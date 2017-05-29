@@ -66,4 +66,5 @@ fastlane/test_output
 
 # hh
 Packages
+Package.pins
 
