@@ -7,7 +7,8 @@ let package = Package(
   
   dependencies: [
     // TODO: factor out KVC?
-    .Package(url: "git@github.com:helje5/CSQLite3.git", majorVersion: 0)
+    .Package(url: "git@github.com:ZeeQL/CSQLite3.git", 
+             majorVersion: 1, minor: 0)
   ],
 	
   exclude: [
