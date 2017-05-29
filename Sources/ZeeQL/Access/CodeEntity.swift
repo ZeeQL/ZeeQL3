@@ -1,0 +1,186 @@
+//
+//  CodeAttribute.swift
+//  ZeeQL
+//
+//  Created by Helge Hess on 28/02/2017.
+//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//
+
+/**
+ * CodeEntity objects are used to describe Entity objects (ORM table
+ * mapping) from within Swift source code (opposed to doing this in an XML
+ * file or fetching it from the database).
+ *
+ * Example usage:
+ *
+ *     class Person : ActiveRecord, EntityType {
+ *       class Entity : CodeEntity<Person> {
+ *         let table      = "person"
+ *         let id         = Info.Int(column: "company_id")
+ *         let isPerson   = Info.Int(column: "is_person")
+ *
+ *         let login      = Info.OptString(width: 50)
+ *         let isLocked   = Info.Int(column: "is_locked")
+ *         let number     = Info.String(width: 100)
+ *
+ *         let lastname   = Info.OptString(column: "name")
+ *         let firstname  : String? = nil
+ *         let middlename : String? = nil
+ *
+ *         let addresses  = ToMany<Address>() // auto: foreign-key
+ *       }
+ *       static let entity : ZeeQL.Entity = Entity()
+ *     }
+ *
+ * One can use different styles to declare attributes:
+ * - Arbitrary `Attribute` objects (`let id : ModelAttribute(...)`)
+ * - CodeAttribute objects. `Attribute.Int` etc. are just aliases for this.
+ * - Plain Swift types, like `let lastname : String`. If they are optional, that
+ *   maps to 'nullable' on the SQL side.
+ *   Note: Swift 3.0 requires instantiation of the object to do reflection,
+ *         which implies that you have to initialize the property
+ *         (hence `let id = 42` or `let middlename : String? = nil`)
+ *
+ * To define relationships:
+ * - Use actual `Relationship` objects, like `ModelRelationship`
+ * - Use `CodeRelationship` objects, like `ToMany<T>`
+ */
+
+open class CodeEntityBase : Entity {
+  // Those are available in subclasses, which makes it convenient
+  // (can't do this in Generic classes, hence this intermediate)
+  public enum Attribute {
+    public typealias Int            = CodeAttribute<Swift.Int>
+    public typealias String         = CodeAttribute<Swift.String>
+    public typealias NullableString = CodeAttribute<Swift.String?>
+    public typealias OptString      = CodeAttribute<Swift.String?>
+  }
+  public typealias Info = Attribute
+  
+  public typealias ToOne<T: DatabaseObject>  = ToOneRelationship<T>
+  public typealias ToMany<T: DatabaseObject> = ToManyRelationship<T>
+  
+  public final var name                     : String = ""
+  public final var externalName             : String?
+  public final var className                : String? // TBD: Hm.
+
+  public final var attributes               = Array<ZeeQL.Attribute>()
+  public final var relationships            = [ Relationship  ]()
+  public final var primaryKeyAttributeNames : [ String    ]? = nil
+
+  public var objectType : DatabaseObject.Type? { return nil   }
+  public var isPattern  : Bool                 { return false }
+}
+
+open class CodeEntity<T: DatabaseObject> : CodeEntityBase {
+
+  override public var objectType : DatabaseObject.Type? { return T.self }
+  
+  // MARK: - Setup
+  
+  override public init() {
+    // Note: Swift cannot reflect on a Type, the instance is required
+    super.init()
+    
+    name       = "\(T.self)"
+    className  = "\(T.self)"
+    
+    for m in Mirror(reflecting: self).mirrorHierarchy(stopAt: "CodeEntity") {
+      processMirror(m)
+    }
+    
+    primaryKeyAttributeNames = lookupPrimaryKeyAttributeNames()
+  }
+}
+
+
+// MARK: - Directly work on class
+
+public protocol CodeObjectType : DatabaseObject, EntityType, TypedEntityObject {
+  init() // this is required for reflection
+}
+
+open class CodeObjectEntity<T: CodeObjectType> : CodeEntityBase {
+  
+  override public var objectType : DatabaseObject.Type? { return T.self }
+  
+  // MARK: - Setup
+  
+  public init(table: String? = nil) {
+    // Note: Swift cannot reflect on a Type, the instance is required
+    super.init()
+    
+    name         = "\(T.self)"
+    className    = "\(T.self)"
+    externalName = table
+    
+    let prototype = T() // Swift needs to instantiate to do this
+    
+    for m in Mirror(reflecting: prototype)
+               .mirrorHierarchy(stopAt: ActiveRecord.self)
+    {
+      processMirror(m)
+    }
+    
+    primaryKeyAttributeNames = lookupPrimaryKeyAttributeNames()
+  }
+}
+
+
+// MARK: - Reflection
+
+extension CodeEntityBase {
+
+  func processMirror(_ mirror: Mirror) {
+    // TODO: preserve them across processMirror invocations
+    var nameToIdx    = [ String : Int ]()
+    var relNameToIdx = [ String : Int ]()
+    for i in 0..<attributes.count    { nameToIdx   [attributes   [i].name] = i }
+    for i in 0..<relationships.count { relNameToIdx[relationships[i].name] = i }
+    
+    for ( propname, propValue ) in mirror.children {
+      guard let propname = propname else { continue }
+      
+      if propname == "table", // || propname == "externalType",
+         let v = propValue as? String
+      {
+        externalName = v
+        continue
+      }
+      
+      if let attribute = CodeAttributeFactory.attributeFor(property: propname,
+                                                           value: propValue)
+      {
+        if let idx = nameToIdx[propname] {
+          attributes[idx] = attribute // override
+        }
+        else {
+          // Dupe cannot happen. I think :-) TODO: betta check
+          attributes.append(attribute)
+        }
+      }
+      else if let relship = propValue as? Relationship {
+        if let mrelship = relship as? ModelRelationship {
+          if mrelship.name.isEmpty {
+            // hack in name
+            mrelship.name = propname
+          }
+        }
+        
+        if let crelship = relship as? CodeRelationshipType {
+          crelship.codeEntity = self
+        }
+        
+        if let idx = relNameToIdx[propname] {
+          relationships[idx] = relship // override
+        }
+        else {
+          // Dupe cannot happen. I think :-) TODO: betta check
+          relationships.append(relship)
+        }
+      }
+      
+      // TODO: fetch specifications, restrictingQualifier
+    }
+  }
+}

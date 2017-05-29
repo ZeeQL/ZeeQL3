@@ -1,0 +1,11 @@
+//
+//  SharedLibrary.xcconfig
+//  ZeeQL
+//
+//  Created by Helge Hess on 04/04/17.
+//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//
+
+#include "SwiftShared.xcconfig"
+
+PRODUCT_NAME = ZeeQL
