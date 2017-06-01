@@ -182,7 +182,7 @@ final class KeyValueStringFormatter : Formatter {
 
   // MARK: - Value Handlers
   
-  struct KeyValueHandler : KeyValueStringFormatterValueHandler {
+  final class KeyValueHandler : KeyValueStringFormatterValueHandler {
     let lastKeyWasMiss = false
     let object : Any?
     
@@ -195,7 +195,7 @@ final class KeyValueStringFormatter : Formatter {
     }
   }
   
-  struct ArrayValueHandler : KeyValueStringFormatterValueHandler {
+  final class ArrayValueHandler : KeyValueStringFormatterValueHandler {
     var lastKeyWasMiss = false
     let array  : [ Any? ]
     var cursor : Int = 0
@@ -214,7 +214,7 @@ final class KeyValueStringFormatter : Formatter {
      * - 'length', 'size', 'count'
      * - an Integer is parsed as an index, eg %(2)s => array[2]
      */
-    mutating func value(forKey key: String) -> Any? {
+    func value(forKey key: String) -> Any? {
       if key.isEmpty {
         guard cursor < array.count else {
           lastKeyWasMiss = true
@@ -244,7 +244,10 @@ final class KeyValueStringFormatter : Formatter {
   }
 }
 
-fileprivate protocol KeyValueStringFormatterValueHandler {
+fileprivate protocol KeyValueStringFormatterValueHandler: class {
+  // Swift 3: Cannot nest protocols in classes, hence outside of the class
+  // - if that isn't a class protocol, swiftc 3.1.1 crashes on Linux
+  
   var lastKeyWasMiss : Bool { get }
 
   /**
@@ -255,5 +258,5 @@ fileprivate protocol KeyValueStringFormatterValueHandler {
    * @param _key - the key to resolve, or null
    * @return the value stored under the key, or the next value from an array
    */
-  mutating func value(forKey: String) -> Any?
+  func value(forKey: String) -> Any?
 }
