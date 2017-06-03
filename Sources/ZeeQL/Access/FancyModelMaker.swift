@@ -333,6 +333,7 @@ open class FancyModelMaker {
           let newRelship = ModelRelationship(name: rsName, isToMany: true,
                                              source:      destEntity,
                                              destination: entity)
+          newRelship.joinSemantic = .leftOuterJoin // TBD
           for join in relship.joins {
             // TODO: fix `!`
             let inverseJoin = Join(source:      join.destinationName!,
