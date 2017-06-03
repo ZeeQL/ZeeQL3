@@ -164,7 +164,13 @@ public extension Relationship { // extra methods
    * Checks whether the Relationship got resolved (whether the Entity of
    * the destination entity was looked up).
    */
-  var isConnected : Bool { return destinationEntity != nil }
+  var isConnected : Bool {
+    if destinationEntity == nil { return false }
+    for join in joins {
+      if !join.isConnected { return false }
+    }
+    return true
+  }
   
   
   /**

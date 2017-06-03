@@ -68,6 +68,12 @@ public struct Join : Equatable, SmartDescription {
     destination = nil
   }
   
+  public var isConnected : Bool {
+    if sourceName      != nil && source      == nil { return false }
+    if destinationName != nil && destination == nil { return false }
+    return true
+  }
+  
   
   // MARK: - operations
   
