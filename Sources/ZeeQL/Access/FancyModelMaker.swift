@@ -6,6 +6,8 @@
 //  Copyright © 2017 ZeeZide GmbH. All rights reserved.
 //
 
+import struct Foundation.URL
+
 /**
  * `FancyModelMaker` is here to make plain models fancy.
  *
@@ -61,6 +63,10 @@ open class FancyModelMaker {
     let capCamelCaseEntityNames    = true // person_address => PersonAddress
     let camelCaseAttributeNames    = true // company_id => companyId
     let useIdForPrimaryKey         = true // person_id pkey => id
+    
+    let boolValueTypePrefixes      = [ "is_", "can_" ]
+    let urlSuffix                  : String? = nil // "_url"
+    let keyColumnSuffix            = "_id"
   }
   
   public final let model   : Model
@@ -219,9 +225,9 @@ open class FancyModelMaker {
         
         for attr in newEntity.attributes {
           let colname = attr.columnName ?? attr.name
-          guard !pkeyColumns.contains(colname) else { continue }
-          guard colname.hasSuffix("_id")       else { continue }
-          guard colname.characters.count > 3   else { continue }
+          guard !pkeyColumns.contains(colname)             else { continue }
+          guard colname.hasSuffix(options.keyColumnSuffix) else { continue }
+          guard colname.characters.count > 3               else { continue }
           
           // OK, e.g. person_id. Now check whether there is a person table
           let endIdx    = colname.index(colname.endIndex, offsetBy: -3)
@@ -434,23 +440,75 @@ open class FancyModelMaker {
       }
     }
     
-    // assign primary key if missing
+    assignPrimaryKeyIfMissing(newEntity)
+    patchValueTypesOfAttributes(newEntity)
+    recordRelationshipsOfNewEntity(newEntity)
     
-    if newEntity.primaryKeyAttributeNames?.count ?? 0 == 0 {
-      if options.detectIdAsPrimaryKey && newEntity[attribute: "id"] != nil {
-        newEntity.primaryKeyAttributeNames = [ "id" ]
+    return newEntity
+  }
+  
+  func assignPrimaryKeyIfMissing(_ newEntity: ModelEntity) {
+    guard newEntity.primaryKeyAttributeNames?.count ?? 0 == 0 else { return }
+    
+    if options.detectIdAsPrimaryKey && newEntity[attribute: "id"] != nil {
+      newEntity.primaryKeyAttributeNames = [ "id" ]
+    }
+    else if options.detectTableIdAsPrimaryKey {
+      let keyname = (newEntity.externalName ?? newEntity.name)
+                  + options.keyColumnSuffix
+      if let attr = newEntity[columnName: keyname] {
+        newEntity.primaryKeyAttributeNames = [ attr.name ]
       }
-      else if options.detectTableIdAsPrimaryKey {
-        let keyname = (newEntity.externalName ?? newEntity.name) + "_id"
-        if let attr = newEntity[columnName: keyname] {
-          newEntity.primaryKeyAttributeNames = [ attr.name ]
+    }
+  }
+  
+  func patchValueTypesOfAttributes(_ newEntity: Entity) {
+    // TBD: maybe value-type assignment shaould be always done in here?
+    // convert Value type to bool type, e.g. of the column name starts with an
+    // 'is_'
+    
+    guard !options.boolValueTypePrefixes.isEmpty else { return }
+      
+    for attr in newEntity.attributes {
+      let cn = attr.columnName ?? attr.name
+      guard !options.onlyLowerCase || cn.isLowerCase else { continue }
+      
+      guard let ma = attr as? ModelAttribute else {
+        assert(attr is ModelAttribute) // we copied deep, should be all model
+        continue
+      }
+      
+      if let urlSuffix = options.urlSuffix, cn.hasSuffix(urlSuffix) {
+        if let oldVT = ma.valueType {
+          if oldVT.isOptional {
+            if oldVT.optionalBaseType == String.self {
+              ma.valueType = Optional<URL>.self
+            }
+          }
+          else {
+            if oldVT == String.self {
+              ma.valueType = URL.self
+            }
+          }
+        }
+        else {
+          ma.valueType = (ma.allowsNull ?? true) ? Optional<URL>.self : URL.self
+        }
+        continue
+      }
+      
+      for prefix in options.boolValueTypePrefixes {
+        if cn.hasPrefix(prefix) {
+          // Note: this includes NULL columns in a special way!
+          // TBD: only certain types of valueTypes?
+          ma.valueType = Bool.self
         }
       }
     }
-    
-    
-    // process relationships, record for later patching
-    
+  }
+  
+  /// process relationships, record for later patching
+  func recordRelationshipsOfNewEntity(_ newEntity: Entity) {
     for rs in newEntity.relationships {
       guard let mrs = rs as? ModelRelationship else {
         assert(rs is ModelRelationship) // we copied deep, should be all model
@@ -459,8 +517,6 @@ open class FancyModelMaker {
       
       modelRelationships.append(mrs)
     }
-    
-    return newEntity
   }
 }
 
