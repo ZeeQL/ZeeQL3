@@ -984,6 +984,8 @@ open class QualifierParser {
 extension String {
   
   func canLA(_ count: Int, startIndex: Index) -> Bool {
+    if startIndex == endIndex { return false }
+    
     guard count != 0 else { return true } // can always not lookahead
       // this asserts on overflow: string.index(idx, offsetBy: count), so it is
       // no good for range-checks.
