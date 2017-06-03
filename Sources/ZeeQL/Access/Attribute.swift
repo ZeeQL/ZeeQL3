@@ -307,6 +307,7 @@ open class ModelAttribute : Attribute {
 
 import struct Foundation.Data
 import struct Foundation.Date
+import struct Foundation.URL
 
 // marker interface for types that can be used as columns
 public protocol AttributeValue {
@@ -346,6 +347,9 @@ extension Double : AttributeValue {}
 extension Bool   : AttributeValue {}
 
 extension Date   : AttributeValue {
+}
+
+extension URL    : AttributeValue {
 }
 
 extension Optional : AttributeValue {
