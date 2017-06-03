@@ -919,7 +919,10 @@ open class SQLExpression: SmartDescription {
       /* add joins */
       var isFirstJoin = true
       for join in joins {
-        guard let sa = join.source, let da = join.destination else { continue }
+        guard let sa = join.source, let da = join.destination else {
+          log.error("join has no source or dest", join)
+          continue
+        }
 
         //left  = join.sourceAttribute().name();
         //right = join.destinationAttribute().name();
