@@ -805,6 +805,8 @@ open class QualifierParser {
     /* a quoted string */
     var pos      = string.index(after: idx) /* skip quote */
     let startPos = pos
+    guard startPos != string.endIndex else { return nil }
+    
     var containsEscaped = false
     
     /* loop until closing quote */
