@@ -106,6 +106,12 @@ class QualifierParserTests: XCTestCase {
     XCTAssertNotNil(q, "could not parse qualifier")
 
     XCTAssert(q! is KeyValueQualifier, "did not parse a key/value qualifier")
+    guard let kvq = q as? KeyValueQualifier else { return }
+    
+    XCTAssertEqual(kvq.operation, .EqualTo)
+    XCTAssert(kvq.value is Bool)
+    guard let bv = kvq.value as? Bool else { return }
+    XCTAssertEqual(bv, true)
   }
   
   func testBoolKeyValueAndFrontQualifier() {
@@ -191,7 +197,24 @@ class QualifierParserTests: XCTestCase {
       XCTAssertTrue(false, "4th part is not a QualifierVariable: \(parts[3])")
     }
   }
-  
+
+  func testPlainString() {
+    // Actually the same like testSimpleBoolKeyValueQualifier, but for
+    // clarity :-)
+    let q = qualifierWith(format: "hello")
+    XCTAssertNotNil(q, "could not parse qualifier")
+    
+    // Not sure whether this is actually intended :-) It makes sense for this:
+    //   "lastname = 'abc' AND isLoggedIn" etc.
+    XCTAssert(q! is KeyValueQualifier, "did not parse a key/value qualifier")
+    guard let kvq = q as? KeyValueQualifier else { return }
+    
+    XCTAssertEqual(kvq.operation, .EqualTo)
+    XCTAssert(kvq.value is Bool)
+    guard let bv = kvq.value as? Bool else { return }
+    XCTAssertEqual(bv, true)
+  }
+
   
   // MARK: - Support
   
