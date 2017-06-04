@@ -312,6 +312,7 @@ open class ModelAttribute : Attribute {
 import struct Foundation.Data
 import struct Foundation.Date
 import struct Foundation.URL
+import struct Foundation.Decimal
 
 // marker interface for types that can be used as columns
 public protocol AttributeValue {
@@ -345,16 +346,17 @@ extension Data   : AttributeValue {
     return true
   }
 }
-extension Int    : AttributeValue {}
-extension Float  : AttributeValue {}
-extension Double : AttributeValue {}
-extension Bool   : AttributeValue {}
+extension Int     : AttributeValue {}
+extension Int16   : AttributeValue {}
+extension Int32   : AttributeValue {}
+extension Int64   : AttributeValue {}
+extension Float   : AttributeValue {}
+extension Double  : AttributeValue {}
+extension Bool    : AttributeValue {}
 
-extension Date   : AttributeValue {
-}
-
-extension URL    : AttributeValue {
-}
+extension Date    : AttributeValue {}
+extension URL     : AttributeValue {}
+extension Decimal : AttributeValue {}
 
 extension Optional : AttributeValue {
   public static var isOptional : Bool { return true }
