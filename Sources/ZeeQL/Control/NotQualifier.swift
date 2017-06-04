@@ -58,7 +58,14 @@ public struct NotQualifier : Qualifier, Equatable {
   }
   
   public func appendToStringRepresentation(_ ms: inout String) {
-    ms.append("NOT ")
-    qualifier.appendToStringRepresentation(&ms)
+    if qualifier is KeyValueQualifier || qualifier is KeyComparisonQualifier {
+      ms.append("NOT ")
+      qualifier.appendToStringRepresentation(&ms)
+    }
+    else {
+      ms.append("NOT (")
+      qualifier.appendToStringRepresentation(&ms)
+      ms.append(")")
+    }
   }
 }
