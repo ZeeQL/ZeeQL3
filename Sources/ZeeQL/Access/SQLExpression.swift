@@ -1558,45 +1558,7 @@ open class SQLExpression: SmartDescription {
       
       /* find alias */
       
-      var alias : String
-      
-      if self.relationshipPathToAlias[relPath!] == nil && useAliases {
-        let pc = key
-        
-        /* produce an alias */
-        if pc.hasPrefix("to") && key.characters.count > 2 {
-          /* eg: toCustomer => Customer" */
-          let idx = key.index(key.startIndex, offsetBy: 2)
-          alias = key.substring(from: idx)
-        }
-        else {
-          alias = String(pc.characters.first!).uppercased()
-          if relationshipPathToAlias.values.contains(alias) &&
-             pc.characters.count > 1
-          {
-            let idx = pc.index(pc.startIndex, offsetBy: 2)
-            alias = pc[pc.startIndex..<idx].uppercased()
-          }
-        }
-        
-        if relationshipPathToAlias.values.contains(alias) {
-          /* search for next ID */
-          let balias = alias
-          for i in 1..<100 { /* limit */
-            alias = "\(balias)\(i)"
-            if !relationshipPathToAlias.values.contains(alias) { break }
-            alias = balias
-          }
-        }
-      }
-      else if let de = rel?.destinationEntity {
-        // TODO: check whether its correct
-        alias = de.name
-      }
-      else {
-        alias = "ERROR" // TODO
-      }
-    
+      let alias = aliasForRelationshipPath(relPath!, key, rel)
       relationshipPathToAlias[relPath!] = alias
     }
     
@@ -1612,6 +1574,60 @@ open class SQLExpression: SmartDescription {
     
     /* OK, we should now have an alias */
     return sqlStringForAttribute(attribute, relPath ?? "ERROR")
+  }
+  
+  @discardableResult
+  func aliasForRelationshipPath(_ relPath: String, _ key: String,
+                                _ rel: Relationship?) -> String
+  {
+    // Alias registration is a MUST to ensure consistency
+    
+    if let alias = relationshipPathToAlias[relPath] { // cached already
+      return alias
+    }
+    
+    var alias : String
+    if useAliases {
+      let pc = key
+      
+      /* produce an alias */
+      if pc.hasPrefix("to") && key.characters.count > 2 {
+        /* eg: toCustomer => Customer" */
+        let idx = key.index(key.startIndex, offsetBy: 2)
+        alias = key.substring(from: idx)
+      }
+      else {
+        alias = String(pc.characters.first!).uppercased()
+        if relationshipPathToAlias.values.contains(alias) &&
+          pc.characters.count > 1
+        {
+          let idx = pc.index(pc.startIndex, offsetBy: 2)
+          alias = pc[pc.startIndex..<idx].uppercased()
+        }
+      }
+      
+      if relationshipPathToAlias.values.contains(alias) {
+        /* search for next ID */
+        let balias = alias
+        for i in 1..<100 { /* limit */
+          alias = "\(balias)\(i)"
+          if !relationshipPathToAlias.values.contains(alias) { break }
+          alias = balias
+        }
+      }
+    }
+    else if let de = rel?.destinationEntity { // not using aliases
+      // TODO: check whether its correct
+      alias = sqlStringFor(schemaObjectName: de.externalName ?? de.name)
+    }
+    else {
+      log.error("Missing relationship or entity to calculate alias for path:",
+                relPath, "key:", key, "relationship:", rel)
+      return "ERROR" // TODO
+    }
+    
+    relationshipPathToAlias[relPath] = alias
+    return alias
   }
   
   

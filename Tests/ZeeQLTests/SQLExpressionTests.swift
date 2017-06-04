@@ -158,6 +158,49 @@ class SQLExpressionTests: XCTestCase {
     let expr = factory.selectExpressionForAttributes([], cfs, Person.entity)
     XCTAssertEqual(expr.statement,
                    "SELECT COUNT(*) FROM \"person\" AS BASE  " + // yes, two
-                   "WHERE BASE.\"login\" LIKE ? LIMIT 1")
+                   "WHERE COALESCE(BASE.\"login\", '') LIKE ? LIMIT 1")
+  }
+
+
+  func testRelationshipPathExpr() {
+    class Address : ActiveRecord, EntityType {
+      class Entity : CodeEntity<Address> {
+        let table         = "address"
+        let id            = Info.Int(column: "address_id")
+        let companyId     = Info.Int(column: "company_id")
+        let name1         : String? = nil
+        let street        : String? = nil
+        let zipcity       : String? = nil
+        let person        = ToOne<Person>(from: "companyId")
+          // auto: key: "company_id")
+      }
+      static let entity : ZeeQL.Entity = Entity()
+    }
+    
+    class Person : ActiveRecord, EntityType {
+      class Entity : CodeEntity<Person> {
+        let table         = "person"
+        let id            = Info.Int(column: "company_id")
+        let login         : String? = nil
+        let lastname      = Info.OptString(column: "name")
+        let addresses     = ToMany<Address>(on: "companyId")
+      }
+      static let typedEntity = Entity()
+      static let entity : ZeeQL.Entity = typedEntity
+    }
+    
+    let q  =
+      "addresses.street LIKE '*Lo*' AND addresses.zipcity LIKE '*Magdeburg*'"
+    let fs = ModelFetchSpecification(entity: Person.entity, q)
+    let expr = factory.selectExpressionForAttributes(
+      [ Person.typedEntity.id ], fs, Person.entity
+    )
+    
+    XCTAssert(expr.statement.contains("JOIN"), "missing join")
+    
+    print("\(expr.statement)")
+    XCTAssertEqual(expr.statement,
+                   "SELECT BASE.\"company_id\" FROM \"person\" AS BASE LEFT JOIN \"address\" AS A ON ( BASE.\"company_id\" = A.\"company_id\" ) WHERE ( COALESCE(A.\"street\", '') LIKE ? ) AND ( COALESCE(A.\"zipcity\", '') LIKE ? )"
+                   )
   }
 }
