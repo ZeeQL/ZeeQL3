@@ -1682,9 +1682,9 @@ open class SQLExpression: SmartDescription {
       case .LessThan:            return "<"
       case .LessThanOrEqual:     return "<="
       case .Contains:            return "IN"
-      case .Like:                return "LIKE"
+      case .Like, .SQLLike:      return "LIKE"
       
-      case .CaseInsensitiveLike:
+      case .CaseInsensitiveLike, .SQLCaseInsensitiveLike:
         if let ilike = sqlStringForCaseInsensitiveLike { return ilike }
         return "LIKE"
       
@@ -1806,6 +1806,12 @@ open class SQLExpression: SmartDescription {
   open var sqlTrueExpression  : String { return "1 = 1" }
   open var sqlFalseExpression : String { return "1 = 0" }
   
+  open func shouldCoalesceEmptyString(_ q: KeyValueQualifier) -> Bool {
+    // TBD: Do we have attribute info? (i.e. is the column nullable in the
+    //      first place)
+    return q.operation == .Like || q.operation == .CaseInsensitiveLike
+  }
+  
   /**
    * Generates the SQL for an KeyValueQualifier. This qualifier compares a
    * column against some constant value using some operator.
@@ -1832,11 +1838,19 @@ open class SQLExpression: SmartDescription {
     // TODO: do something about caseInsensitiveLike (TO_UPPER?), though in
     //       PostgreSQL and MySQL this is already covered by special operators
     
-    let opsel = q.operation
-    let op = self.sqlStringForSelector(opsel, v, true)
+    let opsel         = q.operation
+    let op            = self.sqlStringForSelector(opsel, v, true)
+    let needsCoalesce = shouldCoalesceEmptyString(q)
     
     var sb = ""
+    
+    if needsCoalesce { sb += "COALESCE(" } // undo NULL values for LIKE
     sb += sqlCol
+    if needsCoalesce {
+      sb += ", "
+      sb += formatStringValue("")
+      sb += ")"
+    }
     
     /* generate operator and value */
 
