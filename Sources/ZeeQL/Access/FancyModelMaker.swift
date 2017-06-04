@@ -604,7 +604,7 @@ fileprivate extension Relationship {
   
 }
 
-fileprivate extension String {
+extension String {
   
   var toName : String {
     return "to" + capitalized
@@ -684,103 +684,5 @@ fileprivate extension String {
     }
     return false
   }
-
-  var pluralized : String {
-    // Inspired by:
-    //   https://github.com/rails/rails/blob/master/activesupport/lib/active_support/inflections.rb
-    // FIXME: case
     
-    switch self {
-      // irregular
-      case "person": return "people"
-      case "man":    return "men"
-      case "child":  return "children"
-      case "sex":    return "sexes"
-      case "move":   return "moves"
-      case "zombie": return "zombies"
-      case "staff":  return "staff"
-      
-      // regular
-      case "mice":   return "mice"
-      case "lice":   return "lice"
-      case "mouse":  return "mice"
-      case "louse":  return "lice"
-      
-      default: break
-    }
-    
-    if self.hasSuffix("quiz")   { return self + "zes" }
-    if self.hasSuffix("oxen")   { return self }
-    if self.hasSuffix("ox")     { return self + "en" }
-
-    if self.hasSuffix("matrix") {
-      return self.replaceSuffix("matrix", "matrices")
-    }
-    if self.hasSuffix("vertex") {
-      return self.replaceSuffix("vertex", "vertices")
-    }
-    if self.hasSuffix("index") { return self.replaceSuffix("index", "indices") }
-
-    if self.hasSuffix("ch")     { return self + "es" }
-    if self.hasSuffix("ss")     { return self + "es" }
-    if self.hasSuffix("sh")     { return self + "es" }
-    
-    if self.hasSuffix("quy")    { return self.replaceSuffix("quy", "quies") }
-    if self.hasSuffix("y") {
-      if self.characters.count > 2 {
-        let idx = self.index(self.endIndex, offsetBy: -2)
-        let cbY = self.characters[idx]
-        switch cbY {
-          // https://www.youtube.com/watch?v=gUrJKN7F_so
-          case "a", "e", "i", "o", "u": break
-          default: return self.replaceSuffix("y",  "ies")
-        }
-        if self.hasSuffix("ry")   { return self.replaceSuffix("ry",  "ries")  }
-      }
-    }
-    
-    if self.hasSuffix("hive")   { return self + "hives" }
-    
-    // TODO: (?:([^f])fe|([lr])f) => '\1\2ves'
-    
-    if self.hasSuffix("sis")    { return self + "ses" } // TODO: replace?
-
-    if self.hasSuffix("ta")     { return self }
-    if self.hasSuffix("ia")     { return self }
-    
-    if self.hasSuffix("tum")    { return self.replaceSuffix("tum", "ta") }
-    if self.hasSuffix("ium")    { return self.replaceSuffix("ium", "ia") }
-
-    if self.hasSuffix("buffalo") {
-      return self.replaceSuffix("buffalo", "buffaloes")
-    }
-    if self.hasSuffix("tomato") {
-      return self.replaceSuffix("tomato", "tomatoes")
-    }
-    
-    if self.hasSuffix("bus")    { return self.replaceSuffix("bus", "buses") }
-
-    if self.hasSuffix("alias")  { return self + "es" }
-    if self.hasSuffix("status") { return self + "es" }
-
-    if self.hasSuffix("octopi")  { return self }
-    if self.hasSuffix("viri")    { return self }
-    if self.hasSuffix("octopus") {
-      return self.replaceSuffix("octopus", "octopi")
-    }
-    if self.hasSuffix("virus")   { return self.replaceSuffix("virus", "viri") }
-    
-    // TODO: ^(ax|test)is       => '\1es'
-
-    if self.hasSuffix("s") { return self }
-
-    return self + "s"
-  }
-  
-  func replaceSuffix(_ suffix: String, _ with: String) -> String {
-    guard hasSuffix(suffix) else { return self }
-    
-    let endIdx = self.index(endIndex, offsetBy: -(suffix.characters.count))
-    return self[startIndex..<endIdx] + with
-  }
 }

@@ -77,6 +77,15 @@ public struct Join : Equatable, SmartDescription {
   
   // MARK: - operations
   
+  public var inverse : Join {
+    if let ndest = source, let nsource = destination {
+      return Join(source: nsource, destination: ndest)
+    }
+
+    return Join(source      : destinationName ?? "ERROR",
+                destination : sourceName      ?? "ERROR")
+  }
+  
   public func isReciprocalTo(join other: Join) -> Bool {
     /* fast check (should work often) */
     if let msource = self.source,

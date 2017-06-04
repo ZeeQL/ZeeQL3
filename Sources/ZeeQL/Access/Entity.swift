@@ -355,6 +355,10 @@ open class ModelEntity : Entity {
   public final var relationships            = [ Relationship ]()
   public final var primaryKeyAttributeNames : [ String    ]? = nil
   
+  public final var isSyncable               : Bool?
+  public final var codeGenerationType       : String?
+  public final var userData                 = [ String : Any ]()
+  
   /**
    * Returns the attributes which are used for optimistic locking. Those are
    * checked for changes when an UPDATE is attempted in the database. For
@@ -436,6 +440,10 @@ open class ModelEntity : Entity {
     }
     
     if let me = entity as? ModelEntity {
+      self.isSyncable             = me.isSyncable
+      self.codeGenerationType     = me.codeGenerationType
+      self.userData               = me.userData
+      
       self.isExternalNamePattern  = me.isExternalNamePattern
       self.dataSourceClassName    = me.dataSourceClassName
       self._classPropertyNames    = me._classPropertyNames
