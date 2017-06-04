@@ -146,6 +146,7 @@ open class ModelAttribute : Attribute {
   // patterns
   public final var isColumnNamePattern = false
 
+  public final var isSyncable      : Bool?
   public final var userData        = [ String : Any ]()
   
   public init(name         : String,
@@ -179,6 +180,7 @@ open class ModelAttribute : Attribute {
       self.privileges          = ma.privileges
       self.isColumnNamePattern = ma.isColumnNamePattern
       
+      self.isSyncable          = ma.isSyncable
       self.userData            = ma.userData
     }
   }

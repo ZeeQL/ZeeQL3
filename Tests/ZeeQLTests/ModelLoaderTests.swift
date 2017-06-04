@@ -26,6 +26,7 @@ class ModelLoaderTests: XCTestCase {
     #endif
   }()
   
+  let verbose = true
   
   func testModelPath() {
     let url = urlToModel
@@ -51,10 +52,53 @@ class ModelLoaderTests: XCTestCase {
     guard let address = model[entity: "Address"],
           let person  = model[entity: "Person"]
      else { return }
+
+    if verbose {
+      print("Model:     \(model)")
+      print("  Address: \(address.attributes)")
+      print("  Address: \(address.relationships)")
+      print("  Person:  \(person.attributes)")
+      print("  Person:  \(person.relationships)")
+    }
     
-    XCTAssertEqual(address.attributes.count, 4)
-    XCTAssertEqual(person.attributes.count,  2)
+    XCTAssertEqual(address.attributes.count,    6) // +id +fkey
+    XCTAssertEqual(person.attributes.count,     3) // +id
+    XCTAssertEqual(address.relationships.count, 1)
+    XCTAssertEqual(person.relationships.count,  1)
     
-    print("Model: \(model)")
+    if let toOne = address.relationships.first {
+      XCTAssertEqual(toOne.joins.count, 1)
+      XCTAssert(toOne.destinationEntity === person)
+      if let join = toOne.joins.first {
+        XCTAssertEqual(join.destinationName, "id")
+        XCTAssertEqual(join.sourceName,      "personId")
+      }
+    }
+    
+    if let toMany = person.relationships.first {
+      XCTAssertEqual(toMany.joins.count, 1)
+      XCTAssert(toMany.destinationEntity === address)
+      if let join = toMany.joins.first {
+        XCTAssertEqual(join.sourceName,      "id")
+        XCTAssertEqual(join.destinationName, "personId")
+      }
+    }
+    
+    XCTAssert(person[fetchSpecification: "fetchTheDucks"] != nil)
+    if let fs = person[fetchSpecification: "fetchTheDucks"] {
+      if verbose {
+        print("fspec: \(fs)")
+      }
+      XCTAssertEqual(fs.fetchLimit, 220)
+      XCTAssertNotNil(fs.qualifier)
+      XCTAssertNotNil(fs.qualifier as? KeyValueQualifier)
+      XCTAssertTrue(fs.usesDistinct)
+      
+      if let kvq = fs.qualifier as? KeyValueQualifier {
+        XCTAssertEqual(kvq.key, "lastName")
+        XCTAssertEqual(kvq.value as? String, "Duck*")
+        XCTAssertEqual(kvq.operation, .Like)
+      }
+    }
   }
 }

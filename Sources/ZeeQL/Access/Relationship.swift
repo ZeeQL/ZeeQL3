@@ -267,6 +267,9 @@ open class ModelRelationship : Relationship {
   public final var relationshipPath      : String?
   public final var deleteRule            : ConstraintRule?
 
+  public final var isSyncable            : Bool?
+  public final var userData              = [ String : Any ]()
+
   public init(name   : String, isToMany    : Bool    = false,
               source : Entity, destination : Entity? = nil)
   {
@@ -290,6 +293,9 @@ open class ModelRelationship : Relationship {
     entity            = newEntity ?? rs.entity
     
     if let mrs = rs as? ModelRelationship {
+      isSyncable = mrs.isSyncable
+      userData   = mrs.userData
+      
       _ownsDestination = mrs._ownsDestination
       
       if disconnect {
