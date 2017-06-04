@@ -95,35 +95,19 @@ public extension Attribute { // default imp
     if isPattern { ms += " pattern" }
     
     ms += " \(name)"
-    if let cn = columnName {
-      ms += "[\(cn)]"
-    }
+    if let cn = columnName { ms += "[\(cn)]" }
 
     // TODO: precision
     let ws : String
-    if let w = width {
-      ws = "(\(w))"
-    }
-    else {
-      ws = ""
-    }
+    if let w = width { ws = "(\(w))" }
+    else             { ws = "" }
     
-    if let vt = valueType, let et = externalType {
-      ms += " \(vt)[\(et)\(ws)]"
-    }
-    else if let vt = valueType {
-      ms += " \(vt)\(ws)"
-    }
-    else if let et = externalType {
-      ms += " [\(et)\(ws)]"
-    }
+    if let vt = valueType, let et = externalType { ms += " \(vt)[\(et)\(ws)]" }
+    else if let vt = valueType                   { ms += " \(vt)\(ws)"        }
+    else if let et = externalType                { ms += " [\(et)\(ws)]"     }
     
-    if let n = allowsNull, n {
-      ms += "?"
-    }
-    if let n = isAutoIncrement, n {
-      ms += " AUTOINC"
-    }
+    if let n = allowsNull,      n { ms += "?"        }
+    if let n = isAutoIncrement, n { ms += " AUTOINC" }
 
     if let f = readFormat  { ms += " read='\(f)'"  }
     if let f = writeFormat { ms += " write='\(f)'" }
@@ -303,6 +287,50 @@ open class ModelAttribute : Attribute {
   
   public func valueFor(object: Any?) -> Any? {
     return KeyValueCoding.value(forKeyPath: name, inObject: object)
+  }
+
+
+  // MARK: - Own Description
+  
+  public func appendToDescription(_ ms: inout String) {
+    ms += " \(name)"
+    if let cn = columnName {
+      ms += "["
+      ms += cn
+      if isColumnNamePattern { ms += "*" }
+      ms += "]"
+    }
+    
+    // TODO: precision
+    let ws : String
+    if let w = width { ws = "(\(w))" }
+    else             { ws = ""       }
+    
+    if let vt = valueType, let et = externalType { ms += " \(vt)[\(et)\(ws)]" }
+    else if let vt = valueType    { ms += " \(vt)\(ws)"  }
+    else if let et = externalType { ms += " [\(et)\(ws)]" }
+    
+    if let n = allowsNull,      n { ms += "?"        }
+    if let n = isAutoIncrement, n { ms += " AUTOINC" }
+    
+    if let f = readFormat   { ms += " read='\(f)'"  }
+    if let f = writeFormat  { ms += " write='\(f)'" }
+
+    if let v = defaultValue { ms += " default=\(v)" }
+    if let v = comment      { ms += " comment='\(v)'" }
+    if let v = collation    { ms += " collation='\(v)'" }
+    if let v = privileges   { ms += " privileges='\(v)'" }
+
+    if !userData.isEmpty {
+      ms += " ud=["
+      for ( key, value ) in userData {
+        ms += " "
+        ms += key
+        ms += ": "
+        ms += String(describing: value)
+      }
+      ms += "]"
+    }
   }
 }
 

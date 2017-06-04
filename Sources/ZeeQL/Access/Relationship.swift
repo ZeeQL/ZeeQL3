@@ -414,5 +414,16 @@ open class ModelRelationship : Relationship {
     else {
       ms += " no-joins?"
     }
+    
+    if !userData.isEmpty {
+      ms += " ud=["
+      for ( key, value ) in userData {
+        ms += " "
+        ms += key
+        ms += ": "
+        ms += String(describing: value)
+      }
+      ms += "]"
+    }
   }
 }
