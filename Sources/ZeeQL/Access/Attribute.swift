@@ -161,6 +161,8 @@ open class ModelAttribute : Attribute {
   
   // patterns
   public final var isColumnNamePattern = false
+
+  public final var userData        = [ String : Any ]()
   
   public init(name         : String,
               column       : String? = nil,
@@ -192,6 +194,8 @@ open class ModelAttribute : Attribute {
       self.collation           = ma.collation
       self.privileges          = ma.privileges
       self.isColumnNamePattern = ma.isColumnNamePattern
+      
+      self.userData            = ma.userData
     }
   }
   

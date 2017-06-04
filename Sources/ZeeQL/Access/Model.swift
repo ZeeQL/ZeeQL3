@@ -143,6 +143,20 @@ open class Model : SmartDescription {
   // TODO: prototypes
   
   
+  // MARK: - Merging
+  
+  open func merge(_ model: Model) {
+    if tag != nil {
+      log.trace("dropping model tag during merge ...", tag)
+    }
+    tag = nil
+
+    for entity in model.entities {
+      entities.append(entity)
+    }
+  }
+  
+  
   // MARK: - Description
   
   open func appendToDescription(_ ms: inout String) {
