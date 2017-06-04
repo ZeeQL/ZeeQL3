@@ -12,10 +12,11 @@ import CSQLite3
 open class SQLite3Adaptor : Adaptor, SmartDescription {
   
   public enum Error : Swift.Error {
-    case OpenFailed(Int32, String?)
+    case OpenFailed(errorCode: Int32, message: String?,
+                    path: String, mode: OpenMode)
   }
   
-  enum OpenMode {
+  public enum OpenMode {
     case readOnly
     case readWrite
     case autocreate
@@ -65,7 +66,13 @@ open class SQLite3Adaptor : Adaptor, SmartDescription {
         }
         sqlite3_close(db)
       }
-      throw AdaptorError.CouldNotOpenChannel(Error.OpenFailed(rc, errorMessage))
+      
+      log.trace("Could not open SQLite database:", path, "mode:", openMode,
+                "error:", rc, errorMessage)
+      throw AdaptorError.CouldNotOpenChannel(
+        Error.OpenFailed(errorCode: rc, message: errorMessage,
+                         path: path, mode: openMode)
+      )
     }
     
     return SQLite3AdaptorChannel(adaptor: self, handle: db!)

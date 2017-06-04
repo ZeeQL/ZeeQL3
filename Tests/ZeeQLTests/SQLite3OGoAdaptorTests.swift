@@ -70,10 +70,15 @@ class SQLite3OGoAdaptorTests: AdaptorOGoTestCase {
       .limit(4)
       .order(by: Person.fields.login)
     
-    let count = try persons.fetchCount()
-    if printResults {
-      print("got person count: #\(count)")
+    do {
+      let count = try persons.fetchCount()
+      if printResults {
+        print("got person count: #\(count)")
+      }
+      XCTAssert(count > 2)
     }
-    XCTAssert(count > 2)
+    catch {
+      XCTAssertNil(error, "catched error: \(error)")
+    }
   }
 }
