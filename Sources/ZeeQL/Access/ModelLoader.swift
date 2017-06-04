@@ -87,6 +87,10 @@ fileprivate extension XMLElement {
   
 }
 
+fileprivate extension Bool { // Linux compat
+  var boolValue : Bool { return self }
+}
+
 open class CoreDataModelLoader : ModelLoader {
   // An actual implementation for CoreData .xcdatamodeld/.xcdatamodel
   
