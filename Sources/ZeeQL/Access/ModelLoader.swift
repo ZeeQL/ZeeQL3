@@ -237,7 +237,6 @@ open class CoreDataModelLoader : ModelLoader {
     
     if let v = attrs["representedClassName"] { entity.className          = v }
     if let v = attrs["codeGenerationType"]   { entity.codeGenerationType = v }
-    entity.isSyncable = boolValue(attrs["syncable"], default: true)
     
     // support 'externalName' in userdata
     var ud = loadUserInfo(from: xml.firstChildElementWithName("userInfo"))
@@ -311,7 +310,6 @@ open class CoreDataModelLoader : ModelLoader {
     let attribute = ModelAttribute(name: name)
     let allowsNull       = boolValue(attrs["optional"])
     attribute.allowsNull = allowsNull
-    attribute.isSyncable = boolValue(attrs["syncable"], default: true)
     
     if let attrType = attrs["attributeType"], !attrType.isEmpty {
       let lc = attrType.lowercased()
@@ -375,7 +373,6 @@ open class CoreDataModelLoader : ModelLoader {
     guard let name = attrs["name"] else { return nil }
     
     let relship = ModelRelationship(name: name, source: entity)
-    relship.isSyncable = boolValue(attrs["syncable"], default: true)
     relship.isToMany   = boolValue(attrs["toMany"])
     
     if let de = attrs["destinationEntity"], !de.isEmpty {
@@ -406,7 +403,6 @@ open class CoreDataModelLoader : ModelLoader {
       
       let allowsNull       = boolValue(attrs["optional"])
       attribute.allowsNull = allowsNull
-      attribute.isSyncable = relship.isSyncable // TBD: only store in one?
       
       relship.joins = [ Join(source      : attributeName,
                              destination : primaryKeyAttributeName) ]

@@ -355,7 +355,6 @@ open class ModelEntity : Entity {
   public final var relationships            = [ Relationship ]()
   public final var primaryKeyAttributeNames : [ String    ]? = nil
   
-  public final var isSyncable               : Bool?
   public final var codeGenerationType       : String?
   public final var userData                 = [ String : Any ]()
   
@@ -440,7 +439,6 @@ open class ModelEntity : Entity {
     }
     
     if let me = entity as? ModelEntity {
-      self.isSyncable             = me.isSyncable
       self.codeGenerationType     = me.codeGenerationType
       self.userData               = me.userData
       
