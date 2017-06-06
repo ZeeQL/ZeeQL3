@@ -2299,10 +2299,8 @@ public protocol SQLValue {
 }
 
 /**
- * QualifierSQLGeneration
- *
- * When the SQLExpressions wants to generate SQL for a given qualifier, it
- * first checks whether the qualifier implements this interface. If so, it
+ * When the SQLExpression generates SQL for a given qualifier, it
+ * first checks whether the qualifier implements this protocol. If so, it
  * lets the qualifier object generate the SQL instead of relying on the default
  * mechanisms.
  */
