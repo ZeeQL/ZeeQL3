@@ -329,7 +329,6 @@
 		E8BA82D01E683B1500F09D76 /* EntityType.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = EntityType.swift; path = Sources/ZeeQL/Control/EntityType.swift; sourceTree = SOURCE_ROOT; };
 		E8CA45941EB4BA42006DC147 /* AdaptorError.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = AdaptorError.swift; path = Sources/ZeeQL/Access/AdaptorError.swift; sourceTree = SOURCE_ROOT; };
 		E8CF06451E645B68008E5847 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
-		E8CF06481E645F4A008E5847 /* Documentation */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Documentation; sourceTree = "<group>"; };
 		E8D074271ECF200F005FD8AB /* FancyModelMaker.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = FancyModelMaker.swift; path = Sources/ZeeQL/Access/FancyModelMaker.swift; sourceTree = SOURCE_ROOT; };
 		E8D0742A1ECF222D005FD8AB /* contacts-create.pgsql */ = {isa = PBXFileReference; lastKnownFileType = text; path = "contacts-create.pgsql"; sourceTree = "<group>"; };
 		E8D0742B1ECF222D005FD8AB /* contacts-fill.pgsql */ = {isa = PBXFileReference; lastKnownFileType = text; path = "contacts-fill.pgsql"; sourceTree = "<group>"; };
@@ -618,7 +617,6 @@
 			children = (
 				E8CF06451E645B68008E5847 /* README.md */,
 				E89D64AA1E953A3500F55CA1 /* Package.swift */,
-				E8CF06481E645F4A008E5847 /* Documentation */,
 				E8EB94C41E5F31E70058D8D1 /* Sources */,
 				E8263C411E93AE2100508276 /* SQLite3Adaptor */,
 				E8D279671E55059800453BBE /* Tests */,
