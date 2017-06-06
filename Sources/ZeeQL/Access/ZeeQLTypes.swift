@@ -12,6 +12,8 @@ import struct Foundation.Data
 public enum ZeeQLTypes {
   // All this really belongs into the adaptors, but the basic stuff is all the
   // same for SQL.
+  // Update: Yes, but even the adaptors share using this thing. It is also
+  //         used in SQLExpression
   
   /**
    * Returns a SQL type for the given Swift type (_name_). 
@@ -21,7 +23,6 @@ public enum ZeeQLTypes {
    * Do not overuse this, bad stylez :-)
    */
   public static func externalTypeFor(swiftType: String) -> String? {
-    // TODO: this really belongs into the Adaptor?
     switch swiftType {
       case "Int":    return "INT"
       case "String": return "VARCHAR"
@@ -39,14 +40,49 @@ public enum ZeeQLTypes {
    *
    * Do not overuse this, bad stylez :-)
    */
-  public static func externalTypeFor(swiftType: Any.Type) -> String? {
-    if swiftType == Int.self     { return "INT"     }
-    if swiftType == String.self  { return "VARCHAR" }
-    if swiftType == Float.self   { return "FLOAT"   }
-    if swiftType == Double.self  { return "DOUBLE"  }
-    if swiftType == [UInt8].self { return "BLOB"    }
-    if swiftType == Int.self     { return "INT"     }
-    if swiftType == Bool.self    { return "BOOLEAN" }
+  public static func externalTypeFor(swiftType: Any.Type,
+                                     includeConstraint: Bool = false)
+                     -> String?
+  {
+    // Also used by ActiveRecord.reflectedEntity
+    if includeConstraint {
+      if swiftType == Int.self     { return "INT NOT NULL"       }
+      if swiftType == String.self  { return "VARCHAR NOT NULL"   }
+      if swiftType == Float.self   { return "FLOAT NOT NULL"     }
+      if swiftType == Double.self  { return "DOUBLE NOT NULL"    }
+      if swiftType == Data.self    { return "BLOB NOT NULL"      }
+      if swiftType == Date.self    { return "TIMESTAMP NOT NULL" }
+      if swiftType == Int.self     { return "INT NOT NULL"       }
+      if swiftType == Bool.self    { return "BOOLEAN NOT NULL"   }
+      
+      if swiftType == Optional<Int>.self     { return "INT NULL"       }
+      if swiftType == Optional<String>.self  { return "VARCHAR NULL"   }
+      if swiftType == Optional<Float>.self   { return "FLOAT NULL"     }
+      if swiftType == Optional<Double>.self  { return "DOUBLE NULL"    }
+      if swiftType == Optional<Data>.self    { return "BLOB NULL"      }
+      if swiftType == Optional<Date>.self    { return "TIMESTAMP NULL" }
+      if swiftType == Optional<Int>.self     { return "INT NULL"       }
+      if swiftType == Optional<Bool>.self    { return "BOOLEAN NULL"   }
+    }
+    else {
+      if swiftType == Int.self     { return "INT"       }
+      if swiftType == String.self  { return "VARCHAR"   }
+      if swiftType == Float.self   { return "FLOAT"     }
+      if swiftType == Double.self  { return "DOUBLE"    }
+      if swiftType == Data.self    { return "BLOB"      }
+      if swiftType == Date.self    { return "TIMESTAMP" }
+      if swiftType == Int.self     { return "INT"       }
+      if swiftType == Bool.self    { return "BOOLEAN"   }
+      
+      if swiftType == Optional<Int>.self     { return "INT"       }
+      if swiftType == Optional<String>.self  { return "VARCHAR"   }
+      if swiftType == Optional<Float>.self   { return "FLOAT"     }
+      if swiftType == Optional<Double>.self  { return "DOUBLE"    }
+      if swiftType == Optional<Data>.self    { return "BLOB"      }
+      if swiftType == Optional<Date>.self    { return "TIMESTAMP" }
+      if swiftType == Optional<Int>.self     { return "INT"       }
+      if swiftType == Optional<Bool>.self    { return "BOOLEAN"   }
+    }
     return nil
   }
   

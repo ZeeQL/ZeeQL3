@@ -40,7 +40,8 @@ public protocol SchemaGeneration {
                                            options: SchemaGenerationOptions)
        -> [ SQLExpression ]
 
-  func createTableStatementsForEntityGroup(_ entities: [ Entity ])
+  func createTableStatementsForEntityGroup(_ entities: [ Entity ],
+                                           options: SchemaGenerationOptions)
        -> [ SQLExpression ]
 
   func dropTableStatementsForEntityGroup(_ entities: [ Entity ])
@@ -97,24 +98,98 @@ public extension SchemaGeneration {
         statements.append(contentsOf: dropTableStatementsForEntityGroup(group))
       }
     }
+    
     if options.createTables {
       for group in entityGroups {
-        statements.append(contentsOf:
-                            createTableStatementsForEntityGroup(group))
+        let sa = createTableStatementsForEntityGroup(group, options: options)
+        statements.append(contentsOf: sa)
       }
     }
     
     return statements
   }
   
-  func createTableStatementsForEntityGroup(_ entities: [ Entity ])
+  func columnNameForAttribute(_ attr: Attribute) -> String {
+    // could also do a translation when missing
+    return attr.columnName ?? attr.name
+  }
+  
+  fileprivate func contraintKeyForRelationship(_ rs: Relationship) -> String? {
+    guard !rs.joins.isEmpty else { return nil }
+
+    func keyForJoin(_ join: Join) -> String {
+      return (join.sourceName ?? "_") + "=>" + (join.destinationName ?? "_")
+    }
+    
+    if rs.joins.count == 1 { return keyForJoin(rs.joins[0]) }
+    
+    let sortedJoins = rs.joins.map(keyForJoin).sorted()
+    return sortedJoins.joined(separator: ",")
+  }
+  
+  func createTableStatementsForEntityGroup(_ entities: [ Entity ],
+                                           options: SchemaGenerationOptions)
        -> [ SQLExpression ]
   {
     guard !entities.isEmpty else { return [] }
     
-    // TODO: merge attributes
+    // collect attributes, unique columns and relationships we want to create
     
-    return []
+    var attributes = [ Attribute    ]() // rather to attributeGroups?
+    var relships   = [ Relationship ]()
+    
+    var registeredColumns = Set<String>()
+    var registeredJoins   = Set<String>()
+    
+    for entity in entities {
+      for attr in entity.attributes {
+        let columnName = columnNameForAttribute(attr)
+        if registeredColumns.contains(columnName) {
+          // TBD: We may want to 'merge' attributes as the entities may have
+          //      different rules on them.
+          continue
+        }
+        attributes.append(attr)
+        registeredColumns.insert(columnName)
+      }
+      
+      for rs in entity.relationships {
+        guard let key = contraintKeyForRelationship(rs) else { continue }
+        guard !registeredJoins.contains(key)            else { continue }
+        relships.append(rs)
+        registeredJoins.insert(key)
+      }
+    }
+    
+    
+    // build statement
+    
+    let rootEntity = entities[0] // we may or may not want to find the actual
+    let table = rootEntity.externalName ?? rootEntity.name
+    let expr  = adaptor.expressionFactory.createExpression(rootEntity)
+    
+    for attr in attributes {
+      expr.addCreateClauseForAttribute(attr)
+    }
+    
+    var sql = "CREATE TABLE "
+    sql += expr.sqlStringFor(schemaObjectName: table)
+    sql += " ( "
+    sql += expr.listString
+    
+    // TODO: add constraints
+    // FIXME: in SQLite this is the only place where we can add foreign key
+    //        constraints! And we need proper ordering! (self-reference seems
+    //        to be fine in both PG & SQLite)
+    //        else: relation "contact" does not exist
+    // e.g.:
+    //   person_id INTEGER NOT NULL,
+    //     FOREIGN KEY(person_id) REFERENCES person(person_id) DEFERRABLE
+    
+    sql += " )"
+    expr.statement = sql
+    
+    return [ expr ]
   }
   
   func dropTableStatementsForEntityGroup(_ entities: [ Entity ])

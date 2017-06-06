@@ -2222,12 +2222,42 @@ open class SQLExpression: SmartDescription {
     let s = allowsNullClauseForConstraint(_attribute.allowsNull ?? true)
     listString += s
   }
+  
+  open func externalTypeForValueType(_ type: AttributeValue.Type) -> String? {
+    // FIXME: I don't like this stuff
+    guard let et =
+      ZeeQLTypes.externalTypeFor(swiftType: type.optionalBaseType ?? type,
+                                 includeConstraint: false)
+     else {
+      log.error("Could not derive external type from Swift type:", type)
+      return nil
+     }
+    
+    return et
+  }
+  
+  open func externalTypeForTypelessAttribute(_ attr: Attribute) -> String {
+    log.warn("attribute has no type", attr)
+    
+    if let cn = attr.columnName, cn.hasSuffix("_id")          { return "INT" }
+    if attr.name.hasSuffix("Id") || attr.name.hasSuffix("ID") { return "INT" }
+    // TODO: More smartness. Though it doesn't really belong here but in a
+    //       model postprocessing step.
+    return "TEXT"
+  }
 
-  public func columnTypeStringForAttribute(_ attr: Attribute) -> String {
-    guard let extType = attr.externalType else {
-      // TODO: derive ext-type automagically
-      log.error("attribute has no column type", attr)
-      return ""
+
+  open func columnTypeStringForAttribute(_ attr: Attribute) -> String {
+    let extType : String
+    
+    if let t = attr.externalType {
+      extType = t
+    }
+    else if let t = attr.valueType, let et = externalTypeForValueType(t) {
+      extType = et
+    }
+    else {
+      extType = externalTypeForTypelessAttribute(attr)
     }
     
     if let precision = attr.precision, let width = attr.width {
