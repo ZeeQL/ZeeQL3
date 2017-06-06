@@ -62,8 +62,9 @@ public protocol Adaptor : class, AdaptorQueryType {
   func openChannel()         throws -> AdaptorChannel
   func releaseChannel(_ channel: AdaptorChannel)
 
-  var expressionFactory : SQLExpressionFactory { get }
-  var model             : Model?               { get set }
+  var expressionFactory      : SQLExpressionFactory         { get }
+  var synchronizationFactory : SchemaSynchronizationFactory { get }
+  var model                  : Model?                       { get set }
   
   func fetchModel()    throws -> Model
   func fetchModelTag() throws -> ModelTag

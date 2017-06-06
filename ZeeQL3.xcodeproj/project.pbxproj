@@ -7,6 +7,14 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		E80285461EE6CBAE00F25AD7 /* SchemaSynchronizationFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = E80285451EE6CBAE00F25AD7 /* SchemaSynchronizationFactory.swift */; };
+		E80285471EE6CBAE00F25AD7 /* SchemaSynchronizationFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = E80285451EE6CBAE00F25AD7 /* SchemaSynchronizationFactory.swift */; };
+		E80285491EE6CBE100F25AD7 /* SchemaSyncTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E80285481EE6CBE100F25AD7 /* SchemaSyncTests.swift */; };
+		E802854A1EE6CBE100F25AD7 /* SchemaSyncTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E80285481EE6CBE100F25AD7 /* SchemaSyncTests.swift */; };
+		E802854C1EE6CDCF00F25AD7 /* SQLite3SchemaSynchronizationFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = E802854B1EE6CDCF00F25AD7 /* SQLite3SchemaSynchronizationFactory.swift */; };
+		E802854D1EE6CDCF00F25AD7 /* SQLite3SchemaSynchronizationFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = E802854B1EE6CDCF00F25AD7 /* SQLite3SchemaSynchronizationFactory.swift */; };
+		E80285521EE6DFFB00F25AD7 /* FakeAdaptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = E802854E1EE6DFF200F25AD7 /* FakeAdaptor.swift */; };
+		E80285531EE6DFFC00F25AD7 /* FakeAdaptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = E802854E1EE6DFF200F25AD7 /* FakeAdaptor.swift */; };
 		E80B3FAC1E606D1700D6F0ED /* Adaptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = E80B3FA01E606D1700D6F0ED /* Adaptor.swift */; };
 		E80B3FAD1E606D1700D6F0ED /* AdaptorChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E80B3FA11E606D1700D6F0ED /* AdaptorChannel.swift */; };
 		E80B3FAE1E606D1700D6F0ED /* AdaptorOperation.swift in Sources */ = {isa = PBXBuildFile; fileRef = E80B3FA21E606D1700D6F0ED /* AdaptorOperation.swift */; };
@@ -218,6 +226,10 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		E80285451EE6CBAE00F25AD7 /* SchemaSynchronizationFactory.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SchemaSynchronizationFactory.swift; path = Sources/ZeeQL/Access/SchemaSynchronizationFactory.swift; sourceTree = SOURCE_ROOT; };
+		E80285481EE6CBE100F25AD7 /* SchemaSyncTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SchemaSyncTests.swift; sourceTree = "<group>"; };
+		E802854B1EE6CDCF00F25AD7 /* SQLite3SchemaSynchronizationFactory.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SQLite3SchemaSynchronizationFactory.swift; path = Sources/ZeeQL/SQLite3Adaptor/SQLite3SchemaSynchronizationFactory.swift; sourceTree = "<group>"; };
+		E802854E1EE6DFF200F25AD7 /* FakeAdaptor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FakeAdaptor.swift; sourceTree = "<group>"; };
 		E80B3FA01E606D1700D6F0ED /* Adaptor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Adaptor.swift; path = Sources/ZeeQL/Access/Adaptor.swift; sourceTree = SOURCE_ROOT; };
 		E80B3FA11E606D1700D6F0ED /* AdaptorChannel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = AdaptorChannel.swift; path = Sources/ZeeQL/Access/AdaptorChannel.swift; sourceTree = SOURCE_ROOT; };
 		E80B3FA21E606D1700D6F0ED /* AdaptorOperation.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = AdaptorOperation.swift; path = Sources/ZeeQL/Access/AdaptorOperation.swift; sourceTree = SOURCE_ROOT; };
@@ -424,6 +436,7 @@
 				E8263C4C1E93AFF200508276 /* SQLite3AdaptorChannel.swift */,
 				E8263C4D1E93AFF200508276 /* SQLite3Expression.swift */,
 				E8EB9E521EA0DB5400C6DA54 /* SQLite3ModelFetch.swift */,
+				E802854B1EE6CDCF00F25AD7 /* SQLite3SchemaSynchronizationFactory.swift */,
 			);
 			name = Sources;
 			sourceTree = "<group>";
@@ -717,6 +730,7 @@
 				E8DA98351EC0F2C2009B0F0F /* MirrorHelpers.swift */,
 				E8D074271ECF200F005FD8AB /* FancyModelMaker.swift */,
 				E8B2497F1EE44A45008258B7 /* ModelLoader.swift */,
+				E80285451EE6CBAE00F25AD7 /* SchemaSynchronizationFactory.swift */,
 			);
 			name = Model;
 			sourceTree = "<group>";
@@ -747,6 +761,8 @@
 				E81B62CB1E65DA0D00D43EFA /* SchemaGenerationTests.swift */,
 				E84FD5711ECB1B8100B2A8F0 /* ModelTests.swift */,
 				E8B249821EE44A66008258B7 /* ModelLoaderTests.swift */,
+				E80285481EE6CBE100F25AD7 /* SchemaSyncTests.swift */,
+				E802854E1EE6DFF200F25AD7 /* FakeAdaptor.swift */,
 			);
 			path = ZeeQLTests;
 			sourceTree = "<group>";
@@ -1021,6 +1037,7 @@
 				E8263CC11E93C89200508276 /* Property.swift in Sources */,
 				E8263CA21E93C89200508276 /* CompoundQualifier.swift in Sources */,
 				E8263C9C1E93C89200508276 /* Key.swift in Sources */,
+				E80285471EE6CBAE00F25AD7 /* SchemaSynchronizationFactory.swift in Sources */,
 				E8263CB71E93C89200508276 /* AdaptorChannel.swift in Sources */,
 				E8263CBF1E93C89200508276 /* Join.swift in Sources */,
 				E8263CC71E93C89200508276 /* AttributeKey.swift in Sources */,
@@ -1043,6 +1060,7 @@
 				E8263CA01E93C89200508276 /* KeyValueQualifier.swift in Sources */,
 				E8263C911E93C89200508276 /* EquatableType.swift in Sources */,
 				E8E480C01EC2033700350EDF /* ArrayDataSource.swift in Sources */,
+				E802854D1EE6CDCF00F25AD7 /* SQLite3SchemaSynchronizationFactory.swift in Sources */,
 				E8E480C11EC2034A00350EDF /* AdaptorRecordSchema.swift in Sources */,
 				E8263CA91E93C89200508276 /* ObjectStore.swift in Sources */,
 				E8263CBA1E93C89200508276 /* AdaptorQueryType.swift in Sources */,
@@ -1070,6 +1088,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				E8263C8B1E93C82700508276 /* FormatterTests.swift in Sources */,
+				E802854A1EE6CBE100F25AD7 /* SchemaSyncTests.swift in Sources */,
 				E8263C8A1E93C82700508276 /* SQLExpressionTests.swift in Sources */,
 				E84FD5791ECB389200B2A8F0 /* ContactsDBModel.swift in Sources */,
 				E89BDB661EC9ED330007619C /* SQLite3ActiveRecordTests.swift in Sources */,
@@ -1084,6 +1103,7 @@
 				E8263C8E1E93C82D00508276 /* SQLite3AdaptorTests.swift in Sources */,
 				E8B249861EE44AD9008258B7 /* Contacts.xcdatamodel in Sources */,
 				E8263C901E93C82D00508276 /* SQLite3OGoAdaptorTests.swift in Sources */,
+				E80285531EE6DFFC00F25AD7 /* FakeAdaptor.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1124,6 +1144,7 @@
 				E80B3FCF1E606D1E00D6F0ED /* SortOrdering.swift in Sources */,
 				E824EA911E6365A900215ABA /* ActiveRecord.swift in Sources */,
 				E80B3FCB1E606D1E00D6F0ED /* Qualifier.swift in Sources */,
+				E80285461EE6CBAE00F25AD7 /* SchemaSynchronizationFactory.swift in Sources */,
 				E80B3FD51E606D4800D6F0ED /* TimeRange.swift in Sources */,
 				E843135C1E6DB65700A59F8B /* CodeValueAttribute.swift in Sources */,
 				E843135E1E6DBE5400A59F8B /* ModelFetchSpecification.swift in Sources */,
@@ -1146,6 +1167,7 @@
 				E81B62D51E65E39A00D43EFA /* BooleanQualifier.swift in Sources */,
 				E80B3FCA1E606D1E00D6F0ED /* ObjectStore.swift in Sources */,
 				E824EA951E63953600215ABA /* StoreKeyValueCoding.swift in Sources */,
+				E802854C1EE6CDCF00F25AD7 /* SQLite3SchemaSynchronizationFactory.swift in Sources */,
 				E89FCACE1E68DE2000ED9216 /* DatabaseContext.swift in Sources */,
 				E80B3FC41E606D1E00D6F0ED /* Constant.swift in Sources */,
 				E80B3FB21E606D1700D6F0ED /* Join.swift in Sources */,
@@ -1173,9 +1195,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				E8687C9B1E606F6A00D62ABF /* FormatterTests.swift in Sources */,
+				E80285491EE6CBE100F25AD7 /* SchemaSyncTests.swift in Sources */,
 				E8B249831EE44A66008258B7 /* ModelLoaderTests.swift in Sources */,
 				E8DDEE3B1E5FA1E600EC1DD8 /* QualifierParserTests.swift in Sources */,
 				E84FD5781ECB389200B2A8F0 /* ContactsDBModel.swift in Sources */,
+				E80285521EE6DFFB00F25AD7 /* FakeAdaptor.swift in Sources */,
 				E81B62CD1E65DA1300D43EFA /* SchemaGenerationTests.swift in Sources */,
 				E84FD5721ECB1B8100B2A8F0 /* ModelTests.swift in Sources */,
 				E8DDEE3C1E5FA1E600EC1DD8 /* SQLExpressionTests.swift in Sources */,

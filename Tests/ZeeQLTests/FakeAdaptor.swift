@@ -11,10 +11,14 @@ import ZeeQL
 class FakeAdaptor : Adaptor {
 
   var expressionFactory = SQLExpressionFactory()
-  var model             : Model? = Model(entities: [])
+  var model             : Model?
   var fakeFetchModel    : Model?
   
   var sqlCalls = [ String ]()
+  
+  public init(model: Model? = nil) {
+    self.model = model
+  }
   
   public func openChannel() throws -> AdaptorChannel {
     return FakeAdaptorChannel(adaptor: self)

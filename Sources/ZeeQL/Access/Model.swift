@@ -74,6 +74,29 @@ open class Model : SmartDescription {
   }
   
   /**
+   * Return the entities which represent the given external name (table name).
+   */
+  open subscript(entityGroup externalName: String) -> [ Entity ] {
+    // TODO: use a map if this turns out to be a common thing
+    var group = [ Entity ]()
+    for entity in entities {
+      if let n = entity.externalName {
+        if n == externalName {
+          group.append(entity)
+        }
+      }
+    }
+    if group.isEmpty { // next try regular names
+      for entity in entities {
+        if entity.externalName == nil && entity.name == externalName {
+          group.append(entity)
+        }
+      }
+    }
+    return group
+  }
+  
+  /**
    * Return the first entity which has a matching externalName.
    *
    * This first scans entities which do have an externalName,
