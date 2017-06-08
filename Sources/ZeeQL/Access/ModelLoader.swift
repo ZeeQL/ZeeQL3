@@ -265,13 +265,17 @@ open class CoreDataModelLoader : ModelLoader {
     
     if style == .ZeeQLDatabase {
       // Add primary key, those are not usually configured in CoreData. Though
-      // you can add an 'id' attribute and we consider that the primary
-      if idAttribute == nil {
+      // you can add an 'id' attribute and we consider that the primary.
+      if idAttribute == nil &&
+         (entity.primaryKeyAttributeNames?.isEmpty ?? true)
+      {
         let pkeyAttr = ModelAttribute(name: "id", allowsNull: false)
         pkeyAttr.isAutoIncrement = true // TBD. CD has a separate sequence
         
         entity.attributes.insert(pkeyAttr, at: 0)
         // TODO: adjust classProperties accordingly (w/o id to mirror CD)
+        
+        entity.primaryKeyAttributeNames = [ pkeyAttr.name ]
       }
     }
     
