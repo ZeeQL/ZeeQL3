@@ -7,6 +7,7 @@
 //
 
 import struct Foundation.URL
+import CoreFoundation
 
 open class ModelLoader {
 
@@ -103,7 +104,21 @@ open class CoreDataModelLoader : ModelLoader {
     }
     
     let model = Model(entities: entities)
+
+    fixupToMany(in: model)
     
+    for node in root.childElementsWithName("fetchRequest") {
+      _ = loadFetchSpecification(from: node, into: model)
+    }
+    
+    for _ in root.childElementsWithName("configurations") {
+      // TODO: process configurations (@name + <memberEntity name="entity"/>)
+    }
+    
+    return model
+  }
+  
+  func fixupToMany(in model: Model) {
     for entry in toManyRelationshipFixups {
       guard let destEntity = model[entity: entry.inverseEntity]
        else {
@@ -122,16 +137,6 @@ open class CoreDataModelLoader : ModelLoader {
       let inverseJoins = revRelship.joins.map { $0.inverse }
       entry.relationship.joins = inverseJoins
     }
-    
-    for node in root.childElementsWithName("fetchRequest") {
-      _ = loadFetchSpecification(from: node, into: model)
-    }
-    
-    for _ in root.childElementsWithName("configurations") {
-      // TODO: process configurations (@name + <memberEntity name="entity"/>)
-    }
-    
-    return model
   }
 
   @discardableResult
@@ -221,6 +226,32 @@ open class CoreDataModelLoader : ModelLoader {
       if relship.isToMany { toManyRelships.append((relship, rs)) }
     }
     
+    addPrimaryKeyIfNecessary(to: entity, idAttribute: idAttribute)
+    
+    for ( toManyRS, node ) in toManyRelships {
+      let attrs = node.attributesAsDict
+      
+      guard let iname = attrs["inverseName"], !iname.isEmpty
+       else {
+        log.warn("Consistency Error:", toManyRS.name, "relationship does not",
+                 "have an inverse, this is an advanced setting")
+        continue
+       }
+      
+      let ient = attrs["inverseEntity"]
+        ?? toManyRS.destinationEntityName
+      let entry = ToManyEntry(entity: entity, relationship: toManyRS,
+                              inverseName: iname,
+                              inverseEntity: ient ?? "ERROR")
+      toManyRelationshipFixups.append(entry)
+    }
+    
+    return entity
+  }
+  
+  func addPrimaryKeyIfNecessary(to entity   : ModelEntity,
+                                idAttribute : Attribute? = nil)
+  {
     if style == .ZeeQLDatabase {
       // Add primary key, those are not usually configured in CoreData. Though
       // you can add an 'id' attribute and we consider that the primary.
@@ -242,28 +273,6 @@ open class CoreDataModelLoader : ModelLoader {
         entity.primaryKeyAttributeNames = [ idAttribute.name ]
       }
     }
-    
-    // TODO: scan toMany inverse relationships
-    
-    for ( toManyRS, node ) in toManyRelships {
-      let attrs = node.attributesAsDict
-      
-      guard let iname = attrs["inverseName"], !iname.isEmpty
-       else {
-        log.warn("Consistency Error:", toManyRS.name, "relationship does not",
-                 "have an inverse, this is an advanced setting")
-        continue
-       }
-      
-      let ient = attrs["inverseEntity"]
-        ?? toManyRS.destinationEntityName
-      let entry = ToManyEntry(entity: entity, relationship: toManyRS,
-                              inverseName: iname,
-                              inverseEntity: ient ?? "ERROR")
-      toManyRelationshipFixups.append(entry)
-    }
-    
-    return entity
   }
   
   func loadAttribute(from xml: XMLElement) -> Attribute? {
@@ -508,17 +517,429 @@ open class CoreDataModelLoader : ModelLoader {
     
     return try loadDataModelContents(from: contentsURL)
   }
+  
+  
+  // MARK: - Compiled models
+  
+  struct RelshipInfo {
+    var attribute : ModelAttribute?
+    var relship   : ModelRelationship
+  }
+  
+  open func loadCompiledModel(from url: URL) throws -> Model {
+    // TBD: I think this only makes limited sense and more of a workaround
+    //      for Xcode's behaviour when building for iOS. The 'compiled' model
+    //      also ends up being bigger ...
+    //      Presumably we should rather find ways to ship the source xcdatamodel
+    //      on iOS w/o triggering the 'compiler'.
+    //
+    // Instead finish up the little XMLDocument parser for iOS.
+    //
+    // This decodes the NSKeyedArchiver variant of the model. We could just
+    // unarchive, but that would imply we need to link to CoreData.
+    // So rather just load the property list, it ain't that hard.
+    // The only real 'hack' being the CFKeyedArchiverUID description that is
+    // used (as this doesn't seem to be a public class).
+    toManyRelationshipFixups.removeAll()
+    
+    let data  = try Data(contentsOf: url)
+    let plist = try? PropertyListSerialization
+                       .propertyList(from: data, options: [], format: nil)
+    
+    var idToObject = [ Int : Any ]()
+    
+    func textDecodeObjectID(_ key: Any?) -> Int? {
+      guard let o = key else {
+        return nil
+      }
+      
+      // and here comes the hack which can break any time ;-)
+      let s = String(describing: o)
+      assert(s.hasPrefix("<CFKeyedArchiverUID"))
+        // this class is not public? we are not accessing the class by name,
+        // we just decode its name
+      
+      guard let range = s.range(of: "value = ") else {
+        assert(s.range(of: "value = ") != nil, "did not find value in UID")
+        return nil
+      }
+      
+      let startIdx = range.upperBound
+      var idx = startIdx
+      while idx < s.endIndex {
+        let c = s.characters[idx]
+        switch c {
+          case "0"..."9":
+            idx = s.index(after: idx)
+          default:
+            guard let num = String(s[startIdx..<idx]) else {
+              return nil
+            }
+            guard let i = Int(num) else {
+              return nil
+            }
+            return i
+        }
+      }
+      assert(false, "expected number")
+    }
+    func textDecodeObjectIDs(_ key: Any?) -> [ Int ]? {
+      guard let o     = key else { return nil }
+      guard let array = o as? [ Any ] else {
+        assert(false, "expected array!, got: \(o)")
+        return nil
+      }
+      
+      return array.flatMap(textDecodeObjectID)
+    }
+    
+    guard let plistDict = plist as? Dictionary<String, Any>,
+          plistDict["$archiver"] as? String ?? "" == "NSKeyedArchiver",
+          plistDict["$version"]  as? Int    ?? 0  ==  100000,
+          let topDict = plistDict["$top"] as? Dictionary<String, Any>
+     else { throw Error.CouldNotLoadFile(url:url, error: nil) }
+
+    guard let eRootID = textDecodeObjectID(topDict["root"]) else {
+      assert(false, "did not find root")
+      throw Error.CouldNotLoadFile(url:url, error: nil)
+    }
+    guard let objects = plistDict["$objects"] as? [ Any ] else {
+      assert(false, "did not find objects array")
+      throw Error.CouldNotLoadFile(url:url, error: nil)
+    }
+
+    
+    func decodeObject(index: Int, class clazz: String, values: [ String : Any ],
+                      depth: Int = 0) -> Any?
+    {
+      switch clazz {
+        case "NSManagedObjectModel":
+          // NSVersionIdentifiers
+          let model = Model(entities: [])
+          idToObject[index] = model
+          if let id = textDecodeObjectID(values["NSEntities"]) {
+            if let nameToInfo = decodeObject(index: id, depth: depth + 1)
+                                  as? Dictionary<String, Entity>
+            {
+              for entity in nameToInfo.values {
+                model.entities.append(entity)
+              }
+            }
+          }
+          if let id = textDecodeObjectID(values["NSFetchRequestTemplates"]) {
+            if let fetchRequests = decodeObject(index: id, depth: depth + 1)
+                                     as? Dictionary<String, FetchSpecification>
+            {
+              for ( name, fs ) in fetchRequests {
+                if let entity = fs.entity as? ModelEntity {
+                  entity.fetchSpecifications[name] = fs
+                }
+                else if let entityName = fs.entityName {
+                  if let entity = model[entity: entityName] as? ModelEntity {
+                    entity.fetchSpecifications[name] = fs
+                  }
+                  else {
+                    assert(false, "did nit find entity: \(entityName)")
+                  }
+                }
+                // else: fetch spec has no entity ...
+              }
+            }
+          }
+          return model
+        
+        case "NSEntityDescription":
+          guard let id   = textDecodeObjectID(values["NSEntityName"]),
+                let name = decodeObject(index: id, depth: depth + 1) as? String
+           else {
+            assert(false, "entity has no name? \(values)")
+            return nil
+           }
+          
+          let entity = ModelEntity(name: name)
+          idToObject[index] = entity
+          
+          if let i = textDecodeObjectID(values["NSClassNameForEntity"]),
+             let v = decodeObject(index: i, depth: depth + 1) as? String
+          {
+            entity.className = v
+          }
+
+          if let i = textDecodeObjectID(values["NSProperties"]),
+             let props = decodeObject(index: i, depth: depth + 1)
+                          as? Dictionary<String, Any>
+          {
+            for prop in props.values {
+              if let attribute = prop as? Attribute {
+                entity.attributes.append(attribute)
+              }
+              else if let relship = prop as? Relationship {
+                entity.relationships.append(relship)
+              }
+              else if let relship = prop as? RelshipInfo {
+                if let attribute = relship.attribute {
+                  entity.attributes.append(attribute)
+                }
+                entity.relationships.append(relship.relship)
+              }
+            }
+          }
+          
+          // TODO: scan for 'id' attribute
+          addPrimaryKeyIfNecessary(to: entity, idAttribute: nil)
+          
+          // TODO: NSUserInfo, NSSubentities, NSSuperentity
+          return entity
+        
+        case "NSAttributeDescription":
+          guard let id   = textDecodeObjectID(values["NSPropertyName"]),
+                let name = decodeObject(index: id, depth: depth + 1) as? String
+           else {
+            assert(false, "attribute has no name? \(values)")
+            return nil
+           }
+          
+          let attribute = ModelAttribute(name: name)
+          idToObject[index] = attribute
+
+          // TODO: NSValueTransformerName, NSRenamingIdentifier, _P
+          // TODO: Ints: NSAttributeType(700 for NSString), NSFlagsKey
+          
+          if let opt = values["NSIsOptional"] as? Int {
+            attribute.allowsNull = opt != 0
+          }
+          
+          if let i = textDecodeObjectID(values["NSAttributeValueClassName"]),
+             let v = decodeObject(index: i, depth: depth + 1) as? String
+          {
+            switch v {
+              case "NSString": attribute.valueType = String.self
+              default: log.error("add value type: \(v)")
+            }
+          }
+          
+          if let i = textDecodeObjectID(values["NSDefaultValue"]),
+             let v = decodeObject(index: i, depth: depth + 1)
+          {
+            attribute.defaultValue = v
+          }
+          
+          return attribute
+        
+        case "NSRelationshipDescription":
+          // this is both, the attribute, the join and the relationship
+          
+          guard let id   = textDecodeObjectID(values["NSPropertyName"]),
+                let name = decodeObject(index: id, depth: depth + 1) as? String
+           else {
+            assert(false, "relationship has no name? \(values)")
+            return nil
+           }
+          
+          guard let e      = textDecodeObjectID(values["NSEntity"]),
+                let entity = decodeObject(index: e, depth: depth + 1) as? Entity
+           else {
+             assert(false, "relationship has no entity? \(values)")
+             return nil
+           }
+          
+          let relship   = ModelRelationship(name: name, source: entity)
+          var info      = RelshipInfo(attribute: nil, relship: relship)
+          idToObject[index] = info
+          
+          if values["NSIsOrdered"] != nil {
+            // =1. doesn't matter, the pure existence says it is toMany?
+            relship.isToMany = true
+          }
+          
+          // TODO: ints: NSMinCount, NSMaxCount
+          
+          if let i = textDecodeObjectID(values["_NSDestinationEntityName"]),
+             let v = decodeObject(index: i, depth: depth + 1) as? String
+          {
+            relship.destinationEntityName = v
+          }
+          else if let i = textDecodeObjectID(values["NSDestinationEntity"]),
+                  let v = decodeObject(index: i, depth: depth + 1) as? Entity
+          {
+            relship.destinationEntityName = v.name
+              // let connect do the actual lookup of the unique model object
+          }
+          
+          if let i = values["NSDeleteRule"] as? Int {
+            switch i {
+              case 0: relship.deleteRule = .noAction
+              case 1: relship.deleteRule = .nullify
+              case 2: relship.deleteRule = .cascade
+              case 3: relship.deleteRule = .deny
+              default:
+                log.error("unsupported delete-rule value in:", relship)
+            }
+          }
+
+          if !relship.isToMany {
+            // 'person' => 'personId'
+            let attributeName = name + foreignKeyRelationshipSuffix
+            
+            let attribute = ModelAttribute(name: attributeName)
+            
+            if let opt = values["NSIsOptional"] as? Int {
+              attribute.allowsNull = opt != 0
+            }
+            
+            relship.joins = [ Join(source      : attributeName,
+                                   destination : primaryKeyAttributeName) ]
+            info.attribute = attribute
+          }
+          else {
+            if let i = textDecodeObjectID(values["_NSInverseRelationshipName"]),
+               let iname = decodeObject(index: i, depth: depth + 1) as? String
+            {
+              let ient  = relship.destinationEntityName
+              let entry = ToManyEntry(entity: entity, relationship: relship,
+                                      inverseName: iname,
+                                      inverseEntity: ient ?? "ERROR")
+              toManyRelationshipFixups.append(entry)
+            }
+            else {
+              log.warn("Consistency Error:", relship.name,
+                       "relationship does not",
+                       "have an inverse, this is an advanced setting")
+            }
+          }
+          
+          return info
+
+        case "NSFetchRequest":
+          var fs = ModelFetchSpecification()
+          idToObject[index] = fs
+          
+          // FIXME: those are not properly reflected in the compiled model?
+          if let i = values["NSFetchOffset"] as? Int {
+            if i > 0 { fs.fetchOffset = i }
+          }
+          if let i = values["NSFetchLimit"]  as? Int {
+            if i > 0 { fs.fetchLimit  = i }
+          }
+          
+          guard let e      = textDecodeObjectID(values["NSEntity"]),
+                let entity = decodeObject(index: e, depth: depth + 1) as? Entity
+           else {
+             assert(false, "fetch-request has no entity? \(values)")
+             return nil
+           }
+          
+          fs.entity = entity
+          
+          log.warn("not decoding fetch request properly yet ...")
+          /* TODO:
+           ints: NSBatchSize, NSFetchRequestFlags, NSHasFetchRequestFlags,
+                 NSResultType(0 = objects, pkeys, records)
+           objects:
+             - NSPredicate       // most important
+             - NSSortDescriptors // that too ;-)
+             - NSHavingPredicate // ??
+             - NSRelationshipKeyPathsForPrefetching
+             - NSValuesToFetch
+             - NSValuesToGroupBy
+           */
+          idToObject[index] = fs // this is a value object
+          return fs
+        
+        case "NSMutableDictionary", "NSDictionary":
+          guard let keyIDs   = textDecodeObjectIDs(values["NS.keys"]),
+                let valueIDs = textDecodeObjectIDs(values["NS.objects"])
+           else {
+            // or rather error?
+            return Dictionary<String, Any>()
+           }
+        
+          let keys    = decodeObjects(indices: keyIDs,   depth: depth + 1)
+          let objects = decodeObjects(indices: valueIDs, depth: depth + 1)
+          assert(keys.count == objects.count)
+          guard keys.count == objects.count else { return nil }
+          
+          var dict = [ String : Any ]()
+          for i in 0..<keys.count {
+            let key = keys[i] as? String ?? String(describing: keys[i])
+            dict[key] = objects[i]
+          }
+          return dict
+        
+        default:
+          log.error("mdm: unsupported class:", clazz)
+      }
+      
+      return nil
+    }
+    
+    func decodeObjects(indices: [Int], depth: Int = 0) -> [Any?] {
+      return indices.map { decodeObject(index: $0, depth: depth + 1) }
+    }
+    
+    func decodeObject(index: Int, depth: Int = 0) -> Any? {
+      let object = objects[index]
+      
+      if let alreadyParsed = idToObject[index] {
+        return alreadyParsed
+      }
+      
+      if let s = object as? String {
+        if s == "$null" { return nil }
+        assert(!s.hasPrefix("$"), "unexpected string: \(s)")
+        return s
+      }
+      
+      if let s = object as? Dictionary<String, Any> {
+        if let classId = textDecodeObjectID(s["$class"]) {
+          guard let clazz =
+                      decodeObject(index: classId, depth: depth + 1) as? String
+           else {
+            log.error("mom: could not decode class ID \(classId): \(s)")
+            assert(false, "could not decode class ID: \(s)")
+            return nil
+           }
+          return decodeObject(index: index, class: clazz, values: s,
+                              depth: depth)
+        }
+        else if let className = s["$classname"] {
+          idToObject[index] = className
+          return className
+        }
+        else {
+          log.error("mom: got neither class ID nor name?: \(s)")
+          assert(false, "got neither class ID nor name?: \(s)")
+          return nil
+        }
+      }
+      
+      return object
+    }
+    
+    guard let rootObject = decodeObject(index: eRootID) else {
+      assert(false, "to no root object")
+      throw Error.CouldNotLoadFile(url:url, error: nil)
+    }
+    
+    guard let model = rootObject as? Model else {
+      throw Error.CompiledModelsNotYetSupported
+    }
+    
+    fixupToMany(in: model)
+    model.connectRelationships()
+    return model
+  }
 
   open func loadDataModelContents(from url: URL) throws -> Model {
+    if url.pathExtension == "mom" || url.path == "momd" {
+      return try loadCompiledModel(from: url)
+    }
+    
     #if os(Linux) // TBD: is this rather Swift 3.1+?
       let options = XMLNode.Options(rawValue: 0)
     #else // Swift 3.0.2 on 10.11
       let options = 0
     #endif
-    
-    if url.pathExtension == "mom" || url.path == "momd" {
-      throw Error.CompiledModelsNotYetSupported
-    }
     
     let xml : XMLDocument
     do {
