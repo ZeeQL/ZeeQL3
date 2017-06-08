@@ -35,6 +35,7 @@ class SchemaSyncTests: XCTestCase {
     let options    = SchemaGenerationOptions()
     options.createTables = true
     options.dropTables   = false
+    options.embedConstraintsInTable = true
     
     let sf         = adaptor.synchronizationFactory
     let entities   = [ model[entity: "Address"]! ]
@@ -42,11 +43,11 @@ class SchemaSyncTests: XCTestCase {
                                                             options: options)
     if verbose { print("statements: \(statements)") }
     
-    XCTAssertEqual(statements.count, 1)
+    XCTAssertEqual(statements.count, 2)
     if let stmt = statements.first {
       XCTAssertEqual(stmt.statement,
                      "CREATE TABLE \"address\" ( " +
-        "\"address_id\" INT NOT NULL,\n\"street\" VARCHAR NULL,\n" +
+        "\"address_id\" INT NOT NULL PRIMARY KEY,\n\"street\" VARCHAR NULL,\n" +
         "\"city\" VARCHAR NULL,\n\"state\" VARCHAR NULL,\n" +
         "\"country\" VARCHAR NULL,\n" +
         "\"person_id\" INT NOT NULL )")
@@ -122,9 +123,13 @@ class SchemaSyncTests: XCTestCase {
       XCTAssertTrue(a.hasPrefix("CREATE TABLE \"address\""))
       XCTAssertTrue(b.hasPrefix("CREATE TABLE \"person\""))
       
+      print("C: \(constraint)")
       XCTAssertTrue(!a.contains(
         "FOREIGN KEY ( \"person_id\" ) " +
-        "REFERENCES \"person\" ( \"person_id\" ) )"))
+        "REFERENCES \"person\" ( \"person_id\" )"))
+      XCTAssertTrue(constraint.contains(
+        "FOREIGN KEY ( \"person_id\" ) " +
+        "REFERENCES \"person\" ( \"person_id\" )"))
     }
   }
 }
