@@ -17,7 +17,7 @@ class SQLite3ModelTests: XCTestCase {
       let bundle = Bundle(for: SQLite3ModelTests.self)
       let url    = bundle.url(forResource: "OGo", withExtension: "sqlite3")
       guard let path = url?.path else { return SQLite3Adaptor("OGo.sqlite3") }
-      NSLog("URL: \(url) \(path)")
+      //NSLog("URL: \(url) \(path)")
       return SQLite3Adaptor(path)
     #else
       let path = ProcessInfo().environment["SRCROOT"]

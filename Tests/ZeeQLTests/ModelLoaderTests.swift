@@ -9,29 +9,40 @@
 import XCTest
 import struct Foundation.URL
 import class  Foundation.Bundle
+import Foundation
 @testable import ZeeQL
 
 class ModelLoaderTests: XCTestCase {
-
-  let urlToModel : URL = {
+  
+  var urlToModel : URL = URL(fileURLWithPath: "/tmp")
+  let verbose    = true
+  
+  override func setUp() {
+    super.setUp()
     #if ZEE_BUNDLE_RESOURCES
-      let bundle = Bundle(for: type(of: self) as! AnyClass)
-      let url    = bundle.url(forResource:   "Contacts",
+      let bundle = Bundle(for: type(of: self)) // ModelLoaderTests.self)
+      var url    = bundle.url(forResource:   "Contacts",
                               withExtension: "xcdatamodel")
-      return url?.path ?? URL(fileSystemPath: "Contacts.xcdatamodel")
+      if url == nil {
+        url    = bundle.url(forResource:   "Contacts",
+                            withExtension: "mom")
+      }
+      if url == nil {
+        print("could not locate xcdatamodel: \(url as Optional) " +
+          "in bundle: \(bundle)")
+      }
+      urlToModel = url ?? URL(fileURLWithPath: "Contacts.xcdatamodel")
     #else
       let path = ProcessInfo().environment["SRCROOT"]
               ?? FileManager.default.currentDirectoryPath
-      return URL(fileURLWithPath: "\(path)/data/Contacts.xcdatamodel")
+      urlToModel = URL(fileURLWithPath: "\(path)/data/Contacts.xcdatamodel")
     #endif
-  }()
-  
-  let verbose = true
+  }
   
   func testModelPath() {
     let url = urlToModel
     XCTAssert(!url.path.isEmpty)
-    XCTAssert(!url.path.hasPrefix("/tmp"))
+    print("URL: \(url)")
   }
   
   func testModelLoad() {

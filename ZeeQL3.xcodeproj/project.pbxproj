@@ -134,7 +134,6 @@
 		E8263CCD1E93C89200508276 /* SQLite3AdaptorChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8263C4C1E93AFF200508276 /* SQLite3AdaptorChannel.swift */; };
 		E8263CCE1E93C89200508276 /* SQLite3Expression.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8263C4D1E93AFF200508276 /* SQLite3Expression.swift */; };
 		E8263CD21E93CA1D00508276 /* ZeeQL.h in Headers */ = {isa = PBXBuildFile; fileRef = E8263CD11E93CA1D00508276 /* ZeeQL.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		E8263CD71E93CD5D00508276 /* OGo.sqlite3 in Resources */ = {isa = PBXBuildFile; fileRef = E8263CD51E93CD5800508276 /* OGo.sqlite3 */; };
 		E8400F5B1E64662A00346028 /* ActiveDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8400F5A1E64662A00346028 /* ActiveDataSource.swift */; };
 		E8400F5D1E64677000346028 /* DatabaseChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8400F5C1E64677000346028 /* DatabaseChannel.swift */; };
 		E84182071E661922003232E4 /* CodeEntity.swift in Sources */ = {isa = PBXBuildFile; fileRef = E84182061E661922003232E4 /* CodeEntity.swift */; };
@@ -149,6 +148,9 @@
 		E84FD57A1ECB38D800B2A8F0 /* ContactsDBModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E84FD5771ECB389200B2A8F0 /* ContactsDBModel.swift */; };
 		E8546AE31EE9D25800ED5327 /* SchemaSynchronization.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8546AE21EE9D25800ED5327 /* SchemaSynchronization.swift */; };
 		E8546AE41EE9D25800ED5327 /* SchemaSynchronization.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8546AE21EE9D25800ED5327 /* SchemaSynchronization.swift */; };
+		E8546AE61EE9DBC500ED5327 /* OGo.sqlite3 in Resources */ = {isa = PBXBuildFile; fileRef = E8263CD51E93CD5800508276 /* OGo.sqlite3 */; };
+		E8546AE71EE9DBC500ED5327 /* contacts.sqlite3 in Resources */ = {isa = PBXBuildFile; fileRef = E89BDB671EC9F3A80007619C /* contacts.sqlite3 */; };
+		E8546AE81EE9DBC500ED5327 /* Contacts.xcdatamodel in Resources */ = {isa = PBXBuildFile; fileRef = E8B249851EE44AD9008258B7 /* Contacts.xcdatamodel */; };
 		E85D2BCA1EE93F33007B5A2C /* ModelSQLizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = E85D2BC91EE93F33007B5A2C /* ModelSQLizer.swift */; };
 		E85D2BCB1EE93F33007B5A2C /* ModelSQLizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = E85D2BC91EE93F33007B5A2C /* ModelSQLizer.swift */; };
 		E8687C991E606E8A00D62ABF /* KeyValueStringFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8687C981E606E8A00D62ABF /* KeyValueStringFormatter.swift */; };
@@ -163,7 +165,6 @@
 		E890E7391ECA543800DE4BC9 /* DatabaseOperation.swift in Sources */ = {isa = PBXBuildFile; fileRef = E890E7381ECA543800DE4BC9 /* DatabaseOperation.swift */; };
 		E89BDB651EC9ED330007619C /* SQLite3ActiveRecordTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E89BDB641EC9ED330007619C /* SQLite3ActiveRecordTests.swift */; };
 		E89BDB661EC9ED330007619C /* SQLite3ActiveRecordTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E89BDB641EC9ED330007619C /* SQLite3ActiveRecordTests.swift */; };
-		E89BDB681EC9F3A80007619C /* contacts.sqlite3 in Resources */ = {isa = PBXBuildFile; fileRef = E89BDB671EC9F3A80007619C /* contacts.sqlite3 */; };
 		E89FCACC1E68DC9C00ED9216 /* DatabaseDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = E89FCACB1E68DC9C00ED9216 /* DatabaseDataSource.swift */; };
 		E89FCACE1E68DE2000ED9216 /* DatabaseContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = E89FCACD1E68DE2000ED9216 /* DatabaseContext.swift */; };
 		E89FCAD01E68EAE500ED9216 /* ObjectTrackingContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = E89FCACF1E68EAE500ED9216 /* ObjectTrackingContext.swift */; };
@@ -982,8 +983,9 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				E89BDB681EC9F3A80007619C /* contacts.sqlite3 in Resources */,
-				E8263CD71E93CD5D00508276 /* OGo.sqlite3 in Resources */,
+				E8546AE61EE9DBC500ED5327 /* OGo.sqlite3 in Resources */,
+				E8546AE71EE9DBC500ED5327 /* contacts.sqlite3 in Resources */,
+				E8546AE81EE9DBC500ED5327 /* Contacts.xcdatamodel in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

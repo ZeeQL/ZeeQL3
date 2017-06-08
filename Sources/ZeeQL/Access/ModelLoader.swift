@@ -6,7 +6,7 @@
 //  Copyright © 2017 ZeeZide GmbH. All rights reserved.
 //
 
-import Foundation
+import struct Foundation.URL
 
 open class ModelLoader {
 
@@ -18,6 +18,8 @@ open class ModelLoader {
     case InvalidFileFormat
     
     case SubclassResponsibility
+    
+    case CompiledModelsNotYetSupported
     
     case TODO(String)
   }
@@ -46,52 +48,8 @@ open class ModelLoader {
   
 }
 
-fileprivate extension XMLElement {
 
-  func firstChildElementWithName(_ name: String) -> XMLElement? {
-    guard let children = children else { return nil }
-    
-    for child in children {
-      guard let element = child as? XMLElement, let tag = element.name
-       else { continue }
-      
-      if tag == name { return element }
-    }
-    return nil
-  }
-  
-  func childElementsWithName(_ name: String) -> [ XMLElement ] {
-    guard let children = children else { return [] }
-    
-    var matches = [ XMLElement ]()
-    for child in children {
-      guard let element = child as? XMLElement, let tag = element.name
-        else { continue }
-      
-      if tag == name {
-        matches.append(element)
-      }
-    }
-    return matches
-  }
-  
-  var attributesAsDict : [ String : String ] {
-    guard let attributes = attributes else { return [:] }
-    
-    var map = [ String : String ]()
-    for attr in attributes {
-      guard let name = attr.localName ?? attr.name else { continue }
-      guard let v = attr.stringValue else { continue }
-      map[name] = v
-    }
-    return map
-  }
-  
-}
-
-fileprivate extension Bool { // Linux compat
-  var boolValue : Bool { return self }
-}
+import Foundation
 
 open class CoreDataModelLoader : ModelLoader {
   // An actual implementation for CoreData .xcdatamodeld/.xcdatamodel
@@ -480,7 +438,9 @@ open class CoreDataModelLoader : ModelLoader {
       throw Error.CouldNotLoadFile(url:url, error: error) // wrap
     }
     
-    let hasDataModel = contents.contains { $0.hasSuffix(".xcdatamodel") }
+    let hasDataModel = contents.contains {
+      $0.hasSuffix(".xcdatamodel") || $0.hasSuffix(".mom")
+    }
     guard hasDataModel else {
       throw Error.CouldNotLoadFile(url:url, error: nil)
     }
@@ -556,6 +516,10 @@ open class CoreDataModelLoader : ModelLoader {
       let options = 0
     #endif
     
+    if url.pathExtension == "mom" || url.path == "momd" {
+      throw Error.CompiledModelsNotYetSupported
+    }
+    
     let xml : XMLDocument
     do {
       xml = try XMLDocument(contentsOf: url, options: options)
@@ -568,4 +532,97 @@ open class CoreDataModelLoader : ModelLoader {
     model.connectRelationships()
     return model
   }
+}
+
+#if os(macOS) || os(Linux)
+#else
+  // iOS has no XMLDocument, tiny replacement
+  class XMLNode {
+  }
+  class XMLElement  : XMLNode {
+    var name        : String?           = nil
+    var attributes  : [ XMLAttribute ]? = nil
+    var children    : [ XMLNode      ]? = nil
+  }
+  class XMLAttribute : XMLNode {
+    var name        : String?      = nil
+    var localName   : String?      = nil
+    var stringValue : String?      = nil
+  }
+  
+  public class XMLDocument : NSObject, XMLParserDelegate {
+    
+    enum Error : Swift.Error {
+      case ParsingFailed
+      case CouldNotCreateParser
+      case TODO
+    }
+    
+    var root : XMLElement? = nil
+    
+    init(contentsOf url: URL, options: Int) throws {
+      super.init()
+      
+      guard let parser = XMLParser(contentsOf: url)
+       else { throw Error.CouldNotCreateParser }
+      
+      parser.delegate = self
+      guard parser.parse() else { throw Error.ParsingFailed }
+      
+      // FIXME: IMPLEMENT DELEGATE
+      throw Error.TODO
+    }
+    
+    func rootElement() -> XMLElement? {
+      return root
+    }
+    
+  }
+#endif
+
+fileprivate extension XMLElement {
+
+  func firstChildElementWithName(_ name: String) -> XMLElement? {
+    guard let children = children else { return nil }
+    
+    for child in children {
+      guard let element = child as? XMLElement, let tag = element.name
+       else { continue }
+      
+      if tag == name { return element }
+    }
+    return nil
+  }
+  
+  func childElementsWithName(_ name: String) -> [ XMLElement ] {
+    guard let children = children else { return [] }
+    
+    var matches = [ XMLElement ]()
+    for child in children {
+      guard let element = child as? XMLElement, let tag = element.name
+        else { continue }
+      
+      if tag == name {
+        matches.append(element)
+      }
+    }
+    return matches
+  }
+  
+  var attributesAsDict : [ String : String ] {
+    guard let attributes = attributes else { return [:] }
+    
+    var map = [ String : String ]()
+    for attr in attributes {
+      guard let name = attr.localName ?? attr.name else { continue }
+      guard let v = attr.stringValue else { continue }
+      map[name] = v
+    }
+    return map
+  }
+  
+}
+
+fileprivate extension Bool { // Linux compat
+  var boolValue : Bool { return self }
 }
