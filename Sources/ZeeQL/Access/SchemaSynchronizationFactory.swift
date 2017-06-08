@@ -60,30 +60,6 @@ public extension SchemaGeneration {
     sb += expr.statement
   }
   
-  func extractEntityGroups<T: Sequence>(_ entities: T) -> [ [ Entity ] ]
-                           where T.Iterator.Element == Entity
-  {
-    var nameToIndex  = [ String : Int ]()
-    var entityGroups = [ [ Entity ] ]()
-    
-    for entity in entities {
-      if let key = entity.externalName, !key.isEmpty {
-        if let idx = nameToIndex[key] {
-          entityGroups[idx].append(entity)
-        }
-        else {
-          nameToIndex[key] = entityGroups.count
-          entityGroups.append([ entity ])
-        }
-      }
-      else {
-        entityGroups.append([ entity ])
-      }
-    }
-    
-    return entityGroups
-  }
-  
   func schemaCreationStatementsForEntities(_ entities: [ Entity ],
                                            options: SchemaGenerationOptions)
        -> [ SQLExpression ]
@@ -91,7 +67,7 @@ public extension SchemaGeneration {
     var statements = [ SQLExpression ]()
     statements.reserveCapacity(entities.count * 2)
     
-    let entityGroups = extractEntityGroups(entities)
+    let entityGroups = entities.extractEntityGroups()
     
     if options.dropTables {
       for group in entityGroups {
@@ -112,19 +88,6 @@ public extension SchemaGeneration {
   func columnNameForAttribute(_ attr: Attribute) -> String {
     // could also do a translation when missing
     return attr.columnName ?? attr.name
-  }
-  
-  fileprivate func contraintKeyForRelationship(_ rs: Relationship) -> String? {
-    guard !rs.joins.isEmpty else { return nil }
-
-    func keyForJoin(_ join: Join) -> String {
-      return (join.sourceName ?? "_") + "=>" + (join.destinationName ?? "_")
-    }
-    
-    if rs.joins.count == 1 { return keyForJoin(rs.joins[0]) }
-    
-    let sortedJoins = rs.joins.map(keyForJoin).sorted()
-    return sortedJoins.joined(separator: ",")
   }
   
   func createTableStatementsForEntityGroup(_ entities: [ Entity ],
@@ -154,8 +117,8 @@ public extension SchemaGeneration {
       }
       
       for rs in entity.relationships {
-        guard let key = contraintKeyForRelationship(rs) else { continue }
-        guard !registeredJoins.contains(key)            else { continue }
+        guard let key = rs.constraintKey     else { continue }
+        guard !registeredJoins.contains(key) else { continue }
         relships.append(rs)
         registeredJoins.insert(key)
       }
@@ -205,6 +168,76 @@ public extension SchemaGeneration {
     expr.statement = "DROP TABLE " + expr.sqlStringFor(schemaObjectName: table)
     return [ expr ]
   }
+}
+
+fileprivate extension Relationship {
+  
+  var constraintKey : String? {
+    guard !joins.isEmpty else { return nil }
+    
+    func keyForJoin(_ join: Join) -> String {
+      return (join.sourceName ?? "_") + "=>" + (join.destinationName ?? "_")
+    }
+    
+    if joins.count == 1 { return keyForJoin(joins[0]) }
+    
+    let sortedJoins = joins.map(keyForJoin).sorted()
+    return sortedJoins.joined(separator: ",")
+  }
+  
+}
+
+fileprivate extension Sequence where Iterator.Element == Entity {
+  
+  func extractEntityGroups() -> [ [ Entity ] ] {
+    var nameToIndex  = [ String : Int ]()
+    var entityGroups = [ [ Entity ] ]()
+    
+    for entity in self {
+      if let key = entity.externalName, !key.isEmpty {
+        if let idx = nameToIndex[key] {
+          entityGroups[idx].append(entity)
+        }
+        else {
+          nameToIndex[key] = entityGroups.count
+          entityGroups.append([ entity ])
+        }
+      }
+      else {
+        entityGroups.append([ entity ])
+      }
+    }
+    
+    return entityGroups
+  }
+
+  /**
+   * Returns the names of the entities referenced by an entity group from
+   * within to-one relationships (aka foreign keys).
+   *
+   * Excluded are self-references.
+   */
+  func entityNamesReferencedBySchemaGroup() -> Set<String> {
+    let ownNames = Set<String>(self.map( { $0.name } ))
+    var names    = Set<String>()
+    
+    for entity in self {
+      for relship in entity.relationships {
+        guard !relship.isToMany      else { continue }
+        guard !relship.joins.isEmpty else { continue }
+        
+        let name = relship.destinationEntity?.name
+                ?? (relship as? ModelRelationship)?.destinationEntityName
+        
+        if let name = name {
+          guard !ownNames.contains(name) else { continue }
+          names.insert(name)
+        }
+      }
+    }
+    return names
+  }
+  
 }
 
 
