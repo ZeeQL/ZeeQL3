@@ -65,6 +65,8 @@ class ModelLoaderTests: XCTestCase {
     XCTAssertEqual(person.attributes.count,     3) // +id
     XCTAssertEqual(address.relationships.count, 1)
     XCTAssertEqual(person.relationships.count,  1)
+    XCTAssertEqual(address.primaryKeyAttributeNames?.count, 1)
+    XCTAssertEqual(person.primaryKeyAttributeNames?.count,  1)
     
     if let toOne = address.relationships.first {
       XCTAssertEqual(toOne.joins.count, 1)
@@ -99,6 +101,57 @@ class ModelLoaderTests: XCTestCase {
         XCTAssertEqual(kvq.value as? String, "Duck*")
         XCTAssertEqual(kvq.operation, .Like)
       }
+    }
+  }
+
+  func testModelSQLize() {
+    let url = urlToModel
+    let originalModel : Model
+    
+    do {
+      originalModel = try ModelLoader.loadModel(from: url)
+    }
+    catch {
+      XCTAssertNil(error, "error: \(error)")
+      return
+    }
+    
+    let sqlizer = ModelSQLizer()
+    let model   = sqlizer.sqlizeModel(originalModel)
+    
+    XCTAssertNotNil(model[entity: "Address"])
+    XCTAssertNotNil(model[entity: "Person"])
+    guard let address = model[entity: "Address"],
+          let person  = model[entity: "Person"]
+     else { return }
+
+    if verbose {
+      print("Model:     \(model)")
+      print("  Address: #\(address.attributes.count)")
+      for addr in address.attributes {
+        print("    \(addr)")
+      }
+      print("  Address: \(address.relationships)")
+      print("  Person:  #\(person.attributes.count)")
+      for addr in person.attributes {
+        print("    \(addr)")
+      }
+      print("  Person:  \(person.relationships)")
+    }
+
+    XCTAssertEqual(address.externalName, "address")
+    XCTAssertEqual(person.externalName,  "person")
+    
+    XCTAssertNotNil(address[attribute: "id"])
+    if let attr = address[attribute: "id"] {
+      XCTAssertNotNil(attr.columnName)
+      XCTAssertEqual(attr.columnName, "address_id")
+    }
+    
+    XCTAssertNotNil(address[attribute: "personId"])
+    if let attr = address[attribute: "personId"] {
+      XCTAssertNotNil(attr.columnName)
+      XCTAssertEqual(attr.columnName, "person_id")
     }
   }
 }
