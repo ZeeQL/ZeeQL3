@@ -277,6 +277,12 @@ open class CoreDataModelLoader : ModelLoader {
         
         entity.primaryKeyAttributeNames = [ pkeyAttr.name ]
       }
+      
+      if entity.primaryKeyAttributeNames?.isEmpty ?? true,
+         let idAttribute = idAttribute
+      {
+        entity.primaryKeyAttributeNames = [ idAttribute.name ]
+      }
     }
     
     // TODO: scan toMany inverse relationships
