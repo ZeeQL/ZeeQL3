@@ -9,12 +9,15 @@
 open class SQLite3SchemaSynchronizationFactory : SchemaSynchronizationFactory {
   
   /// Not supported: ALTER TABLE hello ALTER COLUMN doit TYPE INT;
+  override open
   var supportsDirectColumnCoercion               : Bool { return false }
   
   /// Not supported: ALTER TABLE hello DROP COLUMN doit;
+  override open
   var supportsDirectColumnDeletion               : Bool { return false }
   
   /// Supported: ALTER TABLE x ADD COLUMN y TEXT;
+  override open
   var supportsDirectColumnInsertion              : Bool { return true  }
 
   /**
@@ -24,12 +27,15 @@ open class SQLite3SchemaSynchronizationFactory : SchemaSynchronizationFactory {
    *   ALTER TABLE table DROP CONSTRAINT table2target;
    *     - Note: constraint name must be known!
    */
-  var supportsDirectColumnForeignKeyModification : Bool { return false }
+  override open
+  var supportsDirectForeignKeyModification       : Bool { return false }
   
   /// Not supported: ALTER TABLE table ALTER COLUMN column SET [NOT] NULL;
+  override open
   var supportsDirectColumnNullRuleModification   : Bool { return false }
   
   /// Not supported: ALTER TABLE hello RENAME COLUMN doit TO testit;
+  override open
   var supportsDirectColumnRenaming               : Bool { return false }
   
 }

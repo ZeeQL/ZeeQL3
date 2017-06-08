@@ -6,20 +6,43 @@
 //  Copyright © 2017 ZeeZide GmbH. All rights reserved.
 //
 
+/**
+ * Object used to generate database DDL expressions (i.e. CREATE TABLE and 
+ * such). Similar to `SQLExpression`.
+ *
+ * To acquire a `SchemaSynchronizationFactory` use the
+ * `Adaptor.synchronizationFactory` property as the adaptor may provide a
+ * subclass w/ customized generation.
+ *
+ * Note: This is a stateful object.
+ */
 open class SchemaSynchronizationFactory:
             SchemaGeneration, SchemaSynchronization
 {
   public let log     : ZeeQLLogger
   public let adaptor : Adaptor
+
+  public var createdTables   = Set<String>()
+  public var extraTableJoins = [ SQLExpression ]()
   
   public init(adaptor: Adaptor) {
     self.adaptor = adaptor
     self.log     = self.adaptor.log
   }
+
+  open var supportsDirectForeignKeyModification     : Bool { return true }
+  open var supportsDirectColumnCoercion             : Bool { return true }
+  open var supportsDirectColumnDeletion             : Bool { return true }
+  open var supportsDirectColumnInsertion            : Bool { return true }
+  open var supportsDirectColumnNullRuleModification : Bool { return true }
+  open var supportsDirectColumnRenaming             : Bool { return true }
+  open var supportsSchemaSynchronization            : Bool { return true }
+  
 }
 
 public extension Adaptor {
   
+  /// Note: Returns a stateful object (a new one every time it is accessed).
   var synchronizationFactory : SchemaSynchronizationFactory {
     return SchemaSynchronizationFactory(adaptor: self)
   }
@@ -29,10 +52,15 @@ public extension Adaptor {
 
 // MARK: - Generation
 
-public protocol SchemaGeneration {
+public protocol SchemaGeneration: class {
   
   var adaptor : Adaptor     { get }
   var log     : ZeeQLLogger { get }
+  
+  var createdTables   : Set<String>       { get set }
+  var extraTableJoins : [ SQLExpression ] { get set }
+  
+  func reset()
   
   func appendExpression(_ expr: SQLExpression, toScript sb: inout String)
   
@@ -46,15 +74,31 @@ public protocol SchemaGeneration {
 
   func dropTableStatementsForEntityGroup(_ entities: [ Entity ])
        -> [ SQLExpression ]
+
+  /**
+   * Supports:
+   *   ALTER TABLE table ADD CONSTRAINT table2target
+   *         FOREIGN KEY ( target_id ) REFERENCES target( target_id );
+   *   ALTER TABLE table DROP CONSTRAINT table2target;
+   *     - Note: constraint name must be known!
+   */
+  var supportsDirectForeignKeyModification : Bool { get }
 }
 
 public class SchemaGenerationOptions {
   
-  var dropTables   = true
-  var createTables = true
+  var dropTables              = true
+  var createTables            = true
+  var embedConstraintsInTable = true
+  
 }
 
 public extension SchemaGeneration {
+  
+  func reset() {
+    createdTables.removeAll()
+    extraTableJoins.removeAll()
+  }
   
   func appendExpression(_ expr: SQLExpression, toScript sb: inout String) {
     sb += expr.statement
@@ -64,10 +108,12 @@ public extension SchemaGeneration {
                                            options: SchemaGenerationOptions)
        -> [ SQLExpression ]
   {
+    reset()
+    
     var statements = [ SQLExpression ]()
     statements.reserveCapacity(entities.count * 2)
     
-    let entityGroups = entities.extractEntityGroups()
+    var entityGroups = entities.extractEntityGroups()
     
     if options.dropTables {
       for group in entityGroups {
@@ -76,10 +122,27 @@ public extension SchemaGeneration {
     }
     
     if options.createTables {
+      if !supportsDirectForeignKeyModification ||
+         options.embedConstraintsInTable // not strictly necessary but nicer
+      {
+        entityGroups.sort { lhs, rhs in // areInIncreasingOrder
+          let lhsr = lhs.countReferencesToEntityGroup(rhs)
+          let rhsr = rhs.countReferencesToEntityGroup(lhs)
+          
+          if lhsr < rhsr { return true  }
+          if lhsr > rhsr { return false }
+        
+          // sort by name
+          return lhs[0].name < rhs[0].name
+        }
+      }
+      
       for group in entityGroups {
         let sa = createTableStatementsForEntityGroup(group, options: options)
         statements.append(contentsOf: sa)
       }
+      
+      statements.append(contentsOf: extraTableJoins)
     }
     
     return statements
@@ -101,8 +164,8 @@ public extension SchemaGeneration {
     var attributes = [ Attribute    ]() // rather to attributeGroups?
     var relships   = [ Relationship ]()
     
-    var registeredColumns = Set<String>()
-    var registeredJoins   = Set<String>()
+    var registeredColumns       = Set<String>()
+    var registeredRelationships = Set<String>()
     
     for entity in entities {
       for attr in entity.attributes {
@@ -117,10 +180,10 @@ public extension SchemaGeneration {
       }
       
       for rs in entity.relationships {
-        guard let key = rs.constraintKey     else { continue }
-        guard !registeredJoins.contains(key) else { continue }
+        guard let key = rs.constraintKey             else { continue }
+        guard !registeredRelationships.contains(key) else { continue }
         relships.append(rs)
-        registeredJoins.insert(key)
+        registeredRelationships.insert(key)
       }
     }
     
@@ -130,9 +193,13 @@ public extension SchemaGeneration {
     let rootEntity = entities[0] // we may or may not want to find the actual
     let table = rootEntity.externalName ?? rootEntity.name
     let expr  = adaptor.expressionFactory.createExpression(rootEntity)
+
+    assert(!createdTables.contains(table))
+    createdTables.insert(table)
     
     for attr in attributes {
-      expr.addCreateClauseForAttribute(attr)
+      // TBD: is the pkey handling right for groups?
+      expr.addCreateClauseForAttribute(attr, in: rootEntity)
     }
     
     var sql = "CREATE TABLE "
@@ -140,14 +207,53 @@ public extension SchemaGeneration {
     sql += " ( "
     sql += expr.listString
     
-    // TODO: add constraints
-    // FIXME: in SQLite this is the only place where we can add foreign key
-    //        constraints! And we need proper ordering! (self-reference seems
-    //        to be fine in both PG & SQLite)
-    //        else: relation "contact" does not exist
-    // e.g.:
-    //   person_id INTEGER NOT NULL,
-    //     FOREIGN KEY(person_id) REFERENCES person(person_id) DEFERRABLE
+    var constraintNames = Set<String>()
+    for rs in relships {
+      guard rs.isForeignKeyRelationship else { continue }
+      
+      let fkexpr = adaptor.expressionFactory.createExpression(rootEntity)
+      guard let fkSQL  = fkexpr.sqlForForeignKeyConstraint(rs)
+       else {
+        log.warn("Could not create constraint statement for relationship:", rs)
+        continue
+       }
+      
+      var needsAlter = true
+      
+      if options.embedConstraintsInTable && rs.constraintName == nil {
+        // if the constraint has an explicit name, keep it!
+        
+        if let dest = rs.destinationEntity?.externalName
+                   ?? rs.destinationEntity?.name,
+           createdTables.contains(dest)
+        {
+          sql += ",\n"
+          sql += fkSQL
+          needsAlter = false
+        }
+      }
+      
+      if needsAlter {
+        var constraintName : String = rs.constraintName ?? rs.name
+        if constraintNames.contains(constraintName) {
+          constraintName = rs.name + String(describing: constraintNames.count)
+          if constraintNames.contains(constraintName) {
+            log.error("Failed to generate unique name for constraint:", rs)
+            continue
+          }
+        }
+        constraintNames.insert(constraintName)
+        
+        var sql = "ALTER TABLE "
+        sql += expr.sqlStringFor(schemaObjectName: table)
+        sql += " ADD CONSTRAINT "
+        sql += expr.sqlStringFor(schemaObjectName: constraintName)
+        sql += " "
+        sql += fkSQL
+        fkexpr.statement = sql
+        extraTableJoins.append(fkexpr)
+      }
+    }
     
     sql += " )"
     expr.statement = sql
@@ -185,6 +291,16 @@ fileprivate extension Relationship {
     return sortedJoins.joined(separator: ",")
   }
   
+  var isForeignKeyRelationship : Bool {
+    guard !isToMany      else { return false }
+    guard !joins.isEmpty else { return false }
+    return true
+  }
+
+  var ssfDestinationName : String? {
+    return destinationEntity?.name
+        ?? (self as? ModelRelationship)?.destinationEntityName
+  }
 }
 
 fileprivate extension Sequence where Iterator.Element == Entity {
@@ -223,19 +339,32 @@ fileprivate extension Sequence where Iterator.Element == Entity {
     
     for entity in self {
       for relship in entity.relationships {
-        guard !relship.isToMany      else { continue }
-        guard !relship.joins.isEmpty else { continue }
+        guard relship.isForeignKeyRelationship     else { continue }
+        guard let name = relship.ssfDestinationName else { continue }
         
-        let name = relship.destinationEntity?.name
-                ?? (relship as? ModelRelationship)?.destinationEntityName
-        
-        if let name = name {
-          guard !ownNames.contains(name) else { continue }
-          names.insert(name)
-        }
+        guard !ownNames.contains(name) else { continue }
+        names.insert(name)
       }
     }
     return names
+  }
+  
+  func countReferencesToEntityGroup<T: Sequence>(_ other: T) -> Int
+         where T.Iterator.Element == Iterator.Element
+  {
+    let ownNames = Set<String>(self.map( { $0.name } ))
+    var count = 0
+    for entity in self {
+      for relship in entity.relationships {
+        guard relship.isForeignKeyRelationship      else { continue }
+        guard let name = relship.ssfDestinationName else { continue }
+        
+        guard !ownNames.contains(name) else { continue }
+        
+        count += 1
+      }
+    }
+    return count
   }
   
 }
@@ -243,7 +372,7 @@ fileprivate extension Sequence where Iterator.Element == Entity {
 
 // MARK: - Synchronization
 
-public protocol SchemaSynchronization {
+public protocol SchemaSynchronization : SchemaGeneration {
   
   var adaptor : Adaptor     { get }
   var log     : ZeeQLLogger { get }
@@ -256,15 +385,6 @@ public protocol SchemaSynchronization {
   /// Supports: ALTER TABLE table ADD COLUMN column TEXT;
   var supportsDirectColumnInsertion            : Bool { get }
   
-  /**
-   * Supports:
-   *   ALTER TABLE table ADD CONSTRAINT table2target
-   *         FOREIGN KEY ( target_id ) REFERENCES target( target_id );
-   *   ALTER TABLE table DROP CONSTRAINT table2target;
-   *     - Note: constraint name must be known!
-   */
-  var supportsDirectColumnForeignKeyModification : Bool { get }
-  
   /// Supports: ALTER TABLE table ALTER COLUMN column SET  NOT NULL;
   ///           ALTER TABLE table ALTER COLUMN column DROP NOT NULL;
   var supportsDirectColumnNullRuleModification : Bool { get }
@@ -275,13 +395,4 @@ public protocol SchemaSynchronization {
 }
 
 public extension SchemaSynchronization {
-  
-  var supportsDirectColumnCoercion               : Bool { return true }
-  var supportsDirectColumnDeletion               : Bool { return true }
-  var supportsDirectColumnInsertion              : Bool { return true }
-  var supportsDirectColumnForeignKeyModification : Bool { return true }
-  var supportsDirectColumnNullRuleModification   : Bool { return true }
-  var supportsDirectColumnRenaming               : Bool { return true }
-  var supportsSchemaSynchronization              : Bool { return true }
-  
 }

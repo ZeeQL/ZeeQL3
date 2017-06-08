@@ -28,6 +28,7 @@ public protocol Relationship : Property, ExpressionEvaluation,
   func disconnectRelationships()
   var  isPattern         : Bool            { get }
   
+  var  updateRule        : ConstraintRule? { get }
   var  deleteRule        : ConstraintRule? { get }
   var  ownsDestination   : Bool            { get }
   
@@ -62,6 +63,7 @@ public extension Relationship { // default imp
   
   var joinSemantic   : Join.Semantic   { return .innerJoin }
   var deleteRule     : ConstraintRule? { return nil        }
+  var updateRule     : ConstraintRule? { return nil        }
   var constraintName : String?         { return nil        }
   
   // MARK: - ExpressionEvaluation
