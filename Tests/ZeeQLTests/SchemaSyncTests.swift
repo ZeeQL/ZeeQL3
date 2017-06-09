@@ -188,8 +188,13 @@ class SchemaSyncTests: XCTestCase {
     let sqlizer = ModelSQLizer()
     let newSQLModel = sqlizer.sqlizeModel(newModel)
     if verbose { print("new: \(newSQLModel)") }
+
     
+    // sync
     
+    let sf = adaptor.synchronizationFactory
+    
+    sf.synchronizeModels(old: dbModel, new: newModel)
     // TODO: sync!!!
   }
 }

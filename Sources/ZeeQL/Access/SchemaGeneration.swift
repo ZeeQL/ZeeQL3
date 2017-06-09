@@ -102,11 +102,6 @@ public extension SchemaGeneration {
     return statements
   }
   
-  func columnNameForAttribute(_ attr: Attribute) -> String {
-    // could also do a translation when missing
-    return attr.columnName ?? attr.name
-  }
-  
   func createTableStatementsForEntityGroup(_ entities: [ Entity ],
                                            options: SchemaGenerationOptions)
        -> [ SQLExpression ]
@@ -115,32 +110,8 @@ public extension SchemaGeneration {
     
     // collect attributes, unique columns and relationships we want to create
     
-    var attributes = [ Attribute    ]() // rather to attributeGroups?
-    var relships   = [ Relationship ]()
-    
-    var registeredColumns       = Set<String>()
-    var registeredRelationships = Set<String>()
-    
-    for entity in entities {
-      for attr in entity.attributes {
-        let columnName = columnNameForAttribute(attr)
-        if registeredColumns.contains(columnName) {
-          // TBD: We may want to 'merge' attributes as the entities may have
-          //      different rules on them.
-          continue
-        }
-        attributes.append(attr)
-        registeredColumns.insert(columnName)
-      }
-      
-      for rs in entity.relationships {
-        guard let key = rs.constraintKey             else { continue }
-        guard !registeredRelationships.contains(key) else { continue }
-        relships.append(rs)
-        registeredRelationships.insert(key)
-      }
-    }
-    
+    let attributes = entities.groupAttributes
+    let relships   = entities.groupRelationships
     
     // build statement
     
@@ -257,8 +228,16 @@ fileprivate extension Relationship {
   }
 }
 
-fileprivate extension Sequence where Iterator.Element == Entity {
+extension Sequence where Iterator.Element == Entity { // a flat Entity array
   
+  /**
+   * Groups entities by external name.
+   *
+   * Usually there is just one entity per table, but there can be more with
+   * entity-inheritance.
+   *
+   * Note: this is unrelated to PostgreSQL table inheritance.
+   */
   func extractEntityGroups() -> [ [ Entity ] ] {
     var nameToIndex  = [ String : Int ]()
     var entityGroups = [ [ Entity ] ]()
@@ -280,12 +259,70 @@ fileprivate extension Sequence where Iterator.Element == Entity {
     
     return entityGroups
   }
+}
+
+extension Sequence where Iterator.Element == Entity { // a table group
+  
+  var groupExternalName : String {
+    var iter = makeIterator()
+    guard let first = iter.next() else {
+      assert(false, "entity group contains no entities")
+      return ""
+    }
+    return first.externalName ?? first.name
+  }
+  
+  var groupAttributes : [ Attribute ] {
+    func columnNameForAttribute(_ attr: Attribute) -> String {
+      // could also do a translation when missing
+      return attr.columnName ?? attr.name
+    }
+    
+    var attributes        = [ Attribute    ]()
+    var registeredColumns = Set<String>()
+    
+    for entity in self {
+      for attr in entity.attributes {
+        let columnName = columnNameForAttribute(attr)
+        if registeredColumns.contains(columnName) {
+          // TBD: We may want to 'merge' attributes as the entities may have
+          //      different rules on them.
+          continue
+        }
+        attributes.append(attr)
+        registeredColumns.insert(columnName)
+      }
+    }
+    
+    return attributes
+  }
+  
+  var groupRelationships : [ Relationship ] {
+    var relships                = [ Relationship ]()
+    var registeredRelationships = Set<String>()
+    
+    for entity in self {
+      for rs in entity.relationships {
+        guard let key = rs.constraintKey             else { continue }
+        guard !registeredRelationships.contains(key) else { continue }
+        relships.append(rs)
+        registeredRelationships.insert(key)
+      }
+    }
+    
+    return relships
+  }
 
   /**
    * Returns the names of the entities referenced by an entity group from
    * within to-one relationships (aka foreign keys).
    *
    * Excluded are self-references.
+   *
+   * Example:
+   *   `addressEntityGroup.entityNamesReferencedBySchemaGroup()`
+   * may return `[ Person ]` if an address entity has a toOne relationship
+   * to the `Person` entity.
    */
   func entityNamesReferencedBySchemaGroup() -> Set<String> {
     let ownNames = Set<String>(self.map( { $0.name } ))
@@ -303,6 +340,10 @@ fileprivate extension Sequence where Iterator.Element == Entity {
     return names
   }
   
+  /**
+   * Counts how many toOne references the `self` entity group has to the
+   * other entity group.
+   */
   func countReferencesToEntityGroup<T: Sequence>(_ other: T) -> Int
          where T.Iterator.Element == Iterator.Element
   {

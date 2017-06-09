@@ -80,6 +80,11 @@ public extension Adaptor {
   func releaseChannel(_ channel: AdaptorChannel) {}
   
   var log : ZeeQLLogger { return globalZeeQLLogger }
+
+  /// Note: Returns a stateful object (a new one every time it is accessed).
+  var synchronizationFactory : SchemaSynchronizationFactory {
+    return SchemaSynchronizationFactory(adaptor: self)
+  }
 }
 
 
