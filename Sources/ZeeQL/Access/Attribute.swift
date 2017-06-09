@@ -152,13 +152,15 @@ open class ModelAttribute : Attribute {
               column       : String? = nil,
               externalType : String? = nil,
               allowsNull   : Bool?   = nil,
-              width        : Int?    = nil)
+              width        : Int?    = nil,
+              valueType    : AttributeValue.Type? = nil)
   {
     self.name         = name
     self.columnName   = column
     self.externalType = externalType
     self.allowsNull   = allowsNull
     self.width        = width
+    self.valueType    = valueType
   }
   public init(attribute attr: Attribute) {
     self.name            = attr.name
