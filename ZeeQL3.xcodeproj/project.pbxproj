@@ -739,7 +739,6 @@
 				E8BA82CE1E68397200F09D76 /* CodeFetchSpecification.swift */,
 				E8DA98351EC0F2C2009B0F0F /* MirrorHelpers.swift */,
 				E8D074271ECF200F005FD8AB /* FancyModelMaker.swift */,
-				E85D2BC91EE93F33007B5A2C /* ModelSQLizer.swift */,
 				E8B2497F1EE44A45008258B7 /* ModelLoader.swift */,
 			);
 			name = Model;
@@ -785,6 +784,7 @@
 				E80285451EE6CBAE00F25AD7 /* SchemaSynchronizationFactory.swift */,
 				E8E60DDC1EE9CF560020EA5E /* SchemaGeneration.swift */,
 				E8546AE21EE9D25800ED5327 /* SchemaSynchronization.swift */,
+				E85D2BC91EE93F33007B5A2C /* ModelSQLizer.swift */,
 			);
 			name = "SQL Generation";
 			sourceTree = "<group>";

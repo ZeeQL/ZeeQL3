@@ -48,6 +48,20 @@ open class Model : SmartDescription {
     self.entities = entities
     self.tag      = tag
   }
+  
+  public init(model: Model, deep: Bool = true) {
+    // TBD: keep tag?
+    if deep {
+      self.entities = [ Entity ]()
+      for entity in model.entities {
+        entities.append(ModelEntity(entity: entity, deep: true))
+      }
+      connectRelationships()
+    }
+    else {
+      entities = model.entities
+    }
+  }
 
   open var entityNames : [ String ] {
     return entities.map({$0.name})

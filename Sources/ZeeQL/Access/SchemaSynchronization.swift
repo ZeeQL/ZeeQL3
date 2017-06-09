@@ -11,7 +11,8 @@ public protocol SchemaSynchronization : SchemaGeneration {
   var adaptor : Adaptor     { get }
   var log     : ZeeQLLogger { get }
 
-  /// Supports: ALTER TABLE table ALTER COLUMN column TYPE newType;
+  /// Supports: ALTER TABLE table ALTER COLUMN column TYPE newType
+  ///           [USING CAST(column AS newType)]
   var supportsDirectColumnCoercion             : Bool { get }
   
   /// Supports: ALTER TABLE table DROP COLUMN column [CASCADE];

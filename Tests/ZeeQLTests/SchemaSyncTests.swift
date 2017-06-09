@@ -123,7 +123,7 @@ class SchemaSyncTests: XCTestCase {
       XCTAssertTrue(a.hasPrefix("CREATE TABLE \"address\""))
       XCTAssertTrue(b.hasPrefix("CREATE TABLE \"person\""))
       
-      print("C: \(constraint)")
+      if verbose { print("C: \(constraint)") }
       XCTAssertTrue(!a.contains(
         "FOREIGN KEY ( \"person_id\" ) " +
         "REFERENCES \"person\" ( \"person_id\" )"))
@@ -132,5 +132,64 @@ class SchemaSyncTests: XCTestCase {
         "REFERENCES \"person\" ( \"person_id\" )"))
     }
   }
+  
+  func testSimpleModelSync() {
+    // emulate old model
+    let dbModel  = RawContactsDBModel.model
+    if verbose { print("db: \(dbModel)") }
+    
+    // create newModel
+    let newModel = Model(model: ContactsDBModel.model, deep: true)
+    
+    
+    // changes
+    
+    if let address = newModel[entity: "Address"] as? ModelEntity {
+      // add an attribute to 'Address'
+      address.attributes.append(
+        ModelAttribute(name: "zip", allowsNull: true,
+                       valueType: Optional<String>.self)
+      )
+      
+      // make city non-optional
+      if let city = address[attribute: "city"] as? ModelAttribute {
+        city.valueType  = String.self
+        city.allowsNull = false
+      }
+      
+      // change type of state to Int, just to test
+      if let state = address[attribute: "state"] as? ModelAttribute {
+        state.valueType = Optional<Int>.self
+      }
+    }
+    
+    // add a new entity 'Telephone'
+    let phone : ModelEntity = {
+      let entity = ModelEntity(name: "Telephone")
+      entity.attributes = [
+        ModelAttribute(name: "id",     allowsNull: false, valueType: Int.self),
+        ModelAttribute(name: "number", allowsNull: true,
+                       valueType: Optional<String>.self),
+        ModelAttribute(name: "personId", allowsNull: true,
+                       valueType: Optional<Int>.self),
+      ]
+      let toPerson = ModelRelationship(name: "person", isToMany: false,
+                                       source: entity,
+                                       destination: newModel[entity: "Person"])
+      toPerson.joins = [ Join(source: "personId", destination: "id") ]
+      entity.relationships = [ toPerson ]
+      
+      entity.primaryKeyAttributeNames = [ "id" ]
+      return entity
+    }()
+    newModel.entities.append(phone)
+    
+    // SQLlize model to make sure it has external type info
+    let sqlizer = ModelSQLizer()
+    let newSQLModel = sqlizer.sqlizeModel(newModel)
+    if verbose { print("new: \(newSQLModel)") }
+    
+    
+    // TODO: sync!!!
+  }
 }
-
