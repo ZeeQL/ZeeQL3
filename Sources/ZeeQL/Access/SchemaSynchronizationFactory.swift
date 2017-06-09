@@ -53,6 +53,14 @@ open class SchemaSynchronizationFactory: SchemaGeneration, SchemaSynchronization
     log.log("created: ", changes.created)
     log.log("same:    ", changes.same)
     
+    for ( old, new ) in changes.same {
+      let changes = new.calculateAttributeChanges(since: old)
+      log.log("\nTable:", new.groupExternalName)
+      log.log("  dropped: ", changes.dropped)
+      log.log("  created: ", changes.created)
+      log.log("  same:    ", changes.same)
+    }
+    
     log.log("-----------------------------------------")
   }
 }
@@ -73,7 +81,7 @@ extension Sequence where Iterator.Element == Entity { // an array of entities
     
     var createdGroups = [ [ Entity ] ]()
     var droppedGroups = [ [ Entity ] ]()
-    var oldToGroup    = [ String : [ Entity ] ]()
+    var oldSame    = [ String : [ Entity ] ]()
     var sameGroups    = [ ( [ Entity ], [ Entity ] ) ]()
     
     for oldGroup in oldGroups {
@@ -81,7 +89,7 @@ extension Sequence where Iterator.Element == Entity { // an array of entities
       if !newTables.contains(tableName) {
         droppedGroups.append(oldGroup)
       }
-      oldToGroup[tableName] = oldGroup
+      oldSame[tableName] = oldGroup
     }
     
     for group in newGroups {
@@ -94,7 +102,7 @@ extension Sequence where Iterator.Element == Entity { // an array of entities
         continue
       }
 
-      guard let oldGroup = oldToGroup[tableName]
+      guard let oldGroup = oldSame[tableName]
        else {
         assert(false, "internal inconsistency on table \(tableName)")
         continue
@@ -106,6 +114,39 @@ extension Sequence where Iterator.Element == Entity { // an array of entities
     return SchemaSyncChangeSet(created : createdGroups,
                                dropped : droppedGroups,
                                same    : sameGroups)
+  }
+}
+
+extension Sequence where Iterator.Element == Entity { // an entity group
+  
+  func calculateAttributeChanges<T: Sequence>(since oldEntity: T)
+       -> SchemaSyncChangeSet<Attribute>
+         where T.Iterator.Element == Iterator.Element
+  {
+    let oldAttrs   = oldEntity.groupAttributes
+    let newAttrs   = self.groupAttributes
+    let oldColumns = Set<String>(oldAttrs.map { $0.columnName ?? $0.name })
+    let newColumns = Set<String>(newAttrs.map { $0.columnName ?? $0.name })
+    
+    var oldSame = [ String : Attribute ]()
+    var created = [ Attribute ]()
+    var dropped = [ Attribute ]()
+    var same    = [ ( Attribute, Attribute ) ]()
+    
+    for attr in oldAttrs {
+      let column = attr.columnName ?? attr.name
+      if !newColumns.contains(column) { dropped.append(attr)   }
+      else                            { oldSame[column] = attr }
+    }
+    
+    for attr in newAttrs {
+      let column = attr.columnName ?? attr.name
+      if !oldColumns.contains(column)       { created.append(attr)             }
+      else if let oldAttr = oldSame[column] { same.append( ( oldAttr, attr ) ) }
+      else { assert(false, "internal inconsistency: \(attr)") }
+    }
+    
+    return SchemaSyncChangeSet(created: created, dropped: dropped, same: same)
   }
 }
 
