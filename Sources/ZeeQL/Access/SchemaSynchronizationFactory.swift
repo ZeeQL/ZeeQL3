@@ -51,7 +51,6 @@ open class SchemaSynchronizationFactory: SchemaGeneration, SchemaSynchronization
     
     log.log("dropped: ", changes.dropped)
     log.log("created: ", changes.created)
-    log.log("same:    ", changes.same)
     
     for ( old, new ) in changes.same {
       let changes = new.calculateAttributeChanges(since: old)
@@ -59,10 +58,94 @@ open class SchemaSynchronizationFactory: SchemaGeneration, SchemaSynchronization
       log.log("  dropped: ", changes.dropped)
       log.log("  created: ", changes.created)
       log.log("  same:    ", changes.same)
+      
+      for ( old, new ) in changes.same {
+        // TODO: compare attributes
+        guard let changes = new.changes(since: old) else { continue }
+        log.log("    attr changes:", new.name, changes)
+      }
     }
     
     log.log("-----------------------------------------")
   }
+}
+
+struct AttributeChange : SmartDescription {
+  var name         : ( String, String )?
+  var nullability  : Bool?
+  var externalType : String?
+  
+  var hasChanges : Bool {
+    if name         != nil { return true }
+    if nullability  != nil { return true }
+    if externalType != nil { return true }
+    return false
+  }
+  
+  func appendToDescription(_ ms: inout String) {
+    if let (old,new) = name { ms += " rename[\(old)=>\(new)]"   }
+    if let v = nullability  { ms += (v ? " null" : " not-null") }
+    if let v = externalType { ms += " type=\(v)"                }
+  }
+}
+
+extension Attribute {
+  
+  func isSameExternalName(_ lhs: String, _ rhs: String) -> Bool {
+    // FIXME: not really, they could be synonyms
+    // TODO: this needs to live in the adaptor
+    return lhs.uppercased() == rhs.uppercased()
+  }
+  func externalTypeForValueType(_ vt: AttributeValue.Type) -> String? {
+    // FIXME: do this in the adaptor (/SQLExpression of the adaptor)
+    return ZeeQLTypes.externalTypeFor(swiftType: vt, includeConstraint: false)
+  }
+  
+  func changes(since old: Attribute) -> AttributeChange? {
+    var change = AttributeChange()
+    
+    let oldName = old.columnName  ?? old.name
+    let newName = self.columnName ?? self.name
+    if oldName != newName { change.name = ( oldName, newName ) }
+    
+    if (old.allowsNull ?? true) != (self.allowsNull ?? true) {
+      change.nullability = self.allowsNull ?? true
+    }
+    
+    // Type changes are a little difficult as we need to consider both,
+    // valueType and externalType.
+    
+    if let oldExt = old.externalType, let newExt = self.externalType {
+      // if both have an external type assigned, this is authoritive
+      if !isSameExternalName(oldExt, newExt) {
+        change.externalType = newExt
+      }
+      // else: considered the same
+    }
+    else if let oldVT = old.valueType?.optionalBaseType  ?? old.valueType,
+            let newVT = self.valueType?.optionalBaseType ?? self.valueType
+    {
+      // FIXME: This needs to be more clever. Sometimes the external type
+      //        doesn't really change.
+      // - one of them could still have *one* external type
+      if oldVT != newVT {
+        // FIXME: can return nil, what then?
+        change.externalType = externalType ?? externalTypeForValueType(newVT)
+      }
+      // else: considered the same
+    }
+    else {
+      // either neither, or only one has an external type.
+      
+      // usually the old has an external type (fetched schema from DB). Well,
+      // but usually it also has assigned a value type.
+      
+      print("TODO: complex type compare: \(old) \(self)")
+    }
+    
+    return change.hasChanges ? change : nil
+  }
+  
 }
 
 extension Sequence where Iterator.Element == Entity { // an array of entities
