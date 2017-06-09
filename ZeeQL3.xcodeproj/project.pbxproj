@@ -741,9 +741,6 @@
 				E8D074271ECF200F005FD8AB /* FancyModelMaker.swift */,
 				E85D2BC91EE93F33007B5A2C /* ModelSQLizer.swift */,
 				E8B2497F1EE44A45008258B7 /* ModelLoader.swift */,
-				E80285451EE6CBAE00F25AD7 /* SchemaSynchronizationFactory.swift */,
-				E8E60DDC1EE9CF560020EA5E /* SchemaGeneration.swift */,
-				E8546AE21EE9D25800ED5327 /* SchemaSynchronization.swift */,
 			);
 			name = Model;
 			sourceTree = "<group>";
@@ -785,6 +782,9 @@
 			children = (
 				E80B3FAA1E606D1700D6F0ED /* SQLExpression.swift */,
 				E80B3FAB1E606D1700D6F0ED /* SQLExpressionFactory.swift */,
+				E80285451EE6CBAE00F25AD7 /* SchemaSynchronizationFactory.swift */,
+				E8E60DDC1EE9CF560020EA5E /* SchemaGeneration.swift */,
+				E8546AE21EE9D25800ED5327 /* SchemaSynchronization.swift */,
 			);
 			name = "SQL Generation";
 			sourceTree = "<group>";
