@@ -195,11 +195,17 @@ open class SQLite3ModelFetch: AdaptorModelFetch {
     let fkeysByConstraint : [ Int : [ AdaptorRecord ] ] = {
       var grouped = [ Int : [ AdaptorRecord ] ]()
       for record in foreignKeyRecords {
-        guard let rawkey = record["id"] else { continue }
+        guard let rawkey = record["id"] else {
+          log.warn("fkey record has no id:", record)
+          continue
+        }
         
         let key : Int
         if let ikey = rawkey as? Int {
           key = ikey
+        }
+        else if let ikey = rawkey as? Int64 {
+          key = Int(ikey)
         }
         else if let skey = rawkey as? String, let ikey = Int(skey) {
           key = ikey
