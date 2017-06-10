@@ -153,6 +153,10 @@ open class ModelAttribute : Attribute {
 
   public final var userData        = [ String : Any ]()
   
+  /// A persistent ID used to track renaming when doing model-to-model
+  /// migrations.
+  public final var elementID                : String?
+  
   public init(name         : String,
               column       : String? = nil,
               externalType : String? = nil,
@@ -187,6 +191,7 @@ open class ModelAttribute : Attribute {
       self.isColumnNamePattern = ma.isColumnNamePattern
       
       self.userData            = ma.userData
+      self.elementID           = ma.elementID
     }
   }
   

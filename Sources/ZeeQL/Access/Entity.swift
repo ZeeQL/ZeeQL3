@@ -358,6 +358,10 @@ open class ModelEntity : Entity {
   public final var codeGenerationType       : String?
   public final var userData                 = [ String : Any ]()
   
+  /// A persistent ID used to track renaming when doing model-to-model
+  /// migrations.
+  public final var elementID                : String?
+  
   /**
    * Returns the attributes which are used for optimistic locking. Those are
    * checked for changes when an UPDATE is attempted in the database. For
@@ -441,6 +445,7 @@ open class ModelEntity : Entity {
     if let me = entity as? ModelEntity {
       self.codeGenerationType     = me.codeGenerationType
       self.userData               = me.userData
+      self.elementID              = me.elementID
       
       self.isExternalNamePattern  = me.isExternalNamePattern
       self.dataSourceClassName    = me.dataSourceClassName

@@ -198,8 +198,9 @@ open class CoreDataModelLoader : ModelLoader {
     
     let entity = ModelEntity(name: name)
     
-    if let v = attrs["representedClassName"] { entity.className          = v }
-    if let v = attrs["codeGenerationType"]   { entity.codeGenerationType = v }
+    if let v = attrs["elementID"], !v.isEmpty { entity.elementID          = v }
+    if let v = attrs["representedClassName"]  { entity.className          = v }
+    if let v = attrs["codeGenerationType"]    { entity.codeGenerationType = v }
     
     // support 'externalName' in userdata
     var ud = loadUserInfo(from: xml.firstChildElementWithName("userInfo"))
@@ -287,6 +288,8 @@ open class CoreDataModelLoader : ModelLoader {
     let attribute = ModelAttribute(name: name)
     let allowsNull       = boolValue(attrs["optional"])
     attribute.allowsNull = allowsNull
+    
+    if let v = attrs["elementID"], !v.isEmpty { attribute.elementID = v }
     
     if let attrType = attrs["attributeType"], !attrType.isEmpty {
       let lc = attrType.lowercased()
@@ -380,6 +383,8 @@ open class CoreDataModelLoader : ModelLoader {
       let attributeName = name + foreignKeyRelationshipSuffix
       
       let attribute = ModelAttribute(name: attributeName)
+
+      if let v = attrs["elementID"], !v.isEmpty { attribute.elementID = v }
       
       let allowsNull       = boolValue(attrs["optional"])
       attribute.allowsNull = allowsNull
@@ -667,6 +672,11 @@ open class CoreDataModelLoader : ModelLoader {
           {
             entity.className = v
           }
+          if let i = textDecodeObjectID(values["NSRenamingIdentifier"]),
+             let v = decodeObject(index: i, depth: depth + 1) as? String
+          {
+            entity.elementID = v
+          }
 
           if let i = textDecodeObjectID(values["NSProperties"]),
              let props = decodeObject(index: i, depth: depth + 1)
@@ -705,11 +715,17 @@ open class CoreDataModelLoader : ModelLoader {
           let attribute = ModelAttribute(name: name)
           idToObject[index] = attribute
 
-          // TODO: NSValueTransformerName, NSRenamingIdentifier, _P
+          // TODO: NSValueTransformerName, _P
           // TODO: Ints: NSAttributeType(700 for NSString), NSFlagsKey
           
           if let opt = values["NSIsOptional"] as? Int {
             attribute.allowsNull = opt != 0
+          }
+          
+          if let i = textDecodeObjectID(values["NSRenamingIdentifier"]),
+             let v = decodeObject(index: i, depth: depth + 1) as? String
+          {
+            attribute.elementID = v
           }
           
           if let i = textDecodeObjectID(values["NSAttributeValueClassName"]),
@@ -784,11 +800,17 @@ open class CoreDataModelLoader : ModelLoader {
             relship.maxCount = i
           }
 
-          if !relship.isToMany {
+          if !relship.isToMany { // toOne
             // 'person' => 'personId'
             let attributeName = name + foreignKeyRelationshipSuffix
             
             let attribute = ModelAttribute(name: attributeName)
+            
+            if let i = textDecodeObjectID(values["NSRenamingIdentifier"]),
+               let v = decodeObject(index: i, depth: depth + 1) as? String
+            {
+              attribute.elementID = v
+            }
             
             if let opt = values["NSIsOptional"] as? Int {
               attribute.allowsNull = opt != 0
@@ -884,7 +906,8 @@ open class CoreDataModelLoader : ModelLoader {
       return indices.map { decodeObject(index: $0, depth: depth + 1) }
     }
     
-    func decodeObject(index: Int, depth: Int = 0) -> Any? {
+    func decodeObject(index: Int?, depth: Int = 0) -> Any? {
+      guard let index = index else { return nil }
       let object = objects[index]
       
       if let alreadyParsed = idToObject[index] {
