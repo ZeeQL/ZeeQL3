@@ -488,3 +488,8 @@ open class ModelEntity : Entity {
     return false
   }
 }
+
+/// Commonly used within the framework, but should not be public API
+extension Entity {
+  var externalNameOrName : String { return externalName ?? name }
+}

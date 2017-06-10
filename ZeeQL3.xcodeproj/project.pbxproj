@@ -51,6 +51,12 @@
 		E81B62D51E65E39A00D43EFA /* BooleanQualifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81B62D41E65E39A00D43EFA /* BooleanQualifier.swift */; };
 		E81B62D71E65E3B500D43EFA /* SQLQualifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81B62D61E65E3B500D43EFA /* SQLQualifier.swift */; };
 		E81B62D91E65E3E200D43EFA /* NotQualifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81B62D81E65E3E200D43EFA /* NotQualifier.swift */; };
+		E823BC7D1EEC284900483A97 /* SQLForeignKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = E823BC7C1EEC284900483A97 /* SQLForeignKey.swift */; };
+		E823BC7E1EEC284900483A97 /* SQLForeignKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = E823BC7C1EEC284900483A97 /* SQLForeignKey.swift */; };
+		E823BC801EEC28AC00483A97 /* SQLAttributeChange.swift in Sources */ = {isa = PBXBuildFile; fileRef = E823BC7F1EEC28AC00483A97 /* SQLAttributeChange.swift */; };
+		E823BC811EEC28AC00483A97 /* SQLAttributeChange.swift in Sources */ = {isa = PBXBuildFile; fileRef = E823BC7F1EEC28AC00483A97 /* SQLAttributeChange.swift */; };
+		E823BC831EEC296900483A97 /* SQLTableGroups.swift in Sources */ = {isa = PBXBuildFile; fileRef = E823BC821EEC296900483A97 /* SQLTableGroups.swift */; };
+		E823BC841EEC296900483A97 /* SQLTableGroups.swift in Sources */ = {isa = PBXBuildFile; fileRef = E823BC821EEC296900483A97 /* SQLTableGroups.swift */; };
 		E824EA8E1E63450D00215ABA /* Database.swift in Sources */ = {isa = PBXBuildFile; fileRef = E824EA8D1E63450D00215ABA /* Database.swift */; };
 		E824EA911E6365A900215ABA /* ActiveRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = E824EA901E6365A900215ABA /* ActiveRecord.swift */; };
 		E824EA931E63925B00215ABA /* DatabaseObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = E824EA921E63925B00215ABA /* DatabaseObject.swift */; };
@@ -273,6 +279,9 @@
 		E81B62D41E65E39A00D43EFA /* BooleanQualifier.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = BooleanQualifier.swift; path = Sources/ZeeQL/Control/BooleanQualifier.swift; sourceTree = SOURCE_ROOT; };
 		E81B62D61E65E3B500D43EFA /* SQLQualifier.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SQLQualifier.swift; path = Sources/ZeeQL/Control/SQLQualifier.swift; sourceTree = SOURCE_ROOT; };
 		E81B62D81E65E3E200D43EFA /* NotQualifier.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = NotQualifier.swift; path = Sources/ZeeQL/Control/NotQualifier.swift; sourceTree = SOURCE_ROOT; };
+		E823BC7C1EEC284900483A97 /* SQLForeignKey.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SQLForeignKey.swift; path = Sources/ZeeQL/Access/SQLForeignKey.swift; sourceTree = SOURCE_ROOT; };
+		E823BC7F1EEC28AC00483A97 /* SQLAttributeChange.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SQLAttributeChange.swift; path = Sources/ZeeQL/Access/SQLAttributeChange.swift; sourceTree = SOURCE_ROOT; };
+		E823BC821EEC296900483A97 /* SQLTableGroups.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SQLTableGroups.swift; path = Sources/ZeeQL/Access/SQLTableGroups.swift; sourceTree = SOURCE_ROOT; };
 		E824EA8D1E63450D00215ABA /* Database.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Database.swift; path = Sources/ZeeQL/Access/Database.swift; sourceTree = SOURCE_ROOT; };
 		E824EA901E6365A900215ABA /* ActiveRecord.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = ActiveRecord.swift; path = Sources/ZeeQL/Access/ActiveRecord.swift; sourceTree = SOURCE_ROOT; };
 		E824EA921E63925B00215ABA /* DatabaseObject.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = DatabaseObject.swift; path = Sources/ZeeQL/Access/DatabaseObject.swift; sourceTree = SOURCE_ROOT; };
@@ -781,10 +790,13 @@
 			children = (
 				E80B3FAA1E606D1700D6F0ED /* SQLExpression.swift */,
 				E80B3FAB1E606D1700D6F0ED /* SQLExpressionFactory.swift */,
+				E85D2BC91EE93F33007B5A2C /* ModelSQLizer.swift */,
 				E80285451EE6CBAE00F25AD7 /* SchemaSynchronizationFactory.swift */,
 				E8E60DDC1EE9CF560020EA5E /* SchemaGeneration.swift */,
 				E8546AE21EE9D25800ED5327 /* SchemaSynchronization.swift */,
-				E85D2BC91EE93F33007B5A2C /* ModelSQLizer.swift */,
+				E823BC7C1EEC284900483A97 /* SQLForeignKey.swift */,
+				E823BC7F1EEC28AC00483A97 /* SQLAttributeChange.swift */,
+				E823BC821EEC296900483A97 /* SQLTableGroups.swift */,
 			);
 			name = "SQL Generation";
 			sourceTree = "<group>";
@@ -1035,8 +1047,10 @@
 				E8263C941E93C89200508276 /* KeyValueStringFormatter.swift in Sources */,
 				E8263C991E93C89200508276 /* Constant.swift in Sources */,
 				E8E480C41EC2035500350EDF /* AdaptorError.swift in Sources */,
+				E823BC7E1EEC284900483A97 /* SQLForeignKey.swift in Sources */,
 				E8263CB01E93C89200508276 /* DatabaseContext.swift in Sources */,
 				E8E60DDE1EE9CF560020EA5E /* SchemaGeneration.swift in Sources */,
+				E823BC811EEC28AC00483A97 /* SQLAttributeChange.swift in Sources */,
 				E8263CB91E93C89200508276 /* AdaptorRecord.swift in Sources */,
 				E8263CA31E93C89200508276 /* BooleanQualifier.swift in Sources */,
 				E8B249811EE44A45008258B7 /* ModelLoader.swift in Sources */,
@@ -1051,6 +1065,7 @@
 				E8263CB31E93C89200508276 /* DatabaseObject.swift in Sources */,
 				E8263CAD1E93C89200508276 /* ActiveRecord.swift in Sources */,
 				E8263CC11E93C89200508276 /* Property.swift in Sources */,
+				E823BC841EEC296900483A97 /* SQLTableGroups.swift in Sources */,
 				E85D2BCB1EE93F33007B5A2C /* ModelSQLizer.swift in Sources */,
 				E8263CA21E93C89200508276 /* CompoundQualifier.swift in Sources */,
 				E8263C9C1E93C89200508276 /* Key.swift in Sources */,
@@ -1145,8 +1160,10 @@
 				E889DE621E666C8D008F962F /* CodeAttribute.swift in Sources */,
 				E8DA98361EC0F2C2009B0F0F /* MirrorHelpers.swift in Sources */,
 				E80B3FB31E606D1700D6F0ED /* Model.swift in Sources */,
+				E823BC7D1EEC284900483A97 /* SQLForeignKey.swift in Sources */,
 				E8CA45951EB4BA42006DC147 /* AdaptorError.swift in Sources */,
 				E8E60DDD1EE9CF560020EA5E /* SchemaGeneration.swift in Sources */,
+				E823BC801EEC28AC00483A97 /* SQLAttributeChange.swift in Sources */,
 				E86BF2571E67207D00C8B22A /* AdaptorQueryType.swift in Sources */,
 				E80E83131EA637D400FC1866 /* ArrayDataSource.swift in Sources */,
 				E8B249801EE44A45008258B7 /* ModelLoader.swift in Sources */,
@@ -1161,6 +1178,7 @@
 				E80B3FC91E606D1E00D6F0ED /* Key.swift in Sources */,
 				E84313641E6DBFC300A59F8B /* TypedFetchSpecification.swift in Sources */,
 				E80B3FCF1E606D1E00D6F0ED /* SortOrdering.swift in Sources */,
+				E823BC831EEC296900483A97 /* SQLTableGroups.swift in Sources */,
 				E85D2BCA1EE93F33007B5A2C /* ModelSQLizer.swift in Sources */,
 				E824EA911E6365A900215ABA /* ActiveRecord.swift in Sources */,
 				E80B3FCB1E606D1E00D6F0ED /* Qualifier.swift in Sources */,

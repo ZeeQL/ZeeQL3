@@ -53,16 +53,23 @@ open class SchemaSynchronizationFactory: SchemaGeneration, SchemaSynchronization
     log.log("created: ", changes.created)
     
     for ( old, new ) in changes.same {
-      let changes = new.calculateAttributeChanges(since: old)
       log.log("\nTable:", new.groupExternalName)
-      log.log("  dropped: ", changes.dropped)
-      log.log("  created: ", changes.created)
-      log.log("  same:    ", changes.same)
-      
-      for ( old, new ) in changes.same {
-        // TODO: compare attributes
-        guard let changes = new.changes(since: old) else { continue }
-        log.log("    attr changes:", new.name, changes)
+      do {
+        let changes = new.calculateAttributeChanges(since: old)
+        log.log("  dropped: ", changes.dropped)
+        log.log("  created: ", changes.created)
+        log.log("  same:    ", changes.same)
+        
+        for ( old, new ) in changes.same {
+          // TODO: compare attributes
+          guard let changes = new.changes(since: old) else { continue }
+          log.log("    attr changes:", new.name, changes)
+        }
+      }
+      do {
+        let changes = new.calculateForeignKeyConstraintChanges(since: old)
+        log.log("  dropped: ", changes.dropped)
+        log.log("  created: ", changes.created)
       }
     }
     
@@ -70,28 +77,11 @@ open class SchemaSynchronizationFactory: SchemaGeneration, SchemaSynchronization
   }
 }
 
-struct AttributeChange : SmartDescription {
-  var name         : ( String, String )?
-  var nullability  : Bool?
-  var externalType : String?
-  
-  var hasChanges : Bool {
-    if name         != nil { return true }
-    if nullability  != nil { return true }
-    if externalType != nil { return true }
-    return false
-  }
-  
-  func appendToDescription(_ ms: inout String) {
-    if let (old,new) = name { ms += " rename[\(old)=>\(new)]"   }
-    if let v = nullability  { ms += (v ? " null" : " not-null") }
-    if let v = externalType { ms += " type=\(v)"                }
-  }
-}
+fileprivate var log : ZeeQLLogger { return globalZeeQLLogger }
 
-extension Attribute {
+fileprivate extension Attribute {
   
-  func isSameExternalName(_ lhs: String, _ rhs: String) -> Bool {
+  func isSameExternalTypeName(_ lhs: String, _ rhs: String) -> Bool {
     // FIXME: not really, they could be synonyms
     // TODO: this needs to live in the adaptor
     return lhs.uppercased() == rhs.uppercased()
@@ -101,8 +91,8 @@ extension Attribute {
     return ZeeQLTypes.externalTypeFor(swiftType: vt, includeConstraint: false)
   }
   
-  func changes(since old: Attribute) -> AttributeChange? {
-    var change = AttributeChange()
+  func changes(since old: Attribute) -> SQLAttributeChange? {
+    var change = SQLAttributeChange()
     
     let oldName = old.columnName  ?? old.name
     let newName = self.columnName ?? self.name
@@ -117,7 +107,7 @@ extension Attribute {
     
     if let oldExt = old.externalType, let newExt = self.externalType {
       // if both have an external type assigned, this is authoritive
-      if !isSameExternalName(oldExt, newExt) {
+      if !isSameExternalTypeName(oldExt, newExt) {
         change.externalType = newExt
       }
       // else: considered the same
@@ -200,7 +190,24 @@ extension Sequence where Iterator.Element == Entity { // an array of entities
   }
 }
 
-extension Sequence where Iterator.Element == Entity { // an entity group
+fileprivate extension Sequence where Iterator.Element == Entity { // an egroup
+  
+  func calculateForeignKeyConstraintChanges<T: Sequence>(since oldEntity: T)
+       -> SchemaSyncChangeSet<SQLForeignKey>
+         where T.Iterator.Element == Iterator.Element
+  {
+    let oldFKeys = oldEntity.groupForeignKeys
+    let newFKeys = self.groupForeignKeys
+    
+    // Note: We don't track 'same' here, the ForeignKey value is a natural
+    //       value. (and for schema sync we are not really interested in the
+    //       'modelling' aspect of a relationship, just in the externals)
+    
+    let dropped = oldFKeys.flatMap { newFKeys.contains($0) ? nil : $0 }
+    let created = newFKeys.flatMap { oldFKeys.contains($0) ? nil : $0 }
+    
+    return SchemaSyncChangeSet(created: created, dropped: dropped)
+  }
   
   func calculateAttributeChanges<T: Sequence>(since oldEntity: T)
        -> SchemaSyncChangeSet<Attribute>

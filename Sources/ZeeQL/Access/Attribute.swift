@@ -114,6 +114,11 @@ public extension Attribute { // default imp
   }
 }
 
+/// Commonly used within the framework, but should not be public API
+extension Attribute {
+  var columnNameOrName : String { return columnName ?? name }
+}
+
 
 /**
  * An Attribute description which stores the info as regular variables.
