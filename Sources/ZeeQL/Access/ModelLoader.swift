@@ -342,7 +342,7 @@ open class CoreDataModelLoader : ModelLoader {
   func loadRelationship(from xml: XMLElement, entity: Entity)
        -> ( Attribute?, ModelRelationship )?
   {
-    // TODO: Add support for 'maxCount', 'ordered=YES/NO'
+    // TODO: Add support 'ordered=YES/NO'
     
     assert(xml.name == "relationship")
     
@@ -355,6 +355,9 @@ open class CoreDataModelLoader : ModelLoader {
     if let de = attrs["destinationEntity"], !de.isEmpty {
       relship.destinationEntityName = de
     }
+
+    if let v = attrs["minCount"], let num = Int(v) { relship.minCount = num }
+    if let v = attrs["maxCount"], let num = Int(v) { relship.maxCount = num }
     
     if let delrule = attrs["deletionRule"], !delrule.isEmpty {
       // nullify
@@ -752,8 +755,6 @@ open class CoreDataModelLoader : ModelLoader {
             relship.isToMany = true
           }
           
-          // TODO: ints: NSMinCount, NSMaxCount
-          
           if let i = textDecodeObjectID(values["_NSDestinationEntityName"]),
              let v = decodeObject(index: i, depth: depth + 1) as? String
           {
@@ -775,6 +776,12 @@ open class CoreDataModelLoader : ModelLoader {
               default:
                 log.error("unsupported delete-rule value in:", relship)
             }
+          }
+          if let i = values["NSMinCount"] as? Int, i > 0 {
+            relship.minCount = i
+          }
+          if let i = values["NSMaxCount"] as? Int, i > 0 {
+            relship.maxCount = i
           }
 
           if !relship.isToMany {
