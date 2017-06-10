@@ -310,6 +310,8 @@
 		E843135D1E6DBE5400A59F8B /* ModelFetchSpecification.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = ModelFetchSpecification.swift; path = Sources/ZeeQL/Control/ModelFetchSpecification.swift; sourceTree = SOURCE_ROOT; };
 		E843135F1E6DBE8F00A59F8B /* QueryBuilder.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = QueryBuilder.swift; path = Sources/ZeeQL/Control/QueryBuilder.swift; sourceTree = SOURCE_ROOT; };
 		E84313631E6DBFC300A59F8B /* TypedFetchSpecification.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = TypedFetchSpecification.swift; path = Sources/ZeeQL/Access/TypedFetchSpecification.swift; sourceTree = SOURCE_ROOT; };
+		E84581161EECAE34009520C6 /* module.modulemap */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.module-map"; path = module.modulemap; sourceTree = "<group>"; };
+		E84581171EECAE34009520C6 /* module.private.modulemap */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.module-map"; path = module.private.modulemap; sourceTree = "<group>"; };
 		E84FD5711ECB1B8100B2A8F0 /* ModelTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ModelTests.swift; sourceTree = "<group>"; };
 		E84FD5751ECB34E100B2A8F0 /* contacts-create.sqlite3 */ = {isa = PBXFileReference; lastKnownFileType = text; path = "contacts-create.sqlite3"; sourceTree = "<group>"; };
 		E84FD5761ECB34E100B2A8F0 /* contacts-fill.sqlite3 */ = {isa = PBXFileReference; lastKnownFileType = text; path = "contacts-fill.sqlite3"; sourceTree = "<group>"; };
@@ -444,6 +446,7 @@
 				E870FC581E9BB28700A038AF /* watchos */,
 				E870FC5B1E9BB28700A038AF /* watchos-simulator */,
 				E870FC5E1E9BB28700A038AF /* xcode-macos */,
+				E84581151EECAE34009520C6 /* xcode-macos-beta */,
 			);
 			path = CSQLite3;
 			sourceTree = "<group>";
@@ -498,6 +501,15 @@
 			);
 			path = data;
 			sourceTree = SOURCE_ROOT;
+		};
+		E84581151EECAE34009520C6 /* xcode-macos-beta */ = {
+			isa = PBXGroup;
+			children = (
+				E84581161EECAE34009520C6 /* module.modulemap */,
+				E84581171EECAE34009520C6 /* module.private.modulemap */,
+			);
+			path = "xcode-macos-beta";
+			sourceTree = "<group>";
 		};
 		E8687C9E1E6086BC00D62ABF /* Fetch Specification */ = {
 			isa = PBXGroup;
