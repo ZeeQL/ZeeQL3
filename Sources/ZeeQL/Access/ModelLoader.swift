@@ -444,6 +444,7 @@ open class CoreDataModelLoader : ModelLoader {
 
     let contentsURL = url.appendingPathComponent("contents", isDirectory: false)
     if fm.fileExists(atPath: contentsURL.path) {
+      // an .xcdatamodel (contains the 'contents' file)
       return try loadDataModel(from: url)
     }
     
@@ -465,46 +466,55 @@ open class CoreDataModelLoader : ModelLoader {
     return try loadDataModelDirectory(from: url)
   }
   
-  open func loadDataModelDirectory(from url: URL) throws -> Model {
-    // presumably this can have multiple
-    let contents : [ String ]
-    do {
-      contents = try fm.contentsOfDirectory(atPath: url.path)
-    }
-    catch {
-      throw Error.CouldNotLoadFile(url:url, error: error) // wrap
-    }
+  open func loadDataModelDirectory(from url: URL, versionName v: String? = nil)
+              throws -> Model
+  {
+    var versionName : String? = nil
     
-    let dataModels = contents.filter { $0.hasSuffix(".xcdatamodel") }
-    guard !dataModels.isEmpty else {
-      throw Error.CouldNotLoadFile(url:url, error: nil)
+    if let v = v {
+      versionName = v
     }
-    
-    var fullModel : Model? = nil
-    for filename in dataModels {
-      let dmURL = url.appendingPathComponent(filename)
-      let model = try loadDataModel(from: dmURL)
+    else { // determine version
+      let versionFileURL = url.appendingPathComponent(".xccurrentversion",
+                                                      isDirectory: false)
+      if fm.fileExists(atPath: versionFileURL.path) {
+        let data  = try Data(contentsOf: versionFileURL)
+        let plist = try? PropertyListSerialization
+                           .propertyList(from: data, options: [], format: nil)
+        if let dict = plist as? [ String : Any] {
+          versionName = dict["_XCCurrentVersionName"] as? String
+        }
+      }
       
-      if let container = fullModel {
-        container.merge(model)
-      }
-      else {
-        if model.tag != nil {
-          fullModel = Model(entities: [])
-          fullModel!.merge(model)
+      if versionName == nil {
+        let contents : [ String ]
+        do {
+          contents = try fm.contentsOfDirectory(atPath: url.path)
+            .filter { $0.hasSuffix(".xcdatamodel") || $0.hasSuffix(".mom") }
         }
-        else {
-          fullModel = model
+        catch {
+          throw Error.CouldNotLoadFile(url:url, error: error) // wrap
         }
+        guard !contents.isEmpty else {
+          throw Error.CouldNotLoadFile(url:url, error: nil)
+        }
+        
+        // just pick the first :-) FIXME: sort by modification date?
+        if contents.count > 1 {
+          log.warn("data model directory contains multiple files,",
+                   "but no version info:", url)
+        }
+        versionName = contents[0]
       }
     }
     
-    guard let result = fullModel else {
+    guard let filename = versionName, !filename.isEmpty
+     else {
       throw Error.CouldNotLoadFile(url:url, error: nil)
-    }
+     }
     
-    result.connectRelationships()
-    return result
+    let dmURL = url.appendingPathComponent(filename)
+    return try loadDataModel(from: dmURL)
   }
   
   open func loadDataModel(from url: URL) throws -> Model {
@@ -961,7 +971,7 @@ open class CoreDataModelLoader : ModelLoader {
   }
 
   open func loadDataModelContents(from url: URL) throws -> Model {
-    if url.pathExtension == "mom" || url.path == "momd" {
+    if url.pathExtension == "mom" {
       return try loadCompiledModel(from: url)
     }
     
