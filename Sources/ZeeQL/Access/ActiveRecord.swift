@@ -388,9 +388,13 @@ open class ActiveRecord : ActiveRecordType, SmartDescription {
         if valueMirror.children.count > 0 {
           let (_, some) = valueMirror.children.first!
           
+          // FIXME: I don't think we want to do this in here. Swift type to
+          //        external type mapping needs to be done in the adaptor. And
+          //        it already does some of it.
           let someMirror = Mirror(reflecting: some)
           if let extType = ZeeQLTypes.externalTypeFor(swiftType:
-                                                        someMirror.subjectType)
+                                                        someMirror.subjectType,
+                                                      includeConstraint: false)
           {
             attribute.externalType = extType
           }

@@ -355,9 +355,12 @@ open class ModelEntity : Entity {
   public final var relationships            = [ Relationship ]()
   public final var primaryKeyAttributeNames : [ String    ]? = nil
   
-  public final var isSyncable               : Bool?
   public final var codeGenerationType       : String?
   public final var userData                 = [ String : Any ]()
+  
+  /// A persistent ID used to track renaming when doing model-to-model
+  /// migrations.
+  public final var elementID                : String?
   
   /**
    * Returns the attributes which are used for optimistic locking. Those are
@@ -440,9 +443,9 @@ open class ModelEntity : Entity {
     }
     
     if let me = entity as? ModelEntity {
-      self.isSyncable             = me.isSyncable
       self.codeGenerationType     = me.codeGenerationType
       self.userData               = me.userData
+      self.elementID              = me.elementID
       
       self.isExternalNamePattern  = me.isExternalNamePattern
       self.dataSourceClassName    = me.dataSourceClassName
@@ -489,4 +492,9 @@ open class ModelEntity : Entity {
     }
     return false
   }
+}
+
+/// Commonly used within the framework, but should not be public API
+extension Entity {
+  var externalNameOrName : String { return externalName ?? name }
 }

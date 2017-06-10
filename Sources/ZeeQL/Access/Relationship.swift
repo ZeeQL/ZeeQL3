@@ -20,6 +20,8 @@ public protocol Relationship : Property, ExpressionEvaluation,
   var  destinationEntity : Entity?         { get }
 
   var  isToMany          : Bool            { get }
+  var  minCount          : Int?            { get }
+  var  maxCount          : Int?            { get }
 
   var  joins             : [ Join ]        { get }
   var  joinSemantic      : Join.Semantic   { get }
@@ -28,6 +30,7 @@ public protocol Relationship : Property, ExpressionEvaluation,
   func disconnectRelationships()
   var  isPattern         : Bool            { get }
   
+  var  updateRule        : ConstraintRule? { get }
   var  deleteRule        : ConstraintRule? { get }
   var  ownsDestination   : Bool            { get }
   
@@ -58,11 +61,42 @@ public enum ConstraintRule {
   }
 }
 
+fileprivate var log : ZeeQLLogger { return globalZeeQLLogger }
+
 public extension Relationship { // default imp
   
   var joinSemantic   : Join.Semantic   { return .innerJoin }
   var deleteRule     : ConstraintRule? { return nil        }
+  var updateRule     : ConstraintRule? { return nil        }
   var constraintName : String?         { return nil        }
+
+  var minCount       : Int? { return isToMany ? nil : (isMandatory ? 0 : 1) }
+  var maxCount       : Int? { return isToMany ? nil : 1 }
+  
+  var isMandatory : Bool {
+    if isToMany { return (minCount ?? 0) > 0 }
+    
+    // 1:1: figure out whether the relationship has one required join
+    for join in joins {
+      if let source = join.source {
+        if let nullable = source.allowsNull, !nullable { return true }
+      }
+      else if let sourceName = join.sourceName {
+        if let source = entity[attribute: sourceName] {
+          if let nullable = source.allowsNull, !nullable { return true }
+        }
+        else {
+          log.error("testing isMandatory on relship w/o proper joins:",
+                    self, join)
+        }
+      }
+      else {
+        log.error("testing isMandatory on relship w/o proper joins:", self)
+        assert(join.sourceName != nil, "missing source in join")
+      }
+    }
+    return false
+  }
   
   // MARK: - ExpressionEvaluation
   
@@ -240,6 +274,14 @@ public extension Relationship {
     else {
       ms += " no-joins?"
     }
+
+    if isToMany {
+      if let v = minCount { ms += " min=\(v)" }
+      if let v = maxCount { ms += " max=\(v)" }
+    }
+    else {
+      if isMandatory { ms += " mandatory" }
+    }
   }
 }
 
@@ -266,8 +308,18 @@ open class ModelRelationship : Relationship {
   open         var isToMany              = false
   public final var relationshipPath      : String?
   public final var deleteRule            : ConstraintRule?
+  
+  public final var minCount              : Int? {
+    set { _minCount = newValue }
+    get { return _minCount ?? (isToMany ? nil : (isMandatory ? 0 : 1)) }
+  }
+  public final var maxCount              : Int? {
+    set { _maxCount = newValue }
+    get { return _maxCount ?? (isToMany ? nil : 1) }
+  }
+  final var _minCount                    : Int?
+  final var _maxCount                    : Int?
 
-  public final var isSyncable            : Bool?
   public final var userData              = [ String : Any ]()
 
   public init(name   : String, isToMany    : Bool    = false,
@@ -289,12 +341,12 @@ open class ModelRelationship : Relationship {
     isToMany          = rs.isToMany
     deleteRule        = rs.deleteRule
     relationshipPath  = rs.relationshipPath
-    
     entity            = newEntity ?? rs.entity
     
     if let mrs = rs as? ModelRelationship {
-      isSyncable = mrs.isSyncable
-      userData   = mrs.userData
+      minCount = mrs._minCount
+      maxCount = mrs._maxCount
+      userData = mrs.userData
       
       _ownsDestination = mrs._ownsDestination
       
@@ -308,6 +360,8 @@ open class ModelRelationship : Relationship {
       }
     }
     else {
+      minCount        = rs.minCount
+      maxCount        = rs.maxCount
       ownsDestination = rs.ownsDestination
       
       if disconnect {
@@ -419,6 +473,14 @@ open class ModelRelationship : Relationship {
     }
     else {
       ms += " no-joins?"
+    }
+    
+    if isToMany {
+      if let v = minCount { ms += " min=\(v)" }
+      if let v = maxCount { ms += " max=\(v)" }
+    }
+    else {
+      if isMandatory { ms += " mandatory" }
     }
     
     if !userData.isEmpty {

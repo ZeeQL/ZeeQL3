@@ -162,11 +162,11 @@ open class SQLite3ModelFetch: AdaptorModelFetch {
         if let s = v as? String {
           attribute.allowsNull = s != "1" // notnull
         }
-        else if let i = v as? Int {
-          attribute.allowsNull = i == 0
-        }
-        else if let i = v as? Int32 {
-          attribute.allowsNull = i == 0
+        else if let i = v as? Int   { attribute.allowsNull = i == 0 }
+        else if let i = v as? Int32 { attribute.allowsNull = i == 0 }
+        else if let i = v as? Int64 { attribute.allowsNull = i == 0 }
+        else {
+          log.warn("unexpected type for notnull column:", v, type(of:v))
         }
       }
       if let v = colinfo["dflt_value"] {
@@ -195,12 +195,15 @@ open class SQLite3ModelFetch: AdaptorModelFetch {
     let fkeysByConstraint : [ Int : [ AdaptorRecord ] ] = {
       var grouped = [ Int : [ AdaptorRecord ] ]()
       for record in foreignKeyRecords {
-        guard let rawkey = record["id"] else { continue }
+        guard let rawkey = record["id"] else {
+          log.warn("fkey record has no id:", record)
+          continue
+        }
         
         let key : Int
-        if let ikey = rawkey as? Int {
-          key = ikey
-        }
+        if      let ikey = rawkey as? Int   { key = ikey      }
+        else if let ikey = rawkey as? Int32 { key = Int(ikey) }
+        else if let ikey = rawkey as? Int64 { key = Int(ikey) }
         else if let skey = rawkey as? String, let ikey = Int(skey) {
           key = ikey
         }

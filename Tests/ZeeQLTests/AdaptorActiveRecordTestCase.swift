@@ -18,7 +18,8 @@ class AdapterActiveRecordTests: XCTestCase {
     return nil
   }
   
-  let model = ContactsDBModel.model
+  let verbose = true
+  let model   = ContactsDBModel.model
   
   func testSnapshotting() throws {
     let db = Database(adaptor: adaptor)
@@ -75,14 +76,14 @@ class AdapterActiveRecordTests: XCTestCase {
     person["lastname"]  = "McDonald"
     XCTAssertTrue(person.isNew, "new object not marked as new!")
     
-    print("before save: \(person)")
+    if verbose {print("before save: \(person)") }
     do {
       try person.save()
     }
     catch {
       XCTAssert(false, "save failed: \(error)")
     }
-    print("after save: \(person)")
+    if verbose { print("after save: \(person)") }
     
     XCTAssertFalse(person.isNew,      "object still marked as new after save!")
     XCTAssertNotNil(person.snapshot,  "missing snapshot after save")
@@ -96,7 +97,7 @@ class AdapterActiveRecordTests: XCTestCase {
     
     let refetch = try ds.findBy(matchingAll: [ "firstname": "Ronald" ])
     XCTAssert(refetch != nil, "did not find new Ronald")
-    print("Ronald: \(refetch as Optional)")
+    if verbose { print("Ronald: \(refetch as Optional)") }
     guard refetch != nil else { return } // keep tests running
     
     XCTAssertFalse(refetch!.isNew,      "fetched object marked as new!")

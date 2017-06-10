@@ -114,6 +114,11 @@ public extension Attribute { // default imp
   }
 }
 
+/// Commonly used within the framework, but should not be public API
+extension Attribute {
+  var columnNameOrName : String { return columnName ?? name }
+}
+
 
 /**
  * An Attribute description which stores the info as regular variables.
@@ -146,20 +151,25 @@ open class ModelAttribute : Attribute {
   // patterns
   public final var isColumnNamePattern = false
 
-  public final var isSyncable      : Bool?
   public final var userData        = [ String : Any ]()
+  
+  /// A persistent ID used to track renaming when doing model-to-model
+  /// migrations.
+  public final var elementID                : String?
   
   public init(name         : String,
               column       : String? = nil,
               externalType : String? = nil,
               allowsNull   : Bool?   = nil,
-              width        : Int?    = nil)
+              width        : Int?    = nil,
+              valueType    : AttributeValue.Type? = nil)
   {
     self.name         = name
     self.columnName   = column
     self.externalType = externalType
     self.allowsNull   = allowsNull
     self.width        = width
+    self.valueType    = valueType
   }
   public init(attribute attr: Attribute) {
     self.name            = attr.name
@@ -180,8 +190,8 @@ open class ModelAttribute : Attribute {
       self.privileges          = ma.privileges
       self.isColumnNamePattern = ma.isColumnNamePattern
       
-      self.isSyncable          = ma.isSyncable
       self.userData            = ma.userData
+      self.elementID           = ma.elementID
     }
   }
   

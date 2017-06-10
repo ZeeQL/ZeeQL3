@@ -154,3 +154,20 @@ public struct Join : Equatable, SmartDescription {
     return self == other
   }
 }
+
+extension Join {
+  // Maybe that should be public API, but then framework users don't usually
+  // have to deal with this.
+  
+  func source(in entity: Entity) -> Attribute? {
+    if let attr = source { return attr }
+    if let name = sourceName, let attr = entity[attribute: name] { return attr }
+    return nil
+  }
+  func destination(in entity: Entity) -> Attribute? {
+    if let attr = destination { return attr }
+    if let name = destinationName,
+      let attr = entity[attribute: name] { return attr }
+    return nil
+  }
+}

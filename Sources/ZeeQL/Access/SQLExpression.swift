@@ -2198,7 +2198,11 @@ open class SQLExpression: SmartDescription {
   
   /* DDL */
   
-  public func addCreateClauseForAttribute(_ _attribute: Attribute) {
+  open func addCreateClauseForAttribute(_ attribute: Attribute,
+                                        in entity: Entity? = nil)
+  {
+    let isPrimaryKey = (entity?.primaryKeyAttributeNames ?? [])
+                       .contains(attribute.name)
     
     /* separator */
     
@@ -2208,26 +2212,129 @@ open class SQLExpression: SmartDescription {
     
     /* column name */
     
-    let c = _attribute.columnName ?? _attribute.name
+    let c = attribute.columnName ?? attribute.name
     listString += sqlStringFor(schemaObjectName: c)
     listString += " "
     
     /* column type */
     
-    listString += columnTypeStringForAttribute(_attribute)
+    listString += columnTypeStringForAttribute(attribute)
     
     /* constraints */
     /* Note: we do not add primary keys, done in a separate step */
 
-    let s = allowsNullClauseForConstraint(_attribute.allowsNull ?? true)
+    let s = allowsNullClauseForConstraint(attribute.allowsNull ?? true)
     listString += s
+    
+    if isPrimaryKey {
+      listString += " PRIMARY KEY"
+    }
+  }
+  
+  open func sqlForForeignKeyConstraint(_ rs: Relationship) -> String? {
+    // This is for constraint statements, some databases can also attach the
+    // constraint directly to the column. (which should be handled by the
+    // method above).
+    //   person_id INTEGER NOT NULL,
+    //     FOREIGN KEY(person_id) REFERENCES person(person_id) DEFERRABLE
+    guard let destTable = rs.destinationEntity?.externalName
+                       ?? rs.destinationEntity?.name
+     else {
+      return nil
+     }
+    
+    var sql = "FOREIGN KEY ( "
+    var isFirst = true
+    for join in rs.joins {
+      if isFirst { isFirst = false } else { sql += ", " }
+      
+      
+      guard let propName = join.sourceName ?? join.source?.name
+       else { return nil }
+      
+      guard let attr = rs.entity[attribute: propName] else { return nil }
+      let columnName = attr.columnName ?? attr.name
+      
+      sql += sqlStringFor(schemaObjectName: columnName)
+    }
+    sql += " ) REFERENCES "
+
+    sql += sqlStringFor(schemaObjectName: destTable)
+    
+    sql += " ( "
+    isFirst = true
+    for join in rs.joins {
+      if isFirst { isFirst = false } else { sql += ", " }
+      
+      guard let propName = join.destinationName ?? join.destination?.name
+       else { return nil }
+      
+      guard let attr = rs.destinationEntity?[attribute: propName]
+       else { return nil }
+      let columnName = attr.columnName ?? attr.name
+      
+      sql += sqlStringFor(schemaObjectName: columnName)
+    }
+    sql += " )"
+    
+    
+    if let updateRule = rs.updateRule {
+      switch updateRule {
+        case .applyDefault: sql += " ON UPDATE SET DEFAULT"
+        case .cascade:      sql += " ON UPDATE CASCADE"
+        case .deny:         sql += " ON UPDATE RESTRICT"
+        case .noAction:     sql += " ON UPDATE NO ACTION"
+        case .nullify:      sql += " ON UPDATE SET NULL"
+      }
+    }
+    
+    if let deleteRule = rs.deleteRule {
+      switch deleteRule {
+        case .applyDefault: sql += " ON DELETE SET DEFAULT"
+        case .cascade:      sql += " ON DELETE CASCADE"
+        case .deny:         sql += " ON DELETE RESTRICT"
+        case .noAction:     sql += " ON DELETE NO ACTION"
+        case .nullify:      sql += " ON DELETE SET NULL"
+      }
+    }
+    
+    return sql
+  }
+  open func externalTypeForValueType(_ type: AttributeValue.Type) -> String? {
+    // FIXME: I don't like this stuff
+    guard let et =
+      ZeeQLTypes.externalTypeFor(swiftType: type.optionalBaseType ?? type,
+                                 includeConstraint: false)
+     else {
+      log.error("Could not derive external type from Swift type:", type)
+      return nil
+     }
+    
+    return et
+  }
+  
+  open func externalTypeForTypelessAttribute(_ attr: Attribute) -> String {
+    log.warn("attribute has no type", attr)
+    
+    if let cn = attr.columnName, cn.hasSuffix("_id")          { return "INT" }
+    if attr.name.hasSuffix("Id") || attr.name.hasSuffix("ID") { return "INT" }
+    // TODO: More smartness. Though it doesn't really belong here but in a
+    //       model postprocessing step.
+    return "TEXT"
   }
 
-  public func columnTypeStringForAttribute(_ attr: Attribute) -> String {
-    guard let extType = attr.externalType else {
-      // TODO: derive ext-type automagically
-      log.error("attribute has no column type", attr)
-      return ""
+
+  open func columnTypeStringForAttribute(_ attr: Attribute) -> String {
+    let extType : String
+    
+    if let t = attr.externalType {
+      extType = t
+    }
+    else if let t = attr.valueType, let et = externalTypeForValueType(t) {
+      extType = et
+    }
+    else {
+      extType = externalTypeForTypelessAttribute(attr)
     }
     
     if let precision = attr.precision, let width = attr.width {

@@ -48,6 +48,20 @@ open class Model : SmartDescription {
     self.entities = entities
     self.tag      = tag
   }
+  
+  public init(model: Model, deep: Bool = true) {
+    // TBD: keep tag?
+    if deep {
+      self.entities = [ Entity ]()
+      for entity in model.entities {
+        entities.append(ModelEntity(entity: entity, deep: true))
+      }
+      connectRelationships()
+    }
+    else {
+      entities = model.entities
+    }
+  }
 
   open var entityNames : [ String ] {
     return entities.map({$0.name})
@@ -71,6 +85,29 @@ open class Model : SmartDescription {
       if n == entity.name { return entity }
     }
     return nil
+  }
+  
+  /**
+   * Return the entities which represent the given external name (table name).
+   */
+  open subscript(entityGroup externalName: String) -> [ Entity ] {
+    // TODO: use a map if this turns out to be a common thing
+    var group = [ Entity ]()
+    for entity in entities {
+      if let n = entity.externalName {
+        if n == externalName {
+          group.append(entity)
+        }
+      }
+    }
+    if group.isEmpty { // next try regular names
+      for entity in entities {
+        if entity.externalName == nil && entity.name == externalName {
+          group.append(entity)
+        }
+      }
+    }
+    return group
   }
   
   /**
