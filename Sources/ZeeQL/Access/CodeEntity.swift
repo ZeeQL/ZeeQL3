@@ -96,7 +96,10 @@ open class CodeEntity<T: DatabaseObject> : CodeEntityBase {
 
 // MARK: - Directly work on class
 
-public protocol CodeObjectType : DatabaseObject, EntityType, TypedEntityObject {
+public protocol CodeObjectType :
+                  /* DatabaseObject, EntityType, implied by: */
+                  TypedEntityObject
+{
   init() // this is required for reflection
 }
 
