@@ -600,6 +600,7 @@ open class CoreDataModelLoader : ModelLoader {
         }
       }
       assert(false, "expected number")
+      return nil
     }
     func textDecodeObjectIDs(_ key: Any?) -> [ Int ]? {
       guard let o     = key else { return nil }
