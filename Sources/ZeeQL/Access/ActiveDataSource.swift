@@ -152,9 +152,7 @@ fileprivate let countAttr : Attribute = {
 
 public extension Database {
   
-  func datasource<Object: ActiveRecordType>(_ type: Object.Type)
-       -> ActiveDataSource<Object>
-  {
+  func datasource<Object>(_ type: Object.Type) -> ActiveDataSource<Object> {
     // use type argument to capture, is there a nicer way?
     return ActiveDataSource<Object>(database: self)
   }
