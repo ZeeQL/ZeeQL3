@@ -3,6 +3,7 @@
 // Created by Helge Hess on 23/01/2017.
 //
 
+//SWIFT_INCLUDE_PATHS[sdk=macosx*] = $(inherited) $(SRCROOT)/CSQLite3/xcode-macos-beta
 SWIFT_INCLUDE_PATHS[sdk=macosx*] = $(inherited) $(SRCROOT)/CSQLite3/xcode-macos
 SWIFT_INCLUDE_PATHS[sdk=iphoneos*] = $(inherited) $(SRCROOT)/CSQLite3/ios
 SWIFT_INCLUDE_PATHS[sdk=iphonesimulator*] = $(inherited) $(SRCROOT)/CSQLite3/simulator
