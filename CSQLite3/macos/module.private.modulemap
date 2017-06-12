@@ -7,7 +7,7 @@
 
 module CSQLite3 [system] {
   
-  header "/usr/include/sqlite3.h"
+  header "CSQLite3Shim.h"
   
   export *
   

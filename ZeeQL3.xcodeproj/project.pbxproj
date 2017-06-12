@@ -312,6 +312,7 @@
 		E84313631E6DBFC300A59F8B /* TypedFetchSpecification.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = TypedFetchSpecification.swift; path = Sources/ZeeQL/Access/TypedFetchSpecification.swift; sourceTree = SOURCE_ROOT; };
 		E84581161EECAE34009520C6 /* module.modulemap */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.module-map"; path = module.modulemap; sourceTree = "<group>"; };
 		E84581171EECAE34009520C6 /* module.private.modulemap */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.module-map"; path = module.private.modulemap; sourceTree = "<group>"; };
+		E848A3C31EEE995C00593DEC /* CSQLite3Shim.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = CSQLite3Shim.h; path = "CSQLite3/xcode-macos/CSQLite3Shim.h"; sourceTree = SOURCE_ROOT; };
 		E84FD5711ECB1B8100B2A8F0 /* ModelTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ModelTests.swift; sourceTree = "<group>"; };
 		E84FD5751ECB34E100B2A8F0 /* contacts-create.sqlite3 */ = {isa = PBXFileReference; lastKnownFileType = text; path = "contacts-create.sqlite3"; sourceTree = "<group>"; };
 		E84FD5761ECB34E100B2A8F0 /* contacts-fill.sqlite3 */ = {isa = PBXFileReference; lastKnownFileType = text; path = "contacts-fill.sqlite3"; sourceTree = "<group>"; };
@@ -587,6 +588,7 @@
 		E870FC4C1E9BB28700A038AF /* macos */ = {
 			isa = PBXGroup;
 			children = (
+				E848A3C31EEE995C00593DEC /* CSQLite3Shim.h */,
 				E870FC4D1E9BB28700A038AF /* module.modulemap */,
 				E870FC4E1E9BB28700A038AF /* module.private.modulemap */,
 			);
