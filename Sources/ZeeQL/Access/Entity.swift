@@ -77,11 +77,11 @@ public protocol Entity: class, SmartDescription {
 
 public extension Entity { // default imp
   
-  var externalName          : String? { return nil }
-  var schemaName            : String? { return nil }
+  var externalName          : String? { return nil   }
+  var schemaName            : String? { return nil   }
 
   var isReadOnly            : Bool    { return false }
-  var shouldRefetchOnInsert : Bool { return true }
+  var shouldRefetchOnInsert : Bool    { return true  }
 
   var className  : String? {
     if let t = objectType { return "\(t)" }
