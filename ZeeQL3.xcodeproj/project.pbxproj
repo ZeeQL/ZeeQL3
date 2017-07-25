@@ -488,7 +488,6 @@
 				E8263CD31E93CAAC00508276 /* ZeeQL-Info.plist */,
 			);
 			name = Framework;
-			path = MobileZeeQL;
 			sourceTree = "<group>";
 		};
 		E8263CD41E93CD5800508276 /* data */ = {
