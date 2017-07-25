@@ -409,13 +409,13 @@ public extension AccessDataSource { // Finders
    *
    * Example:
    *
-   *     let donald = ds.findBy(matchingAll: [ "lastname": "Duck",
-   *                                           "firstname": "Donald"])
+   *     let donald = ds.findBy(matchingAll: [ "lastname"  : "Duck",
+   *                                           "firstname" : "Donald"])
    * 
    * This will construct an AndQualifier containing KeyValueQualifiers to
    * perform the matches.
    */
-  func findBy(matchingAll values: [ String : Any ]) throws -> Object? {
+  func findBy(matchingAll values: [ String : Any? ]) throws -> Object? {
     var fs = try fetchSpecificationForFetch()
     fs.qualifier = qualifierToMatchAllValues(values)
     return try find(fs)
@@ -426,13 +426,13 @@ public extension AccessDataSource { // Finders
    *
    * Example:
    *
-   *     let donaldOrMickey = ds.findBy(matchingAny: ["firstname": "Mickey",
-   *                                                  "firstname", "Donald"])
+   *     let donaldOrMickey = ds.findBy(matchingAny: ["firstname" : "Mickey",
+   *                                                  "firstname" : "Donald"])
    * 
    * This will construct an OrQualifier containing KeyValueQualifiers to
    * perform the matches.
    */
-  func findBy(matchingAny values: [ String : Any ]) throws -> Object? {
+  func findBy(matchingAny values: [ String : Any? ]) throws -> Object? {
     var fs = try fetchSpecificationForFetch()
     fs.qualifier = qualifierToMatchAnyValue(values)
     return try find(fs)
