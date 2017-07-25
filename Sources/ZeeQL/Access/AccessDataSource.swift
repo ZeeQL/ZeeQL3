@@ -312,10 +312,18 @@ public extension AccessDataSource { // Finders
    */
   func find(_ _fs: FetchSpecification) throws -> Object? {
     var fs = _fs // copies, struct
-    fs.fetchLimit = 1
+    fs.fetchLimit = 2
     
     var object: Object? = nil
-    try _primaryFetchObjects(fs) { object = $0 }
+    try _primaryFetchObjects(fs) {
+      guard object == nil
+       else {
+        throw AccessDataSourceError
+          .FetchReturnedMoreThanOneResult(fetchSpecification: fs,
+                                          firstObject: object!)
+       }
+      object = $0
+    }
     return object
   }
   
@@ -447,4 +455,6 @@ public enum AccessDataSourceError : Swift.Error { // cannot nest in generic
   case CannotConstructFetchSpecification
   case CannotConstructCountFetchSpecification
   case CountFetchReturnedNoResults
+  case FetchReturnedMoreThanOneResult(fetchSpecification: FetchSpecification,
+                                      firstObject: SwiftObject)
 }
