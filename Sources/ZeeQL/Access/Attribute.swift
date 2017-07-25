@@ -362,6 +362,10 @@ public protocol AttributeValue {
   static func shouldUseBindVariable(for attribute: Attribute) -> Bool
   
   static var optionalBaseType : AttributeValue.Type? { get }
+  
+  // TBD: static var attributeValueType: Enum
+  //        Enum { int(width), float(width), string, url, decimal }
+  //               var isStringRepresentable:..,
 }
 
 public extension AttributeValue {
