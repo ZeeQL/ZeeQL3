@@ -312,7 +312,12 @@ open class DatabaseChannelBase {
   func relationshipNameWithoutParameters(_ name: String) -> String {
     /* cut off '*' (relationship fetch repeaters like parent*) */
     if name.hasSuffix("*") {
-      return name.substring(to: name.index(before: name.endIndex))
+      let endIdx = name.index(before: name.endIndex)
+      #if swift(>=4.0)
+        return String(name[name.startIndex..<endIdx])
+      #else
+        return name.substring(to: endIdx)
+      #endif
     }
     return name
   }

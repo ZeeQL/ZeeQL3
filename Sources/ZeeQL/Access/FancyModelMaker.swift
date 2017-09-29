@@ -626,8 +626,13 @@ extension String {
     guard !isEmpty else { return "" }
     
     let idx = self.index(after: self.startIndex)
-    let c0 = self.substring(to: idx).lowercased()
-    return c0 + self.substring(from: idx)
+    #if swift(>=4.0)
+      let c0 = self[self.startIndex..<idx].lowercased()
+      return c0 + self[idx..<self.endIndex]
+    #else
+      let c0 = self.substring(to: idx).lowercased()
+      return c0 + self.substring(from: idx)
+    #endif
   }
 
   func makeCamelCase(upperFirst: Bool) -> String {

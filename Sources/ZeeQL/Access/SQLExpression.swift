@@ -1602,7 +1602,11 @@ open class SQLExpression: SmartDescription {
       if pc.hasPrefix("to") && key.characters.count > 2 {
         /* eg: toCustomer => Customer" */
         let idx = key.index(key.startIndex, offsetBy: 2)
-        alias = key.substring(from: idx)
+        #if swift(>=4.0)
+          alias = String(key[idx..<key.endIndex])
+        #else
+          alias = key.substring(from: idx)
+        #endif
       }
       else {
         alias = String(pc.characters.first!).uppercased()
@@ -2436,6 +2440,10 @@ fileprivate extension String {
   
   var lastRelPath : String {
     guard let r = range(of: ".", options: .backwards) else { return "" }
-    return substring(to: r.lowerBound)
+    #if swift(>=4.0)
+      return String(self[self.startIndex..<r.lowerBound])
+    #else
+      return substring(to: r.lowerBound)
+    #endif
   }
 }
