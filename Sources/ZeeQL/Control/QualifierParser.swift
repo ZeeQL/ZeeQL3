@@ -588,7 +588,7 @@ open class QualifierParser {
     
     let id = string[idx..<pidx]
     idx = pidx  /* consume */
-    return id
+    return String(id)
   }
   
   /**
@@ -838,7 +838,7 @@ open class QualifierParser {
       // TODO: implement unescaping in quoted strings
       log.error("unescaping not implemented!")
     }
-    return string[startPos..<pos]
+    return String(string[startPos..<pos])
   }
  
   enum Number {

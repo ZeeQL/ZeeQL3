@@ -232,8 +232,12 @@ open class FancyModelMaker {
           guard colname.characters.count > 3               else { continue }
           
           // OK, e.g. person_id. Now check whether there is a person table
-          let endIdx    = colname.index(colname.endIndex, offsetBy: -3)
-          let tableName = colname[colname.startIndex..<endIdx]
+          let endIdx = colname.index(colname.endIndex, offsetBy: -3)
+          #if swift(>=4.0)
+            let tableName = String(colname[colname.startIndex..<endIdx])
+          #else
+            let tableName = colname[colname.startIndex..<endIdx]
+          #endif
           
           
           // This only works for target entities which have a single pkey
@@ -615,7 +619,7 @@ extension String {
     guard hasSuffix("Id")      else { return nil }
     guard characters.count > 2 else { return nil }
     let endIdx   = self.index(endIndex, offsetBy: -2)
-    return self[startIndex..<endIdx]
+    return String(self[startIndex..<endIdx])
   }
   
   var decapitalized : String {

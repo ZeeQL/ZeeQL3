@@ -143,7 +143,11 @@ open class SQLite3ModelFetch: AdaptorModelFetch {
       /* process external type, eg: VARCHAR(40) */
       if let idx = exttype.characters.index(of: "(") {
         let ws = exttype[idx..<exttype.endIndex]
-        exttype = exttype[exttype.startIndex..<idx]
+        #if swift(>=4.0)
+          exttype = String(exttype[exttype.startIndex..<idx])
+        #else
+          exttype = exttype[exttype.startIndex..<idx]
+        #endif
         
         if let eidx = ws.characters.index(of: ")") {
           let iv = ws[ws.startIndex..<eidx]

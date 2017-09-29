@@ -173,8 +173,14 @@ open class DatabaseChannelBase {
       
       var relname : String
       var dotidx  = path.characters.index(of: ".")
-      if let dotidx = dotidx { relname = path[path.startIndex..<dotidx] }
-      else                   { relname = path } // no dot
+      if let dotidx = dotidx {
+        #if swift(>=4.0)
+          relname = String(path[path.startIndex..<dotidx])
+        #else
+          relname = path[path.startIndex..<dotidx]
+        #endif
+      }
+      else { relname = path } // no dot
       
       /* lookup relationship */
       
@@ -191,8 +197,14 @@ open class DatabaseChannelBase {
         // dupe, same thing again
         path   = rel.relationshipPath ?? ""
         dotidx = path.characters.index(of: ".")
-        if let dotidx = dotidx { relname = path[path.startIndex..<dotidx] }
-        else                   { relname = path } // no dot
+        if let dotidx = dotidx {
+          #if swift(>=4.0)
+            relname = String(path[path.startIndex..<dotidx])
+          #else
+            relname = path[path.startIndex..<dotidx]
+          #endif
+        }
+        else { relname = path } // no dot
         
         /* lookup relationship */
         
@@ -224,7 +236,11 @@ open class DatabaseChannelBase {
       
       if let dotidx = dotidx {
         let idx = path.index(after: dotidx)
-        sublevels.append(path[idx..<path.endIndex])
+        #if swift(>=4.0)
+          sublevels.append(String(path[idx..<path.endIndex]))
+        #else
+          sublevels.append(path[idx..<path.endIndex])
+        #endif
         level[relname] = sublevels
       }
       else if level[relname] == nil {
@@ -261,8 +277,14 @@ open class DatabaseChannelBase {
       
       var relname : String
       let dotidx  = path.characters.index(of: ".")
-      if let dotidx = dotidx { relname = path[path.startIndex..<dotidx] }
-      else                   { relname = path } // no dot
+      if let dotidx = dotidx {
+        #if swift(>=4.0)
+          relname = String(path[path.startIndex..<dotidx])
+        #else
+          relname = path[path.startIndex..<dotidx]
+        #endif
+      }
+      else { relname = path } // no dot
       
       /* split off fetch parameters (recursive fetches like parent*) */
       

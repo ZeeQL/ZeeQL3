@@ -409,7 +409,11 @@ open class ActiveRecord : ActiveRecordType, SmartDescription {
           guard s.hasPrefix("Optional<") && s.hasSuffix(">") else { continue }
           let fromIdx = s.index(s.startIndex, offsetBy: 9)
           let toIdx   = s.index(before: s.endIndex)
-          let type = s[fromIdx..<toIdx]
+          #if swift(>=4.0)
+            let type  = String(s[fromIdx..<toIdx])
+          #else
+            let type  = s[fromIdx..<toIdx]
+          #endif
           
           if let extType = ZeeQLTypes.externalTypeFor(swiftType: type) {
             attribute.externalType = extType

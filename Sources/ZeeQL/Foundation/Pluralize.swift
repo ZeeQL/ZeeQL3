@@ -230,7 +230,11 @@ fileprivate extension String {
   func cutoffTrailer(_ count: Int) -> String {
     guard self.characters.count >= count else { return self }
     let endIdx = self.index(endIndex, offsetBy: -count)
-    return self[startIndex..<endIdx]
+    #if swift(>=4.0)
+      return String(self[startIndex..<endIdx])
+    #else
+      return self[startIndex..<endIdx]
+    #endif
   }
   
   func replaceSuffix(_ suffix: String, _ with: String) -> String {
