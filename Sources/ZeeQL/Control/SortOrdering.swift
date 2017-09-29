@@ -124,7 +124,7 @@ public extension SortOrdering {
           trimmedPart[trimmedPart.index(after: idx)..<trimmedPart.endIndex]
         
         let op : Selector = (c0 == "-") ? .CompareDescending : .CompareAscending
-        so = SortOrdering(key: key, selector: op)
+        so = SortOrdering(key: String(key), selector: op)
       }
       else {
         so = SortOrdering(key: trimmedPart, selector: .CompareAscending)

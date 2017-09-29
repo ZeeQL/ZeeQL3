@@ -1121,10 +1121,18 @@ open class SQLExpression: SmartDescription {
     guard let v = v else { return "NULL" }
     return String(v)
   }
-  public func sqlStringFor<T: Integer>(number v: T?) -> String {
-    guard let v = v else { return "NULL" }
-    return String(describing: v)
-  }
+  #if swift(>=4.0)
+    // TBD: is this what we want?
+    public func sqlStringFor<T: BinaryInteger>(number v: T?) -> String {
+      guard let v = v else { return "NULL" }
+      return String(describing: v)
+    }
+  #else
+    public func sqlStringFor<T: Integer>(number v: T?) -> String {
+      guard let v = v else { return "NULL" }
+      return String(describing: v)
+    }
+  #endif
   
   /**
    * Returns the SQL representation of a Number. For INTs this is just the

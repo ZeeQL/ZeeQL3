@@ -82,7 +82,11 @@ extension FetchSpecification { // Default Imp
       let sValue = "\(value)" // Hm
       
       let endIdx = key.index(key.endIndex, offsetBy: -11)
-      let bKey   = key[key.startIndex..<endIdx]
+      #if swift(>=4.0)
+        let bKey = String(key[key.startIndex..<endIdx])
+      #else
+        let bKey = key[key.startIndex..<endIdx]
+      #endif
       
       let fValue = KeyValueStringFormatter.format(sValue, object: bindings)
       

@@ -111,7 +111,7 @@ final class KeyValueStringFormatter : Formatter {
           break
         }
         
-        key = format[keyStart..<idx]
+        key = String(format[keyStart..<idx])
         idx = format.index(after: idx) // consume ')'
         if idx == format.endIndex {
           // early close
