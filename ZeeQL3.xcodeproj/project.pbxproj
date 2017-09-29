@@ -694,7 +694,7 @@
 				E8EB94C31E5F31040058D8D1 /* SQL Generation */,
 			);
 			name = Access;
-			path = Sources/Access;
+			path = Sources/ZeeQL/Access;
 			sourceTree = "<group>";
 		};
 		E8D2795C1E55053B00453BBE /* Control */ = {
@@ -704,7 +704,7 @@
 				E8687C9F1E6086E200D62ABF /* Storage */,
 			);
 			name = Control;
-			path = Sources/Control;
+			path = Sources/ZeeQL/Control;
 			sourceTree = "<group>";
 		};
 		E8D279671E55059800453BBE /* Tests */ = {
@@ -741,7 +741,7 @@
 				E8F96E131EE4A968005FDC40 /* Pluralize.swift */,
 			);
 			name = Foundation;
-			path = Sources/Foundation;
+			path = Sources/ZeeQL/Foundation;
 			sourceTree = "<group>";
 		};
 		E8D2798A1E587DB900453BBE /* Model */ = {
