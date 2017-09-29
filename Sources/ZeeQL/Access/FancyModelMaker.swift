@@ -52,21 +52,23 @@ import struct Foundation.URL
 open class FancyModelMaker {
   
   public struct Options {
-    let detectIdAsPrimaryKey       = true
-    let detectTableIdAsPrimaryKey  = true
+    var detectIdAsPrimaryKey       = true
+    var detectTableIdAsPrimaryKey  = true
     
-    let detectRelationships        = true
-    let createInverseRelationships = true
-    let fancyUpRelshipNames        = true
+    var detectRelationships        = true
+    var createInverseRelationships = true
+    var fancyUpRelshipNames        = true
     
-    let onlyLowerCase              = true
-    let capCamelCaseEntityNames    = true // person_address => PersonAddress
-    let camelCaseAttributeNames    = true // company_id => companyId
-    let useIdForPrimaryKey         = true // person_id pkey => id
+    var onlyLowerCase              = true
+    var capCamelCaseEntityNames    = true // person_address => PersonAddress
+    var camelCaseAttributeNames    = true // company_id => companyId
+    var useIdForPrimaryKey         = true // person_id pkey => id
     
-    let boolValueTypePrefixes      = [ "is_", "can_" ]
-    let urlSuffix                  : String? = nil // "_url"
-    let keyColumnSuffix            = "_id"
+    var boolValueTypePrefixes      = [ "is_", "can_" ]
+    var urlSuffix                  : String? = nil // "_url"
+    var keyColumnSuffix            = "_id"
+    
+    public init() {}
   }
   
   public final let model   : Model

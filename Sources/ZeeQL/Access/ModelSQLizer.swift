@@ -20,10 +20,12 @@
 open class ModelSQLizer {
   
   public struct Options {
-    let includeTableNameForPrimaryKeyID : String? = "id" // 'id' => 'person_id'
-    let decamelizeAndInsertString : String? = "_"  // bankAddr => bank_addr
-    let lowercaseTableNames                 = true // Person => person
-    let lowercaseColumnNames                = true // ID => id
+    var includeTableNameForPrimaryKeyID : String? = "id" // 'id' => 'person_id'
+    var decamelizeAndInsertString : String? = "_"  // bankAddr => bank_addr
+    var lowercaseTableNames                 = true // Person => person
+    var lowercaseColumnNames                = true // ID => id
+    
+    public init() {}
   }
   
   let log : ZeeQLLogger = globalZeeQLLogger
