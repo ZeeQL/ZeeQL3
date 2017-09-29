@@ -2,7 +2,9 @@ import PackageDescription
 
 let package = Package(
   name: "ZeeQL3",
-  
+
+  swiftLanguageVersions: [ 3, 4 ],  
+
   targets: [ Target(name: "ZeeQL") ],
   
   dependencies: [
