@@ -593,9 +593,7 @@ open class CoreDataModelLoader : ModelLoader {
             #if swift(>=4.0)
               let num = String(s[startIdx..<idx])
             #else
-              guard let num = s[startIdx..<idx] else {
-                return nil
-              }
+              let num = s[startIdx..<idx]
             #endif
             guard let i = Int(num) else {
               return nil
