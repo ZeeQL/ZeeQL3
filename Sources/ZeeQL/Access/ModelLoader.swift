@@ -590,9 +590,13 @@ open class CoreDataModelLoader : ModelLoader {
           case "0"..."9":
             idx = s.index(after: idx)
           default:
-            guard let num = String(s[startIdx..<idx]) else {
-              return nil
-            }
+            #if swift(>=4.0)
+              let num = String(s[startIdx..<idx])
+            #else
+              guard let num = s[startIdx..<idx] else {
+                return nil
+              }
+            #endif
             guard let i = Int(num) else {
               return nil
             }
@@ -976,12 +980,16 @@ open class CoreDataModelLoader : ModelLoader {
       return try loadCompiledModel(from: url)
     }
     
-    #if os(Linux) // TBD: is this rather Swift 3.1+?
+    #if swift(>=4.0)
       let options = XMLNode.Options(rawValue: 0)
-    #else // Swift 3.0.2 on 10.11
-      let options = 0
+    #else
+      #if os(Linux) // TBD: is this rather Swift 3.1+?
+        let options = XMLNode.Options(rawValue: 0)
+      #else // Swift 3.0.2 on 10.11
+        let options = 0
+      #endif
     #endif
-    
+
     let xml : XMLDocument
     do {
       xml = try XMLDocument(contentsOf: url, options: options)
