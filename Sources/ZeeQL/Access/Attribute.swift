@@ -32,8 +32,7 @@
  * (well, at least in PostgreSQL you can put an index on the LOWER
  *  transformation, so it _can_ use an index)
  */
-public protocol Attribute : class,
-                            Property, SQLValue, ExpressionEvaluation,
+public protocol Attribute : Property, SQLValue, ExpressionEvaluation,
                             SmartDescription
 {  
   var name            : String  { get }

@@ -141,19 +141,27 @@ open class SQLite3ModelFetch: AdaptorModelFetch {
       var width : Int? = nil
 
       /* process external type, eg: VARCHAR(40) */
-      if let idx = exttype.characters.index(of: "(") {
-        let ws = exttype[idx..<exttype.endIndex]
-        #if swift(>=4.0)
+      #if swift(>=3.2)
+        if let idx = exttype.index(of: "(") {
+          let ws = exttype[idx..<exttype.endIndex]
           exttype = String(exttype[exttype.startIndex..<idx])
-        #else
-          exttype = exttype[exttype.startIndex..<idx]
-        #endif
         
-        if let eidx = ws.characters.index(of: ")") {
-          let iv = ws[ws.startIndex..<eidx]
-          width = Int(iv)
+          if let eidx = ws.index(of: ")") {
+            let iv = ws[ws.startIndex..<eidx]
+            width = Int(iv)
+          }
         }
-      }
+      #else
+        if let idx = exttype.characters.index(of: "(") {
+          let ws = exttype[idx..<exttype.endIndex]
+          exttype = exttype[exttype.startIndex..<idx]
+        
+          if let eidx = ws.characters.index(of: ")") {
+            let iv = ws[ws.startIndex..<eidx]
+            width = Int(iv)
+          }
+        }
+      #endif
       exttype = exttype.uppercased()
       
       // TODO: complete information
@@ -246,7 +254,13 @@ open class SQLite3ModelFetch: AdaptorModelFetch {
         let join = Join(source: sourceColumn, destination: targetColumn)
         relship.joins.append(join)
         
-        if let deleteRule = (fkey["on_delete"] as? String)?.characters.first {
+        #if swift(>=3.2)
+          let drc = (fkey["on_delete"] as? String)?.first
+        #else
+          let drc = (fkey["on_delete"] as? String)?.characters.first
+        #endif
+        
+        if let deleteRule = drc {
           switch deleteRule {
             case "n", "N": relship.deleteRule = .noAction
             case "r", "R": relship.deleteRule = .deny

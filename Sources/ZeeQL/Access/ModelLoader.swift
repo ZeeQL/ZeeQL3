@@ -585,7 +585,11 @@ open class CoreDataModelLoader : ModelLoader {
       let startIdx = range.upperBound
       var idx = startIdx
       while idx < s.endIndex {
-        let c = s.characters[idx]
+        #if swift(>=3.2)
+          let c = s[idx]
+        #else
+          let c = s.characters[idx]
+        #endif
         switch c {
           case "0"..."9":
             idx = s.index(after: idx)

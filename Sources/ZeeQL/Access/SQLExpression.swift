@@ -1598,8 +1598,13 @@ open class SQLExpression: SmartDescription {
     if useAliases {
       let pc = key
       
+      #if swift(>=3.2)
+        let keyLen = key.count
+      #else
+        let keyLen = key.characters.count
+      #endif
       /* produce an alias */
-      if pc.hasPrefix("to") && key.characters.count > 2 {
+      if pc.hasPrefix("to") && keyLen > 2 {
         /* eg: toCustomer => Customer" */
         let idx = key.index(key.startIndex, offsetBy: 2)
         #if swift(>=4.0)
@@ -1609,10 +1614,15 @@ open class SQLExpression: SmartDescription {
         #endif
       }
       else {
-        alias = String(pc.characters.first!).uppercased()
-        if relationshipPathToAlias.values.contains(alias) &&
-          pc.characters.count > 1
-        {
+        #if swift(>=3.2)
+          let pc0   = pc.first!
+          let pcLen = pc.count
+        #else
+          let pc0   = pc.characters.first!
+          let pcLen = pc.characters.count
+        #endif
+        alias = String(pc0).uppercased()
+        if relationshipPathToAlias.values.contains(alias) && pcLen > 1 {
           let idx = pc.index(pc.startIndex, offsetBy: 2)
           alias = pc[pc.startIndex..<idx].uppercased()
         }
@@ -2111,7 +2121,13 @@ open class SQLExpression: SmartDescription {
    */
   public func sqlPatternFromShellPattern(_ _pattern: String) -> String {
     // hm, should we escape as %%?
-    return _pattern.characters.reduce("") { res, c in
+    #if swift(>=3.2)
+      let pseq = _pattern
+    #else
+      let pseq = _pattern.characters
+    #endif
+
+    return pseq.reduce("") { res, c in
       switch c {
         case "%": return res + "\\%"
         case "*": return res + "%"
@@ -2376,8 +2392,14 @@ open class SQLExpression: SmartDescription {
    */
   public func escapeSQLString(_ _value: String) -> String {
     guard !_value.isEmpty else { return "" }
-    
-    return _value.characters.reduce("") { res, c in
+
+    #if swift(>=3.2)
+      let vseq = _value
+    #else
+      let vseq = _value.characters
+    #endif
+
+    return vseq.reduce("") { res, c in
       switch c {
         case "\\": return res + "\\\\"
         case "'":  return res + "''"
@@ -2435,7 +2457,11 @@ public protocol QualifierSQLGeneration {
 fileprivate extension String {
   
   var numberOfDots : Int {
-    return characters.reduce(0) { $1 == "." ? ($0 + 1) : $0 }
+    #if swift(>=3.2)
+      return reduce(0) { $1 == "." ? ($0 + 1) : $0 }
+    #else
+      return characters.reduce(0) { $1 == "." ? ($0 + 1) : $0 }
+    #endif
   }
   
   var lastRelPath : String {

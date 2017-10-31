@@ -172,7 +172,11 @@ open class DatabaseChannelBase {
       /* split off first part of relationship */
       
       var relname : String
-      var dotidx  = path.characters.index(of: ".")
+      #if swift(>=3.2)
+        var dotidx  = path.index(of: ".")
+      #else
+        var dotidx  = path.characters.index(of: ".")
+      #endif
       if let dotidx = dotidx {
         #if swift(>=4.0)
           relname = String(path[path.startIndex..<dotidx])
@@ -196,7 +200,11 @@ open class DatabaseChannelBase {
       if rel.isFlattened {
         // dupe, same thing again
         path   = rel.relationshipPath ?? ""
-        dotidx = path.characters.index(of: ".")
+        #if swift(>=3.2)
+          dotidx = path.index(of: ".")
+        #else
+          dotidx = path.characters.index(of: ".")
+        #endif
         if let dotidx = dotidx {
           #if swift(>=4.0)
             relname = String(path[path.startIndex..<dotidx])
@@ -276,7 +284,11 @@ open class DatabaseChannelBase {
       /* split off first part of relationship */
       
       var relname : String
-      let dotidx  = path.characters.index(of: ".")
+      #if swift(>=3.2)
+        let dotidx  = path.index(of: ".")
+      #else
+        let dotidx  = path.characters.index(of: ".")
+      #endif
       if let dotidx = dotidx {
         #if swift(>=4.0)
           relname = String(path[path.startIndex..<dotidx])
