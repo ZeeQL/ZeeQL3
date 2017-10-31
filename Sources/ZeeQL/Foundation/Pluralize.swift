@@ -36,7 +36,11 @@ public extension String {
       default: break
     }
     
-    let len = self.characters.count
+    #if swift(>=3.2)
+      let len = self.count
+    #else
+      let len = self.characters.count
+    #endif
 
     if len > 2 {
       if self.hasCISuffix("octopi")    { return self.cutoffTrailer(1) + "us" }
@@ -166,16 +170,29 @@ public extension String {
     
     if self.hasCISuffix("quy")    { return self.replaceSuffix("quy", "quies") }
     if self.hasCISuffix("y") {
-      if self.characters.count > 2 {
-        let idx = self.index(self.endIndex, offsetBy: -2)
-        let cbY = self.characters[idx]
-        switch cbY {
-          // https://www.youtube.com/watch?v=gUrJKN7F_so
-          case "a", "e", "i", "o", "u": break
-          default: return self.replaceSuffix("y",  "ies")
+      #if swift(>=3.2)
+        if self.count > 2 {
+          let idx = self.index(self.endIndex, offsetBy: -2)
+          let cbY = self[idx]
+          switch cbY {
+            // https://www.youtube.com/watch?v=gUrJKN7F_so
+            case "a", "e", "i", "o", "u": break
+            default: return self.replaceSuffix("y",  "ies")
+          }
+          if self.hasCISuffix("ry")   { return self.replaceSuffix("ry",  "ries")  }
         }
-        if self.hasCISuffix("ry")   { return self.replaceSuffix("ry",  "ries")  }
-      }
+      #else
+        if self.characters.count > 2 {
+          let idx = self.index(self.endIndex, offsetBy: -2)
+          let cbY = self.characters[idx]
+          switch cbY {
+            // https://www.youtube.com/watch?v=gUrJKN7F_so
+            case "a", "e", "i", "o", "u": break
+            default: return self.replaceSuffix("y",  "ies")
+          }
+          if self.hasCISuffix("ry")   { return self.replaceSuffix("ry",  "ries")  }
+        }
+      #endif
     }
     
     if self.hasCISuffix("hive")   { return self + "hives" }
@@ -228,11 +245,13 @@ fileprivate extension String {
   }
   
   func cutoffTrailer(_ count: Int) -> String {
-    guard self.characters.count >= count else { return self }
-    let endIdx = self.index(endIndex, offsetBy: -count)
-    #if swift(>=4.0)
+    #if swift(>=3.2)
+      guard self.count >= count else { return self }
+      let endIdx = self.index(endIndex, offsetBy: -count)
       return String(self[startIndex..<endIdx])
     #else
+      guard self.characters.count >= count else { return self }
+      let endIdx = self.index(endIndex, offsetBy: -count)
       return self[startIndex..<endIdx]
     #endif
   }
@@ -240,7 +259,11 @@ fileprivate extension String {
   func replaceSuffix(_ suffix: String, _ with: String) -> String {
     guard hasSuffix(suffix) else { return self }
     
-    let endIdx = self.index(endIndex, offsetBy: -(suffix.characters.count))
+    #if swift(>=3.2)
+      let endIdx = self.index(endIndex, offsetBy: -(suffix.count))
+    #else
+      let endIdx = self.index(endIndex, offsetBy: -(suffix.characters.count))
+    #endif
     return self[startIndex..<endIdx] + with
   }
 }

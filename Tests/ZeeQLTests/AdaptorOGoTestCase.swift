@@ -555,14 +555,23 @@ extension ActiveRecord {
     // TODO: align width
     let attrNames = self.entity.attributes.map({ $0.name })
     let maxLength = attrNames.reduce(0) {
-      $1.characters.count > $0 ? $1.characters.count : $0
+      #if swift(>=3.2)
+        return $1.count > $0 ? $1.count : $0
+      #else
+        return $1.characters.count > $0 ? $1.characters.count : $0
+      #endif
     }
     
     for key in attrNames {
       let vs  = "\(self[key] ?? "")"
       guard !vs.isEmpty else { continue }
       
-      let pad = String(repeating: " ", count: maxLength - key.characters.count)
+      #if swift(>=3.2)
+        let pad = String(repeating: " ", count: maxLength - key.count)
+      #else
+        let pad = String(repeating: " ",
+                         count: maxLength - key.characters.count)
+      #endif
       print("\(indent)\(key): \(pad)\(vs)")
     }
   }

@@ -121,17 +121,27 @@ extension String {
     var newChars = [ Character ]()
     
     var lastWasLowerOrDigit = false
-    for c in characters {
+    #if swift(>=3.2)
+      let cseq = self
+    #else
+      let cseq = characters
+    #endif
+      
+    for c in cseq {
       switch c {
         case "a"..."z", "0"..."9":
           lastWasLowerOrDigit = true
           newChars.append(c)
-        
+    
         case "A"..."Z":
           if lastWasLowerOrDigit {
             let s = String(c).lowercased()
             if let ist = insertString, !ist.isEmpty {
-              newChars.append(contentsOf: ist.characters)
+              #if swift(>=3.2)
+                newChars.append(contentsOf: ist)
+              #else
+                newChars.append(contentsOf: ist.characters)
+              #endif
             }
             newChars.append(s[s.startIndex])
           }
@@ -139,7 +149,7 @@ extension String {
             newChars.append(c)
           }
           lastWasLowerOrDigit = true
-        
+    
         default:
           lastWasLowerOrDigit = false
           newChars.append(c)

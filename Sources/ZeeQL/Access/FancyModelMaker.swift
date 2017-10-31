@@ -229,7 +229,11 @@ open class FancyModelMaker {
           let colname = attr.columnName ?? attr.name
           guard !pkeyColumns.contains(colname)             else { continue }
           guard colname.hasSuffix(options.keyColumnSuffix) else { continue }
-          guard colname.characters.count > 3               else { continue }
+          #if swift(>=3.2)
+            guard colname.count > 3                        else { continue }
+          #else
+            guard colname.characters.count > 3             else { continue }
+          #endif
           
           // OK, e.g. person_id. Now check whether there is a person table
           let endIdx = colname.index(colname.endIndex, offsetBy: -3)
@@ -616,9 +620,13 @@ extension String {
     return "to" + capitalized
   }
   var withoutId : String? {
-    guard hasSuffix("Id")      else { return nil }
-    guard characters.count > 2 else { return nil }
-    let endIdx   = self.index(endIndex, offsetBy: -2)
+    guard hasSuffix("Id") else { return nil }
+    #if swift(>=3.2)
+      guard count > 2 else { return nil }
+    #else
+      guard characters.count > 2 else { return nil }
+    #endif
+    let endIdx = self.index(endIndex, offsetBy: -2)
     return String(self[startIndex..<endIdx])
   }
   
@@ -640,7 +648,12 @@ extension String {
     var newChars = [ Character ]()
     
     var upperNext = upperFirst
-    for c in characters {
+    #if swift(>=3.2)
+      let cseq = self
+    #else
+      let cseq = characters
+    #endif
+    for c in cseq {
       switch c {
         case " ", "_": // skip and upper next
           // FIXME: wrong behaviour for columns starting with _
@@ -660,7 +673,6 @@ extension String {
           newChars.append(c)
       }
     }
-    
     guard !newChars.isEmpty else { return self }
     return String(newChars)
   }

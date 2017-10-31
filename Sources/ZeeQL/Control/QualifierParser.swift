@@ -199,11 +199,19 @@ open class QualifierParser {
     }
     
     /* process formats */
-    if id.characters.count > 1 && id.hasPrefix("%") {
-      // the id itself is a format, eg: "%@ LIKE 'Hello*'"
-      guard let pid = nextNonNullStringArgument(id) else { return nil }
-      id = pid
-    }
+    #if swift(>=3.2)
+      if id.count > 1 && id.hasPrefix("%") {
+        // the id itself is a format, eg: "%@ LIKE 'Hello*'"
+        guard let pid = nextNonNullStringArgument(id) else { return nil }
+        id = pid
+      }
+    #else
+      if id.characters.count > 1 && id.hasPrefix("%") {
+        // the id itself is a format, eg: "%@ LIKE 'Hello*'"
+        guard let pid = nextNonNullStringArgument(id) else { return nil }
+        id = pid
+      }
+    #endif
     
     if !skipSpaces() {
       /* ok, it was just the ID. We treat this as a boolean kvqualifier,
@@ -233,8 +241,14 @@ open class QualifierParser {
     }
     
     /* process formats */
-    if operation.characters.count > 1 && operation.hasPrefix("%") {
-      // the operation is a pattern, eg: "value %@ 5", "<" 
+    
+    #if swift(>=3.2)
+      let opseq = operation
+    #else
+      let opseq = operation.characters
+    #endif
+    if opseq.count > 1 && operation.hasPrefix("%") {
+      // the operation is a pattern, eg: "value %@ 5", "<"
       guard let pid = nextNonNullStringArgument(operation) else { return nil }
       operation = pid
     }
@@ -459,9 +473,12 @@ open class QualifierParser {
        }
       
       /* process formats */
-      if compoundOperator.characters.count > 1 &&
-         compoundOperator.hasPrefix("%")
-      {
+      #if swift(>=3.2)
+        let coseq = compoundOperator
+      #else
+        let coseq = compoundOperator.characters
+      #endif
+      if coseq.count > 1 && compoundOperator.hasPrefix("%") {
         guard let s = nextNonNullStringArgument(compoundOperator)
          else { return nil }
         compoundOperator = s

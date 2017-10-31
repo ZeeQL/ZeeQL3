@@ -62,7 +62,11 @@ public struct KeyValueCoding {
   public static func takeValue(_ v: Any?, forKeyPath p: String,
                                inObject o: Any?) throws
   {
-    let path = p.characters.split(separator: ".").map { String($0) }
+    #if swift(>=3.2)
+      let path = p.split(separator: ".").map(String.init)
+    #else
+      let path = p.characters.split(separator: ".").map { String($0) }
+    #endif
     try takeValue(v, forKeyPath: path, inObject: o)
   }
   public static func takeValue(_ v: Any?, forKeyPath p: [ String ],
@@ -80,7 +84,11 @@ public struct KeyValueCoding {
   }
 
   public static func value(forKeyPath p: String, inObject o: Any?) -> Any? {
-    let path = p.characters.split(separator: ".").map { String($0) }
+    #if swift(>=3.2)
+      let path = p.split(separator: ".").map(String.init)
+    #else
+      let path = p.characters.split(separator: ".").map { String($0) }
+    #endif
     return value(forKeyPath: path, inObject: o)
   }
   
