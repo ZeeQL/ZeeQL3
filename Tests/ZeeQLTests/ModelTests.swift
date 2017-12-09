@@ -69,7 +69,7 @@ class ModelTests: XCTestCase {
   // MARK: - CodeEntity based model
   
   class OGoObject : ActiveRecord {
-    // TODO: actuall add KVC to store the key in this var
+    // TODO: actually add KVC to store the key in this var
     var id : Int { return value(forKey: "id") as! Int }
   }
   class Address : OGoObject, EntityType {
