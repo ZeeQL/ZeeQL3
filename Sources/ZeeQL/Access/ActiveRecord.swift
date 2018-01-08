@@ -14,8 +14,9 @@
  *
  * See `ActiveRecord` for a concrete implementation of the protocol.
  */
-public protocol ActiveRecordType : DatabaseObject, DatabaseBoundObject {
-
+public protocol ActiveRecordType : DatabaseObject,
+                                   DatabaseBoundObject, SnapshotHoldingObject
+{
   init()
 
   static var database : Database? { get }
