@@ -543,13 +543,13 @@ class AdaptorOGoTestCase: XCTestCase {
 
 // MARK: - Helpers
 
-fileprivate func dump(row: AdaptorRecord, prefix: String = "    ") {
+internal func dump(row: AdaptorRecord, prefix: String = "    ") {
   for ( key, value ) in row {
     print("\(prefix)\(key): \(value as Optional) [\(type(of: value))]")
   }
 }
 
-extension ActiveRecord {
+internal extension ActiveRecord {
   
   func dumpRecordInColumns(indent: String = "") {
     // TODO: align width
