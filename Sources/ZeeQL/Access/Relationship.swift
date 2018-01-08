@@ -36,7 +36,7 @@ public protocol Relationship : Property, ExpressionEvaluation,
   
   var constraintName     : String?         { get }
   
-  // TODO: var isMandatory : Bool (check whether target Attribute `allowsNull`)
+  var isMandatory        : Bool            { get }
 }
 
 /**
@@ -73,7 +73,9 @@ public extension Relationship { // default imp
   var minCount       : Int? { return isToMany ? nil : (isMandatory ? 0 : 1) }
   var maxCount       : Int? { return isToMany ? nil : 1 }
   
-  var isMandatory : Bool {
+  var isMandatory : Bool { return isMandatoryDefaultImplementation }
+
+  internal var isMandatoryDefaultImplementation : Bool {
     if isToMany { return (minCount ?? 0) > 0 }
     
     // 1:1: figure out whether the relationship has one required join
@@ -321,6 +323,8 @@ open class ModelRelationship : Relationship {
   }
   final var _minCount                    : Int?
   final var _maxCount                    : Int?
+
+  open var isMandatory : Bool { return isMandatoryDefaultImplementation }
 
   public final var userData              = [ String : Any ]()
 
