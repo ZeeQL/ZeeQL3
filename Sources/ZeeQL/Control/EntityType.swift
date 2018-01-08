@@ -15,9 +15,9 @@
  *
  *     class Address : ActiveRecord, EntityType {
  *       class Entity : OGoCodeEntity {
- *         let id            = -1
- *         let street        : String? = nil
- *         let person        = ToOne<Person>()
+ *         let id     = -1
+ *         let street : String? = nil
+ *         let person = ToOne<Person>()
  *       }
  *       static let entity : ZeeQL.Entity = CodeEntity<Address>(Entity())
  *     }

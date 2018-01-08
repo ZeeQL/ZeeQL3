@@ -9,7 +9,11 @@
 import struct Foundation.URL
 
 /**
- * `FancyModelMaker` is here to make plain models fancy.
+ * `FancyModelMaker` is here to make plain models (fetched from the DB) fancy.
+ *
+ * (there is `ModelSQLizer` which is the reverse to the `FancyModelMaker`. It
+ *  takes a model with no (or partial) external names assigned, and fills them
+ *  in w/ SQL conventions).
  *
  * The core idea is that you keep your SQL schema SQL-ish but your Swift model
  * Swifty.
@@ -352,6 +356,7 @@ open class FancyModelMaker {
           newRelship.joinSemantic = .leftOuterJoin // TBD
           for join in relship.joins {
             // TODO: fix `!`
+            // TBD: can't we use join.inverse?
             let inverseJoin = Join(source:      join.destinationName!,
                                    destination: join.sourceName!)
             newRelship.joins.append(inverseJoin)
@@ -458,6 +463,7 @@ open class FancyModelMaker {
   }
   
   func assignPrimaryKeyIfMissing(_ newEntity: ModelEntity) {
+    // there is also a simpler Entity.lookupPrimaryKeyAttributeNames()
     guard newEntity.primaryKeyAttributeNames?.count ?? 0 == 0 else { return }
     
     if options.detectIdAsPrimaryKey && newEntity[attribute: "id"] != nil {

@@ -36,7 +36,7 @@ public protocol Relationship : Property, ExpressionEvaluation,
   
   var constraintName     : String?         { get }
   
-  // TODO: var isMandatory : Bool (check whether target Attribute `allowsNull`)
+  var isMandatory        : Bool            { get }
 }
 
 /**
@@ -73,7 +73,9 @@ public extension Relationship { // default imp
   var minCount       : Int? { return isToMany ? nil : (isMandatory ? 0 : 1) }
   var maxCount       : Int? { return isToMany ? nil : 1 }
   
-  var isMandatory : Bool {
+  var isMandatory : Bool { return isMandatoryDefaultImplementation }
+
+  internal var isMandatoryDefaultImplementation : Bool {
     if isToMany { return (minCount ?? 0) > 0 }
     
     // 1:1: figure out whether the relationship has one required join
@@ -208,7 +210,9 @@ public extension Relationship { // extra methods
   
   
   /**
-   * Locates an inverse relationship in the destination entity.
+   * *Locates* an inverse relationship in the destination entity.
+   *
+   * Note: this does *not* create one.
    * 
    * Example: n:1
    *   person  ( person_id, company_id )
@@ -319,6 +323,8 @@ open class ModelRelationship : Relationship {
   }
   final var _minCount                    : Int?
   final var _maxCount                    : Int?
+
+  open var isMandatory : Bool { return isMandatoryDefaultImplementation }
 
   public final var userData              = [ String : Any ]()
 
@@ -446,8 +452,21 @@ open class ModelRelationship : Relationship {
   
   
   // MARK: - Own Description
+  
+  open func appendJoinsToDescripton(_ ms: inout String) {
+    if !joins.isEmpty {
+      if joinSemantic != .innerJoin { ms += " \(joinSemantic)" }
+      ms += " "
+      for join in joins {
+        ms += join.shortDescription
+      }
+    }
+    else {
+      ms += " no-joins?"
+    }
+  }
 
-  public func appendToDescription(_ ms: inout String) {
+  open func appendToDescription(_ ms: inout String) {
     if isPattern { ms += " pattern" }
     
     ms += " \(name)"
@@ -464,16 +483,7 @@ open class ModelRelationship : Relationship {
       ms += " to=?"
     }
     
-    if !joins.isEmpty {
-      if joinSemantic != .innerJoin { ms += " \(joinSemantic)" }
-      ms += " "
-      for join in joins {
-        ms += join.shortDescription
-      }
-    }
-    else {
-      ms += " no-joins?"
-    }
+    appendJoinsToDescripton(&ms)
     
     if isToMany {
       if let v = minCount { ms += " min=\(v)" }

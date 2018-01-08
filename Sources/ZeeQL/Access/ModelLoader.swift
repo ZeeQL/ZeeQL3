@@ -9,6 +9,12 @@
 import struct Foundation.URL
 import CoreFoundation
 
+/**
+ * Load `Model` objects from files (vs. from the database or a code declaration)
+ *
+ * This version supports the format emitted by the CoreData modeling
+ * application in Xcode.
+ */
 open class ModelLoader {
 
   let log : ZeeQLLogger = globalZeeQLLogger
@@ -239,8 +245,7 @@ open class CoreDataModelLoader : ModelLoader {
         continue
        }
       
-      let ient = attrs["inverseEntity"]
-        ?? toManyRS.destinationEntityName
+      let ient = attrs["inverseEntity"] ?? toManyRS.destinationEntityName
       let entry = ToManyEntry(entity: entity, relationship: toManyRS,
                               inverseName: iname,
                               inverseEntity: ient ?? "ERROR")

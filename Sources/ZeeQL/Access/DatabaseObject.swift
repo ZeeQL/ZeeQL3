@@ -9,29 +9,36 @@
 /**
  * Interface of read/write ORM objects.
  */
-public protocol DatabaseObject : SwiftObject,
-                                 StoreKeyValueCodingType,
-                                 DatabaseObjectValidation,
-                                 RelationshipManipulation
+public protocol DatabaseObject : DatabaseObjectValidation,
+                                 RelationshipManipulation,
+                                 SnapshotObject
 {
-
   /* initialization */
   // TODO: those are for AR, there are others for TC based objects
   
   func awakeFromFetch    (_ db: Database)
   func awakeFromInsertion(_ db: Database) // only makes sense w/ EC
-
-  /* snapshot management */
-  
-  var snapshot : Snapshot? { get }
-  func updateFromSnapshot (_ snap: Snapshot) -> Bool
-  func changesFromSnapshot(_ snap: Snapshot) -> Snapshot
-  // func reapplyChangesFromDictionary(_ snap: Snapshot) TODO
   
   /* accessor management */
   
   func willRead()
   func willChange()
+}
+
+public protocol SnapshotObject : SwiftObject, StoreKeyValueCodingType {
+  
+  /* snapshot management */
+  
+  func updateFromSnapshot (_ snap: Snapshot) -> Bool
+  func changesFromSnapshot(_ snap: Snapshot) -> Snapshot
+  // func reapplyChangesFromDictionary(_ snap: Snapshot) TODO
+}
+
+public protocol SnapshotHoldingObject : SnapshotObject {
+  // TBD: Snapshot Management is an ActiveRecord only thing?! Regular EOs use
+  //      the EditingContext?
+
+  var snapshot : Snapshot? { get }
 }
 
 /**
@@ -58,6 +65,14 @@ public extension DatabaseObject { // default imp
   
   func awakeFromFetch    (_ db: Database) {}
   func awakeFromInsertion(_ db: Database) {}
+  
+  /* accessor management */
+  
+  func willRead()   {}
+  func willChange() {}
+}
+
+public extension SnapshotObject { // default imp
   
   /* snapshot management */
   
@@ -103,11 +118,6 @@ public extension DatabaseObject { // default imp
       takeStoredValue(snapValue, forKey: key) // TBD
     }
   }
-  
-  /* accessor management */
-  
-  func willRead()   {}
-  func willChange() {}
 }
 
 

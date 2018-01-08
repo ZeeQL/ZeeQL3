@@ -94,6 +94,7 @@ public extension Entity { // default imp
   }
   
   func lookupPrimaryKeyAttributeNames() -> [ String ]? {
+    // FancyModelMaker also has a `assignPrimaryKeyIfMissing`
     guard !attributes.isEmpty else { return nil }
     
     // plain names, like 'CREATE TABLE pets ( id INT NOT NULL, name ... )'

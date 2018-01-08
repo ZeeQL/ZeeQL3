@@ -26,6 +26,28 @@ public class DatabaseContext : ObjectStore, SmartDescription {
   }
   
   /* fetching objects */
+  
+  // public struct TypedFetchSpecification<Object: DatabaseObject>
+
+  public func objectsWith<T>(fetchSpecification fs : TypedFetchSpecification<T>,
+                             in tc                 : ObjectTrackingContext,
+                             _ cb                  : ( T ) -> Void) throws
+  {
+    if fs.requiresAllQualifierBindingVariables {
+      if let keys = fs.qualifier?.bindingKeys, !keys.isEmpty {
+        throw Error.FetchSpecificationHasUnresolvedBindings(fs)
+      }
+    }
+    
+    // TODO: can we preserve the type? Maybe with a generic fetchspec?
+    let ch = TypedDatabaseChannel<T>(database: database)
+    
+    try ch.selectObjectsWithFetchSpecification(fs, tc)
+    
+    while let o : T = ch.fetchObject() {
+      cb(o)
+    }
+  }
 
   public func objectsWith(fetchSpecification fs : FetchSpecification,
                           in tc                 : ObjectTrackingContext,
