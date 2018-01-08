@@ -7,7 +7,7 @@
 //
 
 /**
- * The ModelSQLizer is the reverse to the FancyModelMaker. It takes a model
+ * The `ModelSQLizer` is the reverse to the `FancyModelMaker`. It takes a model
  * with no (or partial) external names assigned, and fills them in.
  *
  * Hence it is responsible to make 'fancy' SQL DDL statements.

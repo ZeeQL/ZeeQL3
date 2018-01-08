@@ -208,7 +208,9 @@ public extension Relationship { // extra methods
   
   
   /**
-   * Locates an inverse relationship in the destination entity.
+   * *Locates* an inverse relationship in the destination entity.
+   *
+   * Note: this does *not* create one.
    * 
    * Example: n:1
    *   person  ( person_id, company_id )

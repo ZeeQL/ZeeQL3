@@ -170,19 +170,31 @@ open class CodeObjectEntity<T: CodeObjectType> : CodeEntityBase {
 
 // MARK: - Reflection
 
-extension CodeEntityBase {
+fileprivate let specialTableKey = "table"
 
-  func processMirror(_ mirror: Mirror) {
+fileprivate extension CodeEntityBase {
+
+  /**
+   * Walk a Swift Mirror object and try to create `Attribute` and
+   * `Relationship` objects for the properties found.
+   *
+   * Note: This inspects the actual values of an object! (i.e. Swift cannot
+   *       reflect on a Type, just on an instance).
+   *
+   * Sideeffect: Results are pushed into the `attributes` and `relationships`
+   *             properties of the `CodeEntityBase`.
+   */
+  fileprivate func processMirror(_ mirror: Mirror) {
     // TODO: preserve them across processMirror invocations
     var nameToIdx    = [ String : Int ]()
     var relNameToIdx = [ String : Int ]()
-    for i in 0..<attributes.count    { nameToIdx   [attributes   [i].name] = i }
+    for i in 0..<attributes   .count { nameToIdx   [attributes   [i].name] = i }
     for i in 0..<relationships.count { relNameToIdx[relationships[i].name] = i }
     
     for ( propname, propValue ) in mirror.children {
       guard let propname = propname else { continue }
       
-      if propname == "table", // || propname == "externalType",
+      if propname == specialTableKey, // || propname == "externalType",
          let v = propValue as? String
       {
         externalName = v

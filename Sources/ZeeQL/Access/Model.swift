@@ -15,15 +15,56 @@
  * schema, or they can be represented in code (with the help of `CodeEntity` etc
  * model objects).
  *
- * TBD: explain more
+ * Note: Many hipster frameworks use the term `Model` to represent a single
+ *       entity, for example `Person`. ZeeQL uses the naming of the so-called
+ *       [Entity–relationship
+ *          model](https://en.wikipedia.org/wiki/Entity–relationship_model).
+ *
+ *
+ * TODO: explain more
+ *
+ *
+ * ## Access Model Information
+ *
+ * In the current version a model is just a set of entities. You can access
+ * them using a subscript, e.g.:
+ *
+ *     let entityNames = model.entityNames
+ *     for entityName in entityNames {
+ *       guard let entity = model[entity: entityName] else { continue }
+ *       ...
+ *     }
+ *
+ *
+ * ## Model tags
+ *
+ * Especially during development, you may want to detect whether a model
+ * changed. This is supported by the adaptors using a `model tag`.
+ * That tag will change, when the database model was modified.
+ * The actual implementation of the tag is opaque and differs between the
+ * databases (e.g. on PG it is a hash over the information schema, while
+ * SQLite has a schema modification sequence).
+ *
+ * TODO: explain more
+ *
+ *
+ * ## Pattern Models
  *
  * Models can be 'pattern models'. Pattern models retrieve database tables and
  * table columns from the database' information schema. This way you only need
  * to map things which actually require a mapping.
  *
- * TBD: explain more
+ * When the model is then used with an adaptor, the adaptor will fetch the
+ * information schema of the database, build a derived model, and then merge
+ * that with the pattern model.
  *
- * XML file format:
+ * TODO: explain more
+ *
+ *
+ * ## XML file format:
+ *
+ * ZeeQL comes w/ an own XML format for storing models. There is no requirement
+ * to use this.
  *
  *   <model version="1.0">
  *     <entity tableNameLike="subscriber*"> <!-- dynamically load tables -->
@@ -35,6 +76,14 @@
  *       <attribute columnNameLike="*" />
  *     </entity>
  *   </model>
+ *
+ * Do we actually have this in ZeeQL? I think this is GETobjects only :->
+ *
+ *
+ * ## CoreData Model Loader
+ *
+ * TODO: explain `CoreDataModelLoader`
+ *
  */
 open class Model : SmartDescription {
   // TODO: actually implement pattern models

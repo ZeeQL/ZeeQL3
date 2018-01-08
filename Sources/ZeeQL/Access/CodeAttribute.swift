@@ -10,6 +10,9 @@
  * CodeAttribute objects are used to describe properties of Entity objects
  * (which then become columns in the database) from within Swift source code
  * (opposed to doing this in an XML file or fetching it from the database).
+ *
+ * Their primary feature over `ModelAttribute`s is that such are generic over
+ * the value type.
  */
 open class CodeAttribute<T: AttributeValue> : ModelAttribute {
   
@@ -54,6 +57,17 @@ enum CodeAttributeFactory {
   // Note: We could refer to the type, but there is little reason to invoke
   //       the functions all the time? Just store the values.
   
+  /**
+   * Attempt to create an `Attribute` object for the given value. The value can
+   * be a 'real' value taken from an object, or a special thing, like an
+   * `AnnotatedAttributeValue`.
+   *
+   * This checks:
+   * - Is the value an `Attribute` already? If so, use it.
+   * - Is the value an `AnnotatedAttributeValue`? Use the contained `Attribute`.
+   * - String, Int, Bool, Float, Double - also use the value as the default!
+   * - `AttributeValue`?
+   */
   static func attributeFor(property: String, value: Any) -> Attribute? {
     if let attr = value as? Attribute { // an actual Attribute already
       if let mattr = attr as? ModelAttribute {
@@ -75,6 +89,7 @@ enum CodeAttributeFactory {
     }
     
     switch value {
+      // TBD: is this superfluous wrt `AttributeValue` below?
       case let defaultValue as String:
         return CodeAttribute<String>(property, defaultValue: defaultValue)
       case let defaultValue as Int:
@@ -85,6 +100,7 @@ enum CodeAttributeFactory {
         return CodeAttribute<Float>(property, defaultValue: defaultValue)
       case let defaultValue as Double:
         return CodeAttribute<Double>(property, defaultValue: defaultValue)
+      // TODO: add the rest
 
       case let defaultValue as AttributeValue:
         // We could just do AttributeInfo<AttributeValue>, but that is not really
@@ -101,6 +117,7 @@ enum CodeAttributeFactory {
             case is Bool.Type:   return CodeAttribute<Bool?>  (property)
             case is Float.Type:  return CodeAttribute<Float?> (property)
             case is Double.Type: return CodeAttribute<Double?>(property)
+            // TODO: add the rest
             default:
               fatalError("did not map optional AttributeValue? of " +
                          "property \(property): \(defaultValue) \(baseType)")
