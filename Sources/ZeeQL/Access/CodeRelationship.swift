@@ -6,9 +6,19 @@
 //  Copyright © 2017 ZeeZide GmbH. All rights reserved.
 //
 
-open class CodeRelationship<Target: DatabaseObject> : ModelRelationship {
+public protocol CodeRelationshipType : Relationship {
+  // internal patch-helper since we can't refer to generic classes
+  var sourceAttributeName : String? { get set }
+  var targetAttributeName : String? { get set }
+  var codeEntity : Entity? { get set }
+}
+
+open class CodeRelationshipBase<Target: SwiftObject>
+             : ModelRelationship
+{
   open var sourceAttributeName : String?
   open var targetAttributeName : String?
+    // FIXME: rename
   
   override open var destinationEntity : Entity? {
     set {
@@ -22,26 +32,38 @@ open class CodeRelationship<Target: DatabaseObject> : ModelRelationship {
     }
   }
   
-  public var codeEntity : Entity? = nil
-  override open var entity : Entity {
-    set {
-      codeEntity = newValue
-    }
-    get {
-      if let entity = codeEntity { return entity }
-      fatalError("code entity has not been resolved!")
-    }
-  }
-
   override open var joins : [ Join ] { // Note: do not cache due to threading
     set { assert(false, "cannot set joins of code-attribute") }
     get {
-      guard let join = calculateJoin() else { return [] }
-      return [ join ]
+      do {
+        let join = try calculateJoin()
+        return [ join ]
+      }
+      catch {
+        // Note: to not log self, recursion!
+        log.error("could not calculate join", error)
+        #if DEBUG
+          fatalError("could not calculate join: \(self) \(error)")
+        #else
+          return []
+        #endif
+      }
     }
   }
   
-  func calculateJoin() -> Join? {
+  enum JoinCalculationError : Swift.Error {
+    case toManyHasNoSourceAttribute
+    case toManyCouldNotDeriveTargetAttribute(entityName: String,
+                                             column: String,
+                                             sourceAttribute: Attribute,
+                                             destinationEntity: Entity?)
+    case toManyDidNotFindSourceAttribute(sourceAttributeName: String)
+    
+    case toOneHasNoTargetAttribute
+    case toOneCouldNotDeriveForeignKey(entityName: String)
+  }
+  
+  func calculateJoin() throws -> Join {
     // Code entities support a single join only
     let targetAttributeName : String
     let sourceAttributeName : String
@@ -49,7 +71,7 @@ open class CodeRelationship<Target: DatabaseObject> : ModelRelationship {
     if isToMany {
       if let n = self.sourceAttributeName     { sourceAttributeName = n    }
       else if let pkey = sourcePrimaryKeyName { sourceAttributeName = pkey }
-      else                                    { return nil                 }
+      else { throw JoinCalculationError.toManyHasNoSourceAttribute }
       
       if let n = self.targetAttributeName     { targetAttributeName = n    }
       else {
@@ -65,17 +87,26 @@ open class CodeRelationship<Target: DatabaseObject> : ModelRelationship {
         if let sourceA = entity[attribute: sourceAttributeName] {
           // The primary key _column_ of the target, e.g. `company_id`
           // Do we have this as the column? (aka foreign key)?
+          // But what if we name the columns 'id' in the database too. Say
+          // Person.id and Address.id. We wouldn't want to match those?!
           
           let colname = sourceA.columnName ?? sourceA.name
           if let targetA = destinationEntity?[columnName: colname] {
             targetAttributeName = targetA.name
           }
           else {
-            fatalError("could not derive foreign key for: \(self.name)")
+            // OK, we hit this if both pkeys are named 'id'
+            
+            print("source attr is:", sourceA)
+            throw JoinCalculationError.toManyCouldNotDeriveTargetAttribute(
+              entityName: self.name, column: colname, sourceAttribute: sourceA,
+              destinationEntity: destinationEntity
+            )
           }
         }
         else {
-          fatalError("could not derive foreign key for: \(self.name)")
+          throw JoinCalculationError.toManyDidNotFindSourceAttribute(
+                                       sourceAttributeName: sourceAttributeName)
         }
       }
     }
@@ -85,7 +116,7 @@ open class CodeRelationship<Target: DatabaseObject> : ModelRelationship {
       // specify the attributes manually.
       if let n = self.targetAttributeName     { targetAttributeName = n    }
       else if let pkey = targetPrimaryKeyName { targetAttributeName = pkey }
-      else                                    { return nil                 }
+      else { throw JoinCalculationError.toOneHasNoTargetAttribute }
       
       if let n = self.sourceAttributeName     { sourceAttributeName = n    }
       else {
@@ -106,11 +137,13 @@ open class CodeRelationship<Target: DatabaseObject> : ModelRelationship {
             sourceAttributeName = srcA.name
           }
           else {
-            fatalError("could not derive foreign key for: \(self.name)")
+            throw JoinCalculationError
+                    .toOneCouldNotDeriveForeignKey(entityName: self.name)
           }
         }
         else {
-          fatalError("could not derive foreign key for: \(self.name)")
+          throw JoinCalculationError
+                  .toOneCouldNotDeriveForeignKey(entityName: self.name)
         }
       }
     }
@@ -126,7 +159,8 @@ open class CodeRelationship<Target: DatabaseObject> : ModelRelationship {
     }
   }
 
-  // helpers
+  
+  // MARK: - helpers
   
   var sourcePrimaryKeyName : String? {
     guard let pkeys = entity.primaryKeyAttributeNames else { return nil }
@@ -135,20 +169,44 @@ open class CodeRelationship<Target: DatabaseObject> : ModelRelationship {
   }
   var targetPrimaryKeyName : String? {
     guard let pkeys = destinationEntity?.primaryKeyAttributeNames
-      else { return nil }
+     else { return nil }
     
     guard pkeys.count == 1 else { return nil }
     return pkeys[0]
   }
-}
   
-// TODO: rename from info
   
-protocol CodeRelationshipType: class {
-  // internal patch-helper since we can't refer to generic classes
-  var codeEntity : Entity? { get set }
+  // MARK: - Description
+
+  override open func appendJoinsToDescripton(_ ms: inout String) {
+    do {
+      let join = try calculateJoin()
+      if joinSemantic != .innerJoin { ms += " \(joinSemantic)" }
+      ms += " "
+      ms += join.shortDescription
+    }
+    catch {
+      ms += " JOIN-ERROR<\(error)>"
+    }
+  }
 }
-extension CodeRelationship: CodeRelationshipType {}
+
+open class CodeRelationship<Target: DatabaseObject>
+             : CodeRelationshipBase<Target>, CodeRelationshipType
+{
+  public var codeEntity : Entity? = nil
+  override open var entity : Entity {
+    set {
+      codeEntity = newValue
+    }
+    get {
+      if let entity = codeEntity { return entity }
+      fatalError("code entity has not been resolved!")
+    }
+  }
+
+}
+
 
 fileprivate let fakeEntity = ModelEntity(name: "FAKE")
   
