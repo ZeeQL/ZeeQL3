@@ -452,8 +452,21 @@ open class ModelRelationship : Relationship {
   
   
   // MARK: - Own Description
+  
+  open func appendJoinsToDescripton(_ ms: inout String) {
+    if !joins.isEmpty {
+      if joinSemantic != .innerJoin { ms += " \(joinSemantic)" }
+      ms += " "
+      for join in joins {
+        ms += join.shortDescription
+      }
+    }
+    else {
+      ms += " no-joins?"
+    }
+  }
 
-  public func appendToDescription(_ ms: inout String) {
+  open func appendToDescription(_ ms: inout String) {
     if isPattern { ms += " pattern" }
     
     ms += " \(name)"
@@ -470,16 +483,7 @@ open class ModelRelationship : Relationship {
       ms += " to=?"
     }
     
-    if !joins.isEmpty {
-      if joinSemantic != .innerJoin { ms += " \(joinSemantic)" }
-      ms += " "
-      for join in joins {
-        ms += join.shortDescription
-      }
-    }
-    else {
-      ms += " no-joins?"
-    }
+    appendJoinsToDescripton(&ms)
     
     if isToMany {
       if let v = minCount { ms += " min=\(v)" }
