@@ -988,9 +988,9 @@ open class CoreDataModelLoader : ModelLoader {
     }
     
     #if swift(>=4.0)
-      #if os(macOS)
+      #if os(macOS) || os(Linux)
         let options = XMLNode.Options(rawValue: 0)
-      #else
+      #else // but not on iOS
         let options = 0
       #endif
     #else
