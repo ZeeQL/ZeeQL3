@@ -223,6 +223,8 @@
 		E8EB9E551EA0DB8500C6DA54 /* SQLite3ModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8EB9E541EA0DB8500C6DA54 /* SQLite3ModelTests.swift */; };
 		E8EB9E5D1EA1117100C6DA54 /* Logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8EB9E5C1EA1117100C6DA54 /* Logger.swift */; };
 		E8EB9E641EA1254E00C6DA54 /* AdaptorModelFetch.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8EB9E631EA1254E00C6DA54 /* AdaptorModelFetch.swift */; };
+		E8EFAD63202CE97800129D65 /* CodableEntity.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8AA15F51FDEE1E5006FC597 /* CodableEntity.swift */; };
+		E8EFAD64202CE97D00129D65 /* CodableModelPostProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = E83491FC1FE817820091C3FD /* CodableModelPostProcessor.swift */; };
 		E8F96E141EE4A968005FDC40 /* Pluralize.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8F96E131EE4A968005FDC40 /* Pluralize.swift */; };
 		E8F96E151EE4A968005FDC40 /* Pluralize.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8F96E131EE4A968005FDC40 /* Pluralize.swift */; };
 /* End PBXBuildFile section */
@@ -1115,6 +1117,7 @@
 				E8E480C71EC2037600350EDF /* SQLite3ModelFetch.swift in Sources */,
 				E8263CC91E93C89200508276 /* SQLExpression.swift in Sources */,
 				E8263CB81E93C89200508276 /* AdaptorOperation.swift in Sources */,
+				E8EFAD64202CE97D00129D65 /* CodableModelPostProcessor.swift in Sources */,
 				E8263CA61E93C89200508276 /* ModelFetchSpecification.swift in Sources */,
 				E8263CB41E93C89200508276 /* AccessDataSource.swift in Sources */,
 				E8546AE41EE9D25800ED5327 /* SchemaSynchronization.swift in Sources */,
@@ -1151,6 +1154,7 @@
 				E8263C911E93C89200508276 /* EquatableType.swift in Sources */,
 				E8E480C01EC2033700350EDF /* ArrayDataSource.swift in Sources */,
 				E802854D1EE6CDCF00F25AD7 /* SQLite3SchemaSynchronizationFactory.swift in Sources */,
+				E8EFAD63202CE97800129D65 /* CodableEntity.swift in Sources */,
 				E8E480C11EC2034A00350EDF /* AdaptorRecordSchema.swift in Sources */,
 				E8263CA91E93C89200508276 /* ObjectStore.swift in Sources */,
 				E8263CBA1E93C89200508276 /* AdaptorQueryType.swift in Sources */,
