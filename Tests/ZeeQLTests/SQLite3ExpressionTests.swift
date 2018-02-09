@@ -42,9 +42,14 @@ class SQLite3ExpressionTests: XCTestCase {
     
     let expr = factory.updateStatementForRow(row, q!, entity)
     
-    XCTAssertEqual(expr.statement,
-      "UPDATE \"company\" SET \"age\" = 42, \"name\" = ? WHERE \"id\" = 5",
-      "unexpected SQL result")
+    // can be reordered, hashtable has no ordering!
+    XCTAssert((
+      ( expr.statement ==
+        "UPDATE \"company\" SET \"age\" = 42, \"name\" = ? WHERE \"id\" = 5" )
+      ||
+      ( expr.statement ==
+        "UPDATE \"company\" SET \"name\" = ?, \"age\" = 42 WHERE \"id\" = 5" )
+      ), "unexpected SQL result")
     
     let bindings = expr.bindVariables
     XCTAssertEqual(bindings.count, 1, "unexpected binding count")
