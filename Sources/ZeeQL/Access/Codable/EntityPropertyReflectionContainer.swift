@@ -46,7 +46,7 @@
      * - implicit relationships, like `let owner : Person?`
      * - explicit relationships, like `let owner : ToOne<Person>`
      */
-    class EntityPropertyReflectionContainer<Key: CodingKey>:
+    final class EntityPropertyReflectionContainer<Key: CodingKey>:
                      KeyedDecodingContainerProtocol
     {
       var codingPathKK : String {
@@ -117,6 +117,8 @@
             return try decodeCodableObject(type, forKey: key)
           
           // TODO: support all combinations :-)
+          // TBD: Can we do Array<AttributeValue>?
+          //      Maybe via conditional conformance in 4.1?
           case is Array<Int>.Type:
             return try decodeBaseTypeArray(type, Int.self, forKey: key)
           
@@ -287,9 +289,28 @@
         return v
       }
       
-      
+      /**
+       * Extract the property (attribute or relationship) name of the key.
+       * Ideally this would be the Swift property name, but it looks we can't
+       * grab that anymore in 4.1 :-<
+       */
       func nameForKey(_ key: Key) -> String {
-        return "\(key)" // well, this is a little stretched
+        #if swift(>=4.1)
+          // Description gives:
+          //
+          //   CodingKeys(stringValue: "id", intValue: nil)
+          //
+          // This is not really what we want, we want to reflect the original
+          // key.
+          // But maybe this has to do for now (and we should do it on 4.0 too.
+          #if true // we want this as the external name
+            return key.stringValue
+          #else
+            return "\(key)" // was stretched and fails on 4.1.snapshot
+          #endif
+        #else
+          return "\(key)" // well, this is a little stretched
+        #endif
       }
 
       /// Create a typed attribute for the given key.
