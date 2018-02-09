@@ -449,11 +449,20 @@
       var isAtEnd      : Bool {
         return (count ?? 0) <= currentIndex
       }
-
-      var count        : Int? {
+      
+      var count : Int? {
         // If we already know the relationship, we don't need to decode it!
         let name = nameForKey(sourceKey)
-        return sourceEntity[relationship: name] == nil ? 1 : 0
+        if let rs = sourceEntity[relationship: name] {
+          log.trace("count 0:", currentIndex, name, rs)
+          // we know it already, return 0
+          return 0
+        }
+        else {
+          log.trace("count 1:", currentIndex, name)
+          // we do not have it yet, decode it
+          return 1
+        }
       }
 
       init(decoder    : CodableModelDecoder,
@@ -466,6 +475,11 @@
         self.log          = decoder.log
         self.sourceEntity = entity
         self.sourceKey    = key
+        
+        log.trace("entity-col-prop-reflection-decoder:",
+                  "\n  codingPath:  ", codingPath,
+                  "\n  sourceEntity:", entity.name,
+                  "\n  sourceKey:   ", key)
       }
       
       

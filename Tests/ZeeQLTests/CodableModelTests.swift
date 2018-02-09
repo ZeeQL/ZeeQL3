@@ -1178,13 +1178,13 @@ class CodableModelTests: XCTestCase {
        testSchemaWithInlineToOneSourceNoExplicitTarget ),
     ( "testSchemaWithOptionalInlineToOneSourceNoExplicitTarget",
        testSchemaWithOptionalInlineToOneSourceNoExplicitTarget ),
-    ( "testSchemaWithInlineArrayToMany", testSchemaWithInlineArrayToMany ),
-    ( "testSchemaWithToCycle",           testSchemaWithToCycle           ),
-    ( "testSchemaWithToOneInlineCycle",  testSchemaWithToOneInlineCycle  ),
+    ( "testSchemaWithInlineArrayToMany",  testSchemaWithInlineArrayToMany  ),
+    ( "testSchemaWithToCycle",            testSchemaWithToCycle            ),
+    ( "testSchemaWithToOneInlineCycle",   testSchemaWithToOneInlineCycle   ),
     ( "testSchemaWithOptionalToOneInlineCycle",
        testSchemaWithOptionalToOneInlineCycle ),
-    ( "testSchemaWithToManyInlineCycle", testSchemaWithToManyInlineCycle ),
-    ( "testImplicitEntityByReference",   testImplicitEntityByReference   ),
+    ( "testSchemaWithToManyInlineCycle",  testSchemaWithToManyInlineCycle  ),
+    ( "testImplicitEntityByReference",    testImplicitEntityByReference    ),
   ]
 
   #else // Not Swift 4
