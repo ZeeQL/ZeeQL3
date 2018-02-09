@@ -20,7 +20,7 @@ class SQLite3ModelTests: XCTestCase {
       //NSLog("URL: \(url) \(path)")
       return SQLite3Adaptor(path)
     #else
-      let path = ProcessInfo().environment["SRCROOT"]
+      let path = ProcessInfo.processInfo.environment["SRCROOT"]
               ?? FileManager.default.currentDirectoryPath
       return SQLite3Adaptor("\(path)/data/OGo.sqlite3")
     #endif

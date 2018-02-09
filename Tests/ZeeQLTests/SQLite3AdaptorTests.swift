@@ -20,7 +20,7 @@ class SQLite3AdaptorTests: XCTestCase {
         guard let path = url?.path else { return "OGo.sqlite3" }
         return path
       #else
-        let path = ProcessInfo().environment["SRCROOT"]
+        let path = ProcessInfo.processInfo.environment["SRCROOT"]
                 ?? FileManager.default.currentDirectoryPath
         return "\(path)/data/OGo.sqlite3"
       #endif

@@ -35,7 +35,7 @@ class ModelLoaderTests: XCTestCase {
       urlToModel    = url ?? URL(fileURLWithPath: "Contacts.xcdatamodel")
       urlToMOMModel = urlToModel // FIXME
     #else
-      let path = ProcessInfo().environment["SRCROOT"]
+      let path = ProcessInfo.processInfo.environment["SRCROOT"]
               ?? FileManager.default.currentDirectoryPath
       
       urlToModel    = URL(fileURLWithPath: "\(path)/data/Contacts.xcdatamodel")

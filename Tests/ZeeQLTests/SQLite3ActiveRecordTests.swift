@@ -22,7 +22,7 @@ class SQLite3ActiveRecordTests: AdapterActiveRecordTests {
        else { return "contacts.sqlite3" }
       return path
     #else
-      let path = ProcessInfo().environment["SRCROOT"]
+      let path = ProcessInfo.processInfo.environment["SRCROOT"]
               ?? FileManager.default.currentDirectoryPath
       return "\(path)/data/contacts.sqlite3"
     #endif
