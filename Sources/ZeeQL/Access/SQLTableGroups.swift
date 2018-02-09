@@ -154,7 +154,11 @@ extension Sequence where Iterator.Element == Entity { // an egroup
   var groupForeignKeys : Set<SQLForeignKey> {
     var foreignKeys = Set<SQLForeignKey>()
     for entity in self {
-      foreignKeys.formUnion(entity.relationships.flatMap { $0.foreignKey })
+      #if swift(>=4.1)
+        foreignKeys.formUnion(entity.relationships.compactMap { $0.foreignKey })
+      #else
+        foreignKeys.formUnion(entity.relationships.flatMap { $0.foreignKey })
+      #endif
     }
     return foreignKeys
   }

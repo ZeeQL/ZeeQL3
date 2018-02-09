@@ -620,7 +620,11 @@ open class CoreDataModelLoader : ModelLoader {
         return nil
       }
       
-      return array.flatMap(textDecodeObjectID)
+      #if swift(>=4.1)
+      	return array.compactMap(textDecodeObjectID)
+      #else
+      	return array.flatMap(textDecodeObjectID)
+      #endif
     }
     
     guard let plistDict = plist as? Dictionary<String, Any>,
