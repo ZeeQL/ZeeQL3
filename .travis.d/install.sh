@@ -3,28 +3,30 @@
 # our path is:
 #   /home/travis/build/NozeIO/Noze.io/
 
-# Install Swift
+if ! test -z "$SWIFT_SNAPSHOT_NAME"; then
+  # Install Swift
+  wget "${SWIFT_SNAPSHOT_NAME}"
 
-wget "${SWIFT_SNAPSHOT_NAME}"
+  TARBALL="`ls swift-*.tar.gz`"
+  echo "Tarball: $TARBALL"
 
-TARBALL="`ls swift-*.tar.gz`"
-echo "Tarball: $TARBALL"
+  TARPATH="$PWD/$TARBALL"
 
-TARPATH="$PWD/$TARBALL"
+  cd $HOME # expand Swift tarball in $HOME
+  tar zx --strip 1 --file=$TARPATH
+  pwd
 
-cd $HOME # expand Swift tarball in $HOME
-tar zx --strip 1 --file=$TARPATH
-pwd
+  export PATH="$PWD/usr/bin:$PATH"
+  which swift
 
-export PATH="$PWD/usr/bin:$PATH"
-which swift
-
-if [ `which swift` ]; then
+  if [ `which swift` ]; then
     echo "Installed Swift: `which swift`"
-else
+  else
     echo "Failed to install Swift?"
     exit 42
+  fi
 fi
+
 swift --version
 
 
