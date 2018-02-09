@@ -43,14 +43,19 @@ struct SQLForeignKey : Equatable, Hashable, SmartDescription {
     
     self.relationship         = rs
     self.destinationTableName = destEntity.externalNameOrName
-    
-    let joinColumns : [ ( String, String ) ] = rs.joins.flatMap {
-      let sc = $0.source     (in: rs.entity)?.columnNameOrName
-      let dc = $0.destination(in: rs.entity)?.columnNameOrName
+
+    func mapColumns(_ join: Join) -> ( String, String )? {
+      let sc = join.source     (in: rs.entity)?.columnNameOrName
+      let dc = join.destination(in: rs.entity)?.columnNameOrName
       guard let sourceColumn = sc, let destColumn = dc else { return nil }
       return ( sourceColumn, destColumn )
     }
-    
+    #if swift(>=4.1)
+      let joinColumns = rs.joins.compactMap(mapColumns)
+    #else
+      let joinColumns = rs.joins.flatMap(mapColumns)
+    #endif
+
     if joinColumns.count > 1 {
       self.sortedJoinColumns = joinColumns.sorted { lhs, rhs in
         return lhs.0 == rhs.0 ? ( lhs.1 < rhs.1 ) : lhs.0 < rhs.0
