@@ -119,4 +119,12 @@ class SQLite3ExpressionTests: XCTestCase {
     XCTAssertEqual(bindings.count, 1, "unexpected binding count")
     XCTAssertEqual(bindings[0].value as? String, "Donald")
   }
+
+  static var allTests = [
+    ( "testRawDeleteSQLExpr", testRawDeleteSQLExpr ),
+    ( "testUpdateSQLExpr",    testUpdateSQLExpr ),
+    ( "testInsertSQLExpr",    testInsertSQLExpr ),
+    ( "testSimpleSelectExpr", testSimpleSelectExpr ),
+    ( "testSimpleSelectExprWithArgument", testSimpleSelectExprWithArgument ),
+  ]
 }

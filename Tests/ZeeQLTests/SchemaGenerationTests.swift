@@ -310,4 +310,15 @@ class SchemaGenerationTests: XCTestCase {
     XCTAssertEqual(pkeys?.count ?? -1, 1)
     XCTAssertEqual(pkeys?[0] ?? "", "id")
   }
+
+  static var allTests = [
+    ( "testCodeSchema",            testCodeSchema ),
+    ( "testCodeSchemaNativeTypes", testCodeSchemaNativeTypes ),
+    ( "testCodeSchemaWithInheritance", testCodeSchemaWithInheritance ),
+    ( "testCodeSchemaWithRelationships",
+       testCodeSchemaWithRelationships ),
+    ( "testCodeSchemaWithAutoRelationships",
+       testCodeSchemaWithAutoRelationships ),
+    ( "testCodeObjectSchema",      testCodeObjectSchema ),
+  ]
 }

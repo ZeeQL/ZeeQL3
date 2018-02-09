@@ -538,6 +538,21 @@ class AdaptorOGoTestCase: XCTestCase {
       }
     }
   }
+  
+  //( "testRecordAttachedSchema",  testRecordAttachedSchema    ),
+  static var sharedTests = [
+    ( "testRawAdaptorChannelQuery",  testRawAdaptorChannelQuery  ),
+    ( "testEvaluateQueryExpression", testEvaluateQueryExpression ),
+    ( "testRawTypeSafeQuery",        testRawTypeSafeQuery        ),
+    ( "testSimpleTX",                testSimpleTX                ),
+    ( "testAdaptorDataSourceFindByID", testAdaptorDataSourceFindByID ),
+    ( "testBasicReflection",         testBasicReflection         ),
+    ( "testTableReflection",         testTableReflection         ),
+    ( "testCodeSchema",              testCodeSchema              ),
+    ( "testCodeSchemaWithJoinQualifier",   testCodeSchemaWithJoinQualifier ),
+    ( "testCodeSchemaWithRelshipPrefetch", testCodeSchemaWithRelshipPrefetch ),
+    ( "testCodeSchemaWithTypedFetchSpec",  testCodeSchemaWithTypedFetchSpec ),
+  ]
 }
 
 

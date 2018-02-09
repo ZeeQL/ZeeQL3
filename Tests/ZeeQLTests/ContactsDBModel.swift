@@ -104,3 +104,29 @@ enum RawContactsDBModel { // as a schema SQLite3 fetch returns it
     return entity
   }()
 }
+
+
+import class Foundation.ProcessInfo
+import class Foundation.FileManager
+import struct Foundation.URL
+
+internal func lookupTestDataPath() -> String {
+  let path = ProcessInfo.processInfo.environment["SRCROOT"]
+          ?? FileManager.default.currentDirectoryPath
+  
+  let dataPath : String = {
+    let fm = FileManager.default
+    if fm.fileExists(atPath: "\(path)/data") { return "\(path)/data" }
+    
+    // on Linux we seem to be in `/src/Tests/ZeeQLTests`, so step up two
+    let url = URL(fileURLWithPath: path)
+              .deletingLastPathComponent()
+              .deletingLastPathComponent()
+              .appendingPathComponent("data")
+    if fm.fileExists(atPath: url.path) { return url.path }
+    
+    print("could not locate data path in:", path)
+    return "\(path)/data"
+  }()
+  return dataPath
+}

@@ -25,9 +25,8 @@ class SQLite3OGoAdaptorTests: AdaptorOGoTestCase {
         guard let path = url?.path else { return "OGo.sqlite3" }
         return path
       #else
-        let path = ProcessInfo.processInfo.environment["SRCROOT"]
-                   ?? FileManager.default.currentDirectoryPath
-        return "\(path)/data/OGo.sqlite3"
+        let dataPath = lookupTestDataPath()
+        return "\(dataPath)/OGo.sqlite3"
       #endif
     }()
     return SQLite3Adaptor(pathToTestDB)
@@ -81,4 +80,21 @@ class SQLite3OGoAdaptorTests: AdaptorOGoTestCase {
       XCTAssertNil(error, "catched error: \(error)")
     }
   }
+
+  static var allTests = [
+    // super
+    ( "testRawAdaptorChannelQuery",  testRawAdaptorChannelQuery  ),
+    ( "testEvaluateQueryExpression", testEvaluateQueryExpression ),
+    ( "testRawTypeSafeQuery",        testRawTypeSafeQuery        ),
+    ( "testSimpleTX",                testSimpleTX                ),
+    ( "testAdaptorDataSourceFindByID", testAdaptorDataSourceFindByID ),
+    ( "testBasicReflection",         testBasicReflection         ),
+    ( "testTableReflection",         testTableReflection         ),
+    ( "testCodeSchema",              testCodeSchema              ),
+    ( "testCodeSchemaWithJoinQualifier",   testCodeSchemaWithJoinQualifier ),
+    ( "testCodeSchemaWithRelshipPrefetch", testCodeSchemaWithRelshipPrefetch ),
+    ( "testCodeSchemaWithTypedFetchSpec",  testCodeSchemaWithTypedFetchSpec ),
+    // own
+    ( "testCount", testCount ),
+  ]
 }

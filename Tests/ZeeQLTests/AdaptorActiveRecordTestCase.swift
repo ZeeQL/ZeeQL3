@@ -119,4 +119,10 @@ class AdapterActiveRecordTests: XCTestCase {
       XCTAssert(false, "delete failed: \(error)")
     }
   }
+
+  static var sharedTests = [
+    ( "testSnapshotting",    testSnapshotting    ),
+    ( "testSimpleChange",    testSimpleChange    ),
+    ( "testInsertAndDelete", testInsertAndDelete ),
+  ]
 }

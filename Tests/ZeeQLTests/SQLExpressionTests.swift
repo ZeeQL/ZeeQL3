@@ -231,4 +231,15 @@ class SQLExpressionTests: XCTestCase {
                    "SELECT BASE.\"company_id\" FROM \"person\" AS BASE LEFT JOIN \"address\" AS A ON ( BASE.\"company_id\" = A.\"company_id\" ) WHERE ( COALESCE(A.\"street\", '') LIKE ? ) AND ( COALESCE(A.\"zipcity\", '') LIKE ? )"
                    )
   }
+
+
+  static var allTests = [
+    ( "testRawDeleteSQLExpr",     testRawDeleteSQLExpr     ),
+    ( "testUpdateSQLExpr",        testUpdateSQLExpr        ),
+    ( "testInsertSQLExpr",        testInsertSQLExpr        ),
+    ( "testSimpleSelectExpr",     testSimpleSelectExpr     ),
+    ( "testJoinExpr",             testJoinExpr             ),
+    ( "testCountExpr",            testCountExpr            ),
+    ( "testRelationshipPathExpr", testRelationshipPathExpr ),
+  ]
 }

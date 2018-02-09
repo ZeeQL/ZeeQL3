@@ -128,4 +128,10 @@ class ModelTests: XCTestCase {
       return storedValue(forKey: "addresses") as? [ Address ] ?? []
     }
   }
+  
+  static var allTests = [
+    ( "testPrimaryKeyExtraction",        testPrimaryKeyExtraction        ),
+    ( "testPrimaryKeyQualifier",         testPrimaryKeyQualifier         ),
+    ( "testPrimaryKeyQualifierSnapshot", testPrimaryKeyQualifierSnapshot ),
+  ]
 }

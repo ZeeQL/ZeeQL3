@@ -7,8 +7,6 @@
 //
 
 import XCTest
-import struct Foundation.URL
-import class  Foundation.Bundle
 import Foundation
 @testable import ZeeQL
 
@@ -30,16 +28,14 @@ class ModelLoaderTests: XCTestCase {
       }
       if url == nil {
         print("could not locate xcdatamodel: \(url as Optional) " +
-          "in bundle: \(bundle)")
+              "in bundle: \(bundle)")
       }
       urlToModel    = url ?? URL(fileURLWithPath: "Contacts.xcdatamodel")
       urlToMOMModel = urlToModel // FIXME
     #else
-      let path = ProcessInfo.processInfo.environment["SRCROOT"]
-              ?? FileManager.default.currentDirectoryPath
-      
-      urlToModel    = URL(fileURLWithPath: "\(path)/data/Contacts.xcdatamodel")
-      urlToMOMModel = URL(fileURLWithPath: "\(path)/data/Contacts.mom")
+      let dataPath = lookupTestDataPath()
+      urlToModel    = URL(fileURLWithPath: "\(dataPath)/Contacts.xcdatamodel")
+      urlToMOMModel = URL(fileURLWithPath: "\(dataPath)/Contacts.mom")
     #endif
   }
   
@@ -241,4 +237,12 @@ class ModelLoaderTests: XCTestCase {
       XCTAssertEqual(attr.columnName, "person_id")
     }
   }
+  
+  static var allTests = [
+    ( "testModelPath",         testModelPath         ),
+    ( "testModelLoad",         testModelLoad         ),
+    // Compiled models do not work on Linux:
+    // ( "testCompiledModelLoad", testCompiledModelLoad ),
+    ( "testModelSQLize",       testModelSQLize       ),
+  ]
 }

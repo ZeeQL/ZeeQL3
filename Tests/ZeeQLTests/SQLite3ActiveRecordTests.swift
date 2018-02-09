@@ -18,13 +18,11 @@ class SQLite3ActiveRecordTests: AdapterActiveRecordTests {
     #if ZEE_BUNDLE_RESOURCES
       let bundle = Bundle(for: type(of: self) as! AnyClass)
       let url    = bundle.url(forResource: "contacts", withExtension: "sqlite3")
-      guard let path = url?.path
-       else { return "contacts.sqlite3" }
+      guard let path = url?.path else { return "contacts.sqlite3" }
       return path
     #else
-      let path = ProcessInfo.processInfo.environment["SRCROOT"]
-              ?? FileManager.default.currentDirectoryPath
-      return "\(path)/data/contacts.sqlite3"
+      let dataPath = lookupTestDataPath()
+      return "\(dataPath)/contacts.sqlite3"
     #endif
     }()
     return SQLite3Adaptor(pathToTestDB)
@@ -88,4 +86,13 @@ class SQLite3ActiveRecordTests: AdapterActiveRecordTests {
       }
     }
   }
+
+  static var allTests = [
+    // super
+    ( "testSnapshotting",    testSnapshotting    ),
+    ( "testSimpleChange",    testSimpleChange    ),
+    ( "testInsertAndDelete", testInsertAndDelete ),
+    // own
+    ( "testFetchRawContactsModel", testFetchRawContactsModel ),
+  ]
 }

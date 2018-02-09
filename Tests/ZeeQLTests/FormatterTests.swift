@@ -34,4 +34,12 @@ class FormatterTests: XCTestCase {
     XCTAssertEqual(s, "Donald %")
   }
   
+  static var allTests = [
+    ( "testKeyValueStringFormatter1", testKeyValueStringFormatter1 ),
+    ( "testKeyValueStringFormatterPosArg", testKeyValueStringFormatterPosArg ),
+    ( "testKeyValueStringFormatterInvalidPercent",
+       testKeyValueStringFormatterInvalidPercent ),
+    ( "testKeyValueStringFormatterEndInPercent",
+       testKeyValueStringFormatterEndInPercent ),
+  ]
 }

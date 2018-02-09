@@ -19,7 +19,7 @@ import XCTest
 
 class CodeObjectModelTests: XCTestCase {
   
-  func testCodeObjectSchema() {
+  func testCodeObjectSchema() throws {
     class OGoObject : ActiveRecord {
       let objectVersion = Value.Int(column: "object_version", 0)
     }
@@ -62,4 +62,7 @@ class CodeObjectModelTests: XCTestCase {
     XCTAssertEqual(pkeys?[0] ?? "", "id")
   }
   
+  static var allTests = [
+    ( "testCodeObjectSchema", testCodeObjectSchema )
+  ]
 }

@@ -1160,7 +1160,38 @@ class CodableModelTests: XCTestCase {
     }
   }
   
-  #endif // Swift 4
+  static var allTests = [
+    ( "testBasicSchema",                  testBasicSchema                  ),
+    ( "testSchemaWithKeyMappings",        testSchemaWithKeyMappings        ),
+    ( "testSchemaWithOptionalAttribute",  testSchemaWithOptionalAttribute  ),
+    ( "testSchemaWithoutPrimaryKey",      testSchemaWithoutPrimaryKey      ),
+    ( "testSchemaWithRelationshipsAndForeignKey",
+       testSchemaWithRelationshipsAndForeignKey ),
+    ( "testSchemaWithToManyWithoutForeignKey",
+       testSchemaWithToManyWithoutForeignKey ),
+    ( "testSchemaWithOptionalToOne",      testSchemaWithOptionalToOne      ),
+    ( "testSchemaWithToOne",              testSchemaWithToOne              ),
+    ( "testSchemaWithInlineToOneInOrder", testSchemaWithInlineToOneInOrder ),
+    ( "testSchemaWithInlineToOneSourceBeforeTarget",
+       testSchemaWithInlineToOneSourceBeforeTarget ),
+    ( "testSchemaWithInlineToOneSourceNoExplicitTarget",
+       testSchemaWithInlineToOneSourceNoExplicitTarget ),
+    ( "testSchemaWithOptionalInlineToOneSourceNoExplicitTarget",
+       testSchemaWithOptionalInlineToOneSourceNoExplicitTarget ),
+    ( "testSchemaWithInlineArrayToMany", testSchemaWithInlineArrayToMany ),
+    ( "testSchemaWithToCycle",           testSchemaWithToCycle           ),
+    ( "testSchemaWithToOneInlineCycle",  testSchemaWithToOneInlineCycle  ),
+    ( "testSchemaWithOptionalToOneInlineCycle",
+       testSchemaWithOptionalToOneInlineCycle ),
+    ( "testSchemaWithToManyInlineCycle", testSchemaWithToManyInlineCycle ),
+    ( "testImplicitEntityByReference",   testImplicitEntityByReference   ),
+  ]
+
+  #else // Not Swift 4
+  
+  static var allTests = [(String, (CodableModelTests) -> () -> ())]()
+  
+  #endif // Not Swift 4
 }
 
 internal extension Model {

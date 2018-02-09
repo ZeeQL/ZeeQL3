@@ -280,4 +280,11 @@ class CodeEntityModelTests: XCTestCase {
     XCTAssertEqual(rsAJ.destinationName, "id")
   }
 
+  static var allTests = [
+    ( "testCodeSchema",                      testCodeSchema ),
+    ( "testCodeSchemaNativeTypes",           testCodeSchemaNativeTypes ),
+    ( "testCodeSchemaWithInheritance",       testCodeSchemaWithInheritance ),
+    ( "testCodeSchemaWithRelationships",     testCodeSchemaWithRelationships ),
+    ( "testCodeSchemaWithAutoRelationships", testCodeSchemaWithAutoRelationships ),
+  ]
 }

@@ -197,4 +197,13 @@ class SchemaSyncTests: XCTestCase {
     sf.synchronizeModels(old: dbModel, new: newModel)
     // TODO: sync!!!
   }
+
+  static var allTests = [
+    ( "testDropAddressStatement",    testDropAddressStatement ),
+    ( "testCreateAddressStatements", testCreateAddressStatements ),
+    ( "testCreateStatementOrdering", testCreateStatementOrdering ),
+    ( "testEmbeddedConstraint",      testEmbeddedConstraint ),
+    ( "testLateConstraint",          testLateConstraint ),
+    ( "testSimpleModelSync",         testSimpleModelSync ),
+  ]
 }
