@@ -1,7 +1,6 @@
 import XCTest
 
-var tests = [
+var tests : [ XCTestCaseEntry ] = [
 ]
 
 XCTMain(tests)
-
