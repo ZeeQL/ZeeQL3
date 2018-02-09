@@ -97,13 +97,23 @@ class CodableModelTests: XCTestCase {
     XCTAssertEqual(attrs.count, 4,
                    "attribute counts do not match: \(attrs)")
     
-    if let attr = entity[attribute: "isPerson"] {
-      XCTAssertEqual(attr.name,       "isPerson")
-      XCTAssertEqual(attr.columnName, "is_person")
-    }
-    else {
-      XCTFail("entity has no isPerson attribute: \(entity)")
-    }
+    #if swift(>=4.1) // we only get the external key in 4.1
+      if let attr = entity[attribute: "is_person"] {
+        XCTAssertEqual(attr.name, "is_person")
+        XCTAssertNil(attr.columnName)
+      }
+      else {
+        XCTFail("entity has no is_person attribute: \(entity)")
+      }
+    #else
+      if let attr = entity[attribute: "isPerson"] {
+        XCTAssertEqual(attr.name,       "isPerson")
+        XCTAssertEqual(attr.columnName, "is_person")
+      }
+      else {
+        XCTFail("entity has no isPerson attribute: \(entity)")
+      }
+    #endif
     if let attr = entity[attribute: "firstname"] {
       // should not have an external type
       XCTAssertEqual(attr.name, "firstname")
