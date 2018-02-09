@@ -726,6 +726,8 @@ class CodableModelTests: XCTestCase {
   }
   
   func testSchemaWithInlineArrayToMany() {
+    // Note: This works w/ Swift 4.0.3 (i.e. Xcode 9.2 on Travis), but loops
+    //       w/ Swift 4.0.0 (i.e. Xcode 9 on Travis)
     class Person : CodableObjectType {
       var addresses : [ Address ]
     }
