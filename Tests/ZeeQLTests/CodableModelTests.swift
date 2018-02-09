@@ -44,7 +44,8 @@ class CodableModelTests: XCTestCase {
     }
     
     let attrs = entity.attributes
-    XCTAssertEqual(attrs.count, 14)
+    XCTAssertEqual(attrs.count, 14,
+                   "attribute counts do not match: \(attrs)")
     
     let pkeys = entity.primaryKeyAttributeNames
     XCTAssertNotNil(pkeys)
@@ -93,7 +94,8 @@ class CodableModelTests: XCTestCase {
     model.dump()
 
     let attrs = entity.attributes
-    XCTAssertEqual(attrs.count, 4)
+    XCTAssertEqual(attrs.count, 4,
+                   "attribute counts do not match: \(attrs)")
     
     if let attr = entity[attribute: "isPerson"] {
       XCTAssertEqual(attr.name,       "isPerson")
@@ -139,7 +141,8 @@ class CodableModelTests: XCTestCase {
       return
     }
     addressEntity.dump()
-    XCTAssertEqual(addressEntity.attributes.count, 2)
+    XCTAssertEqual(addressEntity.attributes.count, 2,
+                   "attribute counts do not match: \(addressEntity.attributes)")
     
     let pkeys = addressEntity.primaryKeyAttributeNames
     XCTAssertNotNil(pkeys)
