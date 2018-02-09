@@ -140,7 +140,10 @@ open class AccessDataSource<Object: SwiftObject> : DataSource<Object> {
     if qb == nil && aux == nil { return fs }
     
     /* merge in aux qualifier */
-    if let aux = aux { fs.qualifier = and(aux, fs.qualifier) }
+    if let aux = aux {
+      let combined = and(aux, fs.qualifier)
+      fs.qualifier = combined
+    }
     
     /* apply bindings */
     if let qb = qb {
