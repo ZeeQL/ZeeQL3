@@ -36,3 +36,5 @@ script:
     - export PATH="$HOME/usr/bin:$PATH"
     - swift build -c release
     - swift build -c debug
+    - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then xcodebuild -scheme ZeeQL -sdk macosx test; fi
+    - if [[ "$TRAVIS_OS_NAME" == "Linux" ]]; then swift test; fi
