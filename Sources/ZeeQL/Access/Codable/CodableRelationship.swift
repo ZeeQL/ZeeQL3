@@ -16,11 +16,17 @@
   /**
    * A container to maintain a ToOne relationship to a different object.
    *
+   * This is usually used with the `ToOne` typealias, for example like this:
+   *
+   *     var owner : ToOne<Person>
+   *
    * NOTE: This is *NOT* a `Relationship` object. It is more like a `Fault`
    *       and necessary because `Codable` doesn't deal with recursive
    *       relationships.
    */
-  public struct ToOneRelationshipHolder<T: CodableObjectType> : Codable {
+  public struct ToOneRelationshipHolder<TargetType: CodableObjectType>
+                  : Codable
+  {
     // TODO: complete me
     // TBD: should this have a reference to the `Relationship` itself?
     
@@ -39,11 +45,17 @@
    * A container to maintain a ToMany relationship to a set of different
    * objects.
    *
+   * This is usually used with the `ToMany` typealias, for example like this:
+   *
+   *     var addresses : ToMany<Address>
+   *
    * NOTE: This is *NOT* a `Relationship` object. It is more like a `Fault`
-   *       and necessary because `Codable` doesn't deal with recursive
+   *       and necessary because `Codable` doesn't deal well with recursive
    *       relationships.
    */
-  public struct ToManyRelationshipHolder<T: CodableObjectType> : Codable {
+  public struct ToManyRelationshipHolder<TargetType: CodableObjectType>
+                  : Codable
+  {
     // TODO: like a toMany fault?
     // TBD: should this have a reference to the `Relationship` itself?
 
@@ -96,8 +108,8 @@
     static func reflectTargetType(on decoder: CodableModelDecoder) throws
                   -> CodableEntityType
     {
-      if !decoder.hasEntityForType(T.self) {
-        _ = try decoder.decode(T.self) // reflect on target entity
+      if !decoder.hasEntityForType(TargetType.self) {
+        _ = try decoder.decode(TargetType.self) // reflect on target entity
       }
       
       // TODO: we can pass in this type?!
@@ -105,7 +117,7 @@
         throw CodableModelDecoder.Error.missingEntity
       }
       
-      let entity = decoder.lookupOrCreateTypedEntity(T.self)
+      let entity = decoder.lookupOrCreateTypedEntity(TargetType.self)
       return entity
     }
     
@@ -118,7 +130,7 @@
       // Create a typed relationship, this works because the
       // `ToOneRelationshipHolder` has the static type of the target as the
       // generic argument.
-      let rs = CodableRelationship<T>(name: name, isToMany: false,
+      let rs = CodableRelationship<TargetType>(name: name, isToMany: false,
                                       isMandatory: !isOptional,
                                       source: source, destination: destination)
       return rs
@@ -130,8 +142,8 @@
     static func reflectTargetType(on decoder: CodableModelDecoder) throws
                   -> CodableEntityType
     {
-      if !decoder.hasEntityForType(T.self) {
-        _ = try decoder.decode(T.self) // reflect on target entity
+      if !decoder.hasEntityForType(TargetType.self) {
+        _ = try decoder.decode(TargetType.self) // reflect on target entity
       }
       
       // TODO: we can pass in this type?!
@@ -139,7 +151,7 @@
         fatalError("no entity?")
       }
       
-      let entity = decoder.lookupOrCreateTypedEntity(T.self)
+      let entity = decoder.lookupOrCreateTypedEntity(TargetType.self)
       return entity
     }
     
@@ -150,7 +162,7 @@
                   -> Relationship
     {
       // TBD: isOptional doesn't really matter here, right?
-      let rs = CodableRelationship<T>(name: name, isToMany: true,
+      let rs = CodableRelationship<TargetType>(name: name, isToMany: true,
                                       isMandatory: !isOptional, // TBD
                                       source: source, destination: destination)
       return rs
