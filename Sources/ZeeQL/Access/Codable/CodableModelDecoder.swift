@@ -18,7 +18,7 @@
   
   
   class CodableModelDecoder : Decoder {
-
+    
     var log : ZeeQLLogger { return globalZeeQLLogger }
 
     let maxDepth          = 10
@@ -270,8 +270,11 @@
       // TBD:  I think this is the place where we need to resolve the
       //       recursion
       
+      // create our nested decoder
+      let decoder = CodableModelEntityDecoder<T>(state: self)
+      
       // call into `Decodable.init(from:)`
-      let fakeObject = try type.init(from: self)
+      let fakeObject = try type.init(from: decoder)
       decodeTypeStack.removeLast()
       return fakeObject
     }
