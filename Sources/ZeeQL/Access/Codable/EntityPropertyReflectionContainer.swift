@@ -222,7 +222,8 @@
           let rs : Relationship =
             reflectedHolderType.makeRelationship(name: name,
                                    isOptional: nilKeys.contains(key),
-                                   source: entity, destination: targetEntity)
+                                   source: entity, sourceType: EntityType.self,
+                                   destination: targetEntity)
             // TODO: push extName for constraint?
           
           entity.relationships.append(rs)

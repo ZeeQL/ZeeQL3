@@ -70,7 +70,7 @@
     }
   }
   
-  open class CodableRelationship<Target: CodableObjectType>
+  open class CodableRelationship<TargetType : CodableObjectType>
                : ModelRelationship
   {
     private var _isMandatory : Bool
@@ -84,7 +84,11 @@
                  source: source, destination: destination)
     }
   }
-  
+  open class CodableRelationshipS<SourceType: Decodable, TargetType: CodableObjectType>
+               : CodableRelationship<TargetType>
+  {
+  }
+
   open class DecodableRelationship<Target: Decodable> : ModelRelationship {
     // We have this just for the mandatory overload. It is used for inline
     // relationships.
@@ -118,18 +122,20 @@
       return entity
     }
     
-    static func makeRelationship(name        : String,
+    static func makeRelationship<SourceType: Decodable>(
+                                 name        : String,
                                  isOptional  : Bool,
                                  source      : CodableEntityType,
+                                 sourceType  : SourceType.Type,
                                  destination : CodableEntityType)
                   -> Relationship
     {
       // Create a typed relationship, this works because the
       // `ToOneRelationshipHolder` has the static type of the target as the
       // generic argument.
-      let rs = CodableRelationship<TargetType>(name: name, isToMany: false,
-                                      isMandatory: !isOptional,
-                                      source: source, destination: destination)
+      let rs = CodableRelationshipS<SourceType, TargetType>(
+                 name: name, isToMany: false, isMandatory: !isOptional,
+                 source: source, destination: destination)
       return rs
     }
   }
@@ -149,16 +155,18 @@
       return entity
     }
     
-    static func makeRelationship(name        : String,
+    static func makeRelationship<SourceType: Decodable>(
+                                 name        : String,
                                  isOptional  : Bool,
                                  source      : CodableEntityType,
+                                 sourceType  : SourceType.Type,
                                  destination : CodableEntityType)
                   -> Relationship
     {
       // TBD: isOptional doesn't really matter here, right?
-      let rs = CodableRelationship<TargetType>(name: name, isToMany: true,
-                                      isMandatory: !isOptional, // TBD
-                                      source: source, destination: destination)
+      let rs = CodableRelationshipS<SourceType, TargetType>(
+                 name: name, isToMany: true, isMandatory: !isOptional, // TBD
+                 source: source, destination: destination)
       return rs
     }
   }
@@ -166,9 +174,11 @@
   internal protocol RelationshipHolderType {
     static func reflectTargetType(on decoder: CodableModelDecoder) throws
                   -> CodableEntityType
-    static func makeRelationship(name        : String,
+    static func makeRelationship<SourceType: Decodable>
+                                (name        : String,
                                  isOptional  : Bool,
                                  source      : CodableEntityType,
+                                 sourceType  : SourceType.Type,
                                  destination : CodableEntityType)
                   -> Relationship
   }
