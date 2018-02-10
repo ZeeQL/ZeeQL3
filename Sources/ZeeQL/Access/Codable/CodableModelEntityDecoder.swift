@@ -11,30 +11,112 @@
 
   extension CodableModelDecoder {
     
-    class CodableModelEntityDecoder<EntityType: Codable> : Decoder {
-      
+    final class CodableModelEntityDecoder<EntityType: Decodable>
+                  : Decoder, ReflectingDecoderType
+    {
       let state      : CodableModelDecoder
-      var codingPath : [ CodingKey ] { return state.codingPath }
+      var log        : ZeeQLLogger
+      
+      var codingPath : [ CodingKey ] {
+        set { state.codingPath = newValue }
+        get { return state.codingPath }
+      }
       var userInfo   : [ CodingUserInfoKey : Any ] { return state.userInfo }
       
       init(state: CodableModelDecoder) {
         self.state = state
+        self.log   = state.log
       }
       
       func container<Key>(keyedBy type: Key.Type) throws
              -> KeyedDecodingContainer<Key> where Key : CodingKey
       {
-        return try state.container(keyedBy: type)
+        guard let entity = state.currentEntity else {
+          log.error("\("  " * codingPath.count)DC[\(state.codingPathKK)]:",
+                    "get-keyed-container<\(type)>:",
+                    "missing entity")
+          throw Error.missingEntity
+        }
+        
+        // TODO: It would be good to detect additional cycles here. That is, only
+        //       create a single container and protect against multiple calls.
+        
+        log.trace("\("  " * codingPath.count)DC[\(state.codingPathKK)]:",
+                  "get-keyed-container<\(type)>")
+        return KeyedDecodingContainer(
+          EntityPropertyReflectionContainer<EntityType, Key>(
+                 decoder: self, entity: entity, codingPath: codingPath))
       }
       
       func unkeyedContainer() throws -> UnkeyedDecodingContainer {
-        return try state.unkeyedContainer()
+        guard let entity = state.currentEntity else {
+          log.error("\("  " * codingPath.count)DC[\(state.codingPathKK)]:",
+                    "get-unkeyed-container:", "missing entity")
+          throw Error.missingEntity
+        }
+        guard let key = codingPath.last else {
+          throw Error.missingKey
+        }
+        
+        log.trace("\("  " * codingPath.count)DC[\(state.codingPathKK)]:",
+                  "get-unkeyed-container",
+                  "\n  source:    ", entity,
+                  "\n  source-key:", key)
+        return EntityCollectionPropertyReflectionContainer(
+                 decoder: self, entity: entity, key: key,
+                 codingPath: codingPath)
       }
       
       func singleValueContainer() throws -> SingleValueDecodingContainer {
-        return try state.singleValueContainer()
+        log.trace("\("  " * codingPath.count)DC[\(state.codingPathKK)]:",
+                  "get-value-container")
+        return SingleContainer(decoder: self)
       }
       
+      // MARK: - SingleContainer
+      
+      private struct SingleContainer<EntityType: Decodable>
+                       : SingleValueDecodingContainer
+      {
+        let log          : ZeeQLLogger
+        let decoder      : CodableModelEntityDecoder<EntityType>
+        var codingPath   : [ CodingKey ] { return decoder.codingPath }
+        
+        init(decoder: CodableModelEntityDecoder<EntityType>) {
+          self.decoder = decoder
+          self.log     = decoder.log
+        }
+        
+        func decodeNil() -> Bool {
+          log.log("\("  " * codingPath.count)SC[\(codingPath)]:decodeNil")
+          return false
+        }
+        
+        func decode(_ type: Bool.Type)   throws -> Bool   { return true }
+        func decode(_ type: Int.Type)    throws -> Int    { return  42 }
+        func decode(_ type: Int8.Type)   throws -> Int8   { return  48 }
+        func decode(_ type: Int16.Type)  throws -> Int16  { return 416 }
+        func decode(_ type: Int32.Type)  throws -> Int32  { return 432 }
+        func decode(_ type: Int64.Type)  throws -> Int64  { return 464 }
+        func decode(_ type: UInt.Type)   throws -> UInt   { return 142 }
+        func decode(_ type: UInt8.Type)  throws -> UInt8  { return 148 }
+        func decode(_ type: UInt16.Type) throws -> UInt16 { return 116 }
+        func decode(_ type: UInt32.Type) throws -> UInt32 { return 132 }
+        func decode(_ type: UInt64.Type) throws -> UInt64 { return 164 }
+        
+        func decode(_ type: Float.Type)  throws -> Float  { return 42.42 }
+        func decode(_ type: Double.Type) throws -> Double { return 4242.42 }
+        
+        func decode(_ type: String.Type) throws -> String {
+          log.log("\("  " * codingPath.count)SC[\(codingPath)]:decodeString")
+          return "Dooo"
+        }
+        
+        func decode<T>(_ type: T.Type) throws -> T where T : Decodable {
+          throw Error.unsupportedSingleValue
+        }
+        
+      }
     }
   }
   

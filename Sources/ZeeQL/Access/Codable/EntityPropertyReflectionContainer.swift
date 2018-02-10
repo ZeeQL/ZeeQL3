@@ -46,15 +46,16 @@
      * - implicit relationships, like `let owner : Person?`
      * - explicit relationships, like `let owner : ToOne<Person>`
      */
-    final class EntityPropertyReflectionContainer<Key: CodingKey>:
-                     KeyedDecodingContainerProtocol
+    final class EntityPropertyReflectionContainer<EntityType : Decodable,
+                                                  Key        : CodingKey>
+                  : KeyedDecodingContainerProtocol
     {
       var codingPathKK : String {
         return codingPath.map { $0.stringValue }.joined(separator: ".")
       }
       
       let log        : ZeeQLLogger
-      let decoder    : CodableModelDecoder
+      let decoder    : CodableModelEntityDecoder<EntityType>
       let codingPath : [ CodingKey ]
       
       let entity     : CodableEntityType
@@ -75,8 +76,9 @@
       }
       private let nilKeys = NilKeySet()
       
-      init(decoder: CodableModelDecoder, entity: CodableEntityType,
-           codingPath: [ CodingKey ] = [])
+      init(decoder    : CodableModelEntityDecoder<EntityType>,
+           entity     : CodableEntityType,
+           codingPath : [ CodingKey ] = [])
       {
         self.decoder    = decoder
         self.codingPath = codingPath
@@ -110,8 +112,9 @@
              where T : Decodable
       {
         switch type {
-          case let rtype as RelationshipHolderType.Type:
-            return try decodeRelationshipHolder(type, rtype, forKey: key)
+          case is RelationshipHolderType.Type:
+            return try decodeRelationshipHolder(erasedHolderType: type,
+                                                forKey: key)
           
           case is CodableObjectType.Type:
             return try decodeCodableObject(type, forKey: key)
@@ -183,21 +186,32 @@
 
       /**
        * This decodes a `ToMany` or `ToOne` wrapper object.
+       *
+       * `erasedHolderType` and `reflectedHolderType` refer to the same
+       * `ToOne` or `ToMany` type.
+       * The first is just the typed erased version (generic `Decodable`),
+       * while the other was reflected on.
        */
       private
-      func decodeRelationshipHolder<T>(_ type: T.Type,
-                                       _ rtype: RelationshipHolderType.Type,
-                                       forKey key: Key) throws -> T
+      func decodeRelationshipHolder<T>(erasedHolderType : T.Type,
+                                       forKey key       : Key) throws -> T
              where T : Decodable
       {
+        guard let reflectedHolderType =
+                    erasedHolderType as? RelationshipHolderType.Type
+        else {
+          throw Error.unexpectedRelationshipHolderType
+        }
+        
         // e.g. ToManyRelationshipHolder<T>
         log.trace("\("  " * codingPath.count)",
                   "KC[\(entity.name):\(codingPathKK)]:",
                   "decode `RelationshipHolderType`:",
-                  key.stringValue, type)
+                  key.stringValue, erasedHolderType)
         
         // In here because we need the key for the relship name
-        let targetEntity = try rtype.reflectTargetType(on: decoder)
+        let targetEntity =
+              try reflectedHolderType.reflectTargetType(on: decoder.state)
           // make sure the target is there (no recursion because we unique,
           // but this may be different if we do free-form)
         
@@ -206,7 +220,7 @@
         
         if entity[relationship: name] == nil {
           let rs : Relationship =
-            rtype.makeRelationship(name: name,
+            reflectedHolderType.makeRelationship(name: name,
                                    isOptional: nilKeys.contains(key),
                                    source: entity, destination: targetEntity)
             // TODO: push extName for constraint?
@@ -221,7 +235,7 @@
         
         // The `To-x-RelationshipHolder` objects have special support for our
         // coder, so this is a little easier.
-        return try type.init(from: decoder) // we need some init
+        return try erasedHolderType.init(from: decoder) // we need some init
       }
       
       /**
@@ -245,7 +259,7 @@
           // TBD: The container is type erased wrt CodableObjectType. Can we
           //      still somehow ask the Type to make the relationship, like
           //      above?
-          let destEntity = decoder.existingEntityForType(type)
+          let destEntity = decoder.state.existingEntityForType(type)
           let rs = DecodableRelationship<T>(name: name, isToMany: false,
                                             isMandatory : !nilKeys.contains(key),
                                             source      : entity,
@@ -264,7 +278,7 @@
         
         // let the main decoder handle this
         decoder.codingPath.append(key)
-        let v = try decoder.decode(type)
+        let v = try decoder.state.decode(type) // TODO: replace?
         decoder.codingPath.removeLast()
         
         
@@ -275,14 +289,14 @@
            mrs.destinationEntity == nil
         {
           // we didn't have the entity yet
-          if let targetEntity = decoder.existingEntityForType(type) {
+          if let targetEntity = decoder.state.existingEntityForType(type) {
             mrs.destinationEntity = targetEntity
           }
           else {
             // register the relship for patching
             log.trace("did not decode target relationship, register:",
                       name, "in", entity)
-            decoder.registerForPendingEntity(type, relationship: mrs)
+            decoder.state.registerForPendingEntity(type, relationship: mrs)
           }
         }
       
@@ -455,13 +469,13 @@
      *     var addresses : [ Address ]
      *
      */
-    internal struct EntityCollectionPropertyReflectionContainer
+    internal struct EntityCollectionPropertyReflectionContainer<EntityType: Decodable>
                       : UnkeyedDecodingContainer
     {
       // This has to live in a different file due to the Xcode 9 compile error
       let log          : ZeeQLLogger
-      let decoder      : CodableModelDecoder
-      
+      let decoder      : CodableModelEntityDecoder<EntityType>
+
       let sourceEntity : CodableEntityType
       let sourceKey    : CodingKey
       
@@ -486,7 +500,7 @@
         }
       }
 
-      init(decoder    : CodableModelDecoder,
+      init(decoder    : CodableModelEntityDecoder<EntityType>,
            entity     : CodableEntityType,
            key        : CodingKey,
            codingPath : [ CodingKey ] = [])
@@ -530,7 +544,7 @@
           // TBD: The container is type erased wrt CodableObjectType. Can we
           //      still somehow ask the Type to make the relationship, like
           //      above?
-          let destEntity = decoder.existingEntityForType(type)
+          let destEntity = decoder.state.existingEntityForType(type)
           let rs = ModelRelationship(name        : name, isToMany: true,
                                      source      : sourceEntity,
                                      destination : destEntity)
@@ -563,7 +577,7 @@
 
         
         // let the main decoder decode the type
-        let v = try decoder.decode(type)
+        let v = try decoder.state.decode(type)
         
         guard v is CodableObjectType else { // superfluous, but be explicit
           throw Error.unsupportedValueType(type)
@@ -577,7 +591,7 @@
             didWorkOut = true
           }
           else {
-            guard let destEntity = decoder.existingEntityForType(type) else {
+            guard let destEntity = decoder.state.existingEntityForType(type) else {
               // In this case there has to be an entity, right?
               throw Error.missingEntity
             }

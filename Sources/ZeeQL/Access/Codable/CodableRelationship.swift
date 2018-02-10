@@ -25,12 +25,12 @@
     // TBD: should this have a reference to the `Relationship` itself?
     
     public init(from decoder: Decoder) throws {
-      if decoder is CodableModelDecoder {
+      if decoder is ReflectingDecoderType {
         // init is separate from reflection, we just need an empty object here
       }
       else {
         // TODO: later we need the actual decoder here (probably taking the EC)
-        fatalError("unexpected decoder")
+        fatalError("unexpected decoder: \(decoder)")
       }
     }
   }
@@ -48,7 +48,7 @@
     // TBD: should this have a reference to the `Relationship` itself?
 
     public init(from decoder: Decoder) throws {
-      if decoder is CodableModelDecoder {
+      if decoder is ReflectingDecoderType {
         // init is separate from reflection, we just need an empty object here
       }
       else {

@@ -16,8 +16,9 @@
     }
   }
   
+  protocol ReflectingDecoderType {}
   
-  class CodableModelDecoder : Decoder {
+  class CodableModelDecoder : ReflectingDecoderType {
     
     var log : ZeeQLLogger { return globalZeeQLLogger }
 
@@ -63,6 +64,9 @@
       /// This can happen for very complex models, or in cases where the types
       /// have a strong recursion.
       case reflectionDepthExceeded
+      
+      /// Should never happen, internal error
+      case unexpectedRelationshipHolderType
     }
     
     /// helper, remove this
@@ -313,103 +317,15 @@
       
       _ = lookupOrCreateUntypedEntity(type) // register
       
+      // create our nested decoder
+      let decoder = CodableModelEntityDecoder<T>(state: self)
+      
       // call into `Decodable.init(from:)`
-      let fakeObject = try type.init(from: self)
+      let fakeObject = try type.init(from: decoder)
       decodeTypeStack.removeLast()
       return fakeObject
     }
 
-    
-    // MARK: - Creating Containers
-    
-    public func container<Key>(keyedBy type: Key.Type) throws
-                -> KeyedDecodingContainer<Key>
-                where Key : CodingKey
-    {
-      guard let entity = currentEntity else {
-        log.error("\("  " * codingPath.count)DC[\(codingPathKK)]:",
-                  "get-keyed-container<\(type)>:",
-                  "missing entity")
-        throw Error.missingEntity
-      }
-      
-      // TODO: It would be good to detect additional cycles here. That is, only
-      //       create a single container and protect against multiple calls.
-      
-      log.trace("\("  " * codingPath.count)DC[\(codingPathKK)]:",
-                "get-keyed-container<\(type)>")
-      return KeyedDecodingContainer(EntityPropertyReflectionContainer<Key>(
-               decoder: self, entity: entity, codingPath: codingPath))
-    }
-    
-    public func unkeyedContainer() throws -> UnkeyedDecodingContainer {
-      guard let entity = currentEntity else {
-        log.error("\("  " * codingPath.count)DC[\(codingPathKK)]:",
-                  "get-unkeyed-container:", "missing entity")
-        throw Error.missingEntity
-      }
-      guard let key = codingPath.last else {
-        throw Error.missingKey
-      }
-      
-      log.trace("\("  " * codingPath.count)DC[\(codingPathKK)]:",
-                "get-unkeyed-container",
-                "\n  source:    ", entity,
-                "\n  source-key:", key)
-      return EntityCollectionPropertyReflectionContainer(
-               decoder: self, entity: entity, key: key,
-               codingPath: codingPath)
-    }
-    
-    public func singleValueContainer() throws -> SingleValueDecodingContainer {
-      log.trace("\("  " * codingPath.count)DC[\(codingPathKK)]:",
-                "get-value-container")
-      return SingleContainer(decoder: self)
-    }
-    
-    // MARK: - SingleContainer
-    
-    private struct SingleContainer: SingleValueDecodingContainer {
-      
-      let log          : ZeeQLLogger
-      let decoder      : CodableModelDecoder
-      let codingPath   : [ CodingKey ] = []
-      
-      init(decoder: CodableModelDecoder) {
-        self.decoder = decoder
-        self.log     = decoder.log
-      }
-
-      func decodeNil() -> Bool {
-        log.log("\("  " * codingPath.count)SC[\(codingPath)]:decodeNil")
-        return false
-      }
-      
-      func decode(_ type: Bool.Type)   throws -> Bool   { return true }
-      func decode(_ type: Int.Type)    throws -> Int    { return  42 }
-      func decode(_ type: Int8.Type)   throws -> Int8   { return  48 }
-      func decode(_ type: Int16.Type)  throws -> Int16  { return 416 }
-      func decode(_ type: Int32.Type)  throws -> Int32  { return 432 }
-      func decode(_ type: Int64.Type)  throws -> Int64  { return 464 }
-      func decode(_ type: UInt.Type)   throws -> UInt   { return 142 }
-      func decode(_ type: UInt8.Type)  throws -> UInt8  { return 148 }
-      func decode(_ type: UInt16.Type) throws -> UInt16 { return 116 }
-      func decode(_ type: UInt32.Type) throws -> UInt32 { return 132 }
-      func decode(_ type: UInt64.Type) throws -> UInt64 { return 164 }
-      
-      func decode(_ type: Float.Type)  throws -> Float  { return 42.42 }
-      func decode(_ type: Double.Type) throws -> Double { return 4242.42 }
-      
-      func decode(_ type: String.Type) throws -> String {
-        log.log("\("  " * codingPath.count)SC[\(codingPath)]:decodeString")
-        return "Dooo"
-      }
-      
-      func decode<T>(_ type: T.Type) throws -> T where T : Decodable {
-        throw Error.unsupportedSingleValue
-      }
-      
-    }
   }
   
   
