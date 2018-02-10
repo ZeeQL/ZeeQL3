@@ -1175,6 +1175,75 @@ class CodableModelTests: XCTestCase {
     }
   }
   
+  func testImplicitEntityExplicitToOne() {
+    // we also want to get a *typed* entity for 'Person', even though we do not
+    // add it to the decoder below
+    class Person : CodableObjectType {
+      var name  : String
+    }
+    class Address : CodableObjectType {
+      var name1 : String?
+      var owner : ToOne<Person>
+    }
+    
+    
+    let reflector = CodableModelDecoder()
+    XCTAssertNoThrow(try reflector.add(Address.self))
+      // this is NOT automagic with full typing info, because the keyed
+      // container is type erased!
+    let model = reflector.buildModel()
+
+    model.dump()
+    
+    guard let addressEntity = model[entity: "Address"] else {
+      XCTFail("model has no Address entity: \(model)")
+      return
+    }
+    guard let personEntity = model[entity: "Person"] else {
+      XCTFail("model has no Person entity: \(model)")
+      return
+    }
+    
+    XCTAssert(personEntity  is CodableEntity<Person>,
+              "person entity is not a CodableEntity<T>")
+    XCTAssert(addressEntity is CodableEntity<Address>,
+              "address entity is not a CodableEntity<T>")
+
+    XCTAssertEqual(personEntity .attributes.count, 2) // 1 generated
+    XCTAssertEqual(addressEntity.attributes.count, 3) // +2, generated!
+    
+    let pkeys = addressEntity.primaryKeyAttributeNames
+    XCTAssertNotNil(pkeys)
+    XCTAssertEqual(pkeys?.count ?? -1, 1)
+    XCTAssertEqual(pkeys?[0] ?? "", "id")
+    
+    XCTAssertEqual(addressEntity.relationships.count, 1)
+    
+    // relationship
+    XCTAssertNotNil(addressEntity[relationship: "owner"])
+    if let toOne = personEntity[relationship: "owner"] {
+      XCTAssertFalse(toOne.isToMany)
+      XCTAssertEqual(toOne.joins.count, 1)
+      if let join = toOne.joins.first {
+        XCTAssertEqual(join.sourceName,      "ownerId")
+        XCTAssertEqual(join.destinationName, "id")
+      }
+      XCTAssertEqual(toOne.entity.name,             "Address")
+      XCTAssertEqual(toOne.destinationEntity?.name, "Person")
+      XCTAssertTrue(toOne.isMandatory)
+    }
+    
+    // validate class properties
+    
+    XCTAssertEqual(addressEntity.classPropertyNames?.count ?? -1, 2)
+      // do not included generated, but does include relationships
+      // ... unless those are generated too ;-)
+    if let names = addressEntity.classPropertyNames {
+      XCTAssertTrue(names.contains("name1"))
+      XCTAssertTrue(names.contains("owner"))
+    }
+  }
+
   static var allTests = [
     ( "testBasicSchema",                  testBasicSchema                  ),
     ( "testSchemaWithKeyMappings",        testSchemaWithKeyMappings        ),
@@ -1200,6 +1269,7 @@ class CodableModelTests: XCTestCase {
        testSchemaWithOptionalToOneInlineCycle ),
     ( "testSchemaWithToManyInlineCycle",  testSchemaWithToManyInlineCycle  ),
     ( "testImplicitEntityByReference",    testImplicitEntityByReference    ),
+    ( "testImplicitEntityExplicitToOne",  testImplicitEntityExplicitToOne  ),
   ]
 
   #else // Not Swift 4

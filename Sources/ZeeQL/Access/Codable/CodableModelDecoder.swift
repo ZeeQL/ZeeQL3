@@ -174,12 +174,21 @@
      * to replace them later w/ typed ones, but if we don't get a static type,
      * we can also just use those.
      */
-    func lookupOrCreateUntypedEntity<T>(_ type: T.Type) -> CodableEntityType
+    func lookupOrCreateLowTypedEntity<T>(_ type: T.Type) -> CodableEntityType
            where T: Decodable
     {
       let name = entityNameFromType(type)
       if let entity = entities         [name] { return entity }
       if let entity = temporaryEntities[name] { return entity }
+      
+      // NOTE: THIS IS *NOT* actually untyped! T still has the full type
+      //       information!
+      // I think the only issue here is, that we cannot get from
+      // `T: Decodable` to `T: CodableObjectType` even though
+      // we do *know* that:
+      //   `if case is CodableObjectType.Type = type` is true
+      // but we need it for this:
+      //    CodableEntity<T: CodableObjectType>
       
       let newEntity = ModelEntity(name: name)
       newEntity.className = name
@@ -309,7 +318,8 @@
                 "DECODE entity-object: \(type)")
       decodeTypeStack.append(type)
       
-      let entity = lookupOrCreateUntypedEntity(type) // register
+      // Note: This is NOT actually untyped, see the function for details.
+      let entity = lookupOrCreateLowTypedEntity(type) // register
       
       // create our nested decoder
       let decoder = CodableModelEntityDecoder<T>(state: self, entity: entity)
