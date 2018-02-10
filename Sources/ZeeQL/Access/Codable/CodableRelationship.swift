@@ -105,19 +105,16 @@
   
   extension ToOneRelationshipHolder : RelationshipHolderType {
     
-    static func reflectTargetType(on decoder: CodableModelDecoder) throws
+    static func reflectTargetType(on state: CodableModelDecoder) throws
                   -> CodableEntityType
     {
-      if !decoder.hasEntityForType(TargetType.self) {
-        _ = try decoder.decode(TargetType.self) // reflect on target entity
+      // This can also get the source type from the
+      // EntityPropertyReflectionContainer.
+      if !state.hasEntityForType(TargetType.self) {
+        _ = try state.decode(TargetType.self) // reflect on target entity
       }
       
-      // TODO: we can pass in this type?!
-      guard let _ = decoder.currentEntity else {
-        throw CodableModelDecoder.Error.missingEntity
-      }
-      
-      let entity = decoder.lookupOrCreateTypedEntity(TargetType.self)
+      let entity = state.lookupOrCreateTypedEntity(TargetType.self)
       return entity
     }
     
@@ -139,19 +136,16 @@
   
   extension ToManyRelationshipHolder : RelationshipHolderType {
     
-    static func reflectTargetType(on decoder: CodableModelDecoder) throws
+    static func reflectTargetType(on state: CodableModelDecoder) throws
                   -> CodableEntityType
     {
-      if !decoder.hasEntityForType(TargetType.self) {
-        _ = try decoder.decode(TargetType.self) // reflect on target entity
+      // This can also get the source type from the
+      // EntityPropertyReflectionContainer.
+      if !state.hasEntityForType(TargetType.self) {
+        _ = try state.decode(TargetType.self) // reflect on target entity
       }
       
-      // TODO: we can pass in this type?!
-      guard let _ = decoder.currentEntity else {
-        fatalError("no entity?")
-      }
-      
-      let entity = decoder.lookupOrCreateTypedEntity(TargetType.self)
+      let entity = state.lookupOrCreateTypedEntity(TargetType.self)
       return entity
     }
     
