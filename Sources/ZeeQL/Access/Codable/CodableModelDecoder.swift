@@ -87,12 +87,6 @@
      */
     var decodeObjectMap = [ String : CodableObjectType ]()
     
-    var currentEntity : CodableEntityType? {
-      guard let type = decodeTypeStack.last else { return nil }
-      let name = entityNameFromType(type)
-      return entities[name] ?? temporaryEntities[name]
-    }
-    
     private func entityNameFromType(_ type: Any.Type) -> String {
       var s = "\(type)" // FIXME: "Address #1" - cut off
       if let r = s.range(of: " #") {
