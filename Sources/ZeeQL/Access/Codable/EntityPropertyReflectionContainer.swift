@@ -65,6 +65,7 @@
       let allKeys    : [ Key ] = []
         // can be queried by the type, we cannot answer that, we depend on the
         // type asking us for keys :-)
+        // TBD: is this used for decoding dictionaries?
       
       private class NilKeySet { // you wonder why, right? go figure! ;-)
         var set = Set<String>()
@@ -77,11 +78,10 @@
       private let nilKeys = NilKeySet()
       
       init(decoder    : CodableModelEntityDecoder<EntityType>,
-           entity     : CodableEntityType,
-           codingPath : [ CodingKey ] = [])
+           entity     : CodableEntityType)
       {
         self.decoder    = decoder
-        self.codingPath = codingPath
+        self.codingPath = decoder.codingPath
         self.log        = decoder.log
         self.entity     = entity
       }

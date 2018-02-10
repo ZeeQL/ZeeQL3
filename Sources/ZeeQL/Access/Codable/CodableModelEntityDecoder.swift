@@ -16,49 +16,43 @@
     {
       let state      : CodableModelDecoder
       var log        : ZeeQLLogger
+      let entity     : CodableEntityType
       
-      var codingPath : [ CodingKey ] {
-        set { state.codingPath = newValue }
-        get { return state.codingPath }
-      }
+      var codingPath : [ CodingKey ]
       var userInfo   : [ CodingUserInfoKey : Any ] { return state.userInfo }
-      
-      init(state: CodableModelDecoder) {
-        self.state = state
-        self.log   = state.log
+
+      /// helper, remove this
+      var codingPathKK : String {
+        return codingPath.map { $0.stringValue }.joined(separator: ".")
+      }
+
+      init(state: CodableModelDecoder, entity: CodableEntityType) {
+        self.state      = state
+        self.log        = state.log
+        self.entity     = entity
+        self.codingPath = state.codingPath
       }
       
       func container<Key>(keyedBy type: Key.Type) throws
              -> KeyedDecodingContainer<Key> where Key : CodingKey
       {
-        guard let entity = state.currentEntity else {
-          log.error("\("  " * codingPath.count)DC[\(state.codingPathKK)]:",
-                    "get-keyed-container<\(type)>:",
-                    "missing entity")
-          throw Error.missingEntity
-        }
+        // Technically the user can have multiple 'Key' types. But that
+        // doesn't (really) make sense for us.
         
         // TODO: It would be good to detect additional cycles here. That is, only
         //       create a single container and protect against multiple calls.
         
-        log.trace("\("  " * codingPath.count)DC[\(state.codingPathKK)]:",
+        log.trace("\("  " * codingPath.count)DC[\(codingPathKK)]:",
                   "get-keyed-container<\(type)>")
         return KeyedDecodingContainer(
           EntityPropertyReflectionContainer<EntityType, Key>(
-                 decoder: self, entity: entity, codingPath: codingPath))
+                                              decoder: self, entity: entity))
       }
       
       func unkeyedContainer() throws -> UnkeyedDecodingContainer {
-        guard let entity = state.currentEntity else {
-          log.error("\("  " * codingPath.count)DC[\(state.codingPathKK)]:",
-                    "get-unkeyed-container:", "missing entity")
-          throw Error.missingEntity
-        }
-        guard let key = codingPath.last else {
-          throw Error.missingKey
-        }
+        guard let key = codingPath.last else { throw Error.missingKey }
         
-        log.trace("\("  " * codingPath.count)DC[\(state.codingPathKK)]:",
+        log.trace("\("  " * codingPath.count)DC[\(codingPathKK)]:",
                   "get-unkeyed-container",
                   "\n  source:    ", entity,
                   "\n  source-key:", key)
@@ -68,7 +62,7 @@
       }
       
       func singleValueContainer() throws -> SingleValueDecodingContainer {
-        log.trace("\("  " * codingPath.count)DC[\(state.codingPathKK)]:",
+        log.trace("\("  " * codingPath.count)DC[\(codingPathKK)]:",
                   "get-value-container")
         return SingleContainer(decoder: self)
       }

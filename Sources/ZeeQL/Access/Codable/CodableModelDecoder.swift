@@ -269,13 +269,13 @@
       log.trace("\("  " * codingPath.count)DC[\(codingPathKK)]:",
                 "DECODE entity-object: \(type)")
       decodeTypeStack.append(type)
-      _ = lookupOrCreateTypedEntity(type) // register
+      let entity = lookupOrCreateTypedEntity(type) // register
       // Note: we may have processed that already!
       // TBD:  I think this is the place where we need to resolve the
       //       recursion
       
       // create our nested decoder
-      let decoder = CodableModelEntityDecoder<T>(state: self)
+      let decoder = CodableModelEntityDecoder<T>(state: self, entity: entity)
       
       // call into `Decodable.init(from:)`
       let fakeObject = try type.init(from: decoder)
@@ -315,10 +315,11 @@
                 "DECODE entity-object: \(type)")
       decodeTypeStack.append(type)
       
-      _ = lookupOrCreateUntypedEntity(type) // register
+      let entity = lookupOrCreateUntypedEntity(type) // register
       
       // create our nested decoder
-      let decoder = CodableModelEntityDecoder<T>(state: self)
+      let decoder = CodableModelEntityDecoder<T>(state: self, entity: entity)
+
       
       // call into `Decodable.init(from:)`
       let fakeObject = try type.init(from: decoder)

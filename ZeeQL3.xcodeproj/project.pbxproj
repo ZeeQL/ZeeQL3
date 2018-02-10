@@ -863,8 +863,8 @@
 				E840F74E1FE2C05B009DBF18 /* CodableRelationship.swift */,
 				E840F7511FE2C117009DBF18 /* CodableModelDecoder.swift */,
 				E8BF37FC202F2CBC0096064E /* CodableModelEntityDecoder.swift */,
-				E83491FC1FE817820091C3FD /* CodableModelPostProcessor.swift */,
 				E8C7C85D1FF401EF0016A597 /* EntityPropertyReflectionContainer.swift */,
+				E83491FC1FE817820091C3FD /* CodableModelPostProcessor.swift */,
 			);
 			path = Codable;
 			sourceTree = "<group>";

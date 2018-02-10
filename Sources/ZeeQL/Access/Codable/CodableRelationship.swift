@@ -100,6 +100,7 @@
         _ = try decoder.decode(T.self) // reflect on target entity
       }
       
+      // TODO: we can pass in this type?!
       guard let _ = decoder.currentEntity else {
         throw CodableModelDecoder.Error.missingEntity
       }
@@ -133,6 +134,7 @@
         _ = try decoder.decode(T.self) // reflect on target entity
       }
       
+      // TODO: we can pass in this type?!
       guard let _ = decoder.currentEntity else {
         fatalError("no entity?")
       }
