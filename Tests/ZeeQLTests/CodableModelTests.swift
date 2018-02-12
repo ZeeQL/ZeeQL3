@@ -1137,7 +1137,7 @@ class CodableModelTests: XCTestCase {
     // TODO: We eventually want this to fail and make a proper CodableEntity<T>
     //       :-)
     XCTAssert(personEntity is ModelEntity, "person entity is not a ModelEntity")
-    XCTAssert(addressEntity is CodableEntity<Address>,
+    XCTAssert(addressEntity is CodableObjectEntity<Address>,
               "address entity is not a CodableEntity<T>")
 
     XCTAssertEqual(personEntity .attributes.count, 2) // 1 generated
@@ -1204,9 +1204,9 @@ class CodableModelTests: XCTestCase {
       return
     }
     
-    XCTAssert(personEntity  is CodableEntity<Person>,
+    XCTAssert(personEntity  is CodableObjectEntity<Person>,
               "person entity is not a CodableEntity<T>")
-    XCTAssert(addressEntity is CodableEntity<Address>,
+    XCTAssert(addressEntity is CodableObjectEntity<Address>,
               "address entity is not a CodableEntity<T>")
 
     XCTAssertEqual(personEntity .attributes.count, 2) // 1 generated

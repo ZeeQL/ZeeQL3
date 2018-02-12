@@ -64,7 +64,7 @@
            -> ModelRelationship
   }
   extension CodableEntityBase : CodableEntityType {}
-  extension ModelEntity       : CodableEntityType {}
+  extension ModelEntity       : CodableEntityType {} // not necessary
   extension CodableEntityType {
     internal func makeToOneRelationship(name: String,
                                         from sourceEntity: CodableEntityType,
@@ -104,7 +104,7 @@
     }
   }
 
-  open class CodableEntity<T: CodableObjectType> : CodableEntityBase {
+  open class CodableObjectEntity<T: CodableObjectType> : CodableEntityBase {
     
     override open var objectType : DatabaseObject.Type? { return T.self }
     

@@ -97,7 +97,7 @@
     
     func hasEntityForType<T: CodableObjectType>(_ type: T.Type) -> Bool {
       let name = entityNameFromType(type)
-      return (entities[name] as? CodableEntity<T>) != nil
+      return (entities[name] as? CodableObjectEntity<T>) != nil
     }
     func hasEntityForType<T: Decodable>(_ type: T.Type) -> Bool {
       // weaker variant
@@ -146,13 +146,15 @@
       temporaryEntities.removeAll()
     }
     
-    func lookupOrCreateTypedEntity<T>(_ type: T.Type) -> CodableEntity<T>
+    func lookupOrCreateTypedEntity<T>(_ type: T.Type) -> CodableObjectEntity<T>
            where T: CodableObjectType
     {
       let name = entityNameFromType(type)
-      if let entity = entities[name] as? CodableEntity<T> { return entity }
+      if let entity = entities[name] as? CodableObjectEntity<T> {
+        return entity
+      }
       
-      let newEntity = CodableEntity<T>(name: name, className: name)
+      let newEntity = CodableObjectEntity<T>(name: name, className: name)
       entities[name] = newEntity
       
       if let tempEntity = temporaryEntities[name] {
