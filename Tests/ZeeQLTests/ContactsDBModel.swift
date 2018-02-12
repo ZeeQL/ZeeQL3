@@ -43,6 +43,28 @@ enum ContactsDBModel {
   
 }
 
+#if swift(>=4.0)
+enum PlainCodableContactsDBModel {
+  
+  static let model = try! Model.createFromTypes(Address.self, Person.self)
+  
+  class Address : Codable {
+    var street  : String?
+    var city    : String?
+    var state   : String?
+    var country : String?
+    var person  : Person
+  }
+  
+  class Person : Codable {
+    var firstname : String?
+    var lastname  : String
+    var addresses : [ Address ]
+  }
+  
+}
+#endif // Swift 4+
+
 enum RawContactsDBModel { // as a schema SQLite3 fetch returns it
 
   static let model = Model(entities: [ person, address ])

@@ -1292,6 +1292,14 @@ class CodableModelTests: XCTestCase {
     XCTAssertEqual(filledEntity.externalName, "address")
   }
   
+  func testPlainCodableContactsDBModel() {
+    let model = PlainCodableContactsDBModel.model
+    model.dump()
+    XCTAssertNotNil(model[entity: "Address"], "Model has no Address?")
+    XCTAssertNotNil(model[entity: "Person"],  "Model has no Person?")
+  }
+  
+  
   // MARK: - Non-ObjC Swift Support
 
   static var allTests = [
@@ -1321,6 +1329,7 @@ class CodableModelTests: XCTestCase {
     ( "testImplicitEntityByReference",    testImplicitEntityByReference    ),
     ( "testImplicitEntityExplicitToOne",  testImplicitEntityExplicitToOne  ),
     ( "testBasicPlainCodableSchema",      testBasicPlainCodableSchema      ),
+    ( "testPlainCodableContactsDBModel",  testPlainCodableContactsDBModel  ),
   ]
 
   #else // Not Swift 4
