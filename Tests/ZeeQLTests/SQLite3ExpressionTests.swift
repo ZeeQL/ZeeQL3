@@ -125,6 +125,9 @@ class SQLite3ExpressionTests: XCTestCase {
     XCTAssertEqual(bindings[0].value as? String, "Donald")
   }
 
+  
+  // MARK: - Non-ObjC Swift Support
+
   static var allTests = [
     ( "testRawDeleteSQLExpr", testRawDeleteSQLExpr ),
     ( "testUpdateSQLExpr",    testUpdateSQLExpr ),

@@ -69,6 +69,9 @@ class SQLite3AdaptorTests: XCTestCase {
     }
   }
 
+  
+  // MARK: - Non-ObjC Swift Support
+  
   static var allTests = [
     ( "testBindQuery", testBindQuery ),
   ]

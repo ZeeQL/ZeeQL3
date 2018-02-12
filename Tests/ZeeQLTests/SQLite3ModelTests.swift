@@ -97,6 +97,9 @@ class SQLite3ModelTests: XCTestCase {
     XCTAssert(!tag4.isEqual(to: tag6))
     XCTAssert(!tag1.isEqual(to: tag6))
   }
+  
+  
+  // MARK: - Non-ObjC Swift Support
 
   static var allTests = [
     ( "testDescribeDatabaseNames", testDescribeDatabaseNames ),

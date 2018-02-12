@@ -81,6 +81,9 @@ class SQLite3OGoAdaptorTests: AdaptorOGoTestCase {
     }
   }
 
+  
+  // MARK: - Non-ObjC Swift Support
+
   static var allTests = [
     // super
     ( "testRawAdaptorChannelQuery",  testRawAdaptorChannelQuery  ),

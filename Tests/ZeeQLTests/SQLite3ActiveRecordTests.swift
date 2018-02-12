@@ -87,6 +87,9 @@ class SQLite3ActiveRecordTests: AdapterActiveRecordTests {
     }
   }
 
+  
+  // MARK: - Non-ObjC Swift Support
+  
   static var allTests = [
     // super
     ( "testSnapshotting",    testSnapshotting    ),
