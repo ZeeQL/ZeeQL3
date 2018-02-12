@@ -26,10 +26,19 @@
     var codingPath        = [ CodingKey ]()
     var userInfo          = [ CodingUserInfoKey : Any]()
     
+    /// Entities we decoded for which we have a full
+    /// `CodableObjectEntity` (vs just a `DecodableEntity`).
     var entities          = [ String : CodableEntityType ]()
-    var temporaryEntities = [ String : ModelEntity       ]()
+    
+    /// Entities we decoded for which we do not have a full
+    /// `CodableObjectEntity`, but just a `DecodableEntity`.
+    var temporaryEntities = [ String : CodableEntityType ]()
+    
+    /// This is used when we first implicitly decoded an entity, but later
+    /// get a full `CodableObjectEntity`.
     var entitiesToMigrate = Set<String>()
 
+    
     // MARK: - API
     
     public func add<T: CodableObjectType>(_ type: T.Type) throws {
@@ -192,9 +201,7 @@
       // but we need it for this:
       //    CodableEntity<T: CodableObjectType>
       
-      let newEntity = ModelEntity(name: name)
-      newEntity.className = name
-      newEntity._classPropertyNames = [] // IMPORTANT! It says we maintain them.
+      let newEntity = DecodableEntity<T>(name: name, className: name)
       temporaryEntities[name] = newEntity
       log.trace("registering temporary entity:", newEntity)
       return newEntity

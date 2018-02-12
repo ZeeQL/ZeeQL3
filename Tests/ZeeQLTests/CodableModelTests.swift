@@ -1119,8 +1119,6 @@ class CodableModelTests: XCTestCase {
     
     let reflector = CodableModelDecoder()
     XCTAssertNoThrow(try reflector.add(Address.self))
-      // this is NOT automagic with full typing info, because the keyed
-      // container is type erased!
     let model = reflector.buildModel()
 
     model.dump()
@@ -1133,10 +1131,12 @@ class CodableModelTests: XCTestCase {
       XCTFail("model has no Person entity: \(model)")
       return
     }
-    
-    // TODO: We eventually want this to fail and make a proper CodableEntity<T>
-    //       :-)
-    XCTAssert(personEntity is ModelEntity, "person entity is not a ModelEntity")
+
+    // We'd like to have that as a `CodableObjectEntity<Person>`, but it looks
+    // like that is not yet possible in Swift
+    //   https://gist.github.com/helje5/a3c26a63092a57dd61f5a1dcb7c8580e
+    XCTAssert(personEntity  is DecodableEntity<Person>,
+              "person entity is not a DecodableEntity<T>")
     XCTAssert(addressEntity is CodableObjectEntity<Address>,
               "address entity is not a CodableEntity<T>")
 
