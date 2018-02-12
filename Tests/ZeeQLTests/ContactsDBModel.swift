@@ -46,7 +46,15 @@ enum ContactsDBModel {
 #if swift(>=4.0)
 enum PlainCodableContactsDBModel {
   
-  static let model = try! Model.createFromTypes(Address.self, Person.self)
+  static let model : Model = {
+    return (try? Model.createFromTypes(Address.self, Person.self))
+              ?? Model(entities: [], tag: nil)
+  }()
+  static let sqlModel : Model = {
+    let model = (try? Model.createFromTypes(Address.self, Person.self))
+                   ?? Model(entities: [])
+    return ModelSQLizer().sqlizeModel(model)
+  }()
   
   class Address : Codable {
     var street  : String?

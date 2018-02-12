@@ -24,6 +24,7 @@ let tests = [
   testCase(SQLite3ExpressionTests.allTests),
   testCase(SQLite3ModelTests.allTests),
   testCase(SQLite3OGoAdaptorTests.allTests),
+  testCase(SQLite3CodableTests.allTests),
 ]
 
 XCTMain(tests)
