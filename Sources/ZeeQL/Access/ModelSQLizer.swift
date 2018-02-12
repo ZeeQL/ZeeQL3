@@ -19,19 +19,31 @@
  */
 open class ModelSQLizer {
   
-  public struct Options {
+  public struct Options : CustomStringConvertible {
     var includeTableNameForPrimaryKeyID : String? = "id" // 'id' => 'person_id'
     var decamelizeAndInsertString : String? = "_"  // bankAddr => bank_addr
     var lowercaseTableNames                 = true // Person => person
     var lowercaseColumnNames                = true // ID => id
     
     public init() {}
+    
+    public var description: String {
+      var ms = "<SQLizerOpts:"
+      if let s = includeTableNameForPrimaryKeyID { ms += " tableid=\(s)"   }
+      if let s = decamelizeAndInsertString       { ms += " decamel='\(s)'" }
+      if lowercaseTableNames  { ms += "lower-tables"  }
+      if lowercaseColumnNames { ms += "lower-columns" }
+      ms += ">"
+      return ms
+    }
   }
   
   let log : ZeeQLLogger = globalZeeQLLogger
   
-  // TODO: IMPLEMENT ME :-)
+  public init() {
+  }
 
+  
   /**
    * Add external-names/column-names to model.
    *
