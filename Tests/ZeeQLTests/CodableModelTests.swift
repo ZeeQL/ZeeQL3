@@ -1326,6 +1326,67 @@ class CodableModelTests: XCTestCase {
     XCTAssertEqual(person .relationships.count, 1)
   }
   
+  func testPlainCodableContactsDBModelSQLize() {
+    let model    = PlainCodableContactsDBModel.model
+    let sqlModel = PlainCodableContactsDBModel.sqlModel
+    
+    print("Codable Model:")
+    model.dump()
+    print("SQL Model:")
+    sqlModel.dump()
+    print("---")
+
+    guard let address = model[entity: "Address"] else {
+      XCTAssertNotNil(model[entity: "Address"], "Model has no Address?")
+      return
+    }
+    guard let person = model[entity: "Person"] else {
+      XCTAssertNotNil(model[entity: "Person"],  "Model has no Person?")
+      return
+    }
+    guard let sqlAddress = sqlModel[entity: "Address"] else {
+      XCTAssertNotNil(model[entity: "Address"], "Model has no Address?")
+      return
+    }
+    guard let sqlPerson = sqlModel[entity: "Person"] else {
+      XCTAssertNotNil(model[entity: "Person"],  "Model has no Person?")
+      return
+    }
+    
+    // This is right, we are doing PlainCodableContactsDBModel,
+    // where the classes are NOT `CodableObjectType`!!!
+    typealias M = PlainCodableContactsDBModel
+    XCTAssert(address    is DecodableEntity<M.Address>)
+    XCTAssert(person     is DecodableEntity<M.Person>)
+    XCTAssert(sqlAddress is DecodableEntity<M.Address>)
+    XCTAssert(sqlPerson  is DecodableEntity<M.Person>)
+
+    XCTAssertEqual(address.classPropertyNames?.count ?? 0, 5,
+                   "unexpected class properties: " +
+                   "\(address.classPropertyNames ?? [])")
+    XCTAssertEqual(person.classPropertyNames?.count  ?? 0, 3,
+                   "unexpected class properties: " +
+                   "\(person.classPropertyNames ?? [])")
+    XCTAssertEqual(address.relationships.count, 1)
+    XCTAssertEqual(person .relationships.count, 1)
+
+    XCTAssertEqual(address   .classPropertyNames?.count ?? 0,
+                   sqlAddress.classPropertyNames?.count ?? 0,
+                   "unexpected class properties:" +
+                   " \(address.classPropertyNames ?? [])" +
+                   " vs \(sqlAddress.classPropertyNames ?? [])")
+    XCTAssertEqual(person   .classPropertyNames?.count  ?? 0,
+                   sqlPerson.classPropertyNames?.count  ?? 0,
+                   "unexpected class properties:" +
+                   " \(person.classPropertyNames ?? [])" +
+                   " vs \(sqlPerson.classPropertyNames ?? [])")
+
+    XCTAssertEqual(address.relationships.count, sqlAddress.relationships.count)
+    XCTAssertEqual(person .relationships.count, sqlPerson .relationships.count)
+    XCTAssertEqual(address.attributes   .count, sqlAddress.attributes   .count)
+    XCTAssertEqual(person .attributes   .count, sqlPerson .attributes   .count)
+  }
+  
   
   // MARK: - Non-ObjC Swift Support
 
@@ -1357,6 +1418,8 @@ class CodableModelTests: XCTestCase {
     ( "testImplicitEntityExplicitToOne",  testImplicitEntityExplicitToOne  ),
     ( "testBasicPlainCodableSchema",      testBasicPlainCodableSchema      ),
     ( "testPlainCodableContactsDBModel",  testPlainCodableContactsDBModel  ),
+    ( "testPlainCodableContactsDBModelSQLize",
+      testPlainCodableContactsDBModelSQLize )
   ]
 
   #else // Not Swift 4

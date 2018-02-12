@@ -52,6 +52,9 @@
     }
   }
   
+  extension CodableEntityBase : SQLizableEntity {
+  }
+  
   /**
    * This is what we patch as part of the decoding reflection.
    * And that also works with non-static ModelEntities.

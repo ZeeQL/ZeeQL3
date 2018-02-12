@@ -52,8 +52,8 @@ open class ModelSQLizer {
   open func sqlizeModel(_ model: Model, options: Options = Options()) -> Model {
     // TODO: only convert to Model on-demand
     for entity in model.entities {
-      let me : ModelEntity
-      if let se = entity as? ModelEntity {
+      let me : SQLizableEntity
+      if let se = entity as? SQLizableEntity {
         me = se
       }
       else {
@@ -87,8 +87,8 @@ open class ModelSQLizer {
       for attr in entity.attributes {
         guard attr.columnName == nil else { continue }
         
-        let ma : ModelAttribute
-        if let sa = attr as? ModelAttribute { ma = sa }
+        let ma : SQLizableAttribute
+        if let sa = attr as? SQLizableAttribute { ma = sa }
         else { ma = ModelAttribute(attribute: attr) }
         
         var columnName : String
@@ -125,6 +125,23 @@ open class ModelSQLizer {
   }
   
 }
+
+
+// MARK: - Supported Model Types
+
+public protocol SQLizableEntity : Entity {
+  var externalName : String? { get set }
+}
+public protocol SQLizableAttribute : Attribute {
+  var columnName   : String? { get set }
+}
+
+extension ModelEntity : SQLizableEntity {
+}
+extension ModelAttribute : SQLizableAttribute {
+}
+
+// MARK: - String Helpers
 
 extension String {
   
