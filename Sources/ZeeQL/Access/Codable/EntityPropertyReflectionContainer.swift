@@ -521,6 +521,12 @@
       
       // MARK: - Main decoding function
       
+      /**
+       * Decode the item type of the array, i.e. the `Address` in
+       * `[ Address ]`.
+       *
+       * We create our ToMany relationship in here.
+       */
       mutating func decode<T>(_ type: T.Type) throws -> T where T : Decodable {
         currentIndex += 1
         log.trace("decode index:", currentIndex, type,
@@ -546,11 +552,10 @@
           //      still somehow ask the Type to make the relationship, like
           //      above?
           let destEntity = decoder.state.existingEntityForType(type)
-          let rs = ModelRelationship(name        : name, isToMany: true,
-                                     source      : sourceEntity,
-                                     destination : destEntity)
-            // TODO: push extName for constraint?
-          
+          let rs = DecodableRelationship<T>(name: name, isToMany: true,
+                                            isMandatory: true, // TBD
+                                            source: sourceEntity,
+                                            destination: destEntity)
           rsToRemove = rs
           sourceEntity.relationships.append(rs)
           sourceEntity.addClassPropertyName(name)

@@ -70,28 +70,18 @@
     }
   }
   
-  open class CodableRelationship<TargetType : CodableObjectType>
-               : ModelRelationship
-  {
-    private var _isMandatory : Bool
-    override open var isMandatory : Bool { return _isMandatory }
-
-    init(name   : String, isToMany : Bool, isMandatory : Bool,
-         source : CodableEntityType, destination : Entity)
-    {
-      self._isMandatory = isMandatory
-      super.init(name: name, isToMany: isToMany,
-                 source: source, destination: destination)
-    }
-  }
-  open class CodableRelationshipS<SourceType: Decodable, TargetType: CodableObjectType>
-               : CodableRelationship<TargetType>
-  {
-  }
-
-  open class DecodableRelationship<Target: Decodable> : ModelRelationship {
-    // We have this just for the mandatory overload. It is used for inline
-    // relationships.
+  /**
+   * For more info on relationships, check the `ModelRelationship` superclass.
+   *
+   * The specific `DecodableRelationship` is used for implicit inline
+   * relationships, like those:
+   *
+   *     class Property : Codable {
+   *       var owner : Person // <= becomes a DecodableRelationship
+   *     }
+   */
+  open class DecodableRelationship<TargetType : Decodable> : ModelRelationship {
+    
     private var _isMandatory : Bool
     override open var isMandatory : Bool { return _isMandatory }
 
@@ -102,6 +92,52 @@
       super.init(name: name, isToMany: isToMany,
                  source: source, destination: destination)
     }
+  }
+  
+  /**
+   * For more info on relationships, check the `ModelRelationship` superclass.
+   *
+   * The specific `CodableObjectRelationship` is used when the
+   * `CodableModelPostProcessor` has to create an inverse to-One relationship
+   * for an implicit to-many relationship.
+   *
+   * For example:
+   *
+   *     class Person    : CodableObjectType {
+   *       var addresses : [ Address ]
+   *     }
+   *     class Address   : CodableObjectType {
+   *       var name1     : String?
+   *
+   *       // we create an implicit 'personId' attribute (the required foreign
+   *       // key!) and a `person` relationship of type
+   *       // `CodableObjectRelationship<Person>`.
+   *     }
+   *
+   */
+  open class CodableObjectRelationship<TargetType : CodableObjectType>
+               : DecodableRelationship<TargetType>
+  {
+  }
+  
+  /**
+   * For more info on relationships, check the `ModelRelationship` superclass.
+   *
+   * The specific `CodableObjectRelationshipS` is used when we decode explicit
+   * relationships, like so:
+   *
+   *     class Property : Codable {
+   *       var owner : ToOne<Person>
+               // ^ becomes a CodableObjectRelationshipS<Property, Person>
+   *     }
+   *
+   * When we decode those, we know both, the static source type and the static
+   * target type.
+   */
+  open class CodableObjectRelationshipS<SourceType : Decodable,
+                                        TargetType : CodableObjectType>
+               : CodableObjectRelationship<TargetType>
+  {
   }
   
   
@@ -133,7 +169,7 @@
       // Create a typed relationship, this works because the
       // `ToOneRelationshipHolder` has the static type of the target as the
       // generic argument.
-      let rs = CodableRelationshipS<SourceType, TargetType>(
+      let rs = CodableObjectRelationshipS<SourceType, TargetType>(
                  name: name, isToMany: false, isMandatory: !isOptional,
                  source: source, destination: destination)
       return rs
@@ -164,7 +200,7 @@
                   -> Relationship
     {
       // TBD: isOptional doesn't really matter here, right?
-      let rs = CodableRelationshipS<SourceType, TargetType>(
+      let rs = CodableObjectRelationshipS<SourceType, TargetType>(
                  name: name, isToMany: true, isMandatory: !isOptional, // TBD
                  source: source, destination: destination)
       return rs
