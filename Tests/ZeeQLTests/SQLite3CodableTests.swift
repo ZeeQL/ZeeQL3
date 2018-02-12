@@ -30,7 +30,6 @@ class SQLite3CodableTests: XCTestCase {
   
 
   func testRawAdaptorQuery() throws {
-    #if false // TODO: does not work yet
     guard let entity = PlainCodableContactsDBModel.sqlModel[entity: "Person"]
      else
     {
@@ -57,12 +56,11 @@ class SQLite3CodableTests: XCTestCase {
       
       print("records:", records)
       
-      //XCTAssertEqual(records.count, 1, "there should be one template record")
+      XCTAssertEqual(records.count, 3)      
     }
     catch {
       XCTFail("Unexpected error: \(error)")
     }
-    #endif
   }
 
 
@@ -78,3 +76,4 @@ class SQLite3CodableTests: XCTestCase {
   
   #endif // Not Swift 4
 }
+
