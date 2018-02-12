@@ -174,7 +174,19 @@ class CodableModelTests: XCTestCase {
     class Address : CodableObjectType {
       var name1 : String?
     }
-    let reflector = CodableModelDecoder()
+    // sqlize adds the primary key
+    /* w/o SQLize vs w/ SQLize
+     entity: <CodableObjectEntity<Address #1> Address Address #1 pkey=id #attrs=2>
+       props: name1
+       attr: <ModelAttribute id Int>
+       attr: <CodeAttribute<Optional<String>> name1 String?>
+     entity: <ModelEntity pattern Address[address] 'Address' pkey=id #attrs=2>
+       props: id,name1
+       attr: <ModelAttribute id Int>
+       attr: <ModelAttribute name1 String?>
+     */
+    let reflector = CodableModelDecoder(options:
+                      CodableModelDecoder.Options(sqlize: false))
     XCTAssertNoThrow(try reflector.add(Address.self))
     let model = reflector.buildModel()
     

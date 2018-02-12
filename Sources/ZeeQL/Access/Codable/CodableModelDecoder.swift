@@ -37,7 +37,23 @@
        */
       var enforceCodableObjectType = false
       
-      public init() {}
+      /**
+       * If non-nil, we will SQLize the external names of the model using the
+       * `ModelSQLizer`.
+       *
+       * What it does:
+       * - it lowercases entity names, a `Person` entity becomes the `person`
+       *   table
+       * - it expands primary keys, a `Person.id` becomes `person.person_id`
+       * - it de-camel-cases attribute names: `bankAddress` becomes
+       *   `bank_address`
+       * and more ;-)
+       */
+      var sqlize : ModelSQLizer.Options?
+      
+      public init(sqlize: Bool = false) {
+        self.sqlize = sqlize ? ModelSQLizer.Options() : nil
+      }
     }
     let options :  Options
     
@@ -58,10 +74,21 @@
     }
 
     public func buildModel() -> Model {
+      log.trace("build model ...")
       migrateTypedEntities()
       processPendingEntities()
-      return CodableModelPostProcessor(entities: Array(entities.values))
-               .buildModel()
+      
+      log.trace("post process entities and create model ...")
+      var model = CodableModelPostProcessor(entities: Array(entities.values))
+                    .buildModel()
+      
+      if let sqlize = options.sqlize {
+        // FIXME: this needs to SQLize in-place!
+        log.trace("SQLize model ...", sqlize)
+        model = ModelSQLizer().sqlizeModel(model, options: sqlize)
+      }
+      log.trace("created model:", model)
+      return model
     }
     
     enum Error : Swift.Error {
@@ -150,8 +177,7 @@
       log.trace("migrate temporary entities:", names.joined(separator: ","))
       for entityName in names {
         guard let old = temporaryEntities[entityName],
-              let new = entities[entityName]
-         else { continue }
+              let new = entities         [entityName] else { continue }
         
         log.trace("  migrate temporary entity:",
                   "\n  old:", old,
@@ -170,11 +196,13 @@
       }
       assert(entitiesToMigrate.isEmpty)
       
-      log.log("left w/ temporary model entities:", temporaryEntities)
-
-      for (name, entity) in temporaryEntities {
-        guard entities[name] == nil else { continue }
-        entities[name] = entity
+      if !temporaryEntities.isEmpty {
+        log.log("left w/ temporary model entities:", temporaryEntities)
+        
+        for (name, entity) in temporaryEntities {
+          guard entities[name] == nil else { continue }
+          entities[name] = entity
+        }
       }
       temporaryEntities.removeAll()
     }
