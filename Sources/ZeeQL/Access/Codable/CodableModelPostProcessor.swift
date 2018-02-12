@@ -264,11 +264,13 @@
       
       // FIXME: check whether the RS is already setup (has joins etc)
       
-      // first, check whether the target
-      
-      let reverseName = srcEntity.name.decapitalized
-      if let rev = destEntity[relationship: reverseName], !rev.isToMany,
-         rev.destinationEntity === srcEntity
+      // first check whether the target has a ToOne which matches the the source
+      // in lowercase (e.g. the Address entity has a `var person:ToOne<Person>`.
+
+      let reverseName = srcEntity.name.decapitalized // e.g. 'person'
+      if let rev = destEntity[relationship: reverseName], // we have that RS
+         !rev.isToMany,                                   // it is a toOne
+         rev.destinationEntity === srcEntity              // entity matches
       {
         log.trace("  found reverse:", rev)
         // NOTE: this should have keys setup due to the toOne being processed
@@ -276,9 +278,8 @@
         guard !rev.joins.isEmpty else {
           throw Error.reverseRelationshipMissesJoins(relationship: rev)
         }
-
-        // TODO
-        throw Error.notImplemented
+        
+        return // Nothing to do, right?!
       }
       else {
         log.trace("  no reverse named:", reverseName)
