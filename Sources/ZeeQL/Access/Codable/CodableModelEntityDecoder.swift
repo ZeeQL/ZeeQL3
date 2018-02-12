@@ -9,8 +9,14 @@
 #if swift(>=4.0)
   import Foundation
 
+  /**
+   * Just a helper type to check whether a decoder is a
+   * `CodableModelEntityDecoder`.
+   */
+  internal protocol ReflectingDecoderType {}
+  
   extension CodableModelDecoder {
-    
+
     final class CodableModelEntityDecoder<EntityType: Decodable>
                   : Decoder, ReflectingDecoderType
     {

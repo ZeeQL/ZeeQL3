@@ -15,10 +15,8 @@
       throw KeyValueCoding.Error.CannotTakeValueForKey(k)
     }
   }
-  
-  protocol ReflectingDecoderType {}
-  
-  class CodableModelDecoder : ReflectingDecoderType {
+    
+  class CodableModelDecoder {
     
     var log : ZeeQLLogger { return globalZeeQLLogger }
 
