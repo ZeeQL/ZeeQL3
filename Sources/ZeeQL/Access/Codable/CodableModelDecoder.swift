@@ -17,6 +17,10 @@
   }
     
   class CodableModelDecoder {
+    // TODO: Rename this class to avoid confusion (it is not a Codable
+    //       decoder)
+    //       Maybe make this a private CodableReflectionState, and add another
+    //       public API to actually build the model.
     
     var log : ZeeQLLogger { return globalZeeQLLogger }
 
