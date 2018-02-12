@@ -6,6 +6,7 @@
 //  Copyright © 2018 ZeeZide GmbH. All rights reserved.
 //
 
+#if swift(>=4.0)
 public extension Model {
   // This has all those dupes, because we want to capture the full static type.
   // It is a little stupid, but hey, type safety!
@@ -393,3 +394,5 @@ public extension Model {
     return builder.buildModel()
   }
 }
+
+#endif /* swift(>=4.0) */
