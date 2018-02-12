@@ -47,8 +47,13 @@ enum ContactsDBModel {
 enum PlainCodableContactsDBModel {
   
   static let model : Model = {
-    return (try? Model.createFromTypes(Address.self, Person.self))
-              ?? Model(entities: [], tag: nil)
+    do {
+      return try Model.createFromTypes(Address.self, Person.self)
+    }
+    catch {
+      print("COULD NOT CREATE TEST MODEL:", error)
+      return Model(entities: [], tag: nil)
+    }
   }()
   static let sqlModel : Model = {
     let model = (try? Model.createFromTypes(Address.self, Person.self))

@@ -56,7 +56,10 @@
       }
       
       func unkeyedContainer() throws -> UnkeyedDecodingContainer {
-        guard let key = codingPath.last else { throw Error.missingKey }
+        guard let key = codingPath.last else {
+          log.error("missing coding key:", codingPath, self)
+          throw Error.missingKey
+        }
         
         log.trace("\("  " * codingPath.count)DC[\(codingPathKK)]:",
                   "get-unkeyed-container",

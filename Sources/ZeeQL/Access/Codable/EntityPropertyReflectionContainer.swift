@@ -117,13 +117,40 @@
                                                 forKey: key)
           
           case is CodableObjectType.Type:
-            return try decodeCodableObject(type, forKey: key)
-          
+            return try decodeDecodableObject(type, forKey: key)
+
+          case is ImplicitToManyRelationshipHolder.Type:
+            return try decodeImplicitRelationshipHolder(type, forKey: key)
+
           // TODO: support all combinations :-)
           // TBD: Can we do Array<AttributeValue>?
           //      Maybe via conditional conformance in 4.1?
           case is Array<Int>.Type:
-            return try decodeBaseTypeArray(type, Int.self, forKey: key)
+            return try decodeBaseTypeArray(type, Int.self,    forKey: key)
+          case is Array<Int8>.Type:
+            return try decodeBaseTypeArray(type, Int8.self,   forKey: key)
+          case is Array<Int16>.Type:
+            return try decodeBaseTypeArray(type, Int16.self,  forKey: key)
+          case is Array<Int32>.Type:
+            return try decodeBaseTypeArray(type, Int32.self,  forKey: key)
+          case is Array<Int64>.Type:
+            return try decodeBaseTypeArray(type, Int64.self,  forKey: key)
+          case is Array<UInt>.Type:
+            return try decodeBaseTypeArray(type, UInt.self,   forKey: key)
+          case is Array<UInt8>.Type:
+            return try decodeBaseTypeArray(type, UInt8.self,  forKey: key)
+          case is Array<UInt16>.Type:
+            return try decodeBaseTypeArray(type, UInt16.self, forKey: key)
+          case is Array<UInt32>.Type:
+            return try decodeBaseTypeArray(type, UInt32.self, forKey: key)
+          case is Array<UInt64>.Type:
+            return try decodeBaseTypeArray(type, UInt64.self, forKey: key)
+          case is Array<Float>.Type:
+            return try decodeBaseTypeArray(type, Float.self,  forKey: key)
+          case is Array<Double>.Type:
+            return try decodeBaseTypeArray(type, Double.self, forKey: key)
+          case is Array<Bool>.Type:
+            return try decodeBaseTypeArray(type, Bool.self,   forKey: key)
           
           default:
             // Note: This does not fly!:
@@ -135,13 +162,56 @@
             return try decodeOtherType(type, forKey: key)
         }
       }
-      
+
+      private
+      func decodeImplicitRelationshipHolder<T>(_ type: T.Type, forKey key: Key)
+             throws -> T
+             where T : Decodable
+      {
+        /*
+         This is tricky. We need to communicate to the decoder, that we are
+         decoding a property.
+         What do we want? We want to collect relationship types. I.e. this:
+         var addresses : [ Address ]
+         we want to add to the `entity` of this containers entity, the
+         class property `addresses` as a ToMany<Address>.
+         So how do we do this?
+         We somehow need to track, that we decoded an [ CodingType ]?
+         */
+        
+        decoder.codingPath.append(key) // this is the key we are going to use
+        //let v = try decoder.decode(type)
+        let v = try type.init(from: decoder) // init the ('array' expected)
+        decoder.codingPath.removeLast()
+        
+        #if false
+          if let cota = v as? Array<CodableObjectType> {
+            // ^^ we can't dispatch on the static type. But we *can* dispatch on
+            //    the dynamic type :-)
+            // Maybe we can handle this earlier, but at least in here, we know
+            // the proper type.
+            // => We should probably handle it earlier.
+            print("TODO: it is an array of CodableObjectType!")
+          }
+        #endif
+        
+        return v
+      }
+
       func decodeOtherType<T>(_ type: T.Type, forKey key: Key) throws -> T
              where T : Decodable
       {
         // effectively this is: `decodeCodableObjectArray<T>`
         log.trace("out of band type:", type, "for key:", key)
         
+        assert(!(type is ImplicitToManyRelationshipHolder.Type))
+        
+        if !decoder.state.options.enforceCodableObjectType {
+          // We allow arbitrary Decodable objects!
+          // FIXME: this doesn't work right for arrays
+          return try decodeDecodableObject(type, forKey: key)
+        }
+
         /*
          This is tricky. We need to communicate to the decoder, that we are
          decoding a property.
@@ -248,8 +318,8 @@
        *
        * It calls into `decoder.decode()` to do its job.
        */
-      private func decodeCodableObject<T>(_ type: T.Type,
-                                          forKey key: Key) throws -> T
+      private func decodeDecodableObject<T>(_ type: T.Type,
+                                            forKey key: Key) throws -> T
              where T : Decodable
       {
         log.trace("\("  " * codingPath.count)KC[\(entity.name):",
@@ -696,4 +766,7 @@
       }
     }
   }
+  
+  public protocol ImplicitToManyRelationshipHolder {}
+  extension Array : ImplicitToManyRelationshipHolder {}
 #endif // swift(>=4.0)

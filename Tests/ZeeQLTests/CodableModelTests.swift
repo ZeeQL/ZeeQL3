@@ -1307,8 +1307,23 @@ class CodableModelTests: XCTestCase {
   func testPlainCodableContactsDBModel() {
     let model = PlainCodableContactsDBModel.model
     model.dump()
-    XCTAssertNotNil(model[entity: "Address"], "Model has no Address?")
-    XCTAssertNotNil(model[entity: "Person"],  "Model has no Person?")
+    
+    guard let address = model[entity: "Address"] else {
+      XCTAssertNotNil(model[entity: "Address"], "Model has no Address?")
+      return
+    }
+    guard let person = model[entity: "Person"] else {
+      XCTAssertNotNil(model[entity: "Person"],  "Model has no Person?")
+      return
+    }
+    
+    XCTAssertEqual(address.classPropertyNames?.count ?? 0, 5,
+                   "unexpected class properties: \(address.classPropertyNames ?? [])")
+    XCTAssertEqual(person.classPropertyNames?.count  ?? 0, 3,
+                   "unexpected class properties: \(person.classPropertyNames ?? [])")
+
+    XCTAssertEqual(address.relationships.count, 1)
+    XCTAssertEqual(person .relationships.count, 1)
   }
   
   
