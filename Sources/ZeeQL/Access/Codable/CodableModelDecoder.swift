@@ -15,7 +15,7 @@
       throw KeyValueCoding.Error.CannotTakeValueForKey(k)
     }
   }
-    
+  
   class CodableModelDecoder {
     // TODO: Rename this class to avoid confusion (it is not a Codable
     //       decoder)
@@ -23,38 +23,38 @@
     //       public API to actually build the model.
     
     var log : ZeeQLLogger { return globalZeeQLLogger }
+    
+    struct Options {
+      /// Using Codable you can create infinitely recursive models. This is the
+      /// depth until we give up trying to decode.
+      /// TBD: proper cycle detection
+      var maxDepth                 = 10
+      
+      /**
+       * Arbitrary `Codable` types can be decoded. But sometimes, you want to
+       * limit the type to be a `CodableObjectType`
+       */
+      var enforceCodableObjectType = false
+    }
+    let options    :  Options
+    
+    init(options: Options = Options()) {
+      self.options = options
+    }
 
-    let maxDepth          = 10
-    var codingPath        = [ CodingKey ]()
-    var userInfo          = [ CodingUserInfoKey : Any]()
-    
-    /// Entities we decoded for which we have a full
-    /// `CodableObjectEntity` (vs just a `DecodableEntity`).
-    var entities          = [ String : CodableEntityType ]()
-    
-    /// Entities we decoded for which we do not have a full
-    /// `CodableObjectEntity`, but just a `DecodableEntity`.
-    var temporaryEntities = [ String : CodableEntityType ]()
-    
-    /// This is used when we first implicitly decoded an entity, but later
-    /// get a full `CodableObjectEntity`.
-    var entitiesToMigrate = Set<String>()
 
-    
     // MARK: - API
     
     public func add<T: CodableObjectType>(_ type: T.Type) throws {
       codingPath.removeAll()
       _ = try decode(type)
     }
-    
-    // FIXME: drop this, legacy?
-    func reflect<T: CodableObjectType>(on type: T.Type) throws -> Model {
-      try add(type)
-      return buildModel()
+    public func add<T: Decodable>(_ type: T.Type) throws {
+      codingPath.removeAll()
+      _ = try decode(type)
     }
-    
-    func buildModel() -> Model {
+
+    public func buildModel() -> Model {
       migrateTypedEntities()
       processPendingEntities()
       return CodableModelPostProcessor(entities: Array(entities.values))
@@ -85,6 +85,25 @@
       return codingPath.map { $0.stringValue }.joined(separator: ".")
     }
     
+    
+    // MARK: - Processing State
+    
+    var codingPath = [ CodingKey ]()
+    var userInfo   = [ CodingUserInfoKey : Any]()
+    
+    /// Entities we decoded for which we have a full
+    /// `CodableObjectEntity` (vs just a `DecodableEntity`).
+    var entities   = [ String : CodableEntityType ]()
+    
+    /// Entities we decoded for which we do not have a full
+    /// `CodableObjectEntity`, but just a `DecodableEntity`.
+    var temporaryEntities = [ String : CodableEntityType ]()
+    
+    /// This is used when we first implicitly decoded an entity, but later
+    /// get a full `CodableObjectEntity`.
+    var entitiesToMigrate = Set<String>()
+    
+
     
     // MARK: - Decoder
     
@@ -273,7 +292,7 @@
         return fakeObject // already processed this
       }
       
-      guard decodeTypeStack.count <= maxDepth else {
+      guard decodeTypeStack.count <= options.maxDepth else {
         // Protect against cycles. But can't we do this in a more clever way?
         // TBD: e.g. just by looking whether the type is already decoded in the
         //      stack?
@@ -310,11 +329,13 @@
       // This is still required for the type-erased containers. This is not
       // sufficient: decode<T: CodableObjectType>
       
-      guard case is CodableObjectType.Type = type else {
-        throw Error.unsupportedValueType(type)
+      if options.enforceCodableObjectType {
+        guard case is CodableObjectType.Type = type else {
+          throw Error.unsupportedValueType(type)
+        }
       }
       
-      guard decodeTypeStack.count <= maxDepth else {
+      guard decodeTypeStack.count <= options.maxDepth else {
         // Protect against cycles. But can't we do this in a more clever way?
         throw Error.reflectionDepthExceeded
       }

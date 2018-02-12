@@ -9,6 +9,13 @@
 import XCTest
 @testable import ZeeQL
 
+fileprivate extension CodableModelDecoder {
+  func reflect<T: CodableObjectType>(on type: T.Type) throws -> Model {
+    try add(type)
+    return buildModel()
+  }
+}
+
 class CodableModelTests: XCTestCase {
   #if swift(>=4.0)
   
@@ -1243,6 +1250,56 @@ class CodableModelTests: XCTestCase {
       XCTAssertTrue(names.contains("owner"))
     }
   }
+  
+  func testBasicPlainCodableSchema() {
+    
+    class Address : Codable {
+      var objectVersion : Int = 0
+      var id            : Int
+      var dbStatus      : String
+      var companyId     : Int
+      var type          : String
+      
+      var name1         : String?
+      var name2         : String?
+      var name3         : String?
+      var street        : String?
+      var zip           : String?
+      var zipcity       : String?
+      var country       : String?
+      var state         : String?
+      var district      : String?
+    }
+    
+    let reflector = CodableModelDecoder()
+    XCTAssertNoThrow(try reflector.add(Address.self))
+    let model = reflector.buildModel()
+    model.dump()
+    
+    guard let entity = model[entity: "Address"] else {
+      XCTFail("model has no Address entity: \(model)")
+      return
+    }
+    
+    let attrs = entity.attributes
+    XCTAssertEqual(attrs.count, 14,
+                   "attribute counts do not match: \(attrs)")
+    
+    let pkeys = entity.primaryKeyAttributeNames
+    XCTAssertNotNil(pkeys)
+    XCTAssertEqual(pkeys?.count ?? -1, 1)
+    XCTAssertEqual(pkeys?[0] ?? "", "id")
+
+    let filledModel = ModelSQLizer().sqlizeModel(model)
+    // filledModel.dump()
+    guard let filledEntity = filledModel[entity: "Address"] else {
+      XCTFail("model has no Address entity: \(model)")
+      return
+    }
+    XCTAssertEqual(filledEntity.externalName, "address")
+  }
+  
+  // MARK: - Non-ObjC Swift Support
 
   static var allTests = [
     ( "testBasicSchema",                  testBasicSchema                  ),
@@ -1270,6 +1327,7 @@ class CodableModelTests: XCTestCase {
     ( "testSchemaWithToManyInlineCycle",  testSchemaWithToManyInlineCycle  ),
     ( "testImplicitEntityByReference",    testImplicitEntityByReference    ),
     ( "testImplicitEntityExplicitToOne",  testImplicitEntityExplicitToOne  ),
+    ( "testBasicPlainCodableSchema",      testBasicPlainCodableSchema      ),
   ]
 
   #else // Not Swift 4
