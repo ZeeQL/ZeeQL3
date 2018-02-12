@@ -144,6 +144,8 @@
 		E8263CCD1E93C89200508276 /* SQLite3AdaptorChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8263C4C1E93AFF200508276 /* SQLite3AdaptorChannel.swift */; };
 		E8263CCE1E93C89200508276 /* SQLite3Expression.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8263C4D1E93AFF200508276 /* SQLite3Expression.swift */; };
 		E8263CD21E93CA1D00508276 /* ZeeQL.h in Headers */ = {isa = PBXBuildFile; fileRef = E8263CD11E93CA1D00508276 /* ZeeQL.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		E828519F2031DECB00535895 /* CodableModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E828519E2031DECB00535895 /* CodableModel.swift */; };
+		E82851A02031DECB00535895 /* CodableModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E828519E2031DECB00535895 /* CodableModel.swift */; };
 		E83491FD1FE817820091C3FD /* CodableModelPostProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = E83491FC1FE817820091C3FD /* CodableModelPostProcessor.swift */; };
 		E8400F5B1E64662A00346028 /* ActiveDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8400F5A1E64662A00346028 /* ActiveDataSource.swift */; };
 		E8400F5D1E64677000346028 /* DatabaseChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8400F5C1E64677000346028 /* DatabaseChannel.swift */; };
@@ -322,6 +324,7 @@
 		E8263CD31E93CAAC00508276 /* ZeeQL-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "ZeeQL-Info.plist"; path = "xcconfig/ZeeQL-Info.plist"; sourceTree = SOURCE_ROOT; };
 		E8263CD51E93CD5800508276 /* OGo.sqlite3 */ = {isa = PBXFileReference; lastKnownFileType = file; path = OGo.sqlite3; sourceTree = "<group>"; };
 		E8263CD61E93CD5800508276 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		E828519E2031DECB00535895 /* CodableModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodableModel.swift; sourceTree = "<group>"; };
 		E83491FC1FE817820091C3FD /* CodableModelPostProcessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodableModelPostProcessor.swift; sourceTree = "<group>"; };
 		E8400F5A1E64662A00346028 /* ActiveDataSource.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = ActiveDataSource.swift; path = Sources/ZeeQL/Access/ActiveDataSource.swift; sourceTree = SOURCE_ROOT; };
 		E8400F5C1E64677000346028 /* DatabaseChannel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = DatabaseChannel.swift; path = Sources/ZeeQL/Access/DatabaseChannel.swift; sourceTree = SOURCE_ROOT; };
@@ -865,6 +868,7 @@
 				E8BF37FC202F2CBC0096064E /* CodableModelEntityDecoder.swift */,
 				E8C7C85D1FF401EF0016A597 /* EntityPropertyReflectionContainer.swift */,
 				E83491FC1FE817820091C3FD /* CodableModelPostProcessor.swift */,
+				E828519E2031DECB00535895 /* CodableModel.swift */,
 			);
 			path = Codable;
 			sourceTree = "<group>";
@@ -1138,6 +1142,7 @@
 				E8263CB71E93C89200508276 /* AdaptorChannel.swift in Sources */,
 				E8263CBF1E93C89200508276 /* Join.swift in Sources */,
 				E8263CC71E93C89200508276 /* AttributeKey.swift in Sources */,
+				E82851A02031DECB00535895 /* CodableModel.swift in Sources */,
 				E8E480BF1EC2032400350EDF /* Logger.swift in Sources */,
 				E8263CC41E93C89200508276 /* CodeValueAttribute.swift in Sources */,
 				E8E480C31EC2035200350EDF /* AdaptorModelFetch.swift in Sources */,
@@ -1259,6 +1264,7 @@
 				E80285461EE6CBAE00F25AD7 /* SchemaSynchronizationFactory.swift in Sources */,
 				E80B3FD51E606D4800D6F0ED /* TimeRange.swift in Sources */,
 				E843135C1E6DB65700A59F8B /* CodeValueAttribute.swift in Sources */,
+				E828519F2031DECB00535895 /* CodableModel.swift in Sources */,
 				E843135E1E6DBE5400A59F8B /* ModelFetchSpecification.swift in Sources */,
 				E80B3FCE1E606D1E00D6F0ED /* QualifierVariable.swift in Sources */,
 				E86BF2591E68506600C8B22A /* AttributeKey.swift in Sources */,

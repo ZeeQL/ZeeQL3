@@ -16,7 +16,7 @@
     }
   }
   
-  class CodableModelDecoder {
+  open class CodableModelDecoder {
     // TODO: Rename this class to avoid confusion (it is not a Codable
     //       decoder)
     //       Maybe make this a private CodableReflectionState, and add another
@@ -24,19 +24,22 @@
     
     var log : ZeeQLLogger { return globalZeeQLLogger }
     
-    struct Options {
-      /// Using Codable you can create infinitely recursive models. This is the
-      /// depth until we give up trying to decode.
-      /// TBD: proper cycle detection
-      var maxDepth                 = 10
+    public struct Options {
+      /**
+       * Using Codable you can create infinitely recursive models. This is the
+       * depth until we give up trying to decode.
+       */
+      var maxDepth = 10 // TODO: improve cycle detection
       
       /**
        * Arbitrary `Codable` types can be decoded. But sometimes, you want to
        * limit the type to be a `CodableObjectType`
        */
       var enforceCodableObjectType = false
+      
+      public init() {}
     }
-    let options    :  Options
+    let options :  Options
     
     init(options: Options = Options()) {
       self.options = options

@@ -9,13 +9,6 @@
 import XCTest
 @testable import ZeeQL
 
-fileprivate extension CodableModelDecoder {
-  func reflect<T: CodableObjectType>(on type: T.Type) throws -> Model {
-    try add(type)
-    return buildModel()
-  }
-}
-
 class CodableModelTests: XCTestCase {
   #if swift(>=4.0)
   
@@ -39,7 +32,7 @@ class CodableModelTests: XCTestCase {
       var district      : String?
     }
     
-    let modelOpt = try? CodableModelDecoder().reflect(on: Address.self)
+    let modelOpt = try? Model.createFromTypes(Address.self)
     guard let model = modelOpt else {
       XCTAssertNotNil(modelOpt)
       return
@@ -88,7 +81,7 @@ class CodableModelTests: XCTestCase {
       }
     }
     
-    let modelOpt = try? CodableModelDecoder().reflect(on: Person.self)
+    let modelOpt = try? Model.createFromTypes(Person.self)
     guard let model = modelOpt else {
       XCTAssertNotNil(modelOpt)
       return
