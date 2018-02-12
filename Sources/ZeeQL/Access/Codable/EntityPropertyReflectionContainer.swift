@@ -536,10 +536,11 @@
         // we only expect other objects in here
         // Xcode issue: Because of this line, the class cannot live in its own
         //              file.
-        guard case is CodableObjectType.Type = type else {
-          throw Error.unsupportedValueType(type)
+        if decoder.state.options.enforceCodableObjectType {
+          guard case is CodableObjectType.Type = type else {
+            throw Error.unsupportedValueType(type)
+          }
         }
-        
         
         // OK: we already need to register the relationship here, to avoid
         //     recursion!
@@ -585,8 +586,10 @@
         // let the main decoder decode the type
         let v = try decoder.state.decode(type)
         
-        guard v is CodableObjectType else { // superfluous, but be explicit
-          throw Error.unsupportedValueType(type)
+        if decoder.state.options.enforceCodableObjectType {
+          guard v is CodableObjectType else { // superfluous, but be explicit
+            throw Error.unsupportedValueType(type)
+          }
         }
         
         
