@@ -360,7 +360,7 @@ class AdaptorRecordDecoder<T: Decodable> : Decoder {
     //       value (otherwise we would need to add a protocol w/ a default
     //       ctor)
     
-    func decodeBaseType<T>(forKey key: Key) throws -> T {
+    func valueForKey(_ key: Key) throws -> Any {
       let name = nameForKey(key)
       guard let record = decoder.record else {
         throw Error.notImplemented // FIXME
@@ -368,17 +368,22 @@ class AdaptorRecordDecoder<T: Decodable> : Decoder {
       guard let anyValue = record[name] else {
         throw Error.notImplemented // FIXME - nil
       }
+      log.trace("decoded-value for key:", key, anyValue)
+      return anyValue
+    }
+    func decodeBaseType<T>(forKey key: Key) throws -> T {
+      let anyValue = try valueForKey(key)
       guard let v = anyValue as? T else {
-        log.error("unexpected base value:", key, name,
+        log.error("unexpected base value:", key,
                   "\n  value:", anyValue,
                   "\n  types:",
-                  type(of: anyValue), T.self)
+                  type(of: anyValue), "vs", T.self, "\n")
         throw Error.unsupportedValueType(T.self)
       }
       log.trace("decoded-key:", key, v)
       return v
     }
-    
+
     func decode(_ type: Int.Type, forKey key: Key) throws -> Int {
       return try decodeBaseType(forKey: key)
     }
