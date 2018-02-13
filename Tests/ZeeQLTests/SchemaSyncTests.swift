@@ -11,8 +11,8 @@ import XCTest
 
 class SchemaSyncTests: XCTestCase {
   
-  let model   = ContactsDBModel.model
-  let adaptor = FakeAdaptor(model: ContactsDBModel.model)
+  let model   = ActiveRecordContactsDBModel.model
+  let adaptor = FakeAdaptor(model: ActiveRecordContactsDBModel.model)
   
   let verbose = true
   
@@ -139,7 +139,7 @@ class SchemaSyncTests: XCTestCase {
     if verbose { print("db: \(dbModel)") }
     
     // create newModel
-    let newModel = Model(model: ContactsDBModel.model, deep: true)
+    let newModel = Model(model: ActiveRecordContactsDBModel.model, deep: true)
     
     
     // changes

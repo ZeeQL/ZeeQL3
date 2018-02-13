@@ -8,7 +8,7 @@
 
 import ZeeQL
 
-enum ContactsDBModel {
+enum ActiveRecordContactsDBModel {
   
   static let model = Model(entities: [ Person.entity, Address.entity ])
   
