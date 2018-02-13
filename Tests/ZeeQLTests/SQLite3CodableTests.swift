@@ -385,7 +385,16 @@ class AdaptorRecordDecoder<T: Decodable> : Decoder {
     }
 
     func decode(_ type: Int.Type, forKey key: Key) throws -> Int {
-      return try decodeBaseType(forKey: key)
+      // FIXME: Hm?!
+      let anyValue = try valueForKey(key)
+      switch anyValue {
+        case let v as Int8:  return Int(v)
+        case let v as Int16: return Int(v)
+        case let v as Int32: return Int(v)
+        case let v as Int64: return Int(v)
+        // TODO: refactor and enhance
+        default: return try decodeBaseType(forKey: key)
+      }
     }
     func decode(_ type: Int8.Type,  forKey key: Key) throws -> Int8 {
       return try decodeBaseType(forKey: key)
