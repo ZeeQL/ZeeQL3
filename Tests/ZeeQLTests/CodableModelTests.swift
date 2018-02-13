@@ -1317,9 +1317,9 @@ class CodableModelTests: XCTestCase {
       return
     }
     
-    XCTAssertEqual(address.classPropertyNames?.count ?? 0, 5,
+    XCTAssertEqual(address.classPropertyNames?.count ?? 0, 6,
                    "unexpected class properties: \(address.classPropertyNames ?? [])")
-    XCTAssertEqual(person.classPropertyNames?.count  ?? 0, 3,
+    XCTAssertEqual(person.classPropertyNames?.count  ?? 0, 4,
                    "unexpected class properties: \(person.classPropertyNames ?? [])")
 
     XCTAssertEqual(address.relationships.count, 1)
@@ -1361,10 +1361,10 @@ class CodableModelTests: XCTestCase {
     XCTAssert(sqlAddress is DecodableEntity<M.Address>)
     XCTAssert(sqlPerson  is DecodableEntity<M.Person>)
 
-    XCTAssertEqual(address.classPropertyNames?.count ?? 0, 5,
+    XCTAssertEqual(address.classPropertyNames?.count ?? 0, 6,
                    "unexpected class properties: " +
                    "\(address.classPropertyNames ?? [])")
-    XCTAssertEqual(person.classPropertyNames?.count  ?? 0, 3,
+    XCTAssertEqual(person.classPropertyNames?.count  ?? 0, 4,
                    "unexpected class properties: " +
                    "\(person.classPropertyNames ?? [])")
     XCTAssertEqual(address.relationships.count, 1)
