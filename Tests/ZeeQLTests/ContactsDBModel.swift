@@ -61,15 +61,17 @@ enum PlainCodableContactsDBModel {
     return ModelSQLizer().sqlizeModel(model)
   }()
   
-  class Address : Codable {
-    var street  : String?
-    var city    : String?
-    var state   : String?
-    var country : String?
-    var person  : Person
+  class Address   : Codable {
+    var id        : Int = 0
+    var street    : String?
+    var city      : String?
+    var state     : String?
+    var country   : String?
+    var person    : Person
   }
   
-  class Person : Codable {
+  class Person    : Codable {
+    var id        : Int = 0
     var firstname : String?
     var lastname  : String
     var addresses : [ Address ]
