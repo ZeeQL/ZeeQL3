@@ -109,6 +109,8 @@ class AdaptorRecordDecoder<T: Decodable> : Decoder {
     case notImplemented
     case adaptorCannotDecodeRelationships
     case unsupportedValueType(Any.Type)
+    case unsupportedNesting
+    case unexpectedRelationshipHolderType
   }
   
   var log : ZeeQLLogger { return globalZeeQLLogger }
@@ -138,11 +140,7 @@ class AdaptorRecordDecoder<T: Decodable> : Decoder {
          -> KeyedDecodingContainer<Key> where Key : CodingKey
   {
     log.trace("get-keyed-container<\(type)>")
-    #if false // TDD
-      return KeyedDecodingContainer(KeyedContainer<T, Key>(decoder: self))
-    #else
-      throw Error.notImplemented
-    #endif
+    return KeyedDecodingContainer(KeyedContainer<T, Key>(decoder: self))
   }
   
   func unkeyedContainer() throws -> UnkeyedDecodingContainer {
@@ -153,7 +151,6 @@ class AdaptorRecordDecoder<T: Decodable> : Decoder {
     throw Error.notImplemented
   }
 
-  #if false // TDD
   
   /* Containers */
   
@@ -162,10 +159,21 @@ class AdaptorRecordDecoder<T: Decodable> : Decoder {
   {
     let decoder : AdaptorRecordDecoder<T>
     let log     : ZeeQLLogger
-    
+
+    let codingPath : [ CodingKey ]
+    let allKeys    : [ Key ]
+
     init(decoder: AdaptorRecordDecoder<T>) {
-      self.decoder = decoder
-      self.log     = decoder.log
+      self.decoder    = decoder
+      self.log        = decoder.log
+      self.codingPath = decoder.codingPath
+      
+      if let record = decoder.record {
+        self.allKeys = record.schema.attributeNames.flatMap(Key.init)
+      }
+      else {
+        self.allKeys = []
+      }
     }
     
     func contains(_ key: Key) -> Bool {
@@ -249,32 +257,13 @@ class AdaptorRecordDecoder<T: Decodable> : Decoder {
       throws -> T
       where T : Decodable
     {
-      /*
-       This is tricky. We need to communicate to the decoder, that we are
-       decoding a property.
-       What do we want? We want to collect relationship types. I.e. this:
-       var addresses : [ Address ]
-       we want to add to the `entity` of this containers entity, the
-       class property `addresses` as a ToMany<Address>.
-       So how do we do this?
-       We somehow need to track, that we decoded an [ CodingType ]?
-       */
+      // Right now this is an Array, eg `var addresses : [ Address ]`.
+      // We just want to return an empty array here.
+      // TBD: maybe we should create another nested coder?
       
       decoder.codingPath.append(key) // this is the key we are going to use
-      //let v = try decoder.decode(type)
       let v = try type.init(from: decoder) // init the ('array' expected)
       decoder.codingPath.removeLast()
-      
-      #if false
-        if let cota = v as? Array<CodableObjectType> {
-          // ^^ we can't dispatch on the static type. But we *can* dispatch on
-          //    the dynamic type :-)
-          // Maybe we can handle this earlier, but at least in here, we know
-          // the proper type.
-          // => We should probably handle it earlier.
-          print("TODO: it is an array of CodableObjectType!")
-        }
-      #endif
       
       return v
     }
@@ -282,49 +271,14 @@ class AdaptorRecordDecoder<T: Decodable> : Decoder {
     func decodeOtherType<T>(_ type: T.Type, forKey key: Key) throws -> T
       where T : Decodable
     {
-      // effectively this is: `decodeCodableObjectArray<T>`
       log.trace("out of band type:", type, "for key:", key)
       
       assert(!(type is ImplicitToManyRelationshipHolder.Type))
-      
-      if !decoder.state.options.enforceCodableObjectType {
-        // We allow arbitrary Decodable objects!
-        // FIXME: this doesn't work right for arrays
-        return try decodeDecodableObject(type, forKey: key)
-      }
-      
-      /*
-       This is tricky. We need to communicate to the decoder, that we are
-       decoding a property.
-       What do we want? We want to collect relationship types. I.e. this:
-       var addresses : [ Address ]
-       we want to add to the `entity` of this containers entity, the
-       class property `addresses` as a ToMany<Address>.
-       So how do we do this?
-       We somehow need to track, that we decoded an [ CodingType ]?
-       */
-      
-      decoder.codingPath.append(key) // this is the key we are going to use
-      //let v = try decoder.decode(type)
-      let v = try type.init(from: decoder) // init the ('array' expected)
-      decoder.codingPath.removeLast()
-      
-      #if false
-        if let cota = v as? Array<CodableObjectType> {
-          // ^^ we can't dispatch on the static type. But we *can* dispatch on
-          //    the dynamic type :-)
-          // Maybe we can handle this earlier, but at least in here, we know
-          // the proper type.
-          // => We should probably handle it earlier.
-          print("TODO: it is an array of CodableObjectType!")
-        }
-      #endif
-      
-      return v
+      throw Error.unsupportedNesting
     }
     
     /**
-     * Decode base type column arrays, like `[Int]`
+     * Decode base type column arrays, like `[ Int ]`
      */
     func decodeBaseTypeArray<T, E>(_ type: T.Type,
                                    _ elementType: E.Type,
@@ -355,40 +309,11 @@ class AdaptorRecordDecoder<T: Decodable> : Decoder {
       }
       
       // e.g. ToManyRelationshipHolder<T>
-      log.trace("\("  " * codingPath.count)",
-        "KC[\(entity.name):\(codingPathKK)]:",
-        "decode `RelationshipHolderType`:",
-        key.stringValue, erasedHolderType)
-      
-      // In here because we need the key for the relship name
-      let targetEntity =
-        try reflectedHolderType.reflectTargetType(on: decoder.state)
-      // make sure the target is there (no recursion because we unique,
-      // but this may be different if we do free-form)
-      
-      let name = nameForKey(key)
-      //let extName = key.stringValue == name ? nil : key.stringValue
-      
-      if entity[relationship: name] == nil {
-        let rs : Relationship =
-          reflectedHolderType.makeRelationship(name: name,
-                                               isOptional: nilKeys.contains(key),
-                                               source: entity, sourceType: EntityType.self,
-                                               destination: targetEntity)
-        // TODO: push extName for constraint?
-        
-        entity.relationships.append(rs)
-        // entity.attributes.append(makeAttribute(type, forKey: key))
-        entity.addClassPropertyName(nameForKey(key))
-      }
-      else {
-        log.error("already registered relationship:", name, "in", entity)
-      }
-      
-      // The `To-x-RelationshipHolder` objects have special support for our
-      // coder, so this is a little easier.
-      return try erasedHolderType.init(from: decoder) // we need some init
-    }
+      log.trace("decode `RelationshipHolderType`:",
+                key.stringValue, erasedHolderType, reflectedHolderType)
+      // TODO: create a ToOne/ToMany instance as requested (with no value)
+      throw Error.unsupportedValueType(erasedHolderType)
+   }
     
     /**
      * This decodes a `CodableObjectType` when it is used inline (aka is type
@@ -397,62 +322,14 @@ class AdaptorRecordDecoder<T: Decodable> : Decoder {
      *
      *     class House { var owner : Person }
      *
-     * It calls into `decoder.decode()` to do its job.
+     * This is not actually supported in the AdaptorDecoder.
      */
     private func decodeDecodableObject<T>(_ type: T.Type,
                                           forKey key: Key) throws -> T
-      where T : Decodable
+                   where T : Decodable
     {
-      log.trace("\("  " * codingPath.count)KC[\(entity.name):",
-        "\(codingPathKK)]:decode:", key.stringValue, type)
-      
-      let name = nameForKey(key)
-      if entity[relationship: name] == nil {
-        // TBD: The container is type erased wrt CodableObjectType. Can we
-        //      still somehow ask the Type to make the relationship, like
-        //      above?
-        let destEntity = decoder.state.existingEntityForType(type)
-        let rs = DecodableRelationship<T>(name: name, isToMany: false,
-                                          isMandatory : !nilKeys.contains(key),
-                                          source      : entity,
-                                          destination : destEntity)
-        // TODO: push extName for constraint?
-        log.trace("\("  " * codingPath.count)KC[\(entity.name): created:", rs)
-        
-        entity.relationships.append(rs)
-        // entity.attributes.append(makeAttribute(type, forKey: key))
-        entity.addClassPropertyName(name)
-      }
-      else {
-        log.log("already registered relationship:", name, "in", entity)
-      }
-      
-      
-      // let the main decoder handle this
-      decoder.codingPath.append(key)
-      let v = try decoder.state.decode(type) // TODO: replace?
-      decoder.codingPath.removeLast()
-      
-      
-      // post process relationship
-      
-      if let rs = entity[relationship: name],
-        let mrs = rs as? ModelRelationship,
-        mrs.destinationEntity == nil
-      {
-        // we didn't have the entity yet
-        if let targetEntity = decoder.state.existingEntityForType(type) {
-          mrs.destinationEntity = targetEntity
-        }
-        else {
-          // register the relship for patching
-          log.trace("did not decode target relationship, register:",
-                    name, "in", entity)
-          decoder.state.registerForPendingEntity(type, relationship: mrs)
-        }
-      }
-      
-      return v
+      log.trace(":decode:", key.stringValue, type)
+      throw Error.unsupportedValueType(type) // FIXME: proper error
     }
     
     /**
@@ -479,127 +356,84 @@ class AdaptorRecordDecoder<T: Decodable> : Decoder {
       #endif
     }
     
-    /// Create a typed attribute for the given key.
-    func makeAttribute<T>(_ t: T.Type, forKey key: Key) -> Attribute
-      where T: AttributeValue
-    {
-      // FIXME: This doesn't take Optional into account
-      let name    = nameForKey(key)
-      let extName = key.stringValue == name ? nil : key.stringValue
-      
-      let attr : Attribute
-      if nilKeys.contains(key) {
-        attr = CodeAttribute<Optional<T>>(name, column: extName)
-      }
-      else {
-        attr = CodeAttribute<T>(name, column: extName)
-      }
-      log.trace("makeAttribute:", t,
-                "name:", name, "ext:", extName, "key:", key,
-                "\n  attr:", attr)
-      return attr
-    }
-    
-    func addAttribute<T>(_ type: T.Type, forKey key: Key) -> Bool
-      where T: AttributeValue
-    {
-      guard entity[attribute: nameForKey(key)] == nil else {
-        log.trace("already registered attribute:", key, "in", entity)
-        return false
-      }
-      log.trace("\("  " * codingPath.count)KC[\(entity.name):",
-        "\(codingPathKK)]:decode:", key.stringValue, key, type)
-      entity.attributes.append(makeAttribute(type, forKey: key))
-      entity.addClassPropertyName(nameForKey(key))
-      return true
-    }
-    
     // Note: I think we need to implement each, because we need to return the
     //       value (otherwise we would need to add a protocol w/ a default
     //       ctor)
     
-    func decode(_ type: Int.Type, forKey key: Key) throws -> Int {
-      return addAttribute(type, forKey: key) ? -1337 : -1338
-    }
-    func decode(_ type: Int8.Type, forKey key: Key) throws -> Int {
-      return addAttribute(type, forKey: key) ? -13 : -14
-    }
-    func decode(_ type: Int16.Type, forKey key: Key) throws -> Int {
-      return addAttribute(type, forKey: key) ? -1337 : -1338
-    }
-    func decode(_ type: Int32.Type, forKey key: Key) throws -> Int {
-      return addAttribute(type, forKey: key) ? -11337 : -11338
-    }
-    func decode(_ type: Int64.Type, forKey key: Key) throws -> Int {
-      return addAttribute(type, forKey: key) ? -111337 : -111338
+    func decodeBaseType<T>(forKey key: Key) throws -> T {
+      let name = nameForKey(key)
+      guard let record = decoder.record else {
+        throw Error.notImplemented // FIXME
+      }
+      guard let anyValue = record[name] else {
+        throw Error.notImplemented // FIXME - nil
+      }
+      guard let v = anyValue as? T else {
+        log.error("unexpected base value:", key, name,
+                  "\n  value:", anyValue,
+                  "\n  types:",
+                  type(of: anyValue), T.self)
+        throw Error.unsupportedValueType(T.self)
+      }
+      log.trace("decoded-key:", key, v)
+      return v
     }
     
-    func decode(_ type: UInt.Type, forKey key: Key) throws -> Int {
-      return addAttribute(type, forKey: key) ? 1337 : 1338
+    func decode(_ type: Int.Type, forKey key: Key) throws -> Int {
+      return try decodeBaseType(forKey: key)
     }
-    func decode(_ type: UInt8.Type, forKey key: Key) throws -> Int {
-      return addAttribute(type, forKey: key) ? 13 : 14
+    func decode(_ type: Int8.Type,  forKey key: Key) throws -> Int8 {
+      return try decodeBaseType(forKey: key)
     }
-    func decode(_ type: UInt16.Type, forKey key: Key) throws -> Int {
-      return addAttribute(type, forKey: key) ? 1337 : 1338
+    func decode(_ type: Int16.Type, forKey key: Key) throws -> Int16 {
+      return try decodeBaseType(forKey: key)
     }
-    func decode(_ type: UInt32.Type, forKey key: Key) throws -> Int {
-      return addAttribute(type, forKey: key) ? 11337 : 11338
+    func decode(_ type: Int32.Type, forKey key: Key) throws -> Int32 {
+      return try decodeBaseType(forKey: key)
     }
-    func decode(_ type: UInt64.Type, forKey key: Key) throws -> Int {
-      return addAttribute(type, forKey: key) ? 111337 : 111338
+    func decode(_ type: Int64.Type, forKey key: Key) throws -> Int64 {
+      return try decodeBaseType(forKey: key)
+    }
+    
+    func decode(_ type: UInt.Type,   forKey key: Key) throws -> UInt {
+      return try decodeBaseType(forKey: key)
+    }
+    func decode(_ type: UInt8.Type,  forKey key: Key) throws -> UInt8 {
+      return try decodeBaseType(forKey: key)
+    }
+    func decode(_ type: UInt16.Type, forKey key: Key) throws -> UInt16 {
+      return try decodeBaseType(forKey: key)
+    }
+    func decode(_ type: UInt32.Type, forKey key: Key) throws -> UInt32 {
+      return try decodeBaseType(forKey: key)
+    }
+    func decode(_ type: UInt64.Type, forKey key: Key) throws -> UInt64 {
+      return try decodeBaseType(forKey: key)
     }
     
     func decode(_ type: String.Type, forKey key: Key) throws -> String {
-      return addAttribute(type, forKey: key) ? "kasse7" : "kasse8"
+      return try decodeBaseType(forKey: key)
     }
     func decode(_ type: Bool.Type, forKey key: Key) throws -> Bool {
-      return addAttribute(type, forKey: key)
+      return try decodeBaseType(forKey: key)
     }
     
     func decodeNil(forKey key: Key) throws -> Bool {
-      if nilKeys.contains(key) {
-        // return nil if we already know this key!
-        // This allows cycles on optional items!
-        log.trace("\("  " * codingPath.count)KC[\(entity.name):",
-          "\(codingPathKK)]:decodeNil:", key.stringValue,
-          "AS-NIL-was-nil")
-        return true
-      }
-      
-      // We should check whether the entity already has that class
-      // property already. If so, there is no need to decode any
-      // further.
-      if let cp = entity.classPropertyNames, cp.contains(nameForKey(key)) {
-        // return nil if we already know this key!
-        // This allows cycles on optional items!
-        log.trace("\("  " * codingPath.count)KC[\(entity.name):",
-          "\(codingPathKK)]:decodeNil:", key.stringValue,
-          "AS-NIL-prop-exists")
-        return true
-      }
-      
-      log.trace("\("  " * codingPath.count)KC[\(entity.name):",
-        "\(codingPathKK)]:decodeNil:", key.stringValue, "NOT-NIL")
-      // Note: so it first calls `contains(:)`, if that returns true,
-      //       an Optional still calls decodeNil.
-      //       And this returns true for nil values, or false otherwise
-      nilKeys.insert(key)
-      // we do NOT want nil, we want to fake existence
-      return false
+      let name = nameForKey(key)
+      return decoder.record?[name] == nil
     }
     
     func nestedContainer<NestedKey>(keyedBy type: NestedKey.Type,
                                     forKey key: Key) throws
-      -> KeyedDecodingContainer<NestedKey>
-      where NestedKey : CodingKey
+           -> KeyedDecodingContainer<NestedKey>
+           where NestedKey : CodingKey
     {
       //return try decoder.container(keyedBy: type)
       throw Error.unsupportedNesting
     }
     
     func nestedUnkeyedContainer(forKey key: Key) throws
-      -> UnkeyedDecodingContainer
+           -> UnkeyedDecodingContainer
     {
       //return try decoder.unkeyedContainer()
       throw Error.unsupportedNesting
@@ -612,7 +446,6 @@ class AdaptorRecordDecoder<T: Decodable> : Decoder {
       return decoder
     }
   }
-  #endif // TDD
 }
 
 extension Adaptor {
