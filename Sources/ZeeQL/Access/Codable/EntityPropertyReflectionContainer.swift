@@ -440,32 +440,32 @@
       func decode(_ type: Int.Type, forKey key: Key) throws -> Int {
         return addAttribute(type, forKey: key) ? -1337 : -1338
       }
-      func decode(_ type: Int8.Type, forKey key: Key) throws -> Int {
+      func decode(_ type: Int8.Type, forKey key: Key) throws -> Int8 {
         return addAttribute(type, forKey: key) ? -13 : -14
       }
-      func decode(_ type: Int16.Type, forKey key: Key) throws -> Int {
+      func decode(_ type: Int16.Type, forKey key: Key) throws -> Int16 {
         return addAttribute(type, forKey: key) ? -1337 : -1338
       }
-      func decode(_ type: Int32.Type, forKey key: Key) throws -> Int {
+      func decode(_ type: Int32.Type, forKey key: Key) throws -> Int32 {
         return addAttribute(type, forKey: key) ? -11337 : -11338
       }
-      func decode(_ type: Int64.Type, forKey key: Key) throws -> Int {
+      func decode(_ type: Int64.Type, forKey key: Key) throws -> Int64 {
         return addAttribute(type, forKey: key) ? -111337 : -111338
       }
       
-      func decode(_ type: UInt.Type, forKey key: Key) throws -> Int {
+      func decode(_ type: UInt.Type, forKey key: Key) throws -> UInt {
         return addAttribute(type, forKey: key) ? 1337 : 1338
       }
-      func decode(_ type: UInt8.Type, forKey key: Key) throws -> Int {
+      func decode(_ type: UInt8.Type, forKey key: Key) throws -> UInt8 {
         return addAttribute(type, forKey: key) ? 13 : 14
       }
-      func decode(_ type: UInt16.Type, forKey key: Key) throws -> Int {
+      func decode(_ type: UInt16.Type, forKey key: Key) throws -> UInt16 {
         return addAttribute(type, forKey: key) ? 1337 : 1338
       }
-      func decode(_ type: UInt32.Type, forKey key: Key) throws -> Int {
+      func decode(_ type: UInt32.Type, forKey key: Key) throws -> UInt32 {
         return addAttribute(type, forKey: key) ? 11337 : 11338
       }
-      func decode(_ type: UInt64.Type, forKey key: Key) throws -> Int {
+      func decode(_ type: UInt64.Type, forKey key: Key) throws -> UInt64 {
         return addAttribute(type, forKey: key) ? 111337 : 111338
       }
       
@@ -701,37 +701,37 @@
       public mutating func decode(_ type: Bool.Type) throws -> Bool {
         throw Error.unsupportedValueType(type)
       }
-      public mutating func decode(_ type: String.Type) throws -> Bool {
+      public mutating func decode(_ type: String.Type) throws -> String {
         throw Error.unsupportedValueType(type)
       }
-      public mutating func decode(_ type: Int.Type) throws -> Bool {
+      public mutating func decode(_ type: Int.Type) throws -> Int {
         throw Error.unsupportedValueType(type)
       }
-      public mutating func decode(_ type: Int8.Type) throws -> Bool {
+      public mutating func decode(_ type: Int8.Type) throws -> Int8 {
         throw Error.unsupportedValueType(type)
       }
-      public mutating func decode(_ type: Int16.Type) throws -> Bool {
+      public mutating func decode(_ type: Int16.Type) throws -> Int16 {
         throw Error.unsupportedValueType(type)
       }
-      public mutating func decode(_ type: Int32.Type) throws -> Bool {
+      public mutating func decode(_ type: Int32.Type) throws -> Int32 {
         throw Error.unsupportedValueType(type)
       }
-      public mutating func decode(_ type: Int64.Type) throws -> Bool {
+      public mutating func decode(_ type: Int64.Type) throws -> Int64 {
         throw Error.unsupportedValueType(type)
       }
-      public mutating func decode(_ type: UInt.Type) throws -> Bool {
+      public mutating func decode(_ type: UInt.Type) throws -> UInt {
         throw Error.unsupportedValueType(type)
       }
-      public mutating func decode(_ type: UInt8.Type) throws -> Bool {
+      public mutating func decode(_ type: UInt8.Type) throws -> UInt8 {
         throw Error.unsupportedValueType(type)
       }
-      public mutating func decode(_ type: UInt16.Type) throws -> Bool {
+      public mutating func decode(_ type: UInt16.Type) throws -> UInt16 {
         throw Error.unsupportedValueType(type)
       }
-      public mutating func decode(_ type: UInt32.Type) throws -> Bool {
+      public mutating func decode(_ type: UInt32.Type) throws -> UInt32 {
         throw Error.unsupportedValueType(type)
       }
-      public mutating func decode(_ type: UInt64.Type) throws -> Bool {
+      public mutating func decode(_ type: UInt64.Type) throws -> UInt64 {
         throw Error.unsupportedValueType(type)
       }
 
