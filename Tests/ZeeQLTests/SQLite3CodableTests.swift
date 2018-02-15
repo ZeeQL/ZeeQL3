@@ -69,8 +69,16 @@ class SQLite3CodableTests: XCTestCase {
     do {
       let objects = try adaptor.query(Model.Person.self)
       
-      print("objects:", objects)
       XCTAssertEqual(objects.count, 3)
+      
+      if let entity = Model.model[entity: "Person"] {
+        for object in objects {
+          print("object: \(entity.descriptionForObject(object))")
+        }
+      }
+      else {
+        print("objects:", objects)
+      }
     }
     catch {
       XCTFail("Unexpected error: \(error)")
@@ -91,10 +99,82 @@ class SQLite3CodableTests: XCTestCase {
   #endif // Not Swift 4
 }
 
+extension Entity {
+  
+  func descriptionForObject(_ object: Any) -> String {
+    var ms = "<\(type(of: object))[\(name)]:"
+    for prop in classPropertyNames ?? attributes.map { $0.name } {
+      let v = KeyValueCoding.value(forKey: prop, inObject: object)
+      if let v = v {
+        ms += " \(prop)="
+        if let s = v as? String {
+          ms += "\"\(s)\"" // TODO: escape
+        }
+        else {
+          ms += "\(v)"
+        }
+      }
+    }
+    ms += ">"
+    return ms
+  }
+}
+
 #if swift(>=4.0)
 
 // TDD ;-)
 
+
+extension Adaptor {
+  // extension AdaptorQueryType {
+  
+  func query<T: Decodable>(_ type: T.Type) throws -> [ T ] {
+    let adaptor = self
+    
+    // create model for type
+    
+    let options = CodableModelDecoder.Options(sqlize: true)
+    let model   = try Model.createFromTypes(type, options: options)
+      // TODO: we should cache the sqlized model (but per adaptor-type?!)
+    
+    guard let entity = model.entityForType(type) else {
+      // TODO: throw
+      fatalError("did not find entity for decoded type")
+    }
+    
+    // generate SQL
+    
+    let factory = adaptor.expressionFactory
+    let expr =
+      factory.selectExpressionForAttributes(entity.attributes, nil, entity)
+    
+    // open channel
+
+    let channel = try openChannelFromPool()
+    defer { releaseChannel(channel) }
+    
+    // fetch and decode
+    
+    let decoder = AdaptorRecordDecoder<T>()
+    var objects = [ T ]()
+    
+    try channel.evaluateQueryExpression(expr, entity.attributes) { record in
+      print("record:", record)
+      let object = try decoder.decode(record: record)
+      print("object:", record)
+      objects.append(object)
+    }
+    
+    return objects
+  }
+  
+}
+
+#endif // Swift 4+
+
+#if swift(>=4.0) // FIXME: We cannot just move this into its own file due to
+                 //        the Xcode build bug.
+  
 /**
  * Decode plain Decodable objects from adaptor records.
  *
@@ -103,24 +183,25 @@ class SQLite3CodableTests: XCTestCase {
  * follow relationships.
  * A database channel / object tracking context can be used for that.
  */
-class AdaptorRecordDecoder<T: Decodable> : Decoder {
+public class AdaptorRecordDecoder<T: Decodable> : Decoder {
   
-  enum Error : Swift.Error {
+  public enum Error : Swift.Error {
     case notImplemented
     case adaptorCannotDecodeRelationships
     case unsupportedValueType(Any.Type)
     case unsupportedNesting
     case unexpectedRelationshipHolderType
+    case missingKey
   }
   
   var log : ZeeQLLogger { return globalZeeQLLogger }
 
-  var codingPath = [ CodingKey] ()
-  var userInfo   = [ CodingUserInfoKey : Any ]()
+  public var codingPath = [ CodingKey] ()
+  public var userInfo   = [ CodingUserInfoKey : Any ]()
   
   var record : AdaptorRecord? = nil
   
-  func decode(record: AdaptorRecord) throws -> T {
+  public func decode(record: AdaptorRecord) throws -> T {
     assert(self.record == nil, "record still assigned?!")
     defer { clear() }
     
@@ -130,32 +211,40 @@ class AdaptorRecordDecoder<T: Decodable> : Decoder {
     return object
   }
   
-  func clear() {
+  public func clear() {
     codingPath.removeAll()
     userInfo.removeAll()
     record = nil
   }
   
-  func container<Key>(keyedBy type: Key.Type) throws
-         -> KeyedDecodingContainer<Key> where Key : CodingKey
+  public func container<Key>(keyedBy type: Key.Type) throws
+                -> KeyedDecodingContainer<Key> where Key : CodingKey
   {
     log.trace("get-keyed-container<\(type)>")
     return KeyedDecodingContainer(KeyedContainer<T, Key>(decoder: self))
   }
   
-  func unkeyedContainer() throws -> UnkeyedDecodingContainer {
-    throw Error.notImplemented
+  public func unkeyedContainer() throws -> UnkeyedDecodingContainer {
+    guard let key = codingPath.last else {
+      log.error("missing coding key:", codingPath, self)
+      throw Error.missingKey
+    }
+    
+    log.trace("get-unkeyed-container",
+              "\n  record:   ", record,
+              "\n  source-key:", key)
+    return UnkeyedContainer<T>(decoder: self, key: key)
   }
   
-  func singleValueContainer() throws -> SingleValueDecodingContainer {
+  public func singleValueContainer() throws -> SingleValueDecodingContainer {
     throw Error.notImplemented
   }
 
   
   /* Containers */
   
-  final class KeyedContainer<T: Decodable, Key: CodingKey>
-                : KeyedDecodingContainerProtocol
+  internal final class KeyedContainer<T: Decodable, Key: CodingKey>
+                         : KeyedDecodingContainerProtocol
   {
     let decoder : AdaptorRecordDecoder<T>
     let log     : ZeeQLLogger
@@ -460,51 +549,103 @@ class AdaptorRecordDecoder<T: Decodable> : Decoder {
       return decoder
     }
   }
-}
 
-extension Adaptor {
-  // extension AdaptorQueryType {
-  
-  func query<T: Decodable>(_ type: T.Type) throws -> [ T ] {
-    let adaptor = self
+  /**
+   * Right now the sole purpose of this is to decode an array of
+   * `CodableObjectType` aka an implicit toMany relationship:
+   *
+   *     var addresses : [ Address ]
+   *
+   */
+  internal struct UnkeyedContainer<T: Decodable> : UnkeyedDecodingContainer {
+    // TBD: is this also for `[ Int ]` and such? (I think we want to capture
+    //      those earlier as `[Int]`, `[Float]` etc).
+    let log          : ZeeQLLogger
+    let decoder      : AdaptorRecordDecoder<T>
     
-    // create model for type
+    let sourceKey    : CodingKey
     
-    let options = CodableModelDecoder.Options(sqlize: true)
-    let model   = try Model.createFromTypes(type, options: options)
-      // TODO: we should cache the sqlized model (but per adaptor-type?!)
+    let codingPath   = [ CodingKey ]()
+    var currentIndex : Int = 0
+    var isAtEnd      : Bool { return true }
     
-    guard let entity = model.entityForType(type) else {
-      // TODO: throw
-      fatalError("did not find entity for decoded type")
+    var count : Int? { return 0 } // no need to decode anything!
+
+    init(decoder : AdaptorRecordDecoder<T>, key : CodingKey) {
+      self.decoder   = decoder
+      self.log       = decoder.log
+      self.sourceKey = key
     }
     
-    // generate SQL
     
-    let factory = adaptor.expressionFactory
-    let expr =
-      factory.selectExpressionForAttributes(entity.attributes, nil, entity)
+    // MARK: - Main decoding function
     
-    // open channel
-
-    let channel = try openChannelFromPool()
-    defer { releaseChannel(channel) }
-    
-    // fetch and decode
-    
-    let decoder = AdaptorRecordDecoder<T>()
-    var objects = [ T ]()
-    
-    try channel.evaluateQueryExpression(expr, entity.attributes) { record in
-      print("record:", record)
-      let object = try decoder.decode(record: record)
-      print("object:", record)
-      objects.append(object)
+    /**
+     * Decode the item type of the array, i.e. the `Address` in
+     * `[ Address ]`.
+     *
+     * We create our ToMany relationship in here.
+     */
+    mutating func decode<T>(_ type: T.Type) throws -> T where T : Decodable {
+      log.trace("decode index:", currentIndex, type, "source-key:", sourceKey)
+      throw Error.adaptorCannotDecodeRelationships
     }
     
-    return objects
+    // MARK: - Base Decoders, not supported in this specific container
+    
+    func decodeNil() -> Bool {
+      return true // always report nil
+    }
+    public mutating func decode(_ type: Bool.Type) throws -> Bool {
+      throw Error.unsupportedValueType(type)
+    }
+    public mutating func decode(_ type: String.Type) throws -> String {
+      throw Error.unsupportedValueType(type)
+    }
+    public mutating func decode(_ type: Int.Type) throws -> Int {
+      throw Error.unsupportedValueType(type)
+    }
+    public mutating func decode(_ type: Int8.Type) throws -> Int8 {
+      throw Error.unsupportedValueType(type)
+    }
+    public mutating func decode(_ type: Int16.Type) throws -> Int16 {
+      throw Error.unsupportedValueType(type)
+    }
+    public mutating func decode(_ type: Int32.Type) throws -> Int32 {
+      throw Error.unsupportedValueType(type)
+    }
+    public mutating func decode(_ type: Int64.Type) throws -> Int64 {
+      throw Error.unsupportedValueType(type)
+    }
+    public mutating func decode(_ type: UInt.Type) throws -> UInt {
+      throw Error.unsupportedValueType(type)
+    }
+    public mutating func decode(_ type: UInt8.Type) throws -> UInt8 {
+      throw Error.unsupportedValueType(type)
+    }
+    public mutating func decode(_ type: UInt16.Type) throws -> UInt16 {
+      throw Error.unsupportedValueType(type)
+    }
+    public mutating func decode(_ type: UInt32.Type) throws -> UInt32 {
+      throw Error.unsupportedValueType(type)
+    }
+    public mutating func decode(_ type: UInt64.Type) throws -> UInt64 {
+      throw Error.unsupportedValueType(type)
+    }
+
+    func nestedContainer<NestedKey>(keyedBy type: NestedKey.Type) throws
+           -> KeyedDecodingContainer<NestedKey>
+           where NestedKey : CodingKey
+    {
+      throw Error.unsupportedNesting
+    }
+    func nestedUnkeyedContainer() throws -> UnkeyedDecodingContainer {
+      throw Error.unsupportedNesting
+    }
+    
+    func superDecoder() throws -> Decoder {
+      return decoder
+    }
   }
-  
 }
-#endif // Swift 4+
-
+#endif /* Swift 4+ */

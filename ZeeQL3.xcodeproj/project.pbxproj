@@ -178,6 +178,8 @@
 		E8687CA41E60985400D62ABF /* AdaptorDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8687CA31E60985400D62ABF /* AdaptorDataSource.swift */; };
 		E86BF2571E67207D00C8B22A /* AdaptorQueryType.swift in Sources */ = {isa = PBXBuildFile; fileRef = E86BF2561E67207D00C8B22A /* AdaptorQueryType.swift */; };
 		E86BF2591E68506600C8B22A /* AttributeKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = E86BF2581E68506600C8B22A /* AttributeKey.swift */; };
+		E88166C72035C53900A5DF78 /* AdaptorRecordDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = E88166C62035C53900A5DF78 /* AdaptorRecordDecoder.swift */; };
+		E88166C82035C53900A5DF78 /* AdaptorRecordDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = E88166C62035C53900A5DF78 /* AdaptorRecordDecoder.swift */; };
 		E889DE621E666C8D008F962F /* CodeAttribute.swift in Sources */ = {isa = PBXBuildFile; fileRef = E889DE611E666C8D008F962F /* CodeAttribute.swift */; };
 		E889DE641E666C9A008F962F /* CodeRelationship.swift in Sources */ = {isa = PBXBuildFile; fileRef = E889DE631E666C9A008F962F /* CodeRelationship.swift */; };
 		E890E7391ECA543800DE4BC9 /* DatabaseOperation.swift in Sources */ = {isa = PBXBuildFile; fileRef = E890E7381ECA543800DE4BC9 /* DatabaseOperation.swift */; };
@@ -377,6 +379,7 @@
 		E870FC5D1E9BB28700A038AF /* module.private.modulemap */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.module-map"; path = module.private.modulemap; sourceTree = "<group>"; };
 		E870FC5F1E9BB28700A038AF /* module.modulemap */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.module-map"; path = module.modulemap; sourceTree = "<group>"; };
 		E870FC601E9BB28700A038AF /* module.private.modulemap */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.module-map"; path = module.private.modulemap; sourceTree = "<group>"; };
+		E88166C62035C53900A5DF78 /* AdaptorRecordDecoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdaptorRecordDecoder.swift; sourceTree = "<group>"; };
 		E889DE611E666C8D008F962F /* CodeAttribute.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = CodeAttribute.swift; path = Sources/ZeeQL/Access/CodeAttribute.swift; sourceTree = SOURCE_ROOT; };
 		E889DE631E666C9A008F962F /* CodeRelationship.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = CodeRelationship.swift; path = Sources/ZeeQL/Access/CodeRelationship.swift; sourceTree = SOURCE_ROOT; };
 		E890E7381ECA543800DE4BC9 /* DatabaseOperation.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = DatabaseOperation.swift; path = Sources/ZeeQL/Access/DatabaseOperation.swift; sourceTree = SOURCE_ROOT; };
@@ -875,6 +878,7 @@
 				E8C7C85D1FF401EF0016A597 /* EntityPropertyReflectionContainer.swift */,
 				E83491FC1FE817820091C3FD /* CodableModelPostProcessor.swift */,
 				E828519E2031DECB00535895 /* CodableModel.swift */,
+				E88166C62035C53900A5DF78 /* AdaptorRecordDecoder.swift */,
 			);
 			path = Codable;
 			sourceTree = "<group>";
@@ -1112,6 +1116,7 @@
 				E8263C9D1E93C89200508276 /* QualifierEvaluation.swift in Sources */,
 				E8263CAB1E93C89200508276 /* DataSource.swift in Sources */,
 				E8E480C21EC2034F00350EDF /* AdaptorQueryColumnRepresentable.swift in Sources */,
+				E88166C82035C53900A5DF78 /* AdaptorRecordDecoder.swift in Sources */,
 				E8263CCC1E93C89200508276 /* SQLite3Adaptor.swift in Sources */,
 				E8263CA11E93C89200508276 /* KeyComparisonQualifier.swift in Sources */,
 				E8263C9B1E93C89200508276 /* ExpressionEvaluation.swift in Sources */,
@@ -1235,6 +1240,7 @@
 				E8400F5B1E64662A00346028 /* ActiveDataSource.swift in Sources */,
 				E80B3FD41E606D4800D6F0ED /* SimpleKVC.swift in Sources */,
 				E8EB9E5D1EA1117100C6DA54 /* Logger.swift in Sources */,
+				E88166C72035C53900A5DF78 /* AdaptorRecordDecoder.swift in Sources */,
 				E8263C4E1E93AFF200508276 /* SQLite3Adaptor.swift in Sources */,
 				E8EB9E641EA1254E00C6DA54 /* AdaptorModelFetch.swift in Sources */,
 				E81B62CF1E65E32600D43EFA /* KeyValueQualifier.swift in Sources */,
