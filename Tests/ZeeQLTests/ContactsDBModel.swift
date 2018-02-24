@@ -62,6 +62,11 @@ enum PlainCodableContactsDBModel {
   }()
   
   class Address   : Codable {
+    // TODO:
+    // Hm, why does this compile w/ 4.0? breaks 4.1 due to Person not being init
+    // error: class 'PlainCodableContactsDBModel.Address' has no initializers
+    // note: stored property 'person' without initial value prevents synthesized
+    //       initializers
     var id        : Int = 0
     var street    : String?
     var city      : String?
