@@ -67,7 +67,7 @@ enum PlainCodableContactsDBModel {
     // error: class 'PlainCodableContactsDBModel.Address' has no initializers
     // note: stored property 'person' without initial value prevents synthesized
     //       initializers
-    var id        : Int = 0
+    var id        : Int
     var street    : String?
     var city      : String?
     var state     : String?
@@ -76,7 +76,7 @@ enum PlainCodableContactsDBModel {
   }
   
   class Person    : Codable {
-    var id        : Int = 0
+    var id        : Int
     var firstname : String?
     var lastname  : String
     var addresses : [ Address ]
