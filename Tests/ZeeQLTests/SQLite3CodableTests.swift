@@ -258,7 +258,11 @@ public class AdaptorRecordDecoder<T: Decodable> : Decoder {
       self.codingPath = decoder.codingPath
       
       if let record = decoder.record {
-        self.allKeys = record.schema.attributeNames.flatMap(Key.init)
+        #if swift(>=4.1)
+          self.allKeys = record.schema.attributeNames.compactMap(Key.init)
+        #else
+          self.allKeys = record.schema.attributeNames.flatMap(Key.init)
+        #endif
       }
       else {
         self.allKeys = []
