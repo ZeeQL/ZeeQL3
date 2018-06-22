@@ -69,4 +69,5 @@ Packages
 Package.pins
 Package.resolved
 .docker.build
+*.old
 
