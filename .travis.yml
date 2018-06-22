@@ -3,7 +3,6 @@ language:  generic
 notifications:
   slack:
     rooms:
-      - nozeio:LIFY1Jtkx0FRcLq3u1WliHRZ
       - zeeql:odi4PEJUdmDPkBfjhHIaSdrS
       - apacheexpress:9z2IfvxZfENp0TFmiYCgyUKz
 
