@@ -68,4 +68,6 @@ fastlane/test_output
 Packages
 Package.pins
 Package.resolved
+.docker.build
+*.old
 

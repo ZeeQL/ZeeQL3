@@ -4,7 +4,6 @@ notifications:
   slack:
     rooms:
       - zeeql:odi4PEJUdmDPkBfjhHIaSdrS
-      - apacheexpress:9z2IfvxZfENp0TFmiYCgyUKz
 
 matrix:
     include:
