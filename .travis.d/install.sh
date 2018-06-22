@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# our path is:
-#   /home/travis/build/NozeIO/Noze.io/
-
 # Install Swift
 
 wget "${SWIFT_SNAPSHOT_NAME}"
