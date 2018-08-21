@@ -12,6 +12,7 @@ let package = Package(
              from: "1.0.0")
   ],
   targets: [
-    .target(name: "ZeeQL")
+    .target(name: "ZeeQL"),
+    .testTarget(name: "ZeeQLTests", dependencies: [ "ZeeQL" ])
   ]
 )
