@@ -3,7 +3,7 @@
 
 #if defined(__APPLE__) && defined(__MACH__)
 // TODO: this may have issues with LLDB as outlined below
-#  if __clang_major__ >= 10 // Assume Xcode-beta.app (XcodeXbeta)
+#  if __clang_major__ >= 11 // Assume Xcode-beta.app (XcodeXbeta)
 #    include "/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sqlite3.h"
 #  else __clang_major__ >= 9
 #    include "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sqlite3.h"
