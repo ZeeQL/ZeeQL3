@@ -133,6 +133,8 @@ open class SQLite3Adaptor : Adaptor, SmartDescription {
   public struct RuntimeOptions {
     // Note: values unset result in the default behavior
     
+    public init() {}
+    
     public enum AutoVacuumMode {
       case none, full, incremental
     }
