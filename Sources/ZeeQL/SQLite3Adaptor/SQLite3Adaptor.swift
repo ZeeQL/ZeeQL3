@@ -78,8 +78,15 @@ open class SQLite3Adaptor : Adaptor, SmartDescription {
       )
     }
     
+    assert(db != nil, "Lost DB handle mid-flight?! \(self)")
     let channel = SQLite3AdaptorChannel(adaptor: self, handle: db!)
     
+    if let busyTimeout = options.busyTimeout {
+      // Needs to be set early, so that the PRAGMA calls do not trigger the
+      // lock-issue already!
+      sqlite3_busy_timeout(db, Int32(busyTimeout * 1000))
+    }
+
     do {
       for sql in options.sqlStatements {
         guard !sql.isEmpty else { continue }
@@ -245,7 +252,7 @@ extension SQLite3Adaptor.RuntimeOptions.SyncMode {
 
 fileprivate extension TimeInterval {
   var milliseconds : Int {
-    return Int(self / 1000.0)
+    return Int(self * 1000.0)
   }
 }
 
