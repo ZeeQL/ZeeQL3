@@ -538,18 +538,33 @@ class AdaptorOGoTestCase: XCTestCase {
       }
     }
   }
+  
+  //( "testRecordAttachedSchema",  testRecordAttachedSchema    ),
+  static var sharedTests = [
+    ( "testRawAdaptorChannelQuery",  testRawAdaptorChannelQuery  ),
+    ( "testEvaluateQueryExpression", testEvaluateQueryExpression ),
+    ( "testRawTypeSafeQuery",        testRawTypeSafeQuery        ),
+    ( "testSimpleTX",                testSimpleTX                ),
+    ( "testAdaptorDataSourceFindByID", testAdaptorDataSourceFindByID ),
+    ( "testBasicReflection",         testBasicReflection         ),
+    ( "testTableReflection",         testTableReflection         ),
+    ( "testCodeSchema",              testCodeSchema              ),
+    ( "testCodeSchemaWithJoinQualifier",   testCodeSchemaWithJoinQualifier ),
+    ( "testCodeSchemaWithRelshipPrefetch", testCodeSchemaWithRelshipPrefetch ),
+    ( "testCodeSchemaWithTypedFetchSpec",  testCodeSchemaWithTypedFetchSpec ),
+  ]
 }
 
 
 // MARK: - Helpers
 
-fileprivate func dump(row: AdaptorRecord, prefix: String = "    ") {
+internal func dump(row: AdaptorRecord, prefix: String = "    ") {
   for ( key, value ) in row {
     print("\(prefix)\(key): \(value as Optional) [\(type(of: value))]")
   }
 }
 
-extension ActiveRecord {
+internal extension ActiveRecord {
   
   func dumpRecordInColumns(indent: String = "") {
     // TODO: align width

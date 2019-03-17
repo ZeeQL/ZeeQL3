@@ -49,6 +49,7 @@ open class SQLite3AdaptorChannel : AdaptorChannel {
   }
 
   // MARK: - Raw Queries
+  
   func fetchRows(_ stmt     : OpaquePointer?,
                  _ optAttrs : [ Attribute ]? = nil,
                  cb         : ( AdaptorRecord ) throws -> Void) throws
@@ -207,7 +208,7 @@ open class SQLite3AdaptorChannel : AdaptorChannel {
     var stmt : OpaquePointer? = nil
     
     let rc = sqlite3_prepare_v2(handle, sqlexpr.statement, -1, &stmt, nil)
-    guard rc == SQLITE_OK else {
+    guard rc == SQLITE_OK, stmt != nil else {
       throw Error.CannotPrepareSQL(rc, message(for: rc))
     }
     defer { if let stmt = stmt { sqlite3_finalize(stmt) } }
@@ -368,7 +369,7 @@ open class SQLite3AdaptorChannel : AdaptorChannel {
 
   // MARK: - Transactions
   
-  public var isTransactionInProgress : Bool = false
+  private(set) public var isTransactionInProgress : Bool = false
   
   public func begin() throws {
     guard !isTransactionInProgress

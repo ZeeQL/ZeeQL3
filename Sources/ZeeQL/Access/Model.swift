@@ -179,11 +179,7 @@ open class Model : SmartDescription {
     return nil
   }
   
-  open func entityForObject(_ object: Any?) -> Entity? {
-    guard let object = object else { return nil }
-    
-    // scan by type (TBD: is this actually sound?)
-    let objectType = type(of: object)
+  open func entityForType(_ objectType: Any.Type) -> Entity? {
     for entity in entities {
       guard let type = entity.objectType else { continue }
       if type == objectType { return entity }
@@ -196,9 +192,16 @@ open class Model : SmartDescription {
       if name == typeName { return entity }
     }
     
-    log.warn("Did not find entity for object: \(object) " +
-             "type: \(objectType)/\(typeName)")
+    log.warn("Did not find entity for object typ:", objectType, typeName)
     return nil
+  }
+  
+  open func entityForObject(_ object: Any?) -> Entity? {
+    guard let object = object else { return nil }
+    
+    // scan by type (TBD: is this actually sound?)
+    let objectType = type(of: object)
+    return entityForType(objectType)
   }
   
   open func connectRelationships() {

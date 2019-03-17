@@ -236,4 +236,20 @@ class QualifierParserTests: XCTestCase {
     // TODO: check for errors
     return q
   }
+
+  static var allTests = [
+    ( "testSimpleKeyValueQualifierInt",    testSimpleKeyValueQualifierInt ),
+    ( "testSimpleKeyValueQualifierString", testSimpleKeyValueQualifierString ),
+    ( "testComplexCompoundQualifier",      testComplexCompoundQualifier ),
+    ( "testComplexArgumentParsing",        testComplexArgumentParsing ),
+    ( "testQualifierWithOneVariables",     testQualifierWithOneVariables ),
+    ( "testQualifierWithSomeVariables",    testQualifierWithSomeVariables ),
+    ( "testQualifierWithParenthesis",      testQualifierWithParenthesis ),
+    ( "testSimpleBoolKeyValueQualifier",   testSimpleBoolKeyValueQualifier ),
+    ( "testBoolKeyValueAndFrontQualifier", testBoolKeyValueAndFrontQualifier ),
+    ( "testBoolKeyValueAndBackQualifier",  testBoolKeyValueAndBackQualifier ),
+    ( "testBoolKeyValueAndParenQualifier", testBoolKeyValueAndParenQualifier ),
+    ( "testSQLQualifier",                  testSQLQualifier ),
+    ( "testPlainString",                   testPlainString ),
+  ]
 }

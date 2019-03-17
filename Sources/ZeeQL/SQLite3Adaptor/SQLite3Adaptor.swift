@@ -38,11 +38,14 @@ open class SQLite3Adaptor : Adaptor, SmartDescription {
   
   let path     : String
   let openMode : OpenMode
+  let options  : RuntimeOptions
   
-  public init(_ path: String, autocreate: Bool = false, readonly: Bool = false)
+  public init(_ path: String, autocreate: Bool = false, readonly: Bool = false,
+              options: RuntimeOptions = RuntimeOptions())
   {
-    self.path = path
+    self.path     = path
     self.openMode = OpenMode(autocreate: autocreate, readonly: readonly)
+    self.options  = options
   }
   
   
@@ -75,7 +78,27 @@ open class SQLite3Adaptor : Adaptor, SmartDescription {
       )
     }
     
-    return SQLite3AdaptorChannel(adaptor: self, handle: db!)
+    assert(db != nil, "Lost DB handle mid-flight?! \(self)")
+    let channel = SQLite3AdaptorChannel(adaptor: self, handle: db!)
+    
+    if let busyTimeout = options.busyTimeout {
+      // Needs to be set early, so that the PRAGMA calls do not trigger the
+      // lock-issue already!
+      sqlite3_busy_timeout(db, Int32(busyTimeout * 1000))
+    }
+
+    do {
+      for sql in options.sqlStatements {
+        guard !sql.isEmpty else { continue }
+        
+        try channel.performSQL(sql)
+      }
+    }
+    catch {
+      throw error
+    }
+    
+    return channel
   }
   
   public func releaseChannel(_ channel: AdaptorChannel) {
@@ -116,6 +139,8 @@ open class SQLite3Adaptor : Adaptor, SmartDescription {
   
   public struct RuntimeOptions {
     // Note: values unset result in the default behavior
+    
+    public init() {}
     
     public enum AutoVacuumMode {
       case none, full, incremental
@@ -227,7 +252,7 @@ extension SQLite3Adaptor.RuntimeOptions.SyncMode {
 
 fileprivate extension TimeInterval {
   var milliseconds : Int {
-    return Int(self / 1000.0)
+    return Int(self * 1000.0)
   }
 }
 

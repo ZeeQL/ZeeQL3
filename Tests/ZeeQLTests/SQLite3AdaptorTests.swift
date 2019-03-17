@@ -20,9 +20,8 @@ class SQLite3AdaptorTests: XCTestCase {
         guard let path = url?.path else { return "OGo.sqlite3" }
         return path
       #else
-        let path = ProcessInfo().environment["SRCROOT"]
-                ?? FileManager.default.currentDirectoryPath
-        return "\(path)/data/OGo.sqlite3"
+        let dataPath = lookupTestDataPath()
+        return "\(dataPath)/OGo.sqlite3"
       #endif
     }()
     return SQLite3Adaptor(pathToTestDB)
@@ -69,4 +68,11 @@ class SQLite3AdaptorTests: XCTestCase {
       XCTFail("Unexpected error: \(error)")
     }
   }
+
+  
+  // MARK: - Non-ObjC Swift Support
+  
+  static var allTests = [
+    ( "testBindQuery", testBindQuery ),
+  ]
 }

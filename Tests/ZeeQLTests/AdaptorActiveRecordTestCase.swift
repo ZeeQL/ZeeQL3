@@ -19,7 +19,7 @@ class AdapterActiveRecordTests: XCTestCase {
   }
   
   let verbose = true
-  let model   = ContactsDBModel.model
+  let model   = ActiveRecordContactsDBModel.model
   
   func testSnapshotting() throws {
     let db = Database(adaptor: adaptor)
@@ -45,7 +45,7 @@ class AdapterActiveRecordTests: XCTestCase {
     XCTAssert(entity != nil, "did not find person entity ...")
     guard entity != nil else { return } // tests continue to run
     
-    let ds = ActiveDataSource<ContactsDBModel.Person>(database: db)
+    let ds = ActiveDataSource<ActiveRecordContactsDBModel.Person>(database: db)
     
     let dagobert = try ds.findBy(matchingAll: [ "firstname": "Dagobert" ])
     XCTAssert(dagobert != nil)
@@ -64,7 +64,7 @@ class AdapterActiveRecordTests: XCTestCase {
   
   func testInsertAndDelete() throws {
     let db    = Database(adaptor: adaptor)
-    let ds    = db.datasource(ContactsDBModel.Person.self)
+    let ds    = db.datasource(ActiveRecordContactsDBModel.Person.self)
     
     // clear
     try adaptor.performSQL("DELETE FROM person WHERE firstname = 'Ronald'")
@@ -119,4 +119,10 @@ class AdapterActiveRecordTests: XCTestCase {
       XCTAssert(false, "delete failed: \(error)")
     }
   }
+
+  static var sharedTests = [
+    ( "testSnapshotting",    testSnapshotting    ),
+    ( "testSimpleChange",    testSimpleChange    ),
+    ( "testInsertAndDelete", testInsertAndDelete ),
+  ]
 }
