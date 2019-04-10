@@ -184,7 +184,7 @@ fileprivate extension CodeEntityBase {
    * Sideeffect: Results are pushed into the `attributes` and `relationships`
    *             properties of the `CodeEntityBase`.
    */
-  fileprivate func processMirror(_ mirror: Mirror) {
+  func processMirror(_ mirror: Mirror) {
     // TODO: preserve them across processMirror invocations
     var nameToIdx    = [ String : Int ]()
     var relNameToIdx = [ String : Int ]()

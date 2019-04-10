@@ -11,7 +11,7 @@ public extension Model {
   // This has all those dupes, because we want to capture the full static type.
   // It is a little stupid, but hey, type safety!
   
-  public typealias CodableOptions = CodableModelDecoder.Options
+  typealias CodableOptions = CodableModelDecoder.Options
   
   // MARK: - Decodable
   

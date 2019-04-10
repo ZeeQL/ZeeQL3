@@ -540,8 +540,8 @@
      *     var addresses : [ Address ]
      *
      */
-    internal struct EntityCollectionPropertyReflectionContainer<EntityType: Decodable>
-                      : UnkeyedDecodingContainer
+    struct EntityCollectionPropertyReflectionContainer<EntityType: Decodable>
+           : UnkeyedDecodingContainer
     {
       // This has to live in a different file due to the Xcode 9 compile error
       let log          : ZeeQLLogger
@@ -640,14 +640,28 @@
         defer {
           // unregister if something failed
           if !didWorkOut, let rs = rsToRemove {
-            if let idx = sourceEntity.relationships.index(where: { $0 === rs } )
-            {
+            #if swift(>=5)
+              let optIdx = sourceEntity.relationships
+                           .firstIndex(where: { $0 === rs } )
+            #else
+              let optIdx = sourceEntity.relationships
+                           .index(where: { $0 === rs } )
+            #endif
+            if let idx = optIdx {
               sourceEntity.relationships.remove(at: idx)
-              if let cpn = sourceEntity.classPropertyNames,
-                 let idx = cpn.index(where: { $0 == name } )
-              {
-                sourceEntity.classPropertyNames?.remove(at: idx)
-              }
+              #if swift(>=5)
+                if let cpn = sourceEntity.classPropertyNames,
+                   let idx = cpn.firstIndex(where: { $0 == name } )
+                {
+                  sourceEntity.classPropertyNames?.remove(at: idx)
+                }
+              #else
+                if let cpn = sourceEntity.classPropertyNames,
+                   let idx = cpn.index(where: { $0 == name } )
+                {
+                  sourceEntity.classPropertyNames?.remove(at: idx)
+                }
+              #endif
             }
           }
         }

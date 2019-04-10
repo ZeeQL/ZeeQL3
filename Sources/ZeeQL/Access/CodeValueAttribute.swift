@@ -69,7 +69,7 @@ public extension ActiveRecord {
   //     public typealias Int = CodeValueAttribute<Swift.Int>
   //
   
-  public enum Value {
+  enum Value {
     static func box<T>(name         : Swift.String? = nil,
                        column       : Swift.String? = nil,
                        externalType : Swift.String? = nil,

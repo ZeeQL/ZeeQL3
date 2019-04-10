@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 28/02/2017.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2019 ZeeZide GmbH. All rights reserved.
 //
 
 public protocol SmartDescription : CustomStringConvertible {
@@ -14,11 +14,9 @@ public protocol SmartDescription : CustomStringConvertible {
 
 public extension SmartDescription { // default-imp
   
-  public var descriptionPrefix : String {
-    return "\(type(of: self))"
-  }
+  var descriptionPrefix : String { return "\(type(of: self))" }
   
-  public var description: String {
+  var description: String {
     var s = "<\(descriptionPrefix)"
     appendToDescription(&s)
     s += ">"

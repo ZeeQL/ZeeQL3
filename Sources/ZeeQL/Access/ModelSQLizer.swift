@@ -3,7 +3,7 @@
 //  ZeeQL3
 //
 //  Created by Helge Hess on 08/06/17.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2019 ZeeZide GmbH. All rights reserved.
 //
 
 /**
@@ -58,9 +58,15 @@ open class ModelSQLizer {
       }
       else {
         me = ModelEntity(entity: entity, deep: true)
-        if let idx = model.entities.index(where: { $0 === entity }) {
-          model.entities[idx] = me
-        }
+        #if swift(>=5)
+          if let idx = model.entities.firstIndex(where: { $0 === entity }) {
+            model.entities[idx] = me
+          }
+        #else
+          if let idx = model.entities.index(where: { $0 === entity }) {
+            model.entities[idx] = me
+          }
+        #endif
       }
       
       if entity.externalName == nil {

@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 18/02/2017.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2019 ZeeZide GmbH. All rights reserved.
 //
 
 /**
@@ -223,7 +223,7 @@ public extension Entity { // default imp
   
   // MARK: - Description
   
-  public func appendToDescription(_ ms: inout String) {
+  func appendToDescription(_ ms: inout String) {
     if isPattern { ms += " pattern" }
     
     ms += " \(name)"
@@ -295,7 +295,7 @@ public extension Entity { // primary keys
    * - parameter row: a row
    * - returns: a Dictionary containing the keys/values of the primary keys
    */
-  public func primaryKeyForRow(_ row: Any?) -> Snapshot? {
+  func primaryKeyForRow(_ row: Any?) -> Snapshot? {
     /* we do KVC on the row, so it can be any kind of object */
     guard let row = row else {
       globalZeeQLLogger.warn("got no row to calculate primary key!")
@@ -323,7 +323,7 @@ public extension Entity { // primary keys
    * - parameter row: a database object (or snapshot)
    * - returns: a `Qualifier` matching the keys/values of the primary keys
    */
-  public func qualifierForPrimaryKey(_ row: Any?) -> Qualifier? {
+  func qualifierForPrimaryKey(_ row: Any?) -> Qualifier? {
     guard let row = row else { return nil }
     /* we do KVC on the row, so it can be any kind of object */
     guard let pkey = primaryKeyForRow(row) else { return nil }

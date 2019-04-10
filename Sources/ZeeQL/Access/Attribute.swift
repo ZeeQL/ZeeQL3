@@ -72,25 +72,25 @@ public extension Attribute { // default imp
   
   // MARK: - Property
   
-  public var relationshipPath : String? { // for flattened properties
+  var relationshipPath : String? { // for flattened properties
     return nil
   }
   
   // MARK: - SQLValue
   
-  public func valueFor(SQLExpression context: SQLExpression) -> String {
+  func valueFor(SQLExpression context: SQLExpression) -> String {
     return context.sqlStringFor(schemaObjectName: columnName ?? name)
   }
   
   // MARK: - ExpressionEvaluation
   
-  public func valueFor(object: Any?) -> Any? {
+  func valueFor(object: Any?) -> Any? {
     return KeyValueCoding.value(forKeyPath: name, inObject: object)
   }
   
   // MARK: - Description
 
-  public func appendToDescription(_ ms: inout String) {
+  func appendToDescription(_ ms: inout String) {
     if isPattern { ms += " pattern" }
     
     ms += " \(name)"
@@ -374,7 +374,7 @@ public protocol AttributeValue {
 
 public extension AttributeValue {
   static var isOptional : Bool { return false }
-  public static func shouldUseBindVariable(for attribute: Attribute) -> Bool {
+  static func shouldUseBindVariable(for attribute: Attribute) -> Bool {
     return false
   }
   

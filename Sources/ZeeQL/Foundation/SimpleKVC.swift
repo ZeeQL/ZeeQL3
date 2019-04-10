@@ -3,7 +3,7 @@
 //  ZeeQL3
 //
 //  Created by Helge Heß on 6/1/16.
-//  Copyright © 2016 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2016-2019 ZeeZide GmbH. All rights reserved.
 //
 
 import class Foundation.NSObject
@@ -37,12 +37,11 @@ public extension KeyValueCodingType {
 public extension KeyValueCodingType {
   // TODO: own protocol for that
   
-  public func values(forKeys keys: [String]) -> [ String : Any ] {
+  func values(forKeys keys: [String]) -> [ String : Any ] {
     var values = [ String : Any ]()
     for key in keys {
-      if let value = self.value(forKey: key) {
-        values[key] = value
-      }
+      guard let value = self.value(forKey: key) else { continue }
+      values[key] = value
     }
     return values
   }
@@ -187,8 +186,8 @@ public struct KeyValueCoding {
 
 public extension KeyValueCoding {
   
-  public static func defaultValue(forKey k: String, inDictionary o: Any,
-                                  mirror: Mirror) -> Any?
+  static func defaultValue(forKey k: String, inDictionary o: Any,
+                           mirror: Mirror) -> Any?
   {
     for ( _, pair ) in mirror.children {
       let pairMirror = Mirror(reflecting: pair)

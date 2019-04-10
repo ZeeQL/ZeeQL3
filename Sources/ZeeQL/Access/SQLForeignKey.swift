@@ -80,11 +80,20 @@ struct SQLForeignKey : Equatable, Hashable, SmartDescription {
     return true
   }
   
-  public var hashValue: Int {
-    // FIXME: what is a proper function?
-    guard count > 0 else { return destinationTableName.hashValue }
-    return destinationTableName.hashValue ^ sortedJoinColumns[0].0.hashValue
-  }
+  #if swift(>=5)
+    public func hash(into hasher: inout Hasher) {
+      // FIXME: what is a proper function?
+      guard count > 0 else { return destinationTableName.hash(into: &hasher) }
+      destinationTableName  .hash(into: &hasher)
+      sortedJoinColumns[0].0.hash(into: &hasher)
+    }
+  #else
+    public var hashValue: Int {
+      // FIXME: what is a proper function?
+      guard count > 0 else { return destinationTableName.hashValue }
+      return destinationTableName.hashValue ^ sortedJoinColumns[0].0.hashValue
+    }
+  #endif
   
   public var descriptionPrefix : String { return "ForeignKey:" }
   

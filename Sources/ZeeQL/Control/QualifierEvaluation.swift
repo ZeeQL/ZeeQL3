@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 15/02/2017.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2019 ZeeZide GmbH. All rights reserved.
 //
 
 public protocol QualifierEvaluation : ExpressionEvaluation {
@@ -14,7 +14,7 @@ public protocol QualifierEvaluation : ExpressionEvaluation {
 
 public extension QualifierEvaluation {
 
-  public func valueFor(object: Any?) -> Any? {
+  func valueFor(object: Any?) -> Any? {
     return evaluateWith(object: object) ? true : false
   }
   
