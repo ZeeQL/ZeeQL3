@@ -3,7 +3,7 @@
 //  ZeeQL3
 //
 //  Created by Helge Hess on 08/06/17.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2019 ZeeZide GmbH. All rights reserved.
 //
 
 /**
@@ -19,19 +19,31 @@
  */
 open class ModelSQLizer {
   
-  public struct Options {
+  public struct Options : CustomStringConvertible {
     var includeTableNameForPrimaryKeyID : String? = "id" // 'id' => 'person_id'
     var decamelizeAndInsertString : String? = "_"  // bankAddr => bank_addr
     var lowercaseTableNames                 = true // Person => person
     var lowercaseColumnNames                = true // ID => id
     
     public init() {}
+    
+    public var description: String {
+      var ms = "<SQLizerOpts:"
+      if let s = includeTableNameForPrimaryKeyID { ms += " tableid=\(s)"   }
+      if let s = decamelizeAndInsertString       { ms += " decamel='\(s)'" }
+      if lowercaseTableNames  { ms += "lower-tables"  }
+      if lowercaseColumnNames { ms += "lower-columns" }
+      ms += ">"
+      return ms
+    }
   }
   
   let log : ZeeQLLogger = globalZeeQLLogger
   
-  // TODO: IMPLEMENT ME :-)
+  public init() {
+  }
 
+  
   /**
    * Add external-names/column-names to model.
    *
@@ -40,15 +52,21 @@ open class ModelSQLizer {
   open func sqlizeModel(_ model: Model, options: Options = Options()) -> Model {
     // TODO: only convert to Model on-demand
     for entity in model.entities {
-      let me : ModelEntity
-      if let se = entity as? ModelEntity {
+      let me : SQLizableEntity
+      if let se = entity as? SQLizableEntity {
         me = se
       }
       else {
         me = ModelEntity(entity: entity, deep: true)
-        if let idx = model.entities.index(where: { $0 === entity }) {
-          model.entities[idx] = me
-        }
+        #if swift(>=5)
+          if let idx = model.entities.firstIndex(where: { $0 === entity }) {
+            model.entities[idx] = me
+          }
+        #else
+          if let idx = model.entities.index(where: { $0 === entity }) {
+            model.entities[idx] = me
+          }
+        #endif
       }
       
       if entity.externalName == nil {
@@ -75,8 +93,8 @@ open class ModelSQLizer {
       for attr in entity.attributes {
         guard attr.columnName == nil else { continue }
         
-        let ma : ModelAttribute
-        if let sa = attr as? ModelAttribute { ma = sa }
+        let ma : SQLizableAttribute
+        if let sa = attr as? SQLizableAttribute { ma = sa }
         else { ma = ModelAttribute(attribute: attr) }
         
         var columnName : String
@@ -113,6 +131,23 @@ open class ModelSQLizer {
   }
   
 }
+
+
+// MARK: - Supported Model Types
+
+public protocol SQLizableEntity : Entity {
+  var externalName : String? { get set }
+}
+public protocol SQLizableAttribute : Attribute {
+  var columnName   : String? { get set }
+}
+
+extension ModelEntity : SQLizableEntity {
+}
+extension ModelAttribute : SQLizableAttribute {
+}
+
+// MARK: - String Helpers
 
 extension String {
   

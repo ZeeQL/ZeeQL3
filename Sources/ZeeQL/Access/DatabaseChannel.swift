@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 27/02/17.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2019 ZeeZide GmbH. All rights reserved.
 //
 
 open class DatabaseChannelBase {
@@ -172,7 +172,9 @@ open class DatabaseChannelBase {
       /* split off first part of relationship */
       
       var relname : String
-      #if swift(>=3.2)
+      #if swift(>=5.0)
+        var dotidx  = path.firstIndex(of: ".")
+      #elseif swift(>=3.2)
         var dotidx  = path.index(of: ".")
       #else
         var dotidx  = path.characters.index(of: ".")
@@ -200,7 +202,9 @@ open class DatabaseChannelBase {
       if rel.isFlattened {
         // dupe, same thing again
         path   = rel.relationshipPath ?? ""
-        #if swift(>=3.2)
+        #if swift(>=5.0)
+          dotidx = path.firstIndex(of: ".")
+        #elseif swift(>=3.2)
           dotidx = path.index(of: ".")
         #else
           dotidx = path.characters.index(of: ".")
@@ -284,7 +288,9 @@ open class DatabaseChannelBase {
       /* split off first part of relationship */
       
       var relname : String
-      #if swift(>=3.2)
+      #if swift(>=5.0)
+        let dotidx  = path.firstIndex(of: ".")
+      #elseif swift(>=3.2)
         let dotidx  = path.index(of: ".")
       #else
         let dotidx  = path.characters.index(of: ".")

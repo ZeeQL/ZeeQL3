@@ -20,7 +20,13 @@ open class AdaptorRecord : SwiftObject, SmartDescription {
   public var isEmpty : Bool { return values.isEmpty }
   
   public subscript(name: String) -> Any? {
-    guard let idx = schema.attributeNames.index(of: name) else { return nil }
+    #if swift(>=5)
+      guard let idx = schema.attributeNames.firstIndex(of: name) else {
+        return nil
+      }
+    #else
+      guard let idx = schema.attributeNames.index(of: name) else { return nil }
+    #endif
     guard idx < values.count else { return nil }
     return values[idx]
   }

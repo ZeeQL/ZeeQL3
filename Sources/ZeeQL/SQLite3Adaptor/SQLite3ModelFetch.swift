@@ -3,7 +3,7 @@
 //  ZeeQL3
 //
 //  Created by Helge Hess on 14/04/17.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2019 ZeeZide GmbH. All rights reserved.
 //
 
 /**
@@ -141,7 +141,17 @@ open class SQLite3ModelFetch: AdaptorModelFetch {
       var width : Int? = nil
 
       /* process external type, eg: VARCHAR(40) */
-      #if swift(>=3.2)
+      #if swift(>=5.0)
+        if let idx = exttype.firstIndex(of: "(") {
+          let ws = exttype[idx..<exttype.endIndex]
+          exttype = String(exttype[exttype.startIndex..<idx])
+        
+          if let eidx = ws.firstIndex(of: ")") {
+            let iv = ws[ws.startIndex..<eidx]
+            width = Int(iv)
+          }
+        }
+      #elseif swift(>=3.2)
         if let idx = exttype.index(of: "(") {
           let ws = exttype[idx..<exttype.endIndex]
           exttype = String(exttype[exttype.startIndex..<idx])

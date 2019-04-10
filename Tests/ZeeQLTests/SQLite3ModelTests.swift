@@ -20,9 +20,8 @@ class SQLite3ModelTests: XCTestCase {
       //NSLog("URL: \(url) \(path)")
       return SQLite3Adaptor(path)
     #else
-      let path = ProcessInfo().environment["SRCROOT"]
-              ?? FileManager.default.currentDirectoryPath
-      return SQLite3Adaptor("\(path)/data/OGo.sqlite3")
+      let dataPath = lookupTestDataPath()
+      return SQLite3Adaptor("\(dataPath)/OGo.sqlite3")
     #endif
   }()
   
@@ -98,4 +97,14 @@ class SQLite3ModelTests: XCTestCase {
     XCTAssert(!tag4.isEqual(to: tag6))
     XCTAssert(!tag1.isEqual(to: tag6))
   }
+  
+  
+  // MARK: - Non-ObjC Swift Support
+
+  static var allTests = [
+    ( "testDescribeDatabaseNames", testDescribeDatabaseNames ),
+    ( "testDescribeOGoTableNames", testDescribeOGoTableNames ),
+    ( "testFetchModel",            testFetchModel ),
+    ( "testSchemaTag",             testSchemaTag  ),
+  ]
 }

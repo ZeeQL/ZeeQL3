@@ -41,11 +41,9 @@ public protocol DatabaseBoundObject {
 
 public extension ActiveRecordType { // default imp
 
-  public func value(forKey k: String) -> Any? {
+  func value(forKey k: String) -> Any? {
     // first check extra properties
-    if let v = values[k] {
-      return v
-    }
+    if let v = values[k] { return v }
     
     // then fallback to KVC
     if let v = KeyValueCoding.defaultValue(forKey: k, inObject: self) {
@@ -58,7 +56,7 @@ public extension ActiveRecordType { // default imp
   
   // MARK: - Convenience Subscripts
   
-  public subscript(key: String) -> Any? {
+  subscript(key: String) -> Any? {
     set {
       do {
         if let v = newValue { // hm, necessary?
@@ -78,12 +76,12 @@ public extension ActiveRecordType { // default imp
     }
   }
   
-  public subscript(int key: String) -> Int? {
+  subscript(int key: String) -> Int? {
     guard let v = self[key] else { return nil }
     if let i = v as? Int { return i }
     return Int("\(v)")
   }
-  public subscript(string key: String) -> String? {
+  subscript(string key: String) -> String? {
     guard let v = self[key] else { return nil }
     if let i = v as? String { return i }
     return "\(v)"
@@ -272,12 +270,15 @@ open class ActiveRecord : ActiveRecordType, SmartDescription {
     }
   }
   public func removeObject(_ o: AnyObject, fromPropertyWithKey key: String) {
-    if var list = values[key] as? [ AnyObject ] {
-      if let idx = list.index(where: { $0 === o }) {
-        list.remove(at: idx)
-        values[key] = [ list ]
-      }
-    }
+    guard var list = values[key] as? [ AnyObject ] else { return }
+    #if swift(>=5)
+      guard let idx = list.firstIndex(where: { $0 === o }) else { return }
+    #else
+      guard let idx = list.index(where: { $0 === o }) else { return }
+    #endif
+    
+    list.remove(at: idx)
+    values[key] = [ list ]
   }
   
   

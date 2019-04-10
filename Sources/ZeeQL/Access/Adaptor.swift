@@ -92,8 +92,8 @@ public extension Adaptor {
 
 public extension Adaptor { // AdaptorQueryType
   
-  public func querySQL(_ sql: String, _ optAttrs : [ Attribute ]? = nil,
-                       cb: ( AdaptorRecord ) throws -> Void) throws
+  func querySQL(_ sql: String, _ optAttrs : [ Attribute ]? = nil,
+                cb: ( AdaptorRecord ) throws -> Void) throws
   {
     let ch = try openChannelFromPool()
     defer { releaseChannel(ch) }
@@ -102,7 +102,7 @@ public extension Adaptor { // AdaptorQueryType
   }
   
   @discardableResult
-  public func performSQL(_ sql: String) throws -> Int {
+  func performSQL(_ sql: String) throws -> Int {
     let ch = try openChannelFromPool()
     defer { releaseChannel(ch) }
     

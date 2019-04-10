@@ -301,10 +301,10 @@ public extension AdaptorChannel {
    *   - qualifier: the qualifier used to select the rows to be locked
    *   - snapshot:  a set of keys/values specifying a row to be locked
    */
-  public func lockRowComparingAttributes(_ attrs     : [ Attribute ]?,
-                                         _ entity    : Entity,
-                                         _ qualifier : Qualifier?,
-                                         _ snapshot  : AdaptorRow?) throws
+  func lockRowComparingAttributes(_ attrs     : [ Attribute ]?,
+                                  _ entity    : Entity,
+                                  _ qualifier : Qualifier?,
+                                  _ snapshot  : AdaptorRow?) throws
               -> Bool
   {
     let q  = snapshot != nil ? qualifierToMatchAllValues(snapshot!) : nil
@@ -339,11 +339,11 @@ public extension AdaptorChannel {
    *   - lock:  whether the SELECT should include a HOLD LOCK
    *   - e:     the entity (usually the table) to be fetched
    */
-  public func selectAttributes(_ attrs : [ Attribute ]?,
-                               _ fs    : FetchSpecification?,
-                             lock    : Bool,
-                             _ e     : Entity?,
-                             result  : ( AdaptorRecord ) throws -> Void) throws
+  func selectAttributes(_ attrs : [ Attribute ]?,
+                        _ fs    : FetchSpecification?,
+                        lock    : Bool,
+                        _ e     : Entity?,
+                        result  : ( AdaptorRecord ) throws -> Void) throws
   {
     /* This is called by the DatabaseChannel
      *   selectObjectsWithFetchSpecification(fs)
@@ -444,7 +444,6 @@ public extension AdaptorChannel {
    *   - entity:    the entity which should be updated
    * - returns: number of affected rows or -1 on error
    */
-  public
   func updateValuesInRowsDescribedByQualifier(_ values    : [ String: Any? ],
                                               _ qualifier : Qualifier,
                                               _ entity    : Entity) throws
@@ -455,8 +454,8 @@ public extension AdaptorChannel {
     return try evaluateUpdateExpression(expr)
   }
   
-  public func deleteRowsDescribedByQualifier(_ q: Qualifier, _ e: Entity) throws
-              -> Int
+  func deleteRowsDescribedByQualifier(_ q: Qualifier, _ e: Entity) throws
+       -> Int
   {
     let expr = expressionFactory.deleteStatementWithQualifier(q, e)
     return try evaluateUpdateExpression(expr)
@@ -471,9 +470,8 @@ public extension AdaptorChannel {
    *   - entity:    the entity which contains the row
    * - returns:     true if exactly one row was deleted, false otherwise
    */
-  public func deleteRowDescribedByQualifier(_ qualifier : Qualifier,
-                                            _ entity    : Entity) throws
-              -> Bool
+  func deleteRowDescribedByQualifier(_ qualifier: Qualifier, _ entity: Entity)
+         throws -> Bool
   {
     return try deleteRowsDescribedByQualifier(qualifier, entity) == 1
   }
@@ -495,16 +493,14 @@ public extension AdaptorChannel {
    *                 entity are being refetched. Requires the entity!
    * - returns:  the record, potentially refetched and updated
    */
-  public func insertRow(_ row: AdaptorRow, _ entity: Entity?,
-                        refetchAll: Bool)
-                throws -> AdaptorRow
+  func insertRow(_ row: AdaptorRow, _ entity: Entity?, refetchAll: Bool)
+         throws -> AdaptorRow
   {
     return try defaultInsertRow(row, entity, refetchAll: refetchAll)
   }
   
-  public func defaultInsertRow(_ row: AdaptorRow, _ entity: Entity?,
-                               refetchAll: Bool)
-                throws -> AdaptorRow
+  func defaultInsertRow(_ row: AdaptorRow, _ entity: Entity?, refetchAll: Bool)
+         throws -> AdaptorRow
   {
     // So that we can reuse the default implementation ...
     if refetchAll && entity == nil {
@@ -545,8 +541,8 @@ public extension AdaptorChannel {
    *   - entity: optionally an entity representing the table
    * - returns:  the record, potentially refetched and updated
    */
-  public func insertRow(_ row: AdaptorRow, _ entity: Entity? = nil) throws
-              -> AdaptorRow
+  func insertRow(_ row: AdaptorRow, _ entity: Entity? = nil)
+         throws -> AdaptorRow
   {
     return try insertRow(row, entity, refetchAll: entity != nil)
   }

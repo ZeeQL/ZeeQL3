@@ -45,8 +45,8 @@ public extension AdaptorQueryType {
    *
    * TODO: document use of attributes.
    */
-  public func querySQL(_ sql: String, _ optAttrs: [ Attribute ]?) throws
-              -> [ AdaptorRecord ]
+  func querySQL(_ sql: String, _ optAttrs: [ Attribute ]?)
+         throws -> [ AdaptorRecord ]
   {
     var results = [ AdaptorRecord ]()
     try querySQL(sql, optAttrs) { results.append($0) }
@@ -56,7 +56,7 @@ public extension AdaptorQueryType {
   /**
    * Execute the raw SQL and return the results as an array of `AdaptorRecord`s.
    */
-  public func querySQL(_ sql: String) throws -> [ AdaptorRecord ] {
+  func querySQL(_ sql: String) throws -> [ AdaptorRecord ] {
     var results = [ AdaptorRecord ]()
     try querySQL(sql, nil) { results.append($0) }
     return results
@@ -65,9 +65,7 @@ public extension AdaptorQueryType {
   /**
    * Execute the raw SQL and call the result callback for every record returned.
    */
-  public func querySQL(_ sql: String, cb: ( AdaptorRecord ) throws -> Void)
-                throws
-  {
+  func querySQL(_ sql: String, cb: ( AdaptorRecord ) throws -> Void) throws {
     try querySQL(sql, nil, cb: cb)
   }
 }

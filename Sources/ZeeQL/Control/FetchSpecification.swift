@@ -128,7 +128,7 @@ extension FetchSpecification { // Default Imp
 
 public extension FetchSpecification {
 
-  public func appendToDescription(_ ms: inout String) {
+  func appendToDescription(_ ms: inout String) {
     if let entity = entity {
       ms += " \(entity.name)"
     }
@@ -182,7 +182,7 @@ public extension FetchSpecification {
 
 public extension FetchSpecification { // Counts
   
-  public var fetchSpecificationForCount : FetchSpecification? {
+  var fetchSpecificationForCount : FetchSpecification? {
     // TODO: this may not be necessary anymore, see _primaryFetchCount()
     if hints["CustomQueryExpressionHintKey"]            != nil { return nil }
     if hints["CustomQueryExpressionHintKeyBindPattern"] != nil { return nil }

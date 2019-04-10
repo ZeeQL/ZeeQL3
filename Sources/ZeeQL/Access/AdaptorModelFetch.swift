@@ -43,7 +43,7 @@ public extension AdaptorModelFetch { // default imp
   
   // MARK: - Model fetch
   
-  public func fetchModel() throws -> Model {
+  func fetchModel() throws -> Model {
     // simple version first. We may be able to do better :-)
     // TODO: include in Entity whether it was a view
     // Note: Looks like we cannot UNION PRAGMA table_info statements.
@@ -72,9 +72,7 @@ public extension AdaptorModelFetch { // default imp
    * Check whether the schema changed since the tag which is being passed in.
    * If it didn't change, return nil, if it did change, return the new tag.
    */
-  public func didChangeSinceModelTag(_ tag: ModelTag?) throws
-              -> ModelTag?
-  {
+  func didChangeSinceModelTag(_ tag: ModelTag?) throws -> ModelTag? {
     // the idea behind this is that sometimes there may be a faster way to
     // compare partial tags.
     guard let tag = tag else { return try fetchModelTag() }
@@ -89,8 +87,8 @@ public extension AdaptorModelFetch { // default imp
     return try describeModelWithTableNames(names, tagged: true)
   }
 
-  public func describeModelWithTableNames(_ names : [ String ],
-                                          tagged  : Bool = true) throws -> Model
+  func describeModelWithTableNames(_ names : [ String ],
+                                   tagged  : Bool = true) throws -> Model
   {
     let didOpenTX = !channel.isTransactionInProgress
     if didOpenTX { try channel.begin() }

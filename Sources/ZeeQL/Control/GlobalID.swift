@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 17/02/17.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2019 ZeeZide GmbH. All rights reserved.
 //
 
 public class GlobalID : EquatableType, Hashable {
@@ -14,7 +14,13 @@ public class GlobalID : EquatableType, Hashable {
     return gid === self
   }
   
-  public var hashValue: Int { return 0 }
+  #if swift(>=5)
+    public func hash(into hasher: inout Hasher) {
+      // well, what?? :-)
+    }
+  #else
+    public var hashValue: Int { return 0 }
+  #endif
   
   public static func ==(lhs: GlobalID, rhs: GlobalID) -> Bool {
     return lhs.isEqual(to: rhs)
@@ -68,10 +74,17 @@ public class ComplexKeyGlobalID : KeyGlobalID {
     return values[i]
   }
   
-  override public var hashValue: Int {
-    // TODO: pleaze halp
-    return entityName.hashValue % ("\(values[0] as Optional)".hashValue)
-  }
+  #if swift(>=5)
+    override public func hash(into hasher: inout Hasher) {
+      entityName.hash(into: &hasher)
+      "\(values[0] as Optional)".hash(into: &hasher)
+    }
+  #else
+    override public var hashValue: Int {
+      // TODO: pleaze halp
+      return entityName.hashValue % ("\(values[0] as Optional)".hashValue)
+    }
+  #endif
   
   override public func isEqual(to object: Any?) -> Bool {
     // TODO: compare against SingleIntKeyGlobalID
@@ -102,9 +115,16 @@ public class SingleIntKeyGlobalID : KeyGlobalID {
     return value
   }
   
-  override public var hashValue: Int {
-    return entityName.hashValue % value.hashValue // TODO: pleaze halp
-  }
+  #if swift(>=5)
+    override public func hash(into hasher: inout Hasher) {
+      entityName.hash(into: &hasher)
+      value     .hash(into: &hasher)
+    }
+  #else
+    override public var hashValue: Int {
+      return entityName.hashValue % value.hashValue // TODO: pleaze halp
+    }
+  #endif
   
   override public func isEqual(to object: Any?) -> Bool {
     // TODO: compare against ComplexKeyGlobalID

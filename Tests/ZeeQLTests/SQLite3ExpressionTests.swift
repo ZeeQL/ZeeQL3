@@ -42,9 +42,14 @@ class SQLite3ExpressionTests: XCTestCase {
     
     let expr = factory.updateStatementForRow(row, q!, entity)
     
-    XCTAssertEqual(expr.statement,
-      "UPDATE \"company\" SET \"age\" = 42, \"name\" = ? WHERE \"id\" = 5",
-      "unexpected SQL result")
+    // can be reordered, hashtable has no ordering!
+    XCTAssert((
+      ( expr.statement ==
+        "UPDATE \"company\" SET \"age\" = 42, \"name\" = ? WHERE \"id\" = 5" )
+      ||
+      ( expr.statement ==
+        "UPDATE \"company\" SET \"name\" = ?, \"age\" = 42 WHERE \"id\" = 5" )
+      ), "unexpected SQL result")
     
     let bindings = expr.bindVariables
     XCTAssertEqual(bindings.count, 1, "unexpected binding count")
@@ -55,10 +60,32 @@ class SQLite3ExpressionTests: XCTestCase {
     let row : [ String : Any? ] = [ "id": 5, "age": 42, "name": "Zealandia" ]
     
     let expr = factory.insertStatementForRow(row, entity)
-    XCTAssertEqual(expr.statement,
-                   "INSERT INTO \"company\" ( \"id\", \"age\", \"name\" ) " +
-                   "VALUES ( 5, 42, ? )",
-                   "unexpected SQL result")
+    // can be reordered, hashtable has no ordering!
+    XCTAssert((
+      ( expr.statement ==
+        ("INSERT INTO \"company\" ( \"id\", \"age\", \"name\" ) " +
+         "VALUES ( 5, 42, ? )" ) )
+      ||
+      ( expr.statement ==
+        ("INSERT INTO \"company\" ( \"name\", \"id\", \"age\" ) " +
+          "VALUES ( ?, 5, 42 )" ) )
+      ||
+      ( expr.statement ==
+        ("INSERT INTO \"company\" ( \"age\", \"name\", \"id\" ) " +
+          "VALUES ( 42, ?, 5 )" ) )
+      ||
+      ( expr.statement ==
+        ("INSERT INTO \"company\" ( \"age\", \"id\", \"name\" ) " +
+          "VALUES ( 42, 5, ? )" ) )
+      ||
+      ( expr.statement ==
+        ("INSERT INTO \"company\" ( \"id\", \"name\", \"age\" ) " +
+          "VALUES ( 5, ?, 42 )" ) )
+      ||
+      ( expr.statement ==
+        ("INSERT INTO \"company\" ( \"name\", \"age\", \"id\" ) " +
+          "VALUES ( ?, 42, 5 )" ) )
+      ), "unexpected SQL result `\(expr.statement)`")
     
     let bindings = expr.bindVariables
     XCTAssertEqual(bindings.count, 1, "unexpected binding count")
@@ -97,4 +124,15 @@ class SQLite3ExpressionTests: XCTestCase {
     XCTAssertEqual(bindings.count, 1, "unexpected binding count")
     XCTAssertEqual(bindings[0].value as? String, "Donald")
   }
+
+  
+  // MARK: - Non-ObjC Swift Support
+
+  static var allTests = [
+    ( "testRawDeleteSQLExpr", testRawDeleteSQLExpr ),
+    ( "testUpdateSQLExpr",    testUpdateSQLExpr ),
+    ( "testInsertSQLExpr",    testInsertSQLExpr ),
+    ( "testSimpleSelectExpr", testSimpleSelectExpr ),
+    ( "testSimpleSelectExprWithArgument", testSimpleSelectExprWithArgument ),
+  ]
 }

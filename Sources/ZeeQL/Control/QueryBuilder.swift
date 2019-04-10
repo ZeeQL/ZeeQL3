@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 06/03/17.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2019 ZeeZide GmbH. All rights reserved.
 //
 
 // MARK: - Fetch Specification Convenience
@@ -112,31 +112,23 @@ public extension FetchSpecification {
 
 public extension FetchSpecification { // Qualifier Convenience Methods
   
-  public mutating func conjoin(qualifier: Qualifier) {
-    if let q = self.qualifier {
-      self.qualifier = q.and(qualifier)
-    }
-    else {
-      self.qualifier = qualifier
-    }
+  mutating func conjoin(qualifier: Qualifier) {
+    if let q = self.qualifier { self.qualifier = q.and(qualifier) }
+    else                      { self.qualifier = qualifier        }
   }
-  public mutating func disjoin(qualifier: Qualifier) {
-    if let q = self.qualifier {
-      self.qualifier = q.or(qualifier)
-    }
-    else {
-      self.qualifier = qualifier
-    }
+  mutating func disjoin(qualifier: Qualifier) {
+    if let q = self.qualifier { self.qualifier = q.or(qualifier) }
+    else                      { self.qualifier = qualifier       }
   }
   
-  public mutating func setQualifier(_ format: String, _ args: String...) {
+  mutating func setQualifier(_ format: String, _ args: String...) {
     qualifier = qualifierWith(format: format, args)
   }
-  public mutating func conjoin(_ format: String, _ args: String...) {
+  mutating func conjoin(_ format: String, _ args: String...) {
     guard let q = qualifierWith(format: format, args) else { return }
     conjoin(qualifier: q)
   }
-  public mutating func disjoin(_ format: String, _ args: String...) {
+  mutating func disjoin(_ format: String, _ args: String...) {
     guard let q = qualifierWith(format: format, args) else { return }
     disjoin(qualifier: q)
   }

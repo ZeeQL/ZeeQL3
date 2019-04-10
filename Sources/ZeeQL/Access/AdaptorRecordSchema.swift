@@ -18,11 +18,9 @@ public protocol AdaptorRecordSchema : class, SmartDescription {
 
 public extension AdaptorRecordSchema {
   
-  public var descriptionPrefix : String {
-    return "pschema"
-  }
+  var descriptionPrefix : String { return "pschema" }
   
-  public func appendToDescription(_ ms: inout String) {
+  func appendToDescription(_ ms: inout String) {
     if let attrs = attributes {
       ms += " attrs="
       ms += attrs.map { $0.name }.joined(separator: ",")
@@ -82,7 +80,13 @@ public final class AdaptorRecordSchemaWithNames : AdaptorRecordSchema {
 
   @discardableResult
   public func switchKey(_ oldKey: String, to newKey: String) -> Bool {
-    guard let index = attributeNames.index(of: oldKey) else { return false }
+    #if swift(>=5)
+      guard let index = attributeNames.firstIndex(of: oldKey) else {
+        return false
+      }
+    #else
+      guard let index = attributeNames.index(of: oldKey) else { return false }
+    #endif
     attributeNames[index] = newKey
     return true
   }
