@@ -9,7 +9,7 @@ let package = Package(
   ],
   dependencies: [
     .package(url: "https://github.com/ZeeQL/CSQLite3.git",
-             from: "2.0.0")
+             from: "2.0.2")
   ],
   targets: [
     .target    (name: "ZeeQL",      dependencies: [ "CSQLite3" ]),
