@@ -1005,7 +1005,7 @@
 				TargetAttributes = {
 					E8263C541E93B1E100508276 = {
 						CreatedOnToolsVersion = 8.2.1;
-						LastSwiftMigration = 0900;
+						LastSwiftMigration = 1100;
 						ProvisioningStyle = Automatic;
 					};
 					E8263C6D1E93C7DF00508276 = {
@@ -1020,22 +1020,23 @@
 					};
 					E8D279521E5504FA00453BBE = {
 						CreatedOnToolsVersion = 8.2.1;
-						LastSwiftMigration = 0900;
+						LastSwiftMigration = 1100;
 						ProvisioningStyle = Automatic;
 					};
 					E8D279651E55059800453BBE = {
 						CreatedOnToolsVersion = 8.2.1;
-						LastSwiftMigration = 0900;
+						LastSwiftMigration = 1100;
 						ProvisioningStyle = Automatic;
 					};
 				};
 			};
 			buildConfigurationList = E8D2794E1E5504FA00453BBE /* Build configuration list for PBXProject "ZeeQL3" */;
 			compatibilityVersion = "Xcode 3.2";
-			developmentRegion = English;
+			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
+				Base,
 			);
 			mainGroup = E8D2794A1E5504FA00453BBE;
 			productRefGroup = E8D279541E5504FA00453BBE /* Products */;
