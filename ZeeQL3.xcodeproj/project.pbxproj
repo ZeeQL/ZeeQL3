@@ -1010,12 +1010,12 @@
 					};
 					E8263C6D1E93C7DF00508276 = {
 						CreatedOnToolsVersion = 8.2.1;
-						LastSwiftMigration = 0900;
+						LastSwiftMigration = 1030;
 						ProvisioningStyle = Automatic;
 					};
 					E8263C751E93C7DF00508276 = {
 						CreatedOnToolsVersion = 8.2.1;
-						LastSwiftMigration = 0900;
+						LastSwiftMigration = 1030;
 						ProvisioningStyle = Automatic;
 					};
 					E8D279521E5504FA00453BBE = {
