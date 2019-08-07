@@ -14,6 +14,5 @@ let package = Package(
   targets: [
     .target(name: "ZeeQL"),
     .testTarget(name: "ZeeQLTests", dependencies: [ "ZeeQL" ])
-  ],
-  swiftLanguageVersions: [ 4.2, 5 ]
+  ]
 )
