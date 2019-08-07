@@ -3,7 +3,7 @@
 //  ZeeQL3
 //
 //  Created by Helge Hess on 04/06/17.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2019 ZeeZide GmbH. All rights reserved.
 //
 
 import struct Foundation.URL
@@ -590,20 +590,11 @@ open class CoreDataModelLoader : ModelLoader {
       let startIdx = range.upperBound
       var idx = startIdx
       while idx < s.endIndex {
-        #if swift(>=3.2)
-          let c = s[idx]
-        #else
-          let c = s.characters[idx]
-        #endif
-        switch c {
+        switch s[idx] {
           case "0"..."9":
             idx = s.index(after: idx)
           default:
-            #if swift(>=4.0)
-              let num = String(s[startIdx..<idx])
-            #else
-              let num = s[startIdx..<idx]
-            #endif
+            let num = String(s[startIdx..<idx])
             guard let i = Int(num) else {
               return nil
             }
@@ -620,11 +611,7 @@ open class CoreDataModelLoader : ModelLoader {
         return nil
       }
       
-      #if swift(>=4.1)
-      	return array.compactMap(textDecodeObjectID)
-      #else
-      	return array.flatMap(textDecodeObjectID)
-      #endif
+      return array.compactMap(textDecodeObjectID)
     }
     
     guard let plistDict = plist as? Dictionary<String, Any>,
@@ -991,18 +978,10 @@ open class CoreDataModelLoader : ModelLoader {
       return try loadCompiledModel(from: url)
     }
     
-    #if swift(>=4.0)
-      #if os(macOS) || os(Linux)
-        let options = XMLNode.Options(rawValue: 0)
-      #else // but not on iOS
-        let options = 0
-      #endif
-    #else
-      #if os(Linux) // TBD: is this rather Swift 3.1+?
-        let options = XMLNode.Options(rawValue: 0)
-      #else // Swift 3.0.2 on 10.11
-        let options = 0
-      #endif
+    #if os(macOS) || os(Linux)
+      let options = XMLNode.Options(rawValue: 0)
+    #else // but not on iOS
+      let options = 0
     #endif
 
     let xml : XMLDocument

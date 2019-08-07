@@ -3,7 +3,7 @@
 //  ZeeQL3
 //
 //  Created by Helge Hess on 16/05/17.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2019 ZeeZide GmbH. All rights reserved.
 //
 
 import ZeeQL
@@ -43,7 +43,6 @@ enum ActiveRecordContactsDBModel {
   
 }
 
-#if swift(>=4.0)
 enum PlainCodableContactsDBModel {
   
   static let model : Model = {
@@ -83,7 +82,6 @@ enum PlainCodableContactsDBModel {
   }
   
 }
-#endif // Swift 4+
 
 enum RawContactsDBModel { // as a schema SQLite3 fetch returns it
 

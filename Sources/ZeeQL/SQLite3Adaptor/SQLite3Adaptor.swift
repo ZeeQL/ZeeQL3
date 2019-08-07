@@ -3,11 +3,15 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 03/03/17.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2019 ZeeZide GmbH. All rights reserved.
 //
 
 import struct Foundation.TimeInterval
-import CSQLite3
+#if canImport(SQLite3)
+  import SQLite3
+#elseif canImport(CSQLite3)
+  import CSQLite3
+#endif
 
 open class SQLite3Adaptor : Adaptor, SmartDescription {
   

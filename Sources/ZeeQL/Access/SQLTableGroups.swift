@@ -3,7 +3,7 @@
 //  ZeeQL3
 //
 //  Created by Helge Hess on 10/06/17.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2019 ZeeZide GmbH. All rights reserved.
 //
 
 typealias SQLTableGroup = [ Entity ]
@@ -154,11 +154,7 @@ extension Sequence where Iterator.Element == Entity { // an egroup
   var groupForeignKeys : Set<SQLForeignKey> {
     var foreignKeys = Set<SQLForeignKey>()
     for entity in self {
-      #if swift(>=4.1)
-        foreignKeys.formUnion(entity.relationships.compactMap { $0.foreignKey })
-      #else
-        foreignKeys.formUnion(entity.relationships.flatMap { $0.foreignKey })
-      #endif
+      foreignKeys.formUnion(entity.relationships.compactMap { $0.foreignKey })
     }
     return foreignKeys
   }

@@ -3,15 +3,13 @@
 //  ZeeQL3
 //
 //  Created by Helge Hess on 13.12.17.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2019 ZeeZide GmbH. All rights reserved.
 //
 
 import XCTest
 @testable import ZeeQL
 
 class CodableModelTests: XCTestCase {
-  #if swift(>=4.0)
-  
   func testBasicSchema() {
     
     class Address : CodableObjectType {
@@ -97,23 +95,14 @@ class CodableModelTests: XCTestCase {
     XCTAssertEqual(attrs.count, 4,
                    "attribute counts do not match: \(attrs)")
     
-    #if swift(>=4.1) // we only get the external key in 4.1
-      if let attr = entity[attribute: "is_person"] {
-        XCTAssertEqual(attr.name, "is_person")
-        XCTAssertNil(attr.columnName)
-      }
-      else {
-        XCTFail("entity has no is_person attribute: \(entity)")
-      }
-    #else
-      if let attr = entity[attribute: "isPerson"] {
-        XCTAssertEqual(attr.name,       "isPerson")
-        XCTAssertEqual(attr.columnName, "is_person")
-      }
-      else {
-        XCTFail("entity has no isPerson attribute: \(entity)")
-      }
-    #endif
+    if let attr = entity[attribute: "is_person"] {
+      XCTAssertEqual(attr.name, "is_person")
+      XCTAssertNil(attr.columnName)
+    }
+    else {
+      XCTFail("entity has no is_person attribute: \(entity)")
+    }
+
     if let attr = entity[attribute: "firstname"] {
       // should not have an external type
       XCTAssertEqual(attr.name, "firstname")
@@ -1421,12 +1410,6 @@ class CodableModelTests: XCTestCase {
     ( "testPlainCodableContactsDBModelSQLize",
       testPlainCodableContactsDBModelSQLize )
   ]
-
-  #else // Not Swift 4
-  
-  static var allTests = [(String, (CodableModelTests) -> () -> ())]()
-  
-  #endif // Not Swift 4
 }
 
 internal extension Model {

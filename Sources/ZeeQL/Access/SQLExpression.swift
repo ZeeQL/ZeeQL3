@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Heß on 18.02.17.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2019 ZeeZide GmbH. All rights reserved.
 //
 
 import struct Foundation.Date
@@ -1121,18 +1121,11 @@ open class SQLExpression: SmartDescription {
     guard let v = v else { return "NULL" }
     return String(v)
   }
-  #if swift(>=4.0)
-    // TBD: is this what we want?
-    public func sqlStringFor<T: BinaryInteger>(number v: T?) -> String {
-      guard let v = v else { return "NULL" }
-      return String(describing: v)
-    }
-  #else
-    public func sqlStringFor<T: Integer>(number v: T?) -> String {
-      guard let v = v else { return "NULL" }
-      return String(describing: v)
-    }
-  #endif
+  // TBD: is this what we want?
+  public func sqlStringFor<T: BinaryInteger>(number v: T?) -> String {
+    guard let v = v else { return "NULL" }
+    return String(describing: v)
+  }
   
   /**
    * Returns the SQL representation of a Number. For INTs this is just the
@@ -1596,31 +1589,17 @@ open class SQLExpression: SmartDescription {
     
     var alias : String
     if useAliases {
-      let pc = key
-      
-      #if swift(>=3.2)
-        let keyLen = key.count
-      #else
-        let keyLen = key.characters.count
-      #endif
+      let pc     = key
+      let keyLen = key.count
       /* produce an alias */
       if pc.hasPrefix("to") && keyLen > 2 {
         /* eg: toCustomer => Customer" */
         let idx = key.index(key.startIndex, offsetBy: 2)
-        #if swift(>=4.0)
-          alias = String(key[idx..<key.endIndex])
-        #else
-          alias = key.substring(from: idx)
-        #endif
+        alias = String(key[idx..<key.endIndex])
       }
       else {
-        #if swift(>=3.2)
-          let pc0   = pc.first!
-          let pcLen = pc.count
-        #else
-          let pc0   = pc.characters.first!
-          let pcLen = pc.characters.count
-        #endif
+        let pc0   = pc.first!
+        let pcLen = pc.count
         alias = String(pc0).uppercased()
         if relationshipPathToAlias.values.contains(alias) && pcLen > 1 {
           let idx = pc.index(pc.startIndex, offsetBy: 2)
@@ -2121,13 +2100,8 @@ open class SQLExpression: SmartDescription {
    */
   public func sqlPatternFromShellPattern(_ _pattern: String) -> String {
     // hm, should we escape as %%?
-    #if swift(>=3.2)
-      let pseq = _pattern
-    #else
-      let pseq = _pattern.characters
-    #endif
 
-    return pseq.reduce("") { res, c in
+    return _pattern.reduce("") { res, c in
       switch c {
         case "%": return res + "\\%"
         case "*": return res + "%"
@@ -2393,13 +2367,7 @@ open class SQLExpression: SmartDescription {
   public func escapeSQLString(_ _value: String) -> String {
     guard !_value.isEmpty else { return "" }
 
-    #if swift(>=3.2)
-      let vseq = _value
-    #else
-      let vseq = _value.characters
-    #endif
-
-    return vseq.reduce("") { res, c in
+    return _value.reduce("") { res, c in
       switch c {
         case "\\": return res + "\\\\"
         case "'":  return res + "''"
@@ -2457,19 +2425,11 @@ public protocol QualifierSQLGeneration {
 fileprivate extension String {
   
   var numberOfDots : Int {
-    #if swift(>=3.2)
-      return reduce(0) { $1 == "." ? ($0 + 1) : $0 }
-    #else
-      return characters.reduce(0) { $1 == "." ? ($0 + 1) : $0 }
-    #endif
+    return reduce(0) { $1 == "." ? ($0 + 1) : $0 }
   }
   
   var lastRelPath : String {
     guard let r = range(of: ".", options: .backwards) else { return "" }
-    #if swift(>=4.0)
-      return String(self[self.startIndex..<r.lowerBound])
-    #else
-      return substring(to: r.lowerBound)
-    #endif
+    return String(self[self.startIndex..<r.lowerBound])
   }
 }

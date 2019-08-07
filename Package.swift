@@ -1,26 +1,19 @@
+// swift-tools-version:4.2
 import PackageDescription
 
 let package = Package(
   name: "ZeeQL3",
 
-  targets: [ Target(name: "ZeeQL") ],
-  
-  dependencies: [
-    // TODO: factor out KVC?
-    .Package(url: "https://github.com/ZeeQL/CSQLite3.git", 
-             majorVersion: 1, minor: 0)
+  products: [ // TBD: Use ZeeQL3 as library name?
+    .library(name: "ZeeQL", targets: [ "ZeeQL" ])
   ],
-	
-  exclude: [
-    "ZeeQL3.xcodeproj",
-    "GNUmakefile",
-    "LICENSE",
-    "README.md",
-    "xcconfig",
-    "Documentation"
-  ]
+  dependencies: [
+    .package(url: "https://github.com/ZeeQL/CSQLite3.git",
+             from: "2.0.3")
+  ],
+  targets: [
+    .target(name: "ZeeQL"),
+    .testTarget(name: "ZeeQLTests", dependencies: [ "ZeeQL" ])
+  ],
+  swiftLanguageVersions: [ 4.2, 5 ]
 )
-
-#if swift(>=3.1)
-package.swiftLanguageVersions = [ 3, 4 ]
-#endif

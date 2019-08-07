@@ -3,7 +3,7 @@
 //  ZeeQL3
 //
 //  Created by Helge Hess on 19/05/17.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2019 ZeeZide GmbH. All rights reserved.
 //
 
 import struct Foundation.URL
@@ -233,20 +233,11 @@ open class FancyModelMaker {
           let colname = attr.columnName ?? attr.name
           guard !pkeyColumns.contains(colname)             else { continue }
           guard colname.hasSuffix(options.keyColumnSuffix) else { continue }
-          #if swift(>=3.2)
-            guard colname.count > 3                        else { continue }
-          #else
-            guard colname.characters.count > 3             else { continue }
-          #endif
+          guard colname.count > 3                          else { continue }
           
           // OK, e.g. person_id. Now check whether there is a person table
-          let endIdx = colname.index(colname.endIndex, offsetBy: -3)
-          #if swift(>=4.0)
-            let tableName = String(colname[colname.startIndex..<endIdx])
-          #else
-            let tableName = colname[colname.startIndex..<endIdx]
-          #endif
-          
+          let endIdx    = colname.index(colname.endIndex, offsetBy: -3)
+          let tableName = String(colname[colname.startIndex..<endIdx])
           
           // This only works for target entities which have a single pkey
           // (currently, we could match multi-keys as well)
@@ -627,11 +618,7 @@ extension String {
   }
   var withoutId : String? {
     guard hasSuffix("Id") else { return nil }
-    #if swift(>=3.2)
-      guard count > 2 else { return nil }
-    #else
-      guard characters.count > 2 else { return nil }
-    #endif
+    guard count > 2       else { return nil }
     let endIdx = self.index(endIndex, offsetBy: -2)
     return String(self[startIndex..<endIdx])
   }
@@ -640,13 +627,8 @@ extension String {
     guard !isEmpty else { return "" }
     
     let idx = self.index(after: self.startIndex)
-    #if swift(>=4.0)
-      let c0 = self[self.startIndex..<idx].lowercased()
-      return c0 + self[idx..<self.endIndex]
-    #else
-      let c0 = self.substring(to: idx).lowercased()
-      return c0 + self.substring(from: idx)
-    #endif
+    let c0 = self[self.startIndex..<idx].lowercased()
+    return c0 + self[idx..<self.endIndex]
   }
 
   func makeCamelCase(upperFirst: Bool) -> String {
@@ -654,12 +636,7 @@ extension String {
     var newChars = [ Character ]()
     
     var upperNext = upperFirst
-    #if swift(>=3.2)
-      let cseq = self
-    #else
-      let cseq = characters
-    #endif
-    for c in cseq {
+    for c in self {
       switch c {
         case " ", "_": // skip and upper next
           // FIXME: wrong behaviour for columns starting with _
@@ -682,7 +659,7 @@ extension String {
     guard !newChars.isEmpty else { return self }
     return String(newChars)
   }
-  var capCamelCase : String { return makeCamelCase(upperFirst: true) }
+  var capCamelCase : String { return makeCamelCase(upperFirst: true)  }
   var camelCase    : String { return makeCamelCase(upperFirst: false) }
   
   var isLowerCase : Bool {
