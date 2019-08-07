@@ -698,7 +698,17 @@ internal extension CodableModelDecoder {
     }
     
     func nameForKey(_ key: CodingKey) -> String {
-      return "\(key)" // well, this is a little stretched
+      // Note: We do NOT want the `stringValue` here. The `stringValue` is the
+      //       mapped name in SQL. We want the actual variable name!
+      // FIXME: So this approach kinda fell apart :-<
+      #if false
+        // But since (when? 4.2?) this is not provided anymore :-<
+        let n = "\(key)" // well, this is a little stretched
+        assert(!n.contains("CodingKeys"))
+        return n
+      #else
+        return key.stringValue
+      #endif
     }
 
     
