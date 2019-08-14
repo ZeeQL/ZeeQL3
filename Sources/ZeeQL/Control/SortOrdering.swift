@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 15/02/2017.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2019 ZeeZide GmbH. All rights reserved.
 //
 
 /**
@@ -116,34 +116,18 @@ public extension SortOrdering {
       let trimmedPart = part.trimmingCharacters(in: .whitespacesAndNewlines)
       guard !trimmedPart.isEmpty else { continue }
       let idx = trimmedPart.startIndex
-      #if swift(>=3.2)
-        let c0 = trimmedPart[idx]
-        let so : SortOrdering
-        if (c0 == "+" || c0 == "-") && trimmedPart.count > 1 {
-          let key =
-            trimmedPart[trimmedPart.index(after: idx)..<trimmedPart.endIndex]
-          
-          let op : Selector = (c0 == "-") ? .CompareDescending : .CompareAscending
-          so = SortOrdering(key: String(key), selector: op)
-        }
-        else {
-          so = SortOrdering(key: trimmedPart, selector: .CompareAscending)
-        }
-      #else
-        let c0 = trimmedPart.characters[idx]
-        let so : SortOrdering
-        if (c0 == "+" || c0 == "-") && trimmedPart.characters.count > 1 {
-          let key =
-            trimmedPart[trimmedPart.index(after: idx)..<trimmedPart.endIndex]
+      let c0 = trimmedPart[idx]
+      let so : SortOrdering
+      if (c0 == "+" || c0 == "-") && trimmedPart.count > 1 {
+        let key =
+          trimmedPart[trimmedPart.index(after: idx)..<trimmedPart.endIndex]
         
-          let op : Selector = (c0 == "-") ? .CompareDescending : .CompareAscending
-          so = SortOrdering(key: String(key), selector: op)
-        }
-        else {
-          so = SortOrdering(key: trimmedPart, selector: .CompareAscending)
-        }
-      #endif
-      
+        let op : Selector = (c0 == "-") ? .CompareDescending : .CompareAscending
+        so = SortOrdering(key: String(key), selector: op)
+      }
+      else {
+        so = SortOrdering(key: trimmedPart, selector: .CompareAscending)
+      }
       
       orderings.append(so)
     }

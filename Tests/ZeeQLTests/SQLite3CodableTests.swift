@@ -3,7 +3,7 @@
 //  ZeeQL3
 //
 //  Created by Helge Hess on 12.02.18.
-//  Copyright © 2018 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2018-2019 ZeeZide GmbH. All rights reserved.
 //
 
 import XCTest
@@ -11,7 +11,6 @@ import Foundation
 @testable import ZeeQL
 
 class SQLite3CodableTests: XCTestCase {
-  #if swift(>=4.0)
 
   var adaptor : Adaptor! { return _adaptor }
   var _adaptor : Adaptor = {
@@ -91,12 +90,6 @@ class SQLite3CodableTests: XCTestCase {
   static var allTests = [
     ( "testRawAdaptorQuery", testRawAdaptorQuery )
   ]
-  
-  #else // Not Swift 4
-  
-  static var allTests = [(String, (SQLite3CodableTests) -> () -> ())]()
-  
-  #endif // Not Swift 4
 }
 
 extension Entity {
@@ -120,10 +113,7 @@ extension Entity {
   }
 }
 
-#if swift(>=4.0)
-
 // TDD ;-)
-
 
 extension Adaptor {
   // extension AdaptorQueryType {
@@ -170,10 +160,9 @@ extension Adaptor {
   
 }
 
-#endif // Swift 4+
-
-#if swift(>=4.0) // FIXME: We cannot just move this into its own file due to
-                 //        the Xcode build bug.
+// FIXME: We cannot just move this into its own file due to
+//        the Xcode build bug.
+// TODO(2019-08-07): still an issue?
   
 /**
  * Decode plain Decodable objects from adaptor records.
@@ -258,11 +247,7 @@ public class AdaptorRecordDecoder<T: Decodable> : Decoder {
       self.codingPath = decoder.codingPath
       
       if let record = decoder.record {
-        #if swift(>=4.1)
-          self.allKeys = record.schema.attributeNames.compactMap(Key.init)
-        #else
-          self.allKeys = record.schema.attributeNames.flatMap(Key.init)
-        #endif
+        self.allKeys = record.schema.attributeNames.compactMap(Key.init)
       }
       else {
         self.allKeys = []
@@ -431,21 +416,17 @@ public class AdaptorRecordDecoder<T: Decodable> : Decoder {
      * grab that anymore in 4.1 :-<
      */
     func nameForKey(_ key: Key) -> String {
-      #if swift(>=4.1)
-        // Description gives:
-        //
-        //   CodingKeys(stringValue: "id", intValue: nil)
-        //
-        // This is not really what we want, we want to reflect the original
-        // key.
-        // But maybe this has to do for now (and we should do it on 4.0 too.
-        #if true // we want this as the external name
+      // Description gives:
+      //
+      //   CodingKeys(stringValue: "id", intValue: nil)
+      //
+      // This is not really what we want, we want to reflect the original
+      // key.
+      // But maybe this has to do for now (and we should do it on 4.0 too.
+      #if true // we want this as the external name
         return key.stringValue
-        #else
-        return "\(key)" // was stretched and fails on 4.1.snapshot
-        #endif
       #else
-        return "\(key)" // well, this is a little stretched
+        return "\(key)" // was stretched and fails on 4.1.snapshot
       #endif
     }
     
@@ -652,4 +633,3 @@ public class AdaptorRecordDecoder<T: Decodable> : Decoder {
     }
   }
 }
-#endif /* Swift 4+ */

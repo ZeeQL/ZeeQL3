@@ -151,22 +151,12 @@ open class SQLite3ModelFetch: AdaptorModelFetch {
             width = Int(iv)
           }
         }
-      #elseif swift(>=3.2)
+      #else
         if let idx = exttype.index(of: "(") {
           let ws = exttype[idx..<exttype.endIndex]
           exttype = String(exttype[exttype.startIndex..<idx])
         
           if let eidx = ws.index(of: ")") {
-            let iv = ws[ws.startIndex..<eidx]
-            width = Int(iv)
-          }
-        }
-      #else
-        if let idx = exttype.characters.index(of: "(") {
-          let ws = exttype[idx..<exttype.endIndex]
-          exttype = exttype[exttype.startIndex..<idx]
-        
-          if let eidx = ws.characters.index(of: ")") {
             let iv = ws[ws.startIndex..<eidx]
             width = Int(iv)
           }
@@ -264,11 +254,7 @@ open class SQLite3ModelFetch: AdaptorModelFetch {
         let join = Join(source: sourceColumn, destination: targetColumn)
         relship.joins.append(join)
         
-        #if swift(>=3.2)
-          let drc = (fkey["on_delete"] as? String)?.first
-        #else
-          let drc = (fkey["on_delete"] as? String)?.characters.first
-        #endif
+        let drc = (fkey["on_delete"] as? String)?.first
         
         if let deleteRule = drc {
           switch deleteRule {

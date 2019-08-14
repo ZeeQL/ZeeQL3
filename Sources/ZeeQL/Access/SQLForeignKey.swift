@@ -3,7 +3,7 @@
 //  ZeeQL3
 //
 //  Created by Helge Hess on 10/06/17.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2019 ZeeZide GmbH. All rights reserved.
 //
 
 // Note: intentionally not (yet) public API
@@ -50,11 +50,7 @@ struct SQLForeignKey : Equatable, Hashable, SmartDescription {
       guard let sourceColumn = sc, let destColumn = dc else { return nil }
       return ( sourceColumn, destColumn )
     }
-    #if swift(>=4.1)
-      let joinColumns = rs.joins.compactMap(mapColumns)
-    #else
-      let joinColumns = rs.joins.flatMap(mapColumns)
-    #endif
+    let joinColumns = rs.joins.compactMap(mapColumns)
 
     if joinColumns.count > 1 {
       self.sortedJoinColumns = joinColumns.sorted { lhs, rhs in
@@ -80,20 +76,12 @@ struct SQLForeignKey : Equatable, Hashable, SmartDescription {
     return true
   }
   
-  #if swift(>=5)
-    public func hash(into hasher: inout Hasher) {
-      // FIXME: what is a proper function?
-      guard count > 0 else { return destinationTableName.hash(into: &hasher) }
-      destinationTableName  .hash(into: &hasher)
-      sortedJoinColumns[0].0.hash(into: &hasher)
-    }
-  #else
-    public var hashValue: Int {
-      // FIXME: what is a proper function?
-      guard count > 0 else { return destinationTableName.hashValue }
-      return destinationTableName.hashValue ^ sortedJoinColumns[0].0.hashValue
-    }
-  #endif
+  public func hash(into hasher: inout Hasher) {
+    // FIXME: what is a proper function?
+    guard count > 0 else { return destinationTableName.hash(into: &hasher) }
+    destinationTableName  .hash(into: &hasher)
+    sortedJoinColumns[0].0.hash(into: &hasher)
+  }
   
   public var descriptionPrefix : String { return "ForeignKey:" }
   

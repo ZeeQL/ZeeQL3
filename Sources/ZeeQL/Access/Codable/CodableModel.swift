@@ -3,10 +3,9 @@
 //  ZeeQL3
 //
 //  Created by Helge Hess on 12.02.18.
-//  Copyright © 2018 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2018-2019 ZeeZide GmbH. All rights reserved.
 //
 
-#if swift(>=4.0)
 public extension Model {
   // This has all those dupes, because we want to capture the full static type.
   // It is a little stupid, but hey, type safety!
@@ -394,5 +393,3 @@ public extension Model {
     return builder.buildModel()
   }
 }
-
-#endif /* swift(>=4.0) */

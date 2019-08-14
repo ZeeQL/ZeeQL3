@@ -174,17 +174,11 @@ open class DatabaseChannelBase {
       var relname : String
       #if swift(>=5.0)
         var dotidx  = path.firstIndex(of: ".")
-      #elseif swift(>=3.2)
-        var dotidx  = path.index(of: ".")
       #else
-        var dotidx  = path.characters.index(of: ".")
+        var dotidx  = path.index(of: ".")
       #endif
       if let dotidx = dotidx {
-        #if swift(>=4.0)
-          relname = String(path[path.startIndex..<dotidx])
-        #else
-          relname = path[path.startIndex..<dotidx]
-        #endif
+        relname = String(path[path.startIndex..<dotidx])
       }
       else { relname = path } // no dot
       
@@ -204,17 +198,11 @@ open class DatabaseChannelBase {
         path   = rel.relationshipPath ?? ""
         #if swift(>=5.0)
           dotidx = path.firstIndex(of: ".")
-        #elseif swift(>=3.2)
-          dotidx = path.index(of: ".")
         #else
-          dotidx = path.characters.index(of: ".")
+          dotidx = path.index(of: ".")
         #endif
         if let dotidx = dotidx {
-          #if swift(>=4.0)
-            relname = String(path[path.startIndex..<dotidx])
-          #else
-            relname = path[path.startIndex..<dotidx]
-          #endif
+          relname = String(path[path.startIndex..<dotidx])
         }
         else { relname = path } // no dot
         
@@ -248,11 +236,7 @@ open class DatabaseChannelBase {
       
       if let dotidx = dotidx {
         let idx = path.index(after: dotidx)
-        #if swift(>=4.0)
-          sublevels.append(String(path[idx..<path.endIndex]))
-        #else
-          sublevels.append(path[idx..<path.endIndex])
-        #endif
+        sublevels.append(String(path[idx..<path.endIndex]))
         level[relname] = sublevels
       }
       else if level[relname] == nil {
@@ -290,17 +274,11 @@ open class DatabaseChannelBase {
       var relname : String
       #if swift(>=5.0)
         let dotidx  = path.firstIndex(of: ".")
-      #elseif swift(>=3.2)
-        let dotidx  = path.index(of: ".")
       #else
-        let dotidx  = path.characters.index(of: ".")
+        let dotidx  = path.index(of: ".")
       #endif
       if let dotidx = dotidx {
-        #if swift(>=4.0)
-          relname = String(path[path.startIndex..<dotidx])
-        #else
-          relname = path[path.startIndex..<dotidx]
-        #endif
+        relname = String(path[path.startIndex..<dotidx])
       }
       else { relname = path } // no dot
       
@@ -331,11 +309,7 @@ open class DatabaseChannelBase {
     /* cut off '*' (relationship fetch repeaters like parent*) */
     if name.hasSuffix("*") {
       let endIdx = name.index(before: name.endIndex)
-      #if swift(>=4.0)
-        return String(name[name.startIndex..<endIdx])
-      #else
-        return name.substring(to: endIdx)
-      #endif
+      return String(name[name.startIndex..<endIdx])
     }
     return name
   }

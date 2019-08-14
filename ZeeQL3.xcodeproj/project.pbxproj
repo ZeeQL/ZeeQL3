@@ -311,7 +311,6 @@
 		E824EA901E6365A900215ABA /* ActiveRecord.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = ActiveRecord.swift; path = Sources/ZeeQL/Access/ActiveRecord.swift; sourceTree = SOURCE_ROOT; };
 		E824EA921E63925B00215ABA /* DatabaseObject.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = DatabaseObject.swift; path = Sources/ZeeQL/Access/DatabaseObject.swift; sourceTree = SOURCE_ROOT; };
 		E824EA941E63953600215ABA /* StoreKeyValueCoding.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = StoreKeyValueCoding.swift; path = Sources/ZeeQL/Control/StoreKeyValueCoding.swift; sourceTree = SOURCE_ROOT; };
-		E8263C4A1E93AFDC00508276 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		E8263C4B1E93AFF200508276 /* SQLite3Adaptor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SQLite3Adaptor.swift; path = Sources/ZeeQL/SQLite3Adaptor/SQLite3Adaptor.swift; sourceTree = "<group>"; };
 		E8263C4C1E93AFF200508276 /* SQLite3AdaptorChannel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SQLite3AdaptorChannel.swift; path = Sources/ZeeQL/SQLite3Adaptor/SQLite3AdaptorChannel.swift; sourceTree = "<group>"; };
 		E8263C4D1E93AFF200508276 /* SQLite3Expression.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SQLite3Expression.swift; path = Sources/ZeeQL/SQLite3Adaptor/SQLite3Expression.swift; sourceTree = "<group>"; };
@@ -339,14 +338,6 @@
 		E843135D1E6DBE5400A59F8B /* ModelFetchSpecification.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = ModelFetchSpecification.swift; path = Sources/ZeeQL/Control/ModelFetchSpecification.swift; sourceTree = SOURCE_ROOT; };
 		E843135F1E6DBE8F00A59F8B /* QueryBuilder.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = QueryBuilder.swift; path = Sources/ZeeQL/Control/QueryBuilder.swift; sourceTree = SOURCE_ROOT; };
 		E84313631E6DBFC300A59F8B /* TypedFetchSpecification.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = TypedFetchSpecification.swift; path = Sources/ZeeQL/Access/TypedFetchSpecification.swift; sourceTree = SOURCE_ROOT; };
-		E848A3C31EEE995C00593DEC /* CSQLite3Shim.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = CSQLite3Shim.h; path = "CSQLite3/xcode-macos/CSQLite3Shim.h"; sourceTree = SOURCE_ROOT; };
-		E848A3C41EEE9AF600593DEC /* CSQLite3Shim.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CSQLite3Shim.h; sourceTree = "<group>"; };
-		E848A3C61EEEA16200593DEC /* CSQLite3Shim.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CSQLite3Shim.h; sourceTree = "<group>"; };
-		E848A3C71EEEA16A00593DEC /* CSQLite3Shim.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CSQLite3Shim.h; sourceTree = "<group>"; };
-		E848A3C81EEEA17200593DEC /* CSQLite3Shim.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CSQLite3Shim.h; sourceTree = "<group>"; };
-		E848A3C91EEEA17800593DEC /* CSQLite3Shim.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CSQLite3Shim.h; sourceTree = "<group>"; };
-		E848A3CA1EEEA17F00593DEC /* CSQLite3Shim.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CSQLite3Shim.h; sourceTree = "<group>"; };
-		E848A3CB1EEEA18600593DEC /* CSQLite3Shim.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CSQLite3Shim.h; sourceTree = "<group>"; };
 		E84FD5711ECB1B8100B2A8F0 /* ModelTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ModelTests.swift; sourceTree = "<group>"; };
 		E84FD5751ECB34E100B2A8F0 /* contacts-create.sqlite3 */ = {isa = PBXFileReference; lastKnownFileType = text; path = "contacts-create.sqlite3"; sourceTree = "<group>"; };
 		E84FD5761ECB34E100B2A8F0 /* contacts-fill.sqlite3 */ = {isa = PBXFileReference; lastKnownFileType = text; path = "contacts-fill.sqlite3"; sourceTree = "<group>"; };
@@ -361,28 +352,11 @@
 		E8687CA31E60985400D62ABF /* AdaptorDataSource.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = AdaptorDataSource.swift; path = Sources/ZeeQL/Access/AdaptorDataSource.swift; sourceTree = SOURCE_ROOT; };
 		E86BF2561E67207D00C8B22A /* AdaptorQueryType.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = AdaptorQueryType.swift; path = Sources/ZeeQL/Access/AdaptorQueryType.swift; sourceTree = SOURCE_ROOT; };
 		E86BF2581E68506600C8B22A /* AttributeKey.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = AttributeKey.swift; path = Sources/ZeeQL/Access/AttributeKey.swift; sourceTree = SOURCE_ROOT; };
-		E870FC471E9BB28700A038AF /* module.modulemap */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.module-map"; path = module.modulemap; sourceTree = "<group>"; };
-		E870FC481E9BB28700A038AF /* module.private.modulemap */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.module-map"; path = module.private.modulemap; sourceTree = "<group>"; };
-		E870FC4A1E9BB28700A038AF /* module.modulemap */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.module-map"; path = module.modulemap; sourceTree = "<group>"; };
-		E870FC4B1E9BB28700A038AF /* module.private.modulemap */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.module-map"; path = module.private.modulemap; sourceTree = "<group>"; };
-		E870FC4D1E9BB28700A038AF /* module.modulemap */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.module-map"; path = module.modulemap; sourceTree = "<group>"; };
-		E870FC4E1E9BB28700A038AF /* module.private.modulemap */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.module-map"; path = module.private.modulemap; sourceTree = "<group>"; };
-		E870FC501E9BB28700A038AF /* module.modulemap */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.module-map"; path = module.modulemap; sourceTree = "<group>"; };
-		E870FC511E9BB28700A038AF /* module.private.modulemap */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.module-map"; path = module.private.modulemap; sourceTree = "<group>"; };
-		E870FC531E9BB28700A038AF /* module.modulemap */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.module-map"; path = module.modulemap; sourceTree = "<group>"; };
-		E870FC541E9BB28700A038AF /* module.private.modulemap */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.module-map"; path = module.private.modulemap; sourceTree = "<group>"; };
-		E870FC561E9BB28700A038AF /* module.modulemap */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.module-map"; path = module.modulemap; sourceTree = "<group>"; };
-		E870FC571E9BB28700A038AF /* module.private.modulemap */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.module-map"; path = module.private.modulemap; sourceTree = "<group>"; };
-		E870FC591E9BB28700A038AF /* module.modulemap */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.module-map"; path = module.modulemap; sourceTree = "<group>"; };
-		E870FC5A1E9BB28700A038AF /* module.private.modulemap */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.module-map"; path = module.private.modulemap; sourceTree = "<group>"; };
-		E870FC5C1E9BB28700A038AF /* module.modulemap */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.module-map"; path = module.modulemap; sourceTree = "<group>"; };
-		E870FC5D1E9BB28700A038AF /* module.private.modulemap */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.module-map"; path = module.private.modulemap; sourceTree = "<group>"; };
-		E870FC5F1E9BB28700A038AF /* module.modulemap */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.module-map"; path = module.modulemap; sourceTree = "<group>"; };
-		E870FC601E9BB28700A038AF /* module.private.modulemap */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.module-map"; path = module.private.modulemap; sourceTree = "<group>"; };
 		E88166C62035C53900A5DF78 /* AdaptorRecordDecoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdaptorRecordDecoder.swift; sourceTree = "<group>"; };
 		E889DE611E666C8D008F962F /* CodeAttribute.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = CodeAttribute.swift; path = Sources/ZeeQL/Access/CodeAttribute.swift; sourceTree = SOURCE_ROOT; };
 		E889DE631E666C9A008F962F /* CodeRelationship.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = CodeRelationship.swift; path = Sources/ZeeQL/Access/CodeRelationship.swift; sourceTree = SOURCE_ROOT; };
 		E890E7381ECA543800DE4BC9 /* DatabaseOperation.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = DatabaseOperation.swift; path = Sources/ZeeQL/Access/DatabaseOperation.swift; sourceTree = SOURCE_ROOT; };
+		E894B0C722FB40B900AB16BB /* Package@swift-5.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Package@swift-5.swift"; sourceTree = "<group>"; };
 		E89BDB641EC9ED330007619C /* SQLite3ActiveRecordTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SQLite3ActiveRecordTests.swift; path = ZeeQLTests/SQLite3ActiveRecordTests.swift; sourceTree = "<group>"; };
 		E89BDB671EC9F3A80007619C /* contacts.sqlite3 */ = {isa = PBXFileReference; lastKnownFileType = file; path = contacts.sqlite3; sourceTree = "<group>"; };
 		E89D64A91E95372200F55CA1 /* SwiftShared.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = SwiftShared.xcconfig; path = xcconfig/SwiftShared.xcconfig; sourceTree = "<group>"; };
@@ -470,26 +444,8 @@
 			isa = PBXGroup;
 			children = (
 				E8263C491E93AEC600508276 /* Sources */,
-				E8263C421E93AE6100508276 /* CSQLite3 */,
 			);
 			name = SQLite3Adaptor;
-			sourceTree = "<group>";
-		};
-		E8263C421E93AE6100508276 /* CSQLite3 */ = {
-			isa = PBXGroup;
-			children = (
-				E8263C4A1E93AFDC00508276 /* README.md */,
-				E870FC461E9BB28700A038AF /* brew */,
-				E870FC491E9BB28700A038AF /* ios */,
-				E870FC4C1E9BB28700A038AF /* macos */,
-				E870FC4F1E9BB28700A038AF /* simulator */,
-				E870FC521E9BB28700A038AF /* tvos */,
-				E870FC551E9BB28700A038AF /* tvos-simulator */,
-				E870FC581E9BB28700A038AF /* watchos */,
-				E870FC5B1E9BB28700A038AF /* watchos-simulator */,
-				E870FC5E1E9BB28700A038AF /* xcode-macos */,
-			);
-			path = CSQLite3;
 			sourceTree = "<group>";
 		};
 		E8263C491E93AEC600508276 /* Sources */ = {
@@ -598,95 +554,6 @@
 			name = Storage;
 			sourceTree = "<group>";
 		};
-		E870FC461E9BB28700A038AF /* brew */ = {
-			isa = PBXGroup;
-			children = (
-				E870FC471E9BB28700A038AF /* module.modulemap */,
-				E870FC481E9BB28700A038AF /* module.private.modulemap */,
-			);
-			path = brew;
-			sourceTree = "<group>";
-		};
-		E870FC491E9BB28700A038AF /* ios */ = {
-			isa = PBXGroup;
-			children = (
-				E848A3C61EEEA16200593DEC /* CSQLite3Shim.h */,
-				E870FC4A1E9BB28700A038AF /* module.modulemap */,
-				E870FC4B1E9BB28700A038AF /* module.private.modulemap */,
-			);
-			path = ios;
-			sourceTree = "<group>";
-		};
-		E870FC4C1E9BB28700A038AF /* macos */ = {
-			isa = PBXGroup;
-			children = (
-				E848A3C31EEE995C00593DEC /* CSQLite3Shim.h */,
-				E870FC4D1E9BB28700A038AF /* module.modulemap */,
-				E870FC4E1E9BB28700A038AF /* module.private.modulemap */,
-			);
-			path = macos;
-			sourceTree = "<group>";
-		};
-		E870FC4F1E9BB28700A038AF /* simulator */ = {
-			isa = PBXGroup;
-			children = (
-				E848A3C71EEEA16A00593DEC /* CSQLite3Shim.h */,
-				E870FC501E9BB28700A038AF /* module.modulemap */,
-				E870FC511E9BB28700A038AF /* module.private.modulemap */,
-			);
-			path = simulator;
-			sourceTree = "<group>";
-		};
-		E870FC521E9BB28700A038AF /* tvos */ = {
-			isa = PBXGroup;
-			children = (
-				E848A3C81EEEA17200593DEC /* CSQLite3Shim.h */,
-				E870FC531E9BB28700A038AF /* module.modulemap */,
-				E870FC541E9BB28700A038AF /* module.private.modulemap */,
-			);
-			path = tvos;
-			sourceTree = "<group>";
-		};
-		E870FC551E9BB28700A038AF /* tvos-simulator */ = {
-			isa = PBXGroup;
-			children = (
-				E848A3C91EEEA17800593DEC /* CSQLite3Shim.h */,
-				E870FC561E9BB28700A038AF /* module.modulemap */,
-				E870FC571E9BB28700A038AF /* module.private.modulemap */,
-			);
-			path = "tvos-simulator";
-			sourceTree = "<group>";
-		};
-		E870FC581E9BB28700A038AF /* watchos */ = {
-			isa = PBXGroup;
-			children = (
-				E848A3CA1EEEA17F00593DEC /* CSQLite3Shim.h */,
-				E870FC591E9BB28700A038AF /* module.modulemap */,
-				E870FC5A1E9BB28700A038AF /* module.private.modulemap */,
-			);
-			path = watchos;
-			sourceTree = "<group>";
-		};
-		E870FC5B1E9BB28700A038AF /* watchos-simulator */ = {
-			isa = PBXGroup;
-			children = (
-				E848A3CB1EEEA18600593DEC /* CSQLite3Shim.h */,
-				E870FC5C1E9BB28700A038AF /* module.modulemap */,
-				E870FC5D1E9BB28700A038AF /* module.private.modulemap */,
-			);
-			path = "watchos-simulator";
-			sourceTree = "<group>";
-		};
-		E870FC5E1E9BB28700A038AF /* xcode-macos */ = {
-			isa = PBXGroup;
-			children = (
-				E848A3C41EEE9AF600593DEC /* CSQLite3Shim.h */,
-				E870FC5F1E9BB28700A038AF /* module.modulemap */,
-				E870FC601E9BB28700A038AF /* module.private.modulemap */,
-			);
-			path = "xcode-macos";
-			sourceTree = "<group>";
-		};
 		E8A834FB1ECDAF1F00CCDD82 /* Generic */ = {
 			isa = PBXGroup;
 			children = (
@@ -701,6 +568,7 @@
 			children = (
 				E8CF06451E645B68008E5847 /* README.md */,
 				E89D64AA1E953A3500F55CA1 /* Package.swift */,
+				E894B0C722FB40B900AB16BB /* Package@swift-5.swift */,
 				E8EB94C41E5F31E70058D8D1 /* Sources */,
 				E8263C411E93AE2100508276 /* SQLite3Adaptor */,
 				E8D279671E55059800453BBE /* Tests */,
@@ -1010,12 +878,12 @@
 					};
 					E8263C6D1E93C7DF00508276 = {
 						CreatedOnToolsVersion = 8.2.1;
-						LastSwiftMigration = 0900;
+						LastSwiftMigration = 1030;
 						ProvisioningStyle = Automatic;
 					};
 					E8263C751E93C7DF00508276 = {
 						CreatedOnToolsVersion = 8.2.1;
-						LastSwiftMigration = 0900;
+						LastSwiftMigration = 1030;
 						ProvisioningStyle = Automatic;
 					};
 					E8D279521E5504FA00453BBE = {
@@ -1575,7 +1443,6 @@
 					"DEBUG=1",
 					"$(inherited)",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 10.11;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				REEXPORTED_LIBRARY_PATHS = "";
@@ -1589,7 +1456,6 @@
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
-				MACOSX_DEPLOYMENT_TARGET = 10.11;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				REEXPORTED_LIBRARY_PATHS = "";
 				SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";
@@ -1605,7 +1471,6 @@
 				DYLIB_CURRENT_VERSION = 1;
 				EXECUTABLE_PREFIX = lib;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
 			name = Debug;
 		};

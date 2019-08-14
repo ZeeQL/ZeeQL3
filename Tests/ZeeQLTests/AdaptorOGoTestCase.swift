@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 02/03/2017.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2019 ZeeZide GmbH. All rights reserved.
 //
 
 import XCTest
@@ -570,23 +570,14 @@ internal extension ActiveRecord {
     // TODO: align width
     let attrNames = self.entity.attributes.map({ $0.name })
     let maxLength = attrNames.reduce(0) {
-      #if swift(>=3.2)
-        return $1.count > $0 ? $1.count : $0
-      #else
-        return $1.characters.count > $0 ? $1.characters.count : $0
-      #endif
+      return $1.count > $0 ? $1.count : $0
     }
     
     for key in attrNames {
       let vs  = "\(self[key] ?? "")"
       guard !vs.isEmpty else { continue }
       
-      #if swift(>=3.2)
-        let pad = String(repeating: " ", count: maxLength - key.count)
-      #else
-        let pad = String(repeating: " ",
-                         count: maxLength - key.characters.count)
-      #endif
+      let pad = String(repeating: " ", count: maxLength - key.count)
       print("\(indent)\(key): \(pad)\(vs)")
     }
   }

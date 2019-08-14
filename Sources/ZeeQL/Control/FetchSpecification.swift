@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 17/02/17.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2019 ZeeZide GmbH. All rights reserved.
 //
 
 /**
@@ -82,11 +82,7 @@ extension FetchSpecification { // Default Imp
       let sValue = "\(value)" // Hm
       
       let endIdx = key.index(key.endIndex, offsetBy: -11)
-      #if swift(>=4.0)
-        let bKey = String(key[key.startIndex..<endIdx])
-      #else
-        let bKey = key[key.startIndex..<endIdx]
-      #endif
+      let bKey   = String(key[key.startIndex..<endIdx])
       
       let fValue = KeyValueStringFormatter.format(sValue, object: bindings)
       

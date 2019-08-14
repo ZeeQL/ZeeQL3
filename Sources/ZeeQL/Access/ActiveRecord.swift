@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 26/02/2017.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2019 ZeeZide GmbH. All rights reserved.
 //
 
 /**
@@ -411,11 +411,7 @@ open class ActiveRecord : ActiveRecordType, SmartDescription {
           guard s.hasPrefix("Optional<") && s.hasSuffix(">") else { continue }
           let fromIdx = s.index(s.startIndex, offsetBy: 9)
           let toIdx   = s.index(before: s.endIndex)
-          #if swift(>=4.0)
-            let type  = String(s[fromIdx..<toIdx])
-          #else
-            let type  = s[fromIdx..<toIdx]
-          #endif
+          let type    = String(s[fromIdx..<toIdx])
           
           if let extType = ZeeQLTypes.externalTypeFor(swiftType: type) {
             attribute.externalType = extType

@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 16/02/2017.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2019 ZeeZide GmbH. All rights reserved.
 //
 
 // public extension Qualifier {}
@@ -199,19 +199,11 @@ open class QualifierParser {
     }
     
     /* process formats */
-    #if swift(>=3.2)
-      if id.count > 1 && id.hasPrefix("%") {
-        // the id itself is a format, eg: "%@ LIKE 'Hello*'"
-        guard let pid = nextNonNullStringArgument(id) else { return nil }
-        id = pid
-      }
-    #else
-      if id.characters.count > 1 && id.hasPrefix("%") {
-        // the id itself is a format, eg: "%@ LIKE 'Hello*'"
-        guard let pid = nextNonNullStringArgument(id) else { return nil }
-        id = pid
-      }
-    #endif
+    if id.count > 1 && id.hasPrefix("%") {
+      // the id itself is a format, eg: "%@ LIKE 'Hello*'"
+      guard let pid = nextNonNullStringArgument(id) else { return nil }
+      id = pid
+    }
     
     if !skipSpaces() {
       /* ok, it was just the ID. We treat this as a boolean kvqualifier,
@@ -242,12 +234,7 @@ open class QualifierParser {
     
     /* process formats */
     
-    #if swift(>=3.2)
-      let opseq = operation
-    #else
-      let opseq = operation.characters
-    #endif
-    if opseq.count > 1 && operation.hasPrefix("%") {
+    if operation.count > 1 && operation.hasPrefix("%") {
       // the operation is a pattern, eg: "value %@ 5", "<"
       guard let pid = nextNonNullStringArgument(operation) else { return nil }
       operation = pid
@@ -473,12 +460,7 @@ open class QualifierParser {
        }
       
       /* process formats */
-      #if swift(>=3.2)
-        let coseq = compoundOperator
-      #else
-        let coseq = compoundOperator.characters
-      #endif
-      if coseq.count > 1 && compoundOperator.hasPrefix("%") {
+      if compoundOperator.count > 1 && compoundOperator.hasPrefix("%") {
         guard let s = nextNonNullStringArgument(compoundOperator)
          else { return nil }
         compoundOperator = s

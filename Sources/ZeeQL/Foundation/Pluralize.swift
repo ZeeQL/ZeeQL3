@@ -3,7 +3,7 @@
 //  ZeeQL3
 //
 //  Created by Helge Hess on 04.06.17.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2019 ZeeZide GmbH. All rights reserved.
 //
 
 public extension String {
@@ -36,11 +36,7 @@ public extension String {
       default: break
     }
     
-    #if swift(>=3.2)
-      let len = self.count
-    #else
-      let len = self.characters.count
-    #endif
+    let len = self.count
 
     if len > 2 {
       if self.hasCISuffix("octopi")    { return self.cutoffTrailer(1) + "us" }
@@ -170,29 +166,16 @@ public extension String {
     
     if self.hasCISuffix("quy")    { return self.replaceSuffix("quy", "quies") }
     if self.hasCISuffix("y") {
-      #if swift(>=3.2)
-        if self.count > 2 {
-          let idx = self.index(self.endIndex, offsetBy: -2)
-          let cbY = self[idx]
-          switch cbY {
-            // https://www.youtube.com/watch?v=gUrJKN7F_so
-            case "a", "e", "i", "o", "u": break
-            default: return self.replaceSuffix("y",  "ies")
-          }
-          if self.hasCISuffix("ry")   { return self.replaceSuffix("ry",  "ries")  }
+      if self.count > 2 {
+        let idx = self.index(self.endIndex, offsetBy: -2)
+        let cbY = self[idx]
+        switch cbY {
+          // https://www.youtube.com/watch?v=gUrJKN7F_so
+          case "a", "e", "i", "o", "u": break
+          default: return self.replaceSuffix("y",  "ies")
         }
-      #else
-        if self.characters.count > 2 {
-          let idx = self.index(self.endIndex, offsetBy: -2)
-          let cbY = self.characters[idx]
-          switch cbY {
-            // https://www.youtube.com/watch?v=gUrJKN7F_so
-            case "a", "e", "i", "o", "u": break
-            default: return self.replaceSuffix("y",  "ies")
-          }
-          if self.hasCISuffix("ry")   { return self.replaceSuffix("ry",  "ries")  }
-        }
-      #endif
+        if self.hasCISuffix("ry")   { return self.replaceSuffix("ry",  "ries")  }
+      }
     }
     
     if self.hasCISuffix("hive")   { return self + "hives" }
@@ -245,25 +228,15 @@ fileprivate extension String {
   }
   
   func cutoffTrailer(_ count: Int) -> String {
-    #if swift(>=3.2)
-      guard self.count >= count else { return self }
-      let endIdx = self.index(endIndex, offsetBy: -count)
-      return String(self[startIndex..<endIdx])
-    #else
-      guard self.characters.count >= count else { return self }
-      let endIdx = self.index(endIndex, offsetBy: -count)
-      return self[startIndex..<endIdx]
-    #endif
+    guard self.count >= count else { return self }
+    let endIdx = self.index(endIndex, offsetBy: -count)
+    return String(self[startIndex..<endIdx])
   }
   
   func replaceSuffix(_ suffix: String, _ with: String) -> String {
     guard hasSuffix(suffix) else { return self }
     
-    #if swift(>=3.2)
-      let endIdx = self.index(endIndex, offsetBy: -(suffix.count))
-    #else
-      let endIdx = self.index(endIndex, offsetBy: -(suffix.characters.count))
-    #endif
+    let endIdx = self.index(endIndex, offsetBy: -(suffix.count))
     return self[startIndex..<endIdx] + with
   }
 }

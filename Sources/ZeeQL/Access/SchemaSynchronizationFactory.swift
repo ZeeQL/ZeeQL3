@@ -3,7 +3,7 @@
 //  ZeeQL3
 //
 //  Created by Helge Hess on 06/06/17.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2019 ZeeZide GmbH. All rights reserved.
 //
 
 /**
@@ -203,13 +203,8 @@ fileprivate extension Sequence where Iterator.Element == Entity { // an egroup
     //       value. (and for schema sync we are not really interested in the
     //       'modelling' aspect of a relationship, just in the externals)
     
-    #if swift(>=4.1)
-      let dropped = oldFKeys.compactMap { newFKeys.contains($0) ? nil : $0 }
-      let created = newFKeys.compactMap { oldFKeys.contains($0) ? nil : $0 }
-    #else
-      let dropped = oldFKeys.flatMap    { newFKeys.contains($0) ? nil : $0 }
-      let created = newFKeys.flatMap    { oldFKeys.contains($0) ? nil : $0 }
-    #endif
+    let dropped = oldFKeys.compactMap { newFKeys.contains($0) ? nil : $0 }
+    let created = newFKeys.compactMap { oldFKeys.contains($0) ? nil : $0 }
     
     return SchemaSyncChangeSet(created: created, dropped: dropped)
   }

@@ -14,13 +14,9 @@ public class GlobalID : EquatableType, Hashable {
     return gid === self
   }
   
-  #if swift(>=5)
-    public func hash(into hasher: inout Hasher) {
-      // well, what?? :-)
-    }
-  #else
-    public var hashValue: Int { return 0 }
-  #endif
+  public func hash(into hasher: inout Hasher) {
+    // well, what?? :-)
+  }
   
   public static func ==(lhs: GlobalID, rhs: GlobalID) -> Bool {
     return lhs.isEqual(to: rhs)
@@ -74,17 +70,10 @@ public class ComplexKeyGlobalID : KeyGlobalID {
     return values[i]
   }
   
-  #if swift(>=5)
-    override public func hash(into hasher: inout Hasher) {
-      entityName.hash(into: &hasher)
-      "\(values[0] as Optional)".hash(into: &hasher)
-    }
-  #else
-    override public var hashValue: Int {
-      // TODO: pleaze halp
-      return entityName.hashValue % ("\(values[0] as Optional)".hashValue)
-    }
-  #endif
+  override public func hash(into hasher: inout Hasher) {
+    entityName.hash(into: &hasher)
+    String(describing: values[0]).hash(into: &hasher)
+  }
   
   override public func isEqual(to object: Any?) -> Bool {
     // TODO: compare against SingleIntKeyGlobalID
@@ -115,16 +104,10 @@ public class SingleIntKeyGlobalID : KeyGlobalID {
     return value
   }
   
-  #if swift(>=5)
-    override public func hash(into hasher: inout Hasher) {
-      entityName.hash(into: &hasher)
-      value     .hash(into: &hasher)
-    }
-  #else
-    override public var hashValue: Int {
-      return entityName.hashValue % value.hashValue // TODO: pleaze halp
-    }
-  #endif
+  override public func hash(into hasher: inout Hasher) {
+    entityName.hash(into: &hasher)
+    value     .hash(into: &hasher)
+  }
   
   override public func isEqual(to object: Any?) -> Bool {
     // TODO: compare against ComplexKeyGlobalID
