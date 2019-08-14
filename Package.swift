@@ -12,7 +12,7 @@ let package = Package(
              from: "2.0.3")
   ],
   targets: [
-    .target(name: "ZeeQL"),
+    .target    (name: "ZeeQL",      dependencies: [ "CSQLite3" ]),
     .testTarget(name: "ZeeQLTests", dependencies: [ "ZeeQL" ])
   ]
 )
