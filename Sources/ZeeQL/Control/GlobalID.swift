@@ -6,7 +6,7 @@
 //  Copyright © 2017-2019 ZeeZide GmbH. All rights reserved.
 //
 
-public class GlobalID : EquatableType, Hashable {
+open class GlobalID : EquatableType, Hashable {
   // Note: cannot be a protocol because Hashable (because Equatable)
   
   public func isEqual(to object: Any?) -> Bool {
