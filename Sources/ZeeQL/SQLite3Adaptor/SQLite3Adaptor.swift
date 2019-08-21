@@ -7,6 +7,9 @@
 //
 
 import struct Foundation.TimeInterval
+import struct Foundation.URL
+import struct Foundation.URLComponents
+import struct Foundation.URLQueryItem
 #if canImport(SQLite3)
   import SQLite3
 #elseif canImport(CSQLite3)
@@ -50,6 +53,22 @@ open class SQLite3Adaptor : Adaptor, SmartDescription {
     self.path     = path
     self.openMode = OpenMode(autocreate: autocreate, readonly: readonly)
     self.options  = options
+  }
+  
+  public var url: URL? {
+    var url = URLComponents()
+    url.scheme = "sqlite3"
+    url.path   = path
+    
+    // TBD: runtime options
+    switch openMode {
+      case .readWrite: break
+      case .readOnly:
+        url.queryItems = [ .init(name: "mode", value: "readonly") ]
+      case .autocreate:
+        url.queryItems = [ .init(name: "mode", value: "autocreate") ]
+    }
+    return url.url
   }
   
   
