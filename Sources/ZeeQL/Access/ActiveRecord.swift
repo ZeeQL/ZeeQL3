@@ -118,7 +118,7 @@ public extension ActiveRecordType { // finders
  * The disadvantage is that we cannot map to POSOs but objects need to be
  * subclasses of ActiveRecord to implement change tracking.
  */
-open class ActiveRecord : ActiveRecordType, SmartDescription {
+open class ActiveRecordBase : ActiveRecordType, SmartDescription {
   
   open class var database : Database? {
     return nil
@@ -172,6 +172,9 @@ open class ActiveRecord : ActiveRecordType, SmartDescription {
   
   // MARK: - Awake
   
+  open func willRead()   {}
+  open func willChange() {}
+
   open func awakeFromFetch(_ db: Database) {
     // called by DatabaseChannel)
     _database = db
@@ -451,6 +454,22 @@ open class ActiveRecord : ActiveRecordType, SmartDescription {
     return entity
   }
 }
+
+#if canImport(Combine)
+  import protocol Combine.ObservableObject
+  
+  open class ActiveRecord : ActiveRecordBase, ObservableObject {
+    
+    override open func willChange() {
+      if #available(iOS 13, watchOS 5.0, macOS 13, *) {
+        objectWillChange.send()
+      }
+      super.willChange()
+    }
+  }
+#else
+  open class ActiveRecord : ActiveRecordBase {}
+#endif
 
 /* doesn't have 'Self'?
 extension ActiveRecord {
