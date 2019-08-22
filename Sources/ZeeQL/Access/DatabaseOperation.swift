@@ -36,7 +36,7 @@ open class DatabaseOperation : SmartDescription {
     self.object = object
     self.entity = entity
   }
-  public init(_ object: ActiveRecord, _ entity: Entity? = nil) {
+  public init(_ object: ActiveRecordType, _ entity: Entity? = nil) {
     self.object = object
     
     if let entity = entity {

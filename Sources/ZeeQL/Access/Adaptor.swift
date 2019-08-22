@@ -3,8 +3,10 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 21/02/2017.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2019 ZeeZide GmbH. All rights reserved.
 //
+
+import struct Foundation.URL
 
 /**
  * An adaptor is a low level object coordinating access to a specific database.
@@ -70,6 +72,8 @@ public protocol Adaptor : class, AdaptorQueryType {
   func fetchModelTag() throws -> ModelTag
   
   var log : ZeeQLLogger { get }
+  
+  var url : URL? { get }
 }
 
 public extension Adaptor {
@@ -80,7 +84,9 @@ public extension Adaptor {
   func releaseChannel(_ channel: AdaptorChannel) {}
   
   var log : ZeeQLLogger { return globalZeeQLLogger }
-
+  
+  var url : URL? { return nil }
+  
   /// Note: Returns a stateful object (a new one every time it is accessed).
   var synchronizationFactory : SchemaSynchronizationFactory {
     return SchemaSynchronizationFactory(adaptor: self)

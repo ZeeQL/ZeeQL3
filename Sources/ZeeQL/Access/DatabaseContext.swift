@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 03/03/2017.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2019 ZeeZide GmbH. All rights reserved.
 //
 
 /**
@@ -11,6 +11,9 @@
  *
  * This is an object store which works on top of Database. It just manages the
  * database channels to fetch objects.
+ *
+ * E.g. it can be wrapped in an `ObjectTrackingContext` which serves as an
+ * object uniquer.
  */
 public class DatabaseContext : ObjectStore, SmartDescription {
   
@@ -39,9 +42,7 @@ public class DatabaseContext : ObjectStore, SmartDescription {
       }
     }
     
-    // TODO: can we preserve the type? Maybe with a generic fetchspec?
     let ch = TypedDatabaseChannel<T>(database: database)
-    
     try ch.selectObjectsWithFetchSpecification(fs, tc)
     
     while let o : T = ch.fetchObject() {
@@ -59,9 +60,7 @@ public class DatabaseContext : ObjectStore, SmartDescription {
       }
     }
     
-    // TODO: can we preserve the type? Maybe with a generic fetchspec?
     let ch = DatabaseChannel(database: database)
-
     try ch.selectObjectsWithFetchSpecification(fs, tc)
     
     while let o = ch.fetchObject() {
