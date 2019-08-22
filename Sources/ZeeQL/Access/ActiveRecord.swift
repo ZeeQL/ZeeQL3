@@ -461,7 +461,7 @@ open class ActiveRecordBase : ActiveRecordType, SmartDescription {
   open class ActiveRecord : ActiveRecordBase, ObservableObject {
     
     override open func willChange() {
-      if #available(iOS 13, watchOS 5.0, macOS 13, *) {
+      if #available(iOS 13, tvOS 13, watchOS 6, macOS 13, *) {
         objectWillChange.send()
       }
       super.willChange()
