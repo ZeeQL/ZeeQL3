@@ -47,6 +47,7 @@
 		E80B3FD41E606D4800D6F0ED /* SimpleKVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = E80B3FD11E606D4800D6F0ED /* SimpleKVC.swift */; };
 		E80B3FD51E606D4800D6F0ED /* TimeRange.swift in Sources */ = {isa = PBXBuildFile; fileRef = E80B3FD21E606D4800D6F0ED /* TimeRange.swift */; };
 		E80E83131EA637D400FC1866 /* ArrayDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = E80E83121EA637D400FC1866 /* ArrayDataSource.swift */; };
+		E8190837231050D900BC854E /* AccessDataSourceError.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8A20F12230EE5A700AEE53E /* AccessDataSourceError.swift */; };
 		E81AA9FF1E64EACB001B9B3E /* SmartDescription.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81AA9FE1E64EACB001B9B3E /* SmartDescription.swift */; };
 		E81B62CD1E65DA1300D43EFA /* CodeEntityModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81B62CB1E65DA0D00D43EFA /* CodeEntityModelTests.swift */; };
 		E81B62CF1E65E32600D43EFA /* KeyValueQualifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81B62CE1E65E32600D43EFA /* KeyValueQualifier.swift */; };
@@ -1004,6 +1005,7 @@
 				E8A834F71ECDA82300CCDD82 /* DatabaseOperation.swift in Sources */,
 				E8263C9D1E93C89200508276 /* QualifierEvaluation.swift in Sources */,
 				E8263CAB1E93C89200508276 /* DataSource.swift in Sources */,
+				E8190837231050D900BC854E /* AccessDataSourceError.swift in Sources */,
 				E8E480C21EC2034F00350EDF /* AdaptorQueryColumnRepresentable.swift in Sources */,
 				E88166C82035C53900A5DF78 /* AdaptorRecordDecoder.swift in Sources */,
 				E8263CCC1E93C89200508276 /* SQLite3Adaptor.swift in Sources */,
