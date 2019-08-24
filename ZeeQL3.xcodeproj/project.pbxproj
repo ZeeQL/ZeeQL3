@@ -197,6 +197,7 @@
 		E8A834F91ECDADF700CCDD82 /* AdaptorActiveRecordTestCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8A834F81ECDADF700CCDD82 /* AdaptorActiveRecordTestCase.swift */; };
 		E8A834FA1ECDADF700CCDD82 /* AdaptorActiveRecordTestCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8A834F81ECDADF700CCDD82 /* AdaptorActiveRecordTestCase.swift */; };
 		E8AA15F61FDEE1E5006FC597 /* CodableEntity.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8AA15F51FDEE1E5006FC597 /* CodableEntity.swift */; };
+		E8ACA26D23115499000F6BEC /* EquatableTypeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8ACA26C23115499000F6BEC /* EquatableTypeTests.swift */; };
 		E8B249801EE44A45008258B7 /* ModelLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8B2497F1EE44A45008258B7 /* ModelLoader.swift */; };
 		E8B249811EE44A45008258B7 /* ModelLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8B2497F1EE44A45008258B7 /* ModelLoader.swift */; };
 		E8B249831EE44A66008258B7 /* ModelLoaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8B249821EE44A66008258B7 /* ModelLoaderTests.swift */; };
@@ -375,6 +376,7 @@
 		E8A20F14230EE5CF00AEE53E /* AccessDataSourceFinders.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessDataSourceFinders.swift; sourceTree = "<group>"; };
 		E8A834F81ECDADF700CCDD82 /* AdaptorActiveRecordTestCase.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = AdaptorActiveRecordTestCase.swift; path = ZeeQLTests/AdaptorActiveRecordTestCase.swift; sourceTree = "<group>"; };
 		E8AA15F51FDEE1E5006FC597 /* CodableEntity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodableEntity.swift; sourceTree = "<group>"; };
+		E8ACA26C23115499000F6BEC /* EquatableTypeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EquatableTypeTests.swift; sourceTree = "<group>"; };
 		E8B2497F1EE44A45008258B7 /* ModelLoader.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = ModelLoader.swift; path = Sources/ZeeQL/Access/ModelLoader.swift; sourceTree = SOURCE_ROOT; };
 		E8B249821EE44A66008258B7 /* ModelLoaderTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ModelLoaderTests.swift; sourceTree = "<group>"; };
 		E8B249851EE44AD9008258B7 /* Contacts.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = Contacts.xcdatamodel; sourceTree = "<group>"; };
@@ -717,6 +719,7 @@
 		E8DDEE361E5FA1E600EC1DD8 /* ZeeQLTests */ = {
 			isa = PBXGroup;
 			children = (
+				E8ACA26C23115499000F6BEC /* EquatableTypeTests.swift */,
 				E8DDEE381E5FA1E600EC1DD8 /* QualifierParserTests.swift */,
 				E8DDEE391E5FA1E600EC1DD8 /* SQLExpressionTests.swift */,
 				E8687C9A1E606F6A00D62ABF /* FormatterTests.swift */,
@@ -1225,6 +1228,7 @@
 			files = (
 				E8687C9B1E606F6A00D62ABF /* FormatterTests.swift in Sources */,
 				E80285491EE6CBE100F25AD7 /* SchemaSyncTests.swift in Sources */,
+				E8ACA26D23115499000F6BEC /* EquatableTypeTests.swift in Sources */,
 				E8B249831EE44A66008258B7 /* ModelLoaderTests.swift in Sources */,
 				E8DDEE3B1E5FA1E600EC1DD8 /* QualifierParserTests.swift in Sources */,
 				E80B3DE81FE159CD0081DC43 /* CodableModelTests.swift in Sources */,

@@ -3,9 +3,12 @@
 //  ZeeQL
 //
 //  Created by Helge Heß on 17.02.17.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2019 ZeeZide GmbH. All rights reserved.
 //
 
+/**
+ * Dynamic comparison of values. The thing you know from Objective-C or Java ...
+ */
 public protocol EquatableType {
   
   func isEqual(to object: Any?) -> Bool
@@ -36,61 +39,33 @@ public func eq(_ a: Any?, _ b: Any?) -> Bool {
 
 // TBD: is there a betta way? :-)
 
-extension Int : EquatableType {
+extension FixedWidthInteger {
   public func isEqual(to object: Any?) -> Bool {
-    guard let v = object as? Int else { return false }
-    return self == v
+    guard let object = object else { return false } // other is nil
+    switch object {
+      case let other as Int:    return self == other
+      case let other as Int64:  return self == other
+      case let other as Int32:  return self == other
+      case let other as Int16:  return self == other
+      case let other as Int8:   return self == other
+      case let other as UInt:   return self == other
+      case let other as UInt64: return self == other
+      case let other as UInt32: return self == other
+      case let other as UInt16: return self == other
+      case let other as UInt8:  return self == other
+      default: return false
+    }
   }
 }
 
-extension Int8 : EquatableType {
-  public func isEqual(to object: Any?) -> Bool {
-    guard let v = object as? Int8 else { return false }
-    return self == v
-  }
-}
-
-extension Int32 : EquatableType {
-  public func isEqual(to object: Any?) -> Bool {
-    guard let v = object as? Int32 else { return false }
-    return self == v
-  }
-}
-
-extension Int64 : EquatableType {
-  public func isEqual(to object: Any?) -> Bool {
-    guard let v = object as? Int64 else { return false }
-    return self == v
-  }
-}
-
-extension UInt : EquatableType {
-  public func isEqual(to object: Any?) -> Bool {
-    guard let v = object as? UInt else { return false }
-    return self == v
-  }
-}
-
-extension UInt8 : EquatableType {
-  public func isEqual(to object: Any?) -> Bool {
-    guard let v = object as? UInt8 else { return false }
-    return self == v
-  }
-}
-
-extension UInt32 : EquatableType {
-  public func isEqual(to object: Any?) -> Bool {
-    guard let v = object as? UInt32 else { return false }
-    return self == v
-  }
-}
-
-extension UInt64 : EquatableType {
-  public func isEqual(to object: Any?) -> Bool {
-    guard let v = object as? UInt64 else { return false }
-    return self == v
-  }
-}
+extension Int    : EquatableType {}
+extension Int8   : EquatableType {}
+extension Int32  : EquatableType {}
+extension Int64  : EquatableType {}
+extension UInt   : EquatableType {}
+extension UInt8  : EquatableType {}
+extension UInt32 : EquatableType {}
+extension UInt64 : EquatableType {}
 
 extension Float : EquatableType {
   public func isEqual(to object: Any?) -> Bool {
@@ -98,7 +73,6 @@ extension Float : EquatableType {
     return self == v
   }
 }
-
 extension Double : EquatableType {
   public func isEqual(to object: Any?) -> Bool {
     guard let v = object as? Double else { return false }
@@ -108,8 +82,12 @@ extension Double : EquatableType {
 
 extension String : EquatableType {
   public  func isEqual(to object: Any?) -> Bool {
-    guard let v = object as? String else { return false }
-    return self == v
+    guard let object = object else { return false } // other is nil
+    switch object {
+      case let other as String:    return self == other
+      case let other as Substring: return self == other
+      default: return false
+    }
   }
 }
 
