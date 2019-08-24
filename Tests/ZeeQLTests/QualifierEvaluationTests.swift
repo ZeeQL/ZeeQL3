@@ -80,4 +80,20 @@ class QualifierEvaluationTests: XCTestCase {
     XCTAssertTrue(q.evaluateWith(object: anyOptDict))
     XCTAssertTrue(q.evaluateWith(object: donald))
   }
+  
+  func testOpKeyValueQualifier() {
+    XCTAssertTrue (evaluate("id < 1001", anyDict))
+    XCTAssertFalse(evaluate("id > 1000", anyDict))
+    XCTAssertTrue (evaluate("id > 0",    anyDict))
+    XCTAssertTrue (evaluate("id < 1001", donald))
+    XCTAssertTrue (evaluate("id <= 1001", anyDict))
+    XCTAssertTrue (evaluate("id <= 1000", anyDict))
+  }
+  
+  func evaluate<T>(_ qualifier: String, _ object: T) -> Bool {
+    let qq = qualifierWith(format: qualifier)
+    XCTAssert(qq is QualifierEvaluation)
+    guard let q = qq as? QualifierEvaluation else { return false }
+    return q.evaluateWith(object: object)
+  }
 }

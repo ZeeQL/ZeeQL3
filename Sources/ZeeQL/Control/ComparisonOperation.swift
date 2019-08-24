@@ -132,9 +132,14 @@ public extension ComparisonOperation {
   //       Not sure what the best Swift approach would be to avoid the Any
 
   func compare(_ a: Any?, _ b: Any?) -> Bool {
+    // Everytime you compare an Any, a 🐄 dies.
     switch self {
-      case .EqualTo:    return eq(a, b)
-      case .NotEqualTo: return !eq(a, b)
+      case .EqualTo:            return eq(a, b)
+      case .NotEqualTo:         return !eq(a, b)
+      case .LessThan:           return isSmaller(a, b)
+      case .GreaterThan:        return isSmaller(b, a)
+      case .LessThanOrEqual:    return isSmaller(a, b) || eq(a, b)
+      case .GreaterThanOrEqual: return isSmaller(b, a) || eq(a, b)
       
       // TODO: support many more, geez :-)
       

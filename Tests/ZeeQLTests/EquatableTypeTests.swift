@@ -50,4 +50,24 @@ class EquatableTypeTests: XCTestCase {
     XCTAssertFalse((48 as Double).isEqual(to: "48"))
   }
 
+  public func testComparableInts() {
+    XCTAssertTrue (5.isSmaller(than: 6))
+    XCTAssertFalse(6.isSmaller(than: 5))
+    XCTAssertTrue (Optional<Int>.none.isSmaller(than: 6))
+    XCTAssertFalse(6.isSmaller(than: nil))
+  }
+  public func testComparableCrossInts() {
+    XCTAssertTrue (5.isSmaller(than: 6 as UInt8))
+    XCTAssertFalse(6.isSmaller(than: 5 as UInt8))
+    XCTAssertTrue (Optional<UInt8>.none.isSmaller(than: 6))
+    XCTAssertFalse((6 as UInt8).isSmaller(than: nil))
+  }
+  public func testComparableBools() {
+    XCTAssertTrue (false.isSmaller(than: true))
+    XCTAssertFalse(true.isSmaller(than: false))
+    XCTAssertTrue (Optional<Bool>.none.isSmaller(than: false))
+    XCTAssertTrue (Optional<Bool>.none.isSmaller(than: true))
+    XCTAssertFalse(false.isSmaller(than: nil))
+    XCTAssertFalse(true.isSmaller(than: nil))
+  }
 }
