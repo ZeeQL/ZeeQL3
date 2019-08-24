@@ -141,6 +141,31 @@ public extension ComparisonOperation {
       case .LessThanOrEqual:    return isSmaller(a, b) || eq(a, b)
       case .GreaterThanOrEqual: return isSmaller(b, a) || eq(a, b)
       
+      case .Contains: // firstname in ["donald"] or firstname in "donald"
+        guard let b = b else { return false }
+        guard let list = b as? ContainsComparisonType else {
+          globalZeeQLLogger.error(
+            "attempt to evaluate an ComparisonOperation dynamically:",
+            self, a, b
+          )
+          assertionFailure("comparison not supported for dynamic evaluation")
+          return false
+        }
+        return list.contains(other: a)
+      
+      case .Like, .CaseInsensitiveLike: // firstname like *Donald*
+        let ci = self == .CaseInsensitiveLike
+        if a == nil && b == nil { return true } // nil is like nil
+        guard let value = a as? LikeComparisonType else {
+          globalZeeQLLogger.error(
+            "attempt to evaluate an ComparisonOperation dynamically:",
+            self, a, b
+          )
+          assertionFailure("comparison not supported for dynamic evaluation")
+          return false
+        }
+        return value.isLike(other: b, caseInsensitive: ci)
+
       // TODO: support many more, geez :-)
       
       default:
@@ -148,7 +173,7 @@ public extension ComparisonOperation {
           "attempt to evaluate an ComparisonOperation dynamically:",
           self, a, b
         )
-        assertionFailure("comparison operator not supported for dynamic evaluation")
+        assertionFailure("comparison not supported for dynamic evaluation")
         return false
     }
   }

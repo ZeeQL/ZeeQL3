@@ -90,6 +90,33 @@ class QualifierEvaluationTests: XCTestCase {
     XCTAssertTrue (evaluate("id <= 1000", anyDict))
   }
   
+  func testCollectionContains() {
+    let list = [ "Donald", "Mickey" ]
+    let qq = qualifierWith(format: "firstname IN %@", list)
+    XCTAssert(qq is QualifierEvaluation)
+    guard let q = qq as? QualifierEvaluation else { return }
+    
+    XCTAssertTrue(q.evaluateWith(object: donald))
+  }
+  func testStringContains() {
+    let list = "Donald Duck"
+    let qq = qualifierWith(format: "firstname IN %@", list)
+    XCTAssert(qq is QualifierEvaluation)
+    guard let q = qq as? QualifierEvaluation else { return }
+    
+    XCTAssertTrue(q.evaluateWith(object: donald))
+  }
+  func testLikeOp() {
+    XCTAssertTrue (evaluate("firstname LIKE 'Don*'", anyDict))
+    XCTAssertFalse(evaluate("firstname LIKE 'don*'", anyDict))
+    XCTAssertTrue (evaluate("firstname LIKE 'Don*'", donald))
+
+    XCTAssertTrue (evaluate("firstname ILIKE 'don*'", donald))
+    
+    XCTAssertTrue (evaluate("firstname LIKE 'Donald'",  donald))
+    XCTAssertTrue (evaluate("firstname ILIKE 'Donald'", donald))
+  }
+
   func evaluate<T>(_ qualifier: String, _ object: T) -> Bool {
     let qq = qualifierWith(format: qualifier)
     XCTAssert(qq is QualifierEvaluation)

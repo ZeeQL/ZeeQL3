@@ -20,6 +20,19 @@ public protocol ComparableType {
   func isSmaller(than object: Any?) -> Bool
 }
 
+/**
+* Dynamic comparison of values. The thing you know from Objective-C or Java ...
+*/
+public protocol ContainsComparisonType {
+  func contains(other object: Any?) -> Bool
+}
+/**
+* Dynamic comparison of values. The thing you know from Objective-C or Java ...
+*/
+public protocol LikeComparisonType {
+  func isLike(other object: Any?, caseInsensitive: Bool) -> Bool
+}
+
 
 public func eq<T: Equatable>(_ a: T?, _ b: T?) -> Bool {
   if let a = a, let b = b {
@@ -261,3 +274,70 @@ extension Optional : ComparableType {
   }
   
 }
+
+// MARK: - Containment
+
+public extension Collection where Element : EquatableType {
+  func contains(other object: Any?) -> Bool {
+    return contains { $0.isEqual(to: object) }
+  }
+}
+extension Array : ContainsComparisonType where Element : EquatableType {}
+extension Slice : ContainsComparisonType where Element : EquatableType {}
+extension Range : ContainsComparisonType where Element : EquatableType {}
+
+public extension StringProtocol {
+  
+  func contains(other object: Any?) -> Bool {
+    switch object {
+      case .none: return false
+      case .some(let v as String): return contains(v)
+      case .some(let v as Substring): return contains(v)
+      default:
+        return false
+    }
+  }
+  
+  func isLike(other object: Any?, caseInsensitive ci: Bool) -> Bool {
+    guard let other = object else { return false } // String not like nil
+    if !ci {
+      switch other {
+        case let other as String:    return self.likePatternMatch(other)
+        case let other as Substring: return self.likePatternMatch(other)
+        default: return false
+      }
+    }
+    else {
+      switch other {
+        case let other as String:
+          return lowercased().likePatternMatch(other.lowercased())
+        case let other as Substring:
+          return lowercased().likePatternMatch(other.lowercased())
+        default: return false
+      }
+    }
+  }
+  
+  /// A simple (and incomplete) * pattern matcher.
+  /// Can only do prefix/suffix/contains
+  func likePatternMatch<P: StringProtocol>(_ pattern: P) -> Bool {
+    guard pattern.contains("*") else { return self == pattern }
+    let starPrefix = pattern.hasPrefix("*")
+    let starSuffix = pattern.hasSuffix("*")
+    if !starPrefix && !starSuffix { return self == pattern }
+    if starPrefix {
+      let v1 = pattern.dropFirst()
+      return starSuffix ? contains(v1.dropLast()) : hasSuffix(v1)
+    }
+    else if starSuffix {
+      return hasPrefix(pattern.dropLast())
+    }
+    else { // stupid fallback ignoring inner stars
+      return self == pattern
+    }
+  }
+}
+
+// LikeComparisonType
+extension String    : ContainsComparisonType, LikeComparisonType {}
+extension Substring : ContainsComparisonType, LikeComparisonType {}
