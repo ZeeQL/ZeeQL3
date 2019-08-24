@@ -344,6 +344,9 @@ public extension StringProtocol {
   }
 }
 
+extension String    : ContainsComparisonType, LikeComparisonType {}
+extension Substring : ContainsComparisonType, LikeComparisonType {}
+
 #else // Swift 4.2
 
 public extension String {
@@ -398,8 +401,7 @@ public extension String {
   }
 }
 
-#endif // Swift 4.2
+extension String : ContainsComparisonType, LikeComparisonType {}
+// Not for Substring in 4.2
 
-// LikeComparisonType
-extension String    : ContainsComparisonType, LikeComparisonType {}
-extension Substring : ContainsComparisonType, LikeComparisonType {}
+#endif // Swift 4.2
