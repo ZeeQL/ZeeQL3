@@ -148,11 +148,3 @@ public struct KeyValueQualifier : Qualifier, Equatable {
     }
   }
 }
-
-extension KeyValueQualifier: QualifierEvaluation {
-  public func evaluateWith(object: Any?) -> Bool {
-    let objectValue =
-          KeyValueCoding.value(forKeyPath: keyExpr.key, inObject: object)
-    return operation.compare(objectValue, value)
-  }
-}

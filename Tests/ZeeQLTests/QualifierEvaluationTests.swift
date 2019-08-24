@@ -40,7 +40,16 @@ class QualifierEvaluationTests: XCTestCase {
     XCTAssertTrue(q.evaluateWith(object: anyOptDict))
     XCTAssertTrue(q.evaluateWith(object: donald))
   }
-  
+  func testMatchingKeyComparisonQualifier() {
+    let qq = qualifierWith(format: "firstname = firstname")
+    XCTAssert(qq is KeyComparisonQualifier)
+    guard let q = qq as? KeyComparisonQualifier else { return }
+    
+    XCTAssertTrue(q.evaluateWith(object: anyDict))
+    XCTAssertTrue(q.evaluateWith(object: anyOptDict))
+    XCTAssertTrue(q.evaluateWith(object: donald))
+  }
+
   func testNotMatchingKeyValueQualifier() {
     let qq = qualifierWith(format: "firstname = 'Mickey'")
     XCTAssert(qq is KeyValueQualifier)
@@ -50,7 +59,16 @@ class QualifierEvaluationTests: XCTestCase {
     XCTAssertFalse(q.evaluateWith(object: anyOptDict))
     XCTAssertFalse(q.evaluateWith(object: donald))
   }
-  
+  func testNotMatchingKeyComparisonQualifier() {
+    let qq = qualifierWith(format: "firstname != lastName")
+    XCTAssert(qq is KeyComparisonQualifier)
+    guard let q = qq as? KeyComparisonQualifier else { return }
+    
+    XCTAssertTrue(q.evaluateWith(object: anyDict))
+    XCTAssertTrue(q.evaluateWith(object: anyOptDict))
+    XCTAssertTrue(q.evaluateWith(object: donald))
+  }
+
   func testCrossTypeKeyValueQualifier() {
     let qq = qualifierWith(format: "firstname = 100")
     XCTAssert(qq is KeyValueQualifier)
