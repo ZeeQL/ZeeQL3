@@ -198,6 +198,9 @@
 		E8A834FA1ECDADF700CCDD82 /* AdaptorActiveRecordTestCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8A834F81ECDADF700CCDD82 /* AdaptorActiveRecordTestCase.swift */; };
 		E8AA15F61FDEE1E5006FC597 /* CodableEntity.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8AA15F51FDEE1E5006FC597 /* CodableEntity.swift */; };
 		E8ACA26D23115499000F6BEC /* EquatableTypeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8ACA26C23115499000F6BEC /* EquatableTypeTests.swift */; };
+		E8ACA271231164A5000F6BEC /* QualifierEvaluationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8ACA270231164A5000F6BEC /* QualifierEvaluationTests.swift */; };
+		E8ACA274231166F7000F6BEC /* ComparisonOperation.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8ACA272231166BE000F6BEC /* ComparisonOperation.swift */; };
+		E8ACA275231166FA000F6BEC /* ComparisonOperation.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8ACA272231166BE000F6BEC /* ComparisonOperation.swift */; };
 		E8B249801EE44A45008258B7 /* ModelLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8B2497F1EE44A45008258B7 /* ModelLoader.swift */; };
 		E8B249811EE44A45008258B7 /* ModelLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8B2497F1EE44A45008258B7 /* ModelLoader.swift */; };
 		E8B249831EE44A66008258B7 /* ModelLoaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8B249821EE44A66008258B7 /* ModelLoaderTests.swift */; };
@@ -377,6 +380,8 @@
 		E8A834F81ECDADF700CCDD82 /* AdaptorActiveRecordTestCase.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = AdaptorActiveRecordTestCase.swift; path = ZeeQLTests/AdaptorActiveRecordTestCase.swift; sourceTree = "<group>"; };
 		E8AA15F51FDEE1E5006FC597 /* CodableEntity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodableEntity.swift; sourceTree = "<group>"; };
 		E8ACA26C23115499000F6BEC /* EquatableTypeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EquatableTypeTests.swift; sourceTree = "<group>"; };
+		E8ACA270231164A5000F6BEC /* QualifierEvaluationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QualifierEvaluationTests.swift; sourceTree = "<group>"; };
+		E8ACA272231166BE000F6BEC /* ComparisonOperation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComparisonOperation.swift; sourceTree = "<group>"; };
 		E8B2497F1EE44A45008258B7 /* ModelLoader.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = ModelLoader.swift; path = Sources/ZeeQL/Access/ModelLoader.swift; sourceTree = SOURCE_ROOT; };
 		E8B249821EE44A66008258B7 /* ModelLoaderTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ModelLoaderTests.swift; sourceTree = "<group>"; };
 		E8B249851EE44AD9008258B7 /* Contacts.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = Contacts.xcdatamodel; sourceTree = "<group>"; };
@@ -516,6 +521,7 @@
 				E80B3FBB1E606D1E00D6F0ED /* FetchSpecification.swift */,
 				E80B3FBF1E606D1E00D6F0ED /* Qualifier.swift */,
 				E80B3FC31E606D1E00D6F0ED /* SortOrdering.swift */,
+				E8ACA272231166BE000F6BEC /* ComparisonOperation.swift */,
 				E80B3FB81E606D1E00D6F0ED /* Constant.swift */,
 				E80B3FB91E606D1E00D6F0ED /* Expression.swift */,
 				E80B3FBA1E606D1E00D6F0ED /* ExpressionEvaluation.swift */,
@@ -720,6 +726,7 @@
 			isa = PBXGroup;
 			children = (
 				E8ACA26C23115499000F6BEC /* EquatableTypeTests.swift */,
+				E8ACA270231164A5000F6BEC /* QualifierEvaluationTests.swift */,
 				E8DDEE381E5FA1E600EC1DD8 /* QualifierParserTests.swift */,
 				E8DDEE391E5FA1E600EC1DD8 /* SQLExpressionTests.swift */,
 				E8687C9A1E606F6A00D62ABF /* FormatterTests.swift */,
@@ -1060,6 +1067,7 @@
 				E8263C951E93C89200508276 /* SmartDescription.swift in Sources */,
 				E8263CCA1E93C89200508276 /* SQLExpressionFactory.swift in Sources */,
 				E8C7C85F1FF401EF0016A597 /* EntityPropertyReflectionContainer.swift in Sources */,
+				E8ACA275231166FA000F6BEC /* ComparisonOperation.swift in Sources */,
 				E8263CCE1E93C89200508276 /* SQLite3Expression.swift in Sources */,
 				E8263CB61E93C89200508276 /* Adaptor.swift in Sources */,
 				E8263C921E93C89200508276 /* SimpleKVC.swift in Sources */,
@@ -1175,6 +1183,7 @@
 				E80B3FD51E606D4800D6F0ED /* TimeRange.swift in Sources */,
 				E843135C1E6DB65700A59F8B /* CodeValueAttribute.swift in Sources */,
 				E828519F2031DECB00535895 /* CodableModel.swift in Sources */,
+				E8ACA274231166F7000F6BEC /* ComparisonOperation.swift in Sources */,
 				E843135E1E6DBE5400A59F8B /* ModelFetchSpecification.swift in Sources */,
 				E80B3FCE1E606D1E00D6F0ED /* QualifierVariable.swift in Sources */,
 				E86BF2591E68506600C8B22A /* AttributeKey.swift in Sources */,
@@ -1229,6 +1238,7 @@
 				E8687C9B1E606F6A00D62ABF /* FormatterTests.swift in Sources */,
 				E80285491EE6CBE100F25AD7 /* SchemaSyncTests.swift in Sources */,
 				E8ACA26D23115499000F6BEC /* EquatableTypeTests.swift in Sources */,
+				E8ACA271231164A5000F6BEC /* QualifierEvaluationTests.swift in Sources */,
 				E8B249831EE44A66008258B7 /* ModelLoaderTests.swift in Sources */,
 				E8DDEE3B1E5FA1E600EC1DD8 /* QualifierParserTests.swift in Sources */,
 				E80B3DE81FE159CD0081DC43 /* CodableModelTests.swift in Sources */,
