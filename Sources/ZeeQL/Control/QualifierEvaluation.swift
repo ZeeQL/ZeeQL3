@@ -19,3 +19,19 @@ public extension QualifierEvaluation {
   }
   
 }
+
+extension KeyValueQualifier: QualifierEvaluation {
+  public func evaluateWith(object: Any?) -> Bool {
+    let objectValue =
+          KeyValueCoding.value(forKeyPath: keyExpr.key, inObject: object)
+    return operation.compare(objectValue, value)
+  }
+}
+
+extension KeyComparisonQualifier: QualifierEvaluation {
+  public func evaluateWith(object: Any?) -> Bool {
+    let a = KeyValueCoding.value(forKeyPath: leftKeyExpr .key, inObject: object)
+    let b = KeyValueCoding.value(forKeyPath: rightKeyExpr.key, inObject: object)
+    return operation.compare(a, b)
+  }
+}

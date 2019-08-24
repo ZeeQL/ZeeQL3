@@ -3,12 +3,10 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 28/02/17.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2019 ZeeZide GmbH. All rights reserved.
 //
 
 public struct KeyComparisonQualifier : Qualifier, Equatable {
-  // TODO: Evaluation is a little harder in Swift, also coercion
-  // , QualifierEvaluation {
   
   public let leftKeyExpr  : Key
   public let rightKeyExpr : Key

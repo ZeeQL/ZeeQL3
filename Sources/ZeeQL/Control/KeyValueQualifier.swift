@@ -3,14 +3,10 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 28/02/17.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2019 ZeeZide GmbH. All rights reserved.
 //
 
 public struct KeyValueQualifier : Qualifier, Equatable {
-  // , QualifierEvaluation {
-  // TODO: Evaluation is a little harder in Swift, also coercion
-  // Note: Had this as KeyValueQualifier<T>, but this makes class-checks harder.
-  //       Not sure what the best Swift approach would be to avoid the Any
   
   public let keyExpr   : Key
   public let value     : Any? // TBD: change to Expression?
