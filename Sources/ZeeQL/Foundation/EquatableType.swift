@@ -85,32 +85,34 @@ public extension FixedWidthInteger {
   func isEqual(to object: Any?) -> Bool {
     guard let object = object else { return false } // other is nil
     switch object {
-      case let other as Int:    return self == other
-      case let other as Int64:  return self == other
-      case let other as Int32:  return self == other
-      case let other as Int16:  return self == other
-      case let other as Int8:   return self == other
-      case let other as UInt:   return self == other
-      case let other as UInt64: return self == other
-      case let other as UInt32: return self == other
-      case let other as UInt16: return self == other
-      case let other as UInt8:  return self == other
+      case let other as Int:     return self == other
+      case let other as Decimal: return other.isEqual(to: self)
+      case let other as Int64:   return self == other
+      case let other as Int32:   return self == other
+      case let other as Int16:   return self == other
+      case let other as Int8:    return self == other
+      case let other as UInt:    return self == other
+      case let other as UInt64:  return self == other
+      case let other as UInt32:  return self == other
+      case let other as UInt16:  return self == other
+      case let other as UInt8:   return self == other
       default: return false
     }
   }
   func isSmaller(than object: Any?) -> Bool {
     guard let object = object else { return false } // other is nil
     switch object {
-      case let other as Int:    return self < other
-      case let other as Int64:  return self < other
-      case let other as Int32:  return self < other
-      case let other as Int16:  return self < other
-      case let other as Int8:   return self < other
-      case let other as UInt:   return self < other
-      case let other as UInt64: return self < other
-      case let other as UInt32: return self < other
-      case let other as UInt16: return self < other
-      case let other as UInt8:  return self < other
+      case let other as Int:     return self < other
+      case let other as Decimal: return !other.isSmaller(than: self)
+      case let other as Int64:   return self < other
+      case let other as Int32:   return self < other
+      case let other as Int16:   return self < other
+      case let other as Int8:    return self < other
+      case let other as UInt:    return self < other
+      case let other as UInt64:  return self < other
+      case let other as UInt32:  return self < other
+      case let other as UInt16:  return self < other
+      case let other as UInt8:   return self < other
       default: return false
     }
   }
@@ -173,6 +175,70 @@ extension Bool : EquatableType, ComparableType {
   public func isSmaller(than object: Any?) -> Bool {
     guard let v = object as? Bool else { return false }
     return self == v ? false : !self
+  }
+}
+
+import struct Foundation.Date
+import struct Foundation.UUID
+import struct Foundation.URL
+import struct Foundation.Decimal
+
+extension Date : EquatableType, ComparableType {
+  public func isEqual(to object: Any?) -> Bool {
+    guard let v = object as? Date else { return false }
+    return self == v
+  }
+  public func isSmaller(than object: Any?) -> Bool {
+    guard let v = object as? Date else { return false }
+    return self < v
+  }
+}
+extension UUID : EquatableType {
+  public func isEqual(to object: Any?) -> Bool {
+    guard let v = object as? UUID else { return false }
+    return self == v
+  }
+}
+extension URL : EquatableType {
+  public func isEqual(to object: Any?) -> Bool {
+    guard let v = object as? URL else { return false }
+    return self == v
+  }
+}
+
+extension Decimal : EquatableType, ComparableType {
+  public func isEqual(to object: Any?) -> Bool {
+    switch object {
+      case let other as Decimal: return self == other
+      case let other as Int:     return Decimal(other) == self
+      case let other as Int64:   return Decimal(other) == self
+      case let other as Int32:   return Decimal(other) == self
+      case let other as Int16:   return Decimal(other) == self
+      case let other as Int8:    return Decimal(other) == self
+      case let other as UInt:    return Decimal(other) == self
+      case let other as UInt64:  return Decimal(other) == self
+      case let other as UInt32:  return Decimal(other) == self
+      case let other as UInt16:  return Decimal(other) == self
+      case let other as UInt8:   return Decimal(other) == self
+      default: return false
+    }
+  }
+  public func isSmaller(than object: Any?) -> Bool {
+    guard let object = object else { return false }
+    switch object {
+      case let other as Decimal: return self < other
+      case let other as Int:     return self < Decimal(other)
+      case let other as Int64:   return self < Decimal(other)
+      case let other as Int32:   return self < Decimal(other)
+      case let other as Int16:   return self < Decimal(other)
+      case let other as Int8:    return self < Decimal(other)
+      case let other as UInt:    return self < Decimal(other)
+      case let other as UInt64:  return self < Decimal(other)
+      case let other as UInt32:  return self < Decimal(other)
+      case let other as UInt16:  return self < Decimal(other)
+      case let other as UInt8:   return self < Decimal(other)
+      default: return false
+    }
   }
 }
 
