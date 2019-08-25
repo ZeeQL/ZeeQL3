@@ -178,10 +178,15 @@ extension Bool : EquatableType, ComparableType {
   }
 }
 
-import struct Foundation.Date
 import struct Foundation.UUID
 import struct Foundation.URL
 import struct Foundation.Decimal
+import struct Foundation.Data
+import struct Foundation.Date
+import struct Foundation.DateComponents
+import struct Foundation.DateInterval
+import struct Foundation.Measurement
+import struct Foundation.PersonNameComponents
 
 extension Date : EquatableType, ComparableType {
   public func isEqual(to object: Any?) -> Bool {
@@ -190,6 +195,17 @@ extension Date : EquatableType, ComparableType {
   }
   public func isSmaller(than object: Any?) -> Bool {
     guard let v = object as? Date else { return false }
+    return self < v
+  }
+}
+@available(macOS 10.12, iOS 11, watchOS 5, tvOS 11, *)
+extension DateInterval : EquatableType, ComparableType {
+  public func isEqual(to object: Any?) -> Bool {
+    guard let v = object as? DateInterval else { return false }
+    return self == v
+  }
+  public func isSmaller(than object: Any?) -> Bool {
+    guard let v = object as? DateInterval else { return false }
     return self < v
   }
 }
@@ -202,6 +218,36 @@ extension UUID : EquatableType {
 extension URL : EquatableType {
   public func isEqual(to object: Any?) -> Bool {
     guard let v = object as? URL else { return false }
+    return self == v
+  }
+}
+extension Data : EquatableType {
+  public func isEqual(to object: Any?) -> Bool {
+    guard let v = object as? Data else { return false }
+    return self == v
+  }
+}
+extension DateComponents : EquatableType {
+  public func isEqual(to object: Any?) -> Bool {
+    guard let v = object as? DateComponents else { return false }
+    return self == v
+  }
+}
+@available(OSX 10.12, iOS 10.0, watchOS 3.0, tvOS 10.0, *)
+extension Measurement : EquatableType, ComparableType {
+  public func isEqual(to object: Any?) -> Bool {
+    guard let v = object as? Measurement else { return false }
+    return self == v
+  }
+  public func isSmaller(than object: Any?) -> Bool {
+    guard let v = object as? Measurement else { return false }
+    return self < v
+  }
+}
+@available(OSX 10.11, iOS 9.0, *)
+extension PersonNameComponents : EquatableType {
+  public func isEqual(to object: Any?) -> Bool {
+    guard let v = object as? PersonNameComponents else { return false }
     return self == v
   }
 }
