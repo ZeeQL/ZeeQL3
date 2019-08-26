@@ -8,6 +8,7 @@
 
 import struct Foundation.Date
 import struct Foundation.Data
+import struct Foundation.Decimal
 
 public enum ZeeQLTypes {
   // All this really belongs into the adaptors, but the basic stuff is all the
