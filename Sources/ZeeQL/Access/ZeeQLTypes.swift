@@ -111,6 +111,7 @@ public enum ZeeQLTypes {
       if uType.hasPrefix("BOOL")           { return Optional<Bool>   .self }
       if uType.hasPrefix("BYTEA")          { return Optional<Data>   .self }
       if uType.hasPrefix("NUMERIC")        { return Optional<Decimal>.self }
+      if uType.hasPrefix("BPCHAR")         { return Optional<String> .self }
     }
     else {
       if uType.hasPrefix("VARCHAR")        { return String .self }
@@ -124,6 +125,7 @@ public enum ZeeQLTypes {
       if uType.hasPrefix("BOOL")           { return Bool   .self }
       if uType.hasPrefix("BYTEA")          { return Data   .self }
       if uType.hasPrefix("NUMERIC")        { return Decimal.self }
+      if uType.hasPrefix("BPCHAR")         { return String .self }
     }
     /* TBD: is there a calendar date? :-)
     if uType.hasPrefix("TIMESTAMP WITH") { return CalendarDate.self }
