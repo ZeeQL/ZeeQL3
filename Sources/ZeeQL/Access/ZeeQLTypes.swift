@@ -56,7 +56,7 @@ public enum ZeeQLTypes {
       if swiftType == Date  .self { return "TIMESTAMP NOT NULL" }
       if swiftType == Int   .self { return "INT NOT NULL"       }
       if swiftType == Bool  .self { return "BOOLEAN NOT NULL"   }
-      
+
       if swiftType == Optional<Int>   .self { return "INT NULL"       }
       if swiftType == Optional<String>.self { return "VARCHAR NULL"   }
       if swiftType == Optional<Float> .self { return "FLOAT NULL"     }
@@ -100,28 +100,30 @@ public enum ZeeQLTypes {
   {
     // TODO: consider scale and such
     if allowsNull {
-      if uType.hasPrefix("VARCHAR")        { return Optional<String>.self }
-      if uType.hasPrefix("INT")            { return Optional<Int>   .self }
-      if uType.hasPrefix("DOUBLE")         { return Optional<Double>.self }
-      if uType.hasPrefix("FLOAT")          { return Optional<Float> .self }
-      if uType.hasPrefix("TEXT")           { return Optional<String>.self }
-      if uType.hasPrefix("TIMESTAMP")      { return Optional<Date>  .self }
-      if uType.hasPrefix("BLOB")           { return Optional<Data>  .self }
-      if uType.hasPrefix("CLOB")           { return Optional<String>.self }
-      if uType.hasPrefix("BOOL")           { return Optional<Bool>  .self }
-      if uType.hasPrefix("BYTEA")          { return Optional<Data>  .self }
+      if uType.hasPrefix("VARCHAR")        { return Optional<String> .self }
+      if uType.hasPrefix("INT")            { return Optional<Int>    .self }
+      if uType.hasPrefix("DOUBLE")         { return Optional<Double> .self }
+      if uType.hasPrefix("FLOAT")          { return Optional<Float>  .self }
+      if uType.hasPrefix("TEXT")           { return Optional<String> .self }
+      if uType.hasPrefix("TIMESTAMP")      { return Optional<Date>   .self }
+      if uType.hasPrefix("BLOB")           { return Optional<Data>   .self }
+      if uType.hasPrefix("CLOB")           { return Optional<String> .self }
+      if uType.hasPrefix("BOOL")           { return Optional<Bool>   .self }
+      if uType.hasPrefix("BYTEA")          { return Optional<Data>   .self }
+      if uType.hasPrefix("NUMERIC")        { return Optional<Decimal>.self }
     }
     else {
-      if uType.hasPrefix("VARCHAR")        { return String.self }
-      if uType.hasPrefix("INT")            { return Int   .self }
-      if uType.hasPrefix("DOUBLE")         { return Double.self }
-      if uType.hasPrefix("FLOAT")          { return Float .self }
-      if uType.hasPrefix("TEXT")           { return String.self }
-      if uType.hasPrefix("TIMESTAMP")      { return Date  .self }
-      if uType.hasPrefix("BLOB")           { return Data  .self }
-      if uType.hasPrefix("CLOB")           { return String.self }
-      if uType.hasPrefix("BOOL")           { return Bool  .self }
-      if uType.hasPrefix("BYTEA")          { return Data  .self }
+      if uType.hasPrefix("VARCHAR")        { return String .self }
+      if uType.hasPrefix("INT")            { return Int    .self }
+      if uType.hasPrefix("DOUBLE")         { return Double .self }
+      if uType.hasPrefix("FLOAT")          { return Float  .self }
+      if uType.hasPrefix("TEXT")           { return String .self }
+      if uType.hasPrefix("TIMESTAMP")      { return Date   .self }
+      if uType.hasPrefix("BLOB")           { return Data   .self }
+      if uType.hasPrefix("CLOB")           { return String .self }
+      if uType.hasPrefix("BOOL")           { return Bool   .self }
+      if uType.hasPrefix("BYTEA")          { return Data   .self }
+      if uType.hasPrefix("NUMERIC")        { return Decimal.self }
     }
     /* TBD: is there a calendar date? :-)
     if uType.hasPrefix("TIMESTAMP WITH") { return CalendarDate.self }
