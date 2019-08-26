@@ -184,9 +184,6 @@ import struct Foundation.Decimal
 import struct Foundation.Data
 import struct Foundation.Date
 import struct Foundation.DateComponents
-import struct Foundation.DateInterval
-import struct Foundation.Measurement
-import struct Foundation.PersonNameComponents
 
 extension Date : EquatableType, ComparableType {
   public func isEqual(to object: Any?) -> Bool {
@@ -198,17 +195,7 @@ extension Date : EquatableType, ComparableType {
     return self < v
   }
 }
-@available(macOS 10.12, iOS 11, watchOS 5, tvOS 11, *)
-extension DateInterval : EquatableType, ComparableType {
-  public func isEqual(to object: Any?) -> Bool {
-    guard let v = object as? DateInterval else { return false }
-    return self == v
-  }
-  public func isSmaller(than object: Any?) -> Bool {
-    guard let v = object as? DateInterval else { return false }
-    return self < v
-  }
-}
+
 extension UUID : EquatableType {
   public func isEqual(to object: Any?) -> Bool {
     guard let v = object as? UUID else { return false }
@@ -233,6 +220,21 @@ extension DateComponents : EquatableType {
     return self == v
   }
 }
+
+import struct Foundation.DateInterval
+@available(OSX 10.12, iOS 10.0, watchOS 3.0, tvOS 10.0, *)
+extension DateInterval : EquatableType, ComparableType {
+  public func isEqual(to object: Any?) -> Bool {
+    guard let v = object as? DateInterval else { return false }
+    return self == v
+  }
+  public func isSmaller(than object: Any?) -> Bool {
+    guard let v = object as? DateInterval else { return false }
+    return self < v
+  }
+}
+
+import struct Foundation.Measurement
 @available(OSX 10.12, iOS 10.0, watchOS 3.0, tvOS 10.0, *)
 extension Measurement : EquatableType, ComparableType {
   public func isEqual(to object: Any?) -> Bool {
@@ -244,6 +246,8 @@ extension Measurement : EquatableType, ComparableType {
     return self < v
   }
 }
+
+import struct Foundation.PersonNameComponents
 @available(OSX 10.11, iOS 9.0, *)
 extension PersonNameComponents : EquatableType {
   public func isEqual(to object: Any?) -> Bool {
