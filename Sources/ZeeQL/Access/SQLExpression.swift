@@ -1420,27 +1420,37 @@ open class SQLExpression: SmartDescription {
    *   - keyPath: the name of the attribute (eg 'name' or 'address.city')
    * - returns: the SQL (eg 'BASE.c_name' or 'T3.c_city')
    */
-  func sqlStringForAttributeNamed(_ _keyPath: String) -> String? {
-    guard !_keyPath.isEmpty else { return nil }
+  func sqlStringForAttributeNamed(_ keyPath: String) -> String? {
+    guard !keyPath.isEmpty else { return nil }
     
     /* Note: this implies that attribute names may not contain dots, which
      *       might be an issue with user generated tables.
      */
-    if _keyPath.contains(".") {
+    if keyPath.contains(".") {
       /* its a keypath */
-      return sqlStringForAttributePath(_keyPath.components(separatedBy: "."))
+      return sqlStringForAttributePath(keyPath.components(separatedBy: "."))
     }
     
     if entity == nil {
-      return _keyPath /* just reuse the name for model-less operation */
+      return keyPath /* just reuse the name for model-less operation */
     }
     
-    guard let attribute = entity?[attribute: _keyPath] else {
-      return _keyPath
+    if let attribute = entity?[attribute: keyPath] {
+      /* Note: this already adds the table alias */
+      return sqlStringForAttribute(attribute)
     }
-    
-    /* Note: this already adds the table alias */
-    return sqlStringForAttribute(attribute)
+    if let relship = entity?[relationship: keyPath] {
+      // TODO: what about relationships?
+      globalZeeQLLogger.error("unsupported, generating relationship match:\n",
+                              "  path:", keyPath, "\n",
+                              "  rs:  ", relship, "\n",
+                              "  expr:", self)
+      return keyPath
+    }
+
+    globalZeeQLLogger.trace("generating raw value for unknown attribute:",
+                            keyPath, self)
+    return keyPath
   }
   
   /**
@@ -1486,7 +1496,6 @@ open class SQLExpression: SmartDescription {
   func sqlStringForAttribute(_ attr: Attribute) -> String {
     return self.sqlStringForAttribute(attr, "" /* relship path, BASE */);
   }
-
   
   /**
    * This method generates the SQL column reference for a given attribute path.
@@ -1824,6 +1833,8 @@ open class SQLExpression: SmartDescription {
     /* generate lhs */
     // TBD: use sqlStringForExpression with Key?
     
+    // What if the LHS is a relationship? (like addresses.street). It will
+    // yield the proper alias, e.g. "A.street"!
     guard let sqlCol = self.sqlStringForExpression(q.leftExpression) else {
       log.error("got no SQL string for attribute of LHS \(q.key):", q)
       return nil
