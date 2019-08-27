@@ -1365,6 +1365,7 @@ open class DatabaseChannel : DatabaseChannelBase, IteratorProtocol {
       }
       catch {
         // TBD: hm
+        globalZeeQLLogger.warn("rollback failed!", error)
       }
     }
     
