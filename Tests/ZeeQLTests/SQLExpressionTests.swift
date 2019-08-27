@@ -133,7 +133,8 @@ class SQLExpressionTests: XCTestCase {
       static let entity : ZeeQL.Entity = Entity()
     }
     
-    let fs = ModelFetchSpecification(entity: Address.entity, "person.login != nil")
+    let fs = ModelFetchSpecification(entity: Address.entity,
+                                     "person.login != nil")
     let expr = factory.selectExpressionForAttributes(
       Address.entity.attributes, fs, Address.entity
     )
@@ -230,6 +231,47 @@ class SQLExpressionTests: XCTestCase {
     XCTAssertEqual(expr.statement,
                    "SELECT BASE.\"company_id\" FROM \"person\" AS BASE LEFT JOIN \"address\" AS A ON ( BASE.\"company_id\" = A.\"company_id\" ) WHERE ( COALESCE(A.\"street\", '') LIKE ? ) AND ( COALESCE(A.\"zipcity\", '') LIKE ? )"
                    )
+  }
+
+  func DISABLEDtestObjectTargetExpr() { // unsupported yet
+    class Address : ActiveRecord, EntityType {
+      class Entity : CodeEntity<Address> {
+        let table         = "address"
+        let id            = Info.Int(column: "address_id")
+        let companyId     = Info.Int(column: "company_id")
+        let person        = ToOne<Person>(from: "companyId")
+          // auto: key: "company_id")
+      }
+      static let typedEntity = Entity()
+      static let entity : ZeeQL.Entity = typedEntity
+    }
+    class Person : ActiveRecord, EntityType {
+      class Entity : CodeEntity<Person> {
+        let table         = "person"
+        let id            = Info.Int(column: "company_id")
+        let login         : String? = nil
+        let addresses     = ToMany<Address>(on: "companyId")
+      }
+      static let typedEntity = Entity()
+      static let entity : ZeeQL.Entity = typedEntity
+    }
+    
+    let person = Person()
+    person.takeStoredValues([
+      "id"    : 42,
+      "login" : "donald"
+    ])
+    
+    let q = qualifierWith(format: "person = %@", person)!
+    let fs = ModelFetchSpecification(entity: Address.entity, qualifier: q)
+    let expr = factory.selectExpressionForAttributes(
+      [ Address.typedEntity.id ], fs, Address.entity
+    )
+    
+    XCTAssert(expr.statement.contains("JOIN"), "missing join")
+    
+    print("\(expr.statement)")
+    XCTAssertEqual(expr.statement, "TODO")
   }
 
 
