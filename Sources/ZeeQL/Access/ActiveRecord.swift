@@ -7,109 +7,6 @@
 //
 
 /**
- * This type of object tracks the snapshot inside the object itself.
- * Which is different to CD, which tracks the snapshot in the database context.
- * A disadvantage is that we cannot map to POSOs but objects need to be
- * subclasses of ActiveRecord to implement change tracking.
- *
- * See `ActiveRecord` for a concrete implementation of the protocol.
- */
-public protocol ActiveRecordType : DatabaseObject,
-                                   DatabaseBoundObject, SnapshotHoldingObject
-{
-  init()
-
-  static var database : Database? { get }
-  
-  var database : Database  { get }
-  var entity   : Entity    { get }
-  var isNew    : Bool      { get }
-  
-  var values   : [ String : Any ] { get }
-  var snapshot : Snapshot?        { get set }
-  
-  func save()   throws
-  func delete() throws
-}
-
-public protocol DatabaseBoundObject {
-  // TBD: this may be superfluous ...
-  
-  func bind(to db: Database, entity: Entity?)
-  
-}
-
-public extension ActiveRecordType { // default imp
-
-  func value(forKey k: String) -> Any? {
-    // first check extra properties
-    if let v = values[k] { return v }
-    
-    // then fallback to KVC
-    if let v = KeyValueCoding.defaultValue(forKey: k, inObject: self) {
-      return v
-    }
-    
-    return nil
-  }
-  
-  
-  // MARK: - Convenience Subscripts
-  
-  subscript(key: String) -> Any? {
-    set {
-      do {
-        if let v = newValue { // hm, necessary?
-          try takeValue(v, forKey: key)
-        }
-        else {
-          try takeValue(newValue, forKey: key)
-        }
-      }
-      catch {
-        globalZeeQLLogger.warn("attempt to set unbound key:", key,
-                               "value:", newValue)
-      }
-    }
-    get {
-      return value(forKey: key)
-    }
-  }
-  
-  subscript(int key: String) -> Int? {
-    guard let v = self[key] else { return nil }
-    if let i = v as? Int { return i }
-    return Int("\(v)")
-  }
-  subscript(string key: String) -> String? {
-    guard let v = self[key] else { return nil }
-    if let i = v as? String { return i }
-    return "\(v)"
-  }
-  
-}
-
-#if TBD
-public extension ActiveRecordType { // finders
-  
-  static func findBy<T>(id: T) -> Self? {
-    // FIXME: this doesn't invoke the actual type `database` method
-    guard let db = Self.database else { return nil }
-    
-    log.error("DB:", db)
-    // TODO: Well, what?
-    // - get a datasource for 'Self'
-    // - invoke findBy method, return?
-    
-    return nil
-  }
-  
-}
-#endif
-
-/**
- * ActiveRecord
- *
  * A concrete implementation of the `ActiveRecordType`. Can be used as a
  * standalone object, or as a base class for a model object.
  *
@@ -119,6 +16,8 @@ public extension ActiveRecordType { // finders
  * subclasses of ActiveRecord to implement change tracking.
  */
 open class ActiveRecordBase : ActiveRecordType, SmartDescription {
+  // Note: ActiveRecordBase is just here so that we can #ifdef Combine and
+  //       Swift 5 features below.
   
   open class var database : Database? {
     return nil
@@ -458,6 +357,7 @@ open class ActiveRecordBase : ActiveRecordType, SmartDescription {
 #if canImport(Combine)
   import protocol Combine.ObservableObject
   
+  @dynamicMemberLookup
   open class ActiveRecord : ActiveRecordBase, ObservableObject {
     
     override open func willChange() {
@@ -467,18 +367,41 @@ open class ActiveRecordBase : ActiveRecordType, SmartDescription {
       super.willChange()
     }
   }
+#elseif swift(>=5)
+  @dynamicMemberLookup
+  open class ActiveRecord : ActiveRecordBase {}
 #else
   open class ActiveRecord : ActiveRecordBase {}
 #endif
 
-/* doesn't have 'Self'?
+#if swift(>=5)
+public extension ActiveRecord {
+
+  subscript(dynamicMember member: String) -> Any? {
+    set {
+      do {
+        try takeValue(newValue, forKey: member)
+      }
+      catch {
+        globalZeeQLLogger.error("failed to take value for dynamic member:",
+                                member, error)
+        assertionFailure("failed to take value for dynamic member: \(member)")
+      }
+    }
+    get { value(forKey: member) }
+  }
+}
+#endif
+
+
+#if TBD
 extension ActiveRecord {
   
   class func findBy<T>(id: T) -> Self? {
     // FIXME: this doesn't invoke the actual type `database` method
     guard let db = Self.database else { return nil }
     
-    log.error("DB:", db)
+    globalZeeQLLogger.error("DB:", db)
     // TODO: Well, what?
     // - get a datasource for 'Self'
     // - invoke findBy method, return?
@@ -486,4 +409,4 @@ extension ActiveRecord {
     return nil
   }
 }
-*/
+#endif

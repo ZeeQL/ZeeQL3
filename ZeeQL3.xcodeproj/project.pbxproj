@@ -317,6 +317,8 @@
 		E8DA98361EC0F2C2009B0F0F /* MirrorHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8DA98351EC0F2C2009B0F0F /* MirrorHelpers.swift */; };
 		E8DBF5652031EC2100C1EF0E /* SQLite3CodableTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8DBF5642031EC2100C1EF0E /* SQLite3CodableTests.swift */; };
 		E8DBF5662031EC2100C1EF0E /* SQLite3CodableTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8DBF5642031EC2100C1EF0E /* SQLite3CodableTests.swift */; };
+		E8DD6120231EC22700D93C96 /* ActiveRecordType.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8DD611F231EC22700D93C96 /* ActiveRecordType.swift */; };
+		E8DD6121231EC22700D93C96 /* ActiveRecordType.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8DD611F231EC22700D93C96 /* ActiveRecordType.swift */; };
 		E8DDEE3B1E5FA1E600EC1DD8 /* QualifierParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8DDEE381E5FA1E600EC1DD8 /* QualifierParserTests.swift */; };
 		E8DDEE3C1E5FA1E600EC1DD8 /* SQLExpressionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8DDEE391E5FA1E600EC1DD8 /* SQLExpressionTests.swift */; };
 		E8E480BF1EC2032400350EDF /* Logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8EB9E5C1EA1117100C6DA54 /* Logger.swift */; };
@@ -511,6 +513,7 @@
 		E8DA98351EC0F2C2009B0F0F /* MirrorHelpers.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = MirrorHelpers.swift; path = Sources/ZeeQL/Access/MirrorHelpers.swift; sourceTree = SOURCE_ROOT; };
 		E8DBF5642031EC2100C1EF0E /* SQLite3CodableTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SQLite3CodableTests.swift; path = ZeeQLTests/SQLite3CodableTests.swift; sourceTree = "<group>"; };
 		E8DBF5672031ECF800C1EF0E /* LinuxMain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinuxMain.swift; sourceTree = "<group>"; };
+		E8DD611F231EC22700D93C96 /* ActiveRecordType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActiveRecordType.swift; sourceTree = "<group>"; };
 		E8DDEE371E5FA1E600EC1DD8 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = ZeeQLTests/Info.plist; sourceTree = "<group>"; };
 		E8DDEE381E5FA1E600EC1DD8 /* QualifierParserTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = QualifierParserTests.swift; sourceTree = "<group>"; };
 		E8DDEE391E5FA1E600EC1DD8 /* SQLExpressionTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SQLExpressionTests.swift; sourceTree = "<group>"; };
@@ -672,6 +675,7 @@
 		E8687CA21E60872400D62ABF /* Storage */ = {
 			isa = PBXGroup;
 			children = (
+				E8DD611F231EC22700D93C96 /* ActiveRecordType.swift */,
 				E824EA901E6365A900215ABA /* ActiveRecord.swift */,
 				E8400F5A1E64662A00346028 /* ActiveDataSource.swift */,
 				E89FCACB1E68DC9C00ED9216 /* DatabaseDataSource.swift */,
@@ -1193,6 +1197,7 @@
 				E8263CB71E93C89200508276 /* AdaptorChannel.swift in Sources */,
 				E8263CBF1E93C89200508276 /* Join.swift in Sources */,
 				E8263CC71E93C89200508276 /* AttributeKey.swift in Sources */,
+				E8DD6121231EC22700D93C96 /* ActiveRecordType.swift in Sources */,
 				E82851A02031DECB00535895 /* CodableModel.swift in Sources */,
 				E8E480BF1EC2032400350EDF /* Logger.swift in Sources */,
 				E8263CC41E93C89200508276 /* CodeValueAttribute.swift in Sources */,
@@ -1451,6 +1456,7 @@
 				E80B3FB21E606D1700D6F0ED /* Join.swift in Sources */,
 				E80B3FB71E606D1700D6F0ED /* SQLExpressionFactory.swift in Sources */,
 				E80B3FB11E606D1700D6F0ED /* Entity.swift in Sources */,
+				E8DD6120231EC22700D93C96 /* ActiveRecordType.swift in Sources */,
 				E8BA82D11E683B1500F09D76 /* EntityType.swift in Sources */,
 				E8A20F15230EE5CF00AEE53E /* AccessDataSourceFinders.swift in Sources */,
 				E8400F5D1E64677000346028 /* DatabaseChannel.swift in Sources */,
