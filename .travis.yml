@@ -21,8 +21,6 @@ matrix:
           sudo: required
         - os:   osx
           osx_image: xcode10.2
-# Fails on test, but I think this is due to an old Xcode beta. Tests run through
-# on 11b7 on my machine.
         - os:   osx
           osx_image: xcode11
 
