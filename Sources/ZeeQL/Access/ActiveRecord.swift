@@ -366,31 +366,41 @@ open class ActiveRecordBase : ActiveRecordType, SmartDescription {
       }
       super.willChange()
     }
+
+    public subscript(dynamicMember member: String) -> Any? {
+      set {
+        do {
+          try takeValue(newValue, forKey: member)
+        }
+        catch {
+          globalZeeQLLogger.error("failed to take value for dynamic member:",
+                                  member, error)
+          assertionFailure("failed to take value for dynamic member: \(member)")
+        }
+      }
+      get { return value(forKey: member) }
+    }
   }
 #elseif swift(>=5)
   @dynamicMemberLookup
-  open class ActiveRecord : ActiveRecordBase {}
+  open class ActiveRecord : ActiveRecordBase {
+    
+    public subscript(dynamicMember member: String) -> Any? {
+      set {
+        do {
+          try takeValue(newValue, forKey: member)
+        }
+        catch {
+          globalZeeQLLogger.error("failed to take value for dynamic member:",
+                                  member, error)
+          assertionFailure("failed to take value for dynamic member: \(member)")
+        }
+      }
+      get { return value(forKey: member) }
+    }
+  }
 #else
   open class ActiveRecord : ActiveRecordBase {}
-#endif
-
-#if swift(>=5)
-public extension ActiveRecord {
-
-  subscript(dynamicMember member: String) -> Any? {
-    set {
-      do {
-        try takeValue(newValue, forKey: member)
-      }
-      catch {
-        globalZeeQLLogger.error("failed to take value for dynamic member:",
-                                member, error)
-        assertionFailure("failed to take value for dynamic member: \(member)")
-      }
-    }
-    get { return value(forKey: member) }
-  }
-}
 #endif
 
 
