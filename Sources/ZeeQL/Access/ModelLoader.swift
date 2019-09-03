@@ -8,6 +8,11 @@
 
 import struct Foundation.URL
 import CoreFoundation
+#if swift(>=5)
+  #if canImport(FoundationXML)
+    import FoundationXML
+  #endif
+#endif
 
 /**
  * Load `Model` objects from files (vs. from the database or a code declaration)
