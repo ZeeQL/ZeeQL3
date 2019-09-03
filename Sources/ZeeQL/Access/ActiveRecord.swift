@@ -388,7 +388,7 @@ public extension ActiveRecord {
         assertionFailure("failed to take value for dynamic member: \(member)")
       }
     }
-    get { value(forKey: member) }
+    get { return value(forKey: member) }
   }
 }
 #endif
