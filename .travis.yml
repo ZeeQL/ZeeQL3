@@ -17,10 +17,12 @@ matrix:
           sudo: required
         - os:   Linux
           dist: xenial
-          env:  SWIFT_SNAPSHOT_NAME="https://swift.org/builds/swift-5.1-branch/ubuntu1604/swift-5.1-DEVELOPMENT-SNAPSHOT-2019-07-01-a/swift-5.1-DEVELOPMENT-SNAPSHOT-2019-07-01-a-ubuntu16.04.tar.gz"
+          env:  SWIFT_SNAPSHOT_NAME="https://swift.org/builds/swift-5.1-branch/ubuntu1404/swift-5.1-DEVELOPMENT-SNAPSHOT-2019-09-02-a/swift-5.1-DEVELOPMENT-SNAPSHOT-2019-09-02-a-ubuntu14.04.tar.gz"
           sudo: required
         - os:   osx
           osx_image: xcode10.2
+# Fails on test, but I think this is due to an old Xcode beta. Tests run through
+# on 11b7 on my machine.
         - os:   osx
           osx_image: xcode11
 
