@@ -3,14 +3,21 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 15/02/2017.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2019 ZeeZide GmbH. All rights reserved.
 //
 
+/**
+ * Expressions are:
+ * - Qualifier
+ * - SortOrdering
+ * - Constant
+ * - Key
+ */
 public protocol Expression {
 
   func addReferencedKeys(to set: inout Set<String>)
   
-  var hasUnresolvedBindings : Bool { get }
+  var  hasUnresolvedBindings : Bool { get }
   func addBindingKeys(to set: inout Set<String>)
   func keyPathForBindingKey(_ variable: String) -> String?
   
@@ -43,7 +50,7 @@ public extension Expression { // default implementations
 
   func addReferencedKeys(to set: inout Set<String>) {}
 
-  var hasUnresolvedBindings : Bool { return !bindingKeys.isEmpty }
+  var  hasUnresolvedBindings : Bool { return !bindingKeys.isEmpty }
   func addBindingKeys(to set: inout Set<String>) { } // noop
   func keyPathForBindingKey(_ variable: String) -> String? { return nil }
 }
