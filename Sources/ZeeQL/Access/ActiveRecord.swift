@@ -41,6 +41,7 @@ open class ActiveRecordBase : ActiveRecordType, SmartDescription {
     if let entity = _entity { return entity }
     
     if let refEntity = reflectedEntity {
+      willChange()
       _entity = refEntity
       return refEntity
     }
@@ -125,6 +126,8 @@ open class ActiveRecordBase : ActiveRecordType, SmartDescription {
 
   open func takeValue(_ value: Any?, forKey k: String) throws {
     // Note: `values` itself is a [String:Any?], so all that may be superfluous.
+    willChange()
+    
     if let value = value {
       values[k] = value // values is wrapped again in an Optional<Any>
     }
@@ -134,6 +137,8 @@ open class ActiveRecordBase : ActiveRecordType, SmartDescription {
   }
   
   open func value(forKey k: String) -> Any? { // dupe for protocol override
+    willRead()
+    
     // first check extra properties
     if let v = values[k] {
       return v
@@ -149,6 +154,8 @@ open class ActiveRecordBase : ActiveRecordType, SmartDescription {
   
   
   open func storedValue(forKey k: String) -> Any? {
+    willRead()
+    
     if let v = value(forKey: k) { return v } // ask regular KVC
     if let v = values[k]        { return v }
     return nil
@@ -160,6 +167,8 @@ open class ActiveRecordBase : ActiveRecordType, SmartDescription {
   }
   
   public func addObject(_ object: AnyObject, toPropertyWithKey key: String) {
+    willChange()
+    
     // TBD: this is, sigh.
     // also, the KVC access is still a little open, this should do
     // takeValueForKey in case the subclass overrides it
@@ -172,6 +181,8 @@ open class ActiveRecordBase : ActiveRecordType, SmartDescription {
     }
   }
   public func removeObject(_ o: AnyObject, fromPropertyWithKey key: String) {
+    willChange()
+    
     guard var list = values[key] as? [ AnyObject ] else { return }
     #if swift(>=5)
       guard let idx = list.firstIndex(where: { $0 === o }) else { return }
@@ -207,6 +218,8 @@ open class ActiveRecordBase : ActiveRecordType, SmartDescription {
     
     var op : DatabaseOperation
     
+    willChange()
+    
     if isNew {
       try validateForInsert()
       op = DatabaseOperation(self)
@@ -230,6 +243,8 @@ open class ActiveRecordBase : ActiveRecordType, SmartDescription {
 
   open func delete() throws {
     try validateForDelete()
+
+    willChange()
 
     /* check for new objects */
 
