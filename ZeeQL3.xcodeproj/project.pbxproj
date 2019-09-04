@@ -6,6 +6,24 @@
 	objectVersion = 46;
 	objects = {
 
+/* Begin PBXAggregateTarget section */
+		E8C23BBC23202C4B00B4B803 /* All Platforms */ = {
+			isa = PBXAggregateTarget;
+			buildConfigurationList = E8C23BBD23202C4C00B4B803 /* Build configuration list for PBXAggregateTarget "All Platforms" */;
+			buildPhases = (
+			);
+			dependencies = (
+				E8C23BC123202C5600B4B803 /* PBXTargetDependency */,
+				E8C23BC523202C5600B4B803 /* PBXTargetDependency */,
+				E8C23BC723202C5600B4B803 /* PBXTargetDependency */,
+				E8C23BC923202C5600B4B803 /* PBXTargetDependency */,
+				E8C23BCB23202C5600B4B803 /* PBXTargetDependency */,
+			);
+			name = "All Platforms";
+			productName = "All Platforms";
+		};
+/* End PBXAggregateTarget section */
+
 /* Begin PBXBuildFile section */
 		E80285461EE6CBAE00F25AD7 /* SchemaSynchronizationFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = E80285451EE6CBAE00F25AD7 /* SchemaSynchronizationFactory.swift */; };
 		E80285471EE6CBAE00F25AD7 /* SchemaSynchronizationFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = E80285451EE6CBAE00F25AD7 /* SchemaSynchronizationFactory.swift */; };
@@ -305,6 +323,10 @@
 		E8BA82D11E683B1500F09D76 /* EntityType.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8BA82D01E683B1500F09D76 /* EntityType.swift */; };
 		E8BF37FD202F2CBC0096064E /* CodableModelEntityDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8BF37FC202F2CBC0096064E /* CodableModelEntityDecoder.swift */; };
 		E8BF37FE202F2CBC0096064E /* CodableModelEntityDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8BF37FC202F2CBC0096064E /* CodableModelEntityDecoder.swift */; };
+		E8C23BB823202B3500B4B803 /* ActiveRecordType.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8DD611F231EC22700D93C96 /* ActiveRecordType.swift */; };
+		E8C23BB923202B3D00B4B803 /* AccessDataSourceCombine.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8A20F10230EE58900AEE53E /* AccessDataSourceCombine.swift */; };
+		E8C23BBA23202B4000B4B803 /* AccessDataSourcePublisher.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8A20F0E230EE40A00AEE53E /* AccessDataSourcePublisher.swift */; };
+		E8C23BBB23202C1000B4B803 /* AccessDataSourceFinders.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8A20F14230EE5CF00AEE53E /* AccessDataSourceFinders.swift */; };
 		E8C7C85E1FF401EF0016A597 /* EntityPropertyReflectionContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8C7C85D1FF401EF0016A597 /* EntityPropertyReflectionContainer.swift */; };
 		E8C7C85F1FF401EF0016A597 /* EntityPropertyReflectionContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8C7C85D1FF401EF0016A597 /* EntityPropertyReflectionContainer.swift */; };
 		E8CA45951EB4BA42006DC147 /* AdaptorError.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8CA45941EB4BA42006DC147 /* AdaptorError.swift */; };
@@ -357,6 +379,41 @@
 			proxyType = 1;
 			remoteGlobalIDString = E8263C6D1E93C7DF00508276;
 			remoteInfo = MobileZeeQL;
+		};
+		E8C23BC023202C5600B4B803 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E8D2794B1E5504FA00453BBE /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E8263C6D1E93C7DF00508276;
+			remoteInfo = MobileZeeQL;
+		};
+		E8C23BC423202C5600B4B803 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E8D2794B1E5504FA00453BBE /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E8263C541E93B1E100508276;
+			remoteInfo = SQLite3Tests;
+		};
+		E8C23BC623202C5600B4B803 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E8D2794B1E5504FA00453BBE /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E8ACA33A2313E3DB000F6BEC;
+			remoteInfo = WatchZeeQL;
+		};
+		E8C23BC823202C5600B4B803 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E8D2794B1E5504FA00453BBE /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E8D279521E5504FA00453BBE;
+			remoteInfo = ZeeQL;
+		};
+		E8C23BCA23202C5600B4B803 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E8D2794B1E5504FA00453BBE /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E8D279651E55059800453BBE;
+			remoteInfo = ZeeQLTests;
 		};
 		E8D2796C1E55059800453BBE /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -1058,6 +1115,10 @@
 						CreatedOnToolsVersion = 11.0;
 						ProvisioningStyle = Automatic;
 					};
+					E8C23BBC23202C4B00B4B803 = {
+						CreatedOnToolsVersion = 11.0;
+						ProvisioningStyle = Automatic;
+					};
 					E8D279521E5504FA00453BBE = {
 						CreatedOnToolsVersion = 8.2.1;
 						LastSwiftMigration = 1100;
@@ -1089,6 +1150,7 @@
 				E8263C6D1E93C7DF00508276 /* MobileZeeQL */,
 				E8263C751E93C7DF00508276 /* MobileZeeQLTests */,
 				E8ACA33A2313E3DB000F6BEC /* WatchZeeQL */,
+				E8C23BBC23202C4B00B4B803 /* All Platforms */,
 			);
 		};
 /* End PBXProject section */
@@ -1156,6 +1218,7 @@
 				E8263C931E93C89200508276 /* TimeRange.swift in Sources */,
 				E8A834F71ECDA82300CCDD82 /* DatabaseOperation.swift in Sources */,
 				E8263C9D1E93C89200508276 /* QualifierEvaluation.swift in Sources */,
+				E8C23BBA23202B4000B4B803 /* AccessDataSourcePublisher.swift in Sources */,
 				E8263CAB1E93C89200508276 /* DataSource.swift in Sources */,
 				E8190837231050D900BC854E /* AccessDataSourceError.swift in Sources */,
 				E8E480C21EC2034F00350EDF /* AdaptorQueryColumnRepresentable.swift in Sources */,
@@ -1180,6 +1243,7 @@
 				E8E480C71EC2037600350EDF /* SQLite3ModelFetch.swift in Sources */,
 				E8263CC91E93C89200508276 /* SQLExpression.swift in Sources */,
 				E8263CB81E93C89200508276 /* AdaptorOperation.swift in Sources */,
+				E8C23BBB23202C1000B4B803 /* AccessDataSourceFinders.swift in Sources */,
 				E8EFAD64202CE97D00129D65 /* CodableModelPostProcessor.swift in Sources */,
 				E8263CA61E93C89200508276 /* ModelFetchSpecification.swift in Sources */,
 				E8263CB41E93C89200508276 /* AccessDataSource.swift in Sources */,
@@ -1235,6 +1299,7 @@
 				E8263C9E1E93C89200508276 /* QualifierParser.swift in Sources */,
 				E8263CAC1E93C89200508276 /* StoreKeyValueCoding.swift in Sources */,
 				E8263C9F1E93C89200508276 /* QualifierVariable.swift in Sources */,
+				E8C23BB923202B3D00B4B803 /* AccessDataSourceCombine.swift in Sources */,
 				E8D074291ECF200F005FD8AB /* FancyModelMaker.swift in Sources */,
 				E8263C981E93C89200508276 /* SortOrdering.swift in Sources */,
 				E8263C9A1E93C89200508276 /* Expression.swift in Sources */,
@@ -1354,6 +1419,7 @@
 				E8ACA39F2313E4C1000F6BEC /* SQLite3ModelFetch.swift in Sources */,
 				E8ACA3632313E498000F6BEC /* ActiveDataSource.swift in Sources */,
 				E8ACA3722313E49C000F6BEC /* AdaptorRecordSchema.swift in Sources */,
+				E8C23BB823202B3500B4B803 /* ActiveRecordType.swift in Sources */,
 				E8ACA3762313E49C000F6BEC /* AdaptorError.swift in Sources */,
 				E8ACA38C2313E4B2000F6BEC /* CodableRelationship.swift in Sources */,
 				E8ACA3842313E4A8000F6BEC /* CodeAttribute.swift in Sources */,
@@ -1509,6 +1575,31 @@
 			isa = PBXTargetDependency;
 			target = E8263C6D1E93C7DF00508276 /* MobileZeeQL */;
 			targetProxy = E8263C781E93C7DF00508276 /* PBXContainerItemProxy */;
+		};
+		E8C23BC123202C5600B4B803 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E8263C6D1E93C7DF00508276 /* MobileZeeQL */;
+			targetProxy = E8C23BC023202C5600B4B803 /* PBXContainerItemProxy */;
+		};
+		E8C23BC523202C5600B4B803 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E8263C541E93B1E100508276 /* SQLite3Tests */;
+			targetProxy = E8C23BC423202C5600B4B803 /* PBXContainerItemProxy */;
+		};
+		E8C23BC723202C5600B4B803 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E8ACA33A2313E3DB000F6BEC /* WatchZeeQL */;
+			targetProxy = E8C23BC623202C5600B4B803 /* PBXContainerItemProxy */;
+		};
+		E8C23BC923202C5600B4B803 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E8D279521E5504FA00453BBE /* ZeeQL */;
+			targetProxy = E8C23BC823202C5600B4B803 /* PBXContainerItemProxy */;
+		};
+		E8C23BCB23202C5600B4B803 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E8D279651E55059800453BBE /* ZeeQLTests */;
+			targetProxy = E8C23BCA23202C5600B4B803 /* PBXContainerItemProxy */;
 		};
 		E8D2796D1E55059800453BBE /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -1760,6 +1851,22 @@
 			};
 			name = Release;
 		};
+		E8C23BBE23202C4C00B4B803 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		E8C23BBF23202C4C00B4B803 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
 		E8D279551E5504FA00453BBE /* Debug */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = E8D279721E5505DE00453BBE /* Base.xcconfig */;
@@ -1874,6 +1981,15 @@
 			buildConfigurations = (
 				E8ACA3402313E3DB000F6BEC /* Debug */,
 				E8ACA3412313E3DB000F6BEC /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		E8C23BBD23202C4C00B4B803 /* Build configuration list for PBXAggregateTarget "All Platforms" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E8C23BBE23202C4C00B4B803 /* Debug */,
+				E8C23BBF23202C4C00B4B803 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
