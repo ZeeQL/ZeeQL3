@@ -370,11 +370,14 @@ open class ActiveRecordBase : ActiveRecordType, SmartDescription {
 }
 
 #if canImport(Combine)
-  import protocol Combine.ObservableObject
-  
+  import Combine
+
   @dynamicMemberLookup
   open class ActiveRecord : ActiveRecordBase, ObservableObject {
-    
+
+    // Type-erase the un-available type
+    private var _objectWillChangeHolder : Any?
+
     override open func willChange() {
       if #available(iOS 13, tvOS 13, watchOS 6, macOS 13, *) {
         objectWillChange.send()
@@ -396,6 +399,20 @@ open class ActiveRecordBase : ActiveRecordType, SmartDescription {
       get { return value(forKey: member) }
     }
   }
+
+  @available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+  public extension ActiveRecord {
+    var objectWillChange : PassthroughSubject<Void, Never> {
+      if let subject =
+        _objectWillChangeHolder as? PassthroughSubject<Void, Never> {
+        return subject
+      }
+      let subject = PassthroughSubject<Void, Never>()
+      _objectWillChangeHolder = subject
+      return subject
+    }
+  }
+
 #elseif swift(>=5)
   @dynamicMemberLookup
   open class ActiveRecord : ActiveRecordBase {
