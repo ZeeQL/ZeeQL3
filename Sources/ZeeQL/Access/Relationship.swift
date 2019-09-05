@@ -245,11 +245,20 @@ public extension Relationship { // extra methods
       let myJoin = self.joins[0]
       let enemy  = rel.joins[0]
       
-      // TBD: equality might not be correct since joins can be directed
-      //      (relevant for LEFT/RIGHT joins I guess)
-      if myJoin == enemy || myJoin.isReciprocalTo(join: enemy) {
-        return rel
-      }
+      #if false // 2019-09-05: yeah, that definitely feels wrong, it is equal
+                // quite often (source.person_id = target.person_id), but that
+                // is just a special case of the reciprocal
+                // (source.person_id = target.manager_id)
+        // TBD: equality might not be correct since joins can be directed
+        //      (relevant for LEFT/RIGHT joins I guess)
+        if myJoin == enemy || myJoin.isReciprocalTo(join: enemy) {
+          return rel
+        }
+      #else
+        if myJoin.isReciprocalTo(join: enemy) {
+          return rel
+        }
+      #endif
     }
     
     return nil
