@@ -87,7 +87,7 @@
 		E8263C4E1E93AFF200508276 /* SQLite3Adaptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8263C4B1E93AFF200508276 /* SQLite3Adaptor.swift */; };
 		E8263C4F1E93AFF200508276 /* SQLite3AdaptorChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8263C4C1E93AFF200508276 /* SQLite3AdaptorChannel.swift */; };
 		E8263C501E93AFF200508276 /* SQLite3Expression.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8263C4D1E93AFF200508276 /* SQLite3Expression.swift */; };
-		E8263C5A1E93B1E100508276 /* libZeeQL.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = E8D279531E5504FA00453BBE /* libZeeQL.dylib */; };
+		E8263C5A1E93B1E100508276 /* libZeeQL.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E8D279531E5504FA00453BBE /* libZeeQL.a */; };
 		E8263C641E93B35F00508276 /* SQLite3AdaptorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8263C611E93B35F00508276 /* SQLite3AdaptorTests.swift */; };
 		E8263C651E93B35F00508276 /* SQLite3ExpressionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8263C621E93B35F00508276 /* SQLite3ExpressionTests.swift */; };
 		E8263C661E93B35F00508276 /* SQLite3OGoAdaptorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8263C631E93B35F00508276 /* SQLite3OGoAdaptorTests.swift */; };
@@ -332,7 +332,7 @@
 		E8CA45951EB4BA42006DC147 /* AdaptorError.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8CA45941EB4BA42006DC147 /* AdaptorError.swift */; };
 		E8D074281ECF200F005FD8AB /* FancyModelMaker.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8D074271ECF200F005FD8AB /* FancyModelMaker.swift */; };
 		E8D074291ECF200F005FD8AB /* FancyModelMaker.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8D074271ECF200F005FD8AB /* FancyModelMaker.swift */; };
-		E8D2796B1E55059800453BBE /* libZeeQL.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = E8D279531E5504FA00453BBE /* libZeeQL.dylib */; };
+		E8D2796B1E55059800453BBE /* libZeeQL.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E8D279531E5504FA00453BBE /* libZeeQL.a */; };
 		E8DA98301EC0F08E009B0F0F /* AdaptorRecordSchema.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8DA982F1EC0F08E009B0F0F /* AdaptorRecordSchema.swift */; };
 		E8DA98321EC0F0D6009B0F0F /* AdaptorQueryColumnRepresentable.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8DA98311EC0F0D6009B0F0F /* AdaptorQueryColumnRepresentable.swift */; };
 		E8DA98341EC0F287009B0F0F /* ZeeQLTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8DA98331EC0F287009B0F0F /* ZeeQLTypes.swift */; };
@@ -564,7 +564,7 @@
 		E8D074271ECF200F005FD8AB /* FancyModelMaker.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = FancyModelMaker.swift; path = Sources/ZeeQL/Access/FancyModelMaker.swift; sourceTree = SOURCE_ROOT; };
 		E8D0742A1ECF222D005FD8AB /* contacts-create.pgsql */ = {isa = PBXFileReference; lastKnownFileType = text; path = "contacts-create.pgsql"; sourceTree = "<group>"; };
 		E8D0742B1ECF222D005FD8AB /* contacts-fill.pgsql */ = {isa = PBXFileReference; lastKnownFileType = text; path = "contacts-fill.pgsql"; sourceTree = "<group>"; };
-		E8D279531E5504FA00453BBE /* libZeeQL.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libZeeQL.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
+		E8D279531E5504FA00453BBE /* libZeeQL.a */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libZeeQL.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		E8D279661E55059800453BBE /* ZeeQLTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ZeeQLTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		E8D279721E5505DE00453BBE /* Base.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Base.xcconfig; path = xcconfig/Base.xcconfig; sourceTree = "<group>"; };
 		E8DA982F1EC0F08E009B0F0F /* AdaptorRecordSchema.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = AdaptorRecordSchema.swift; path = Sources/ZeeQL/Access/AdaptorRecordSchema.swift; sourceTree = SOURCE_ROOT; };
@@ -591,7 +591,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				E8263C5A1E93B1E100508276 /* libZeeQL.dylib in Frameworks */,
+				E8263C5A1E93B1E100508276 /* libZeeQL.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -628,7 +628,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				E8D2796B1E55059800453BBE /* libZeeQL.dylib in Frameworks */,
+				E8D2796B1E55059800453BBE /* libZeeQL.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -790,7 +790,7 @@
 		E8D279541E5504FA00453BBE /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				E8D279531E5504FA00453BBE /* libZeeQL.dylib */,
+				E8D279531E5504FA00453BBE /* libZeeQL.a */,
 				E8D279661E55059800453BBE /* ZeeQLTests.xctest */,
 				E8263C551E93B1E100508276 /* SQLite3Tests.xctest */,
 				E8263C6E1E93C7DF00508276 /* ZeeQL.framework */,
@@ -1070,7 +1070,7 @@
 			);
 			name = ZeeQL;
 			productName = ZeeQL;
-			productReference = E8D279531E5504FA00453BBE /* libZeeQL.dylib */;
+			productReference = E8D279531E5504FA00453BBE /* libZeeQL.a */;
 			productType = "com.apple.product-type.library.dynamic";
 		};
 		E8D279651E55059800453BBE /* ZeeQLTests */ = {
@@ -1912,9 +1912,9 @@
 			baseConfigurationReference = E8263CD01E93C94600508276 /* SharedLibrary.xcconfig */;
 			buildSettings = {
 				CLANG_ENABLE_MODULES = YES;
-				DYLIB_COMPATIBILITY_VERSION = 1;
-				DYLIB_CURRENT_VERSION = 1;
+				EXECUTABLE_EXTENSION = a;
 				EXECUTABLE_PREFIX = lib;
+				MACH_O_TYPE = staticlib;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -1924,9 +1924,9 @@
 			baseConfigurationReference = E8263CD01E93C94600508276 /* SharedLibrary.xcconfig */;
 			buildSettings = {
 				CLANG_ENABLE_MODULES = YES;
-				DYLIB_COMPATIBILITY_VERSION = 1;
-				DYLIB_CURRENT_VERSION = 1;
+				EXECUTABLE_EXTENSION = a;
 				EXECUTABLE_PREFIX = lib;
+				MACH_O_TYPE = staticlib;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
