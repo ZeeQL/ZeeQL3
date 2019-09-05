@@ -359,6 +359,9 @@
 		E8EB9E551EA0DB8500C6DA54 /* SQLite3ModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8EB9E541EA0DB8500C6DA54 /* SQLite3ModelTests.swift */; };
 		E8EB9E5D1EA1117100C6DA54 /* Logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8EB9E5C1EA1117100C6DA54 /* Logger.swift */; };
 		E8EB9E641EA1254E00C6DA54 /* AdaptorModelFetch.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8EB9E631EA1254E00C6DA54 /* AdaptorModelFetch.swift */; };
+		E8EBB248232159C70074DA4F /* ActiveRecordCombine.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8EBB247232159C70074DA4F /* ActiveRecordCombine.swift */; };
+		E8EBB24A232159C70074DA4F /* ActiveRecordCombine.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8EBB247232159C70074DA4F /* ActiveRecordCombine.swift */; };
+		E8EBB24B23215A3C0074DA4F /* ActiveRecordCombine.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8EBB247232159C70074DA4F /* ActiveRecordCombine.swift */; };
 		E8EFAD63202CE97800129D65 /* CodableEntity.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8AA15F51FDEE1E5006FC597 /* CodableEntity.swift */; };
 		E8EFAD64202CE97D00129D65 /* CodableModelPostProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = E83491FC1FE817820091C3FD /* CodableModelPostProcessor.swift */; };
 		E8F96E141EE4A968005FDC40 /* Pluralize.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8F96E131EE4A968005FDC40 /* Pluralize.swift */; };
@@ -579,6 +582,7 @@
 		E8EB9E541EA0DB8500C6DA54 /* SQLite3ModelTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SQLite3ModelTests.swift; path = ZeeQLTests/SQLite3ModelTests.swift; sourceTree = "<group>"; };
 		E8EB9E5C1EA1117100C6DA54 /* Logger.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Logger.swift; path = Sources/ZeeQL/Foundation/Logger.swift; sourceTree = SOURCE_ROOT; };
 		E8EB9E631EA1254E00C6DA54 /* AdaptorModelFetch.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = AdaptorModelFetch.swift; path = Sources/ZeeQL/Access/AdaptorModelFetch.swift; sourceTree = SOURCE_ROOT; };
+		E8EBB247232159C70074DA4F /* ActiveRecordCombine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActiveRecordCombine.swift; sourceTree = "<group>"; };
 		E8F96E131EE4A968005FDC40 /* Pluralize.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Pluralize.swift; path = Sources/ZeeQL/Foundation/Pluralize.swift; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
@@ -754,6 +758,7 @@
 			children = (
 				E8A20F10230EE58900AEE53E /* AccessDataSourceCombine.swift */,
 				E8A20F0E230EE40A00AEE53E /* AccessDataSourcePublisher.swift */,
+				E8EBB247232159C70074DA4F /* ActiveRecordCombine.swift */,
 			);
 			name = Combine;
 			sourceTree = "<group>";
@@ -1290,6 +1295,7 @@
 				E8263CA91E93C89200508276 /* ObjectStore.swift in Sources */,
 				E8263CBA1E93C89200508276 /* AdaptorQueryType.swift in Sources */,
 				E8E480C51EC2035900350EDF /* ZeeQLTypes.swift in Sources */,
+				E8EBB24B23215A3C0074DA4F /* ActiveRecordCombine.swift in Sources */,
 				E8263CBC1E93C89200508276 /* EntityType.swift in Sources */,
 				E8263CAE1E93C89200508276 /* ActiveDataSource.swift in Sources */,
 				E8263CB51E93C89200508276 /* AdaptorDataSource.swift in Sources */,
@@ -1322,6 +1328,7 @@
 				E89BDB661EC9ED330007619C /* SQLite3ActiveRecordTests.swift in Sources */,
 				E8263C8D1E93C82D00508276 /* AdaptorOGoTestCase.swift in Sources */,
 				E80B3DE91FE159CD0081DC43 /* CodableModelTests.swift in Sources */,
+				E8EBB24A232159C70074DA4F /* ActiveRecordCombine.swift in Sources */,
 				E8263C8F1E93C82D00508276 /* SQLite3ExpressionTests.swift in Sources */,
 				E8263C8C1E93C82700508276 /* CodeEntityModelTests.swift in Sources */,
 				E80B3DEC1FE15B0B0081DC43 /* CodeObjectModelTests.swift in Sources */,
@@ -1523,6 +1530,7 @@
 				E80B3FB71E606D1700D6F0ED /* SQLExpressionFactory.swift in Sources */,
 				E80B3FB11E606D1700D6F0ED /* Entity.swift in Sources */,
 				E8DD6120231EC22700D93C96 /* ActiveRecordType.swift in Sources */,
+				E8EBB248232159C70074DA4F /* ActiveRecordCombine.swift in Sources */,
 				E8BA82D11E683B1500F09D76 /* EntityType.swift in Sources */,
 				E8A20F15230EE5CF00AEE53E /* AccessDataSourceFinders.swift in Sources */,
 				E8400F5D1E64677000346028 /* DatabaseChannel.swift in Sources */,
