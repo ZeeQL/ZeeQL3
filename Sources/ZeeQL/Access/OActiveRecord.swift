@@ -11,8 +11,11 @@
 import protocol Combine.ObservableObject
 import class    Combine.PassthroughSubject
 
+/**
+ * Like an `ActiveRecord`, but is a Combine `ObservableObject`. I.e. one can
+ * subscribe to `objectWillChange` events.
+ */
 @available(iOS 13, tvOS 13, watchOS 6, macOS 13, *)
-@dynamicMemberLookup
 open class OActiveRecord : ActiveRecord, ObservableObject {
   // Looks like we can't add this to the `ActiveRecord` using @availability
   // features.
