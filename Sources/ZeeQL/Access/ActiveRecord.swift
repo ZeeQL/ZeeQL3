@@ -369,51 +369,7 @@ open class ActiveRecordBase : ActiveRecordType, SmartDescription {
   }
 }
 
-#if canImport(Combine)
-  import Combine
-
-  @dynamicMemberLookup
-  open class ActiveRecord : ActiveRecordBase, ObservableObject {
-
-    // Type-erase the un-available type
-    private var _objectWillChangeHolder : Any?
-
-    override open func willChange() {
-      if #available(iOS 13, tvOS 13, watchOS 6, macOS 13, *) {
-        objectWillChange.send()
-      }
-      super.willChange()
-    }
-
-    public subscript(dynamicMember member: String) -> Any? {
-      set {
-        do {
-          try takeValue(newValue, forKey: member)
-        }
-        catch {
-          globalZeeQLLogger.error("failed to take value for dynamic member:",
-                                  member, error)
-          assertionFailure("failed to take value for dynamic member: \(member)")
-        }
-      }
-      get { return value(forKey: member) }
-    }
-  }
-
-  @available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
-  public extension ActiveRecord {
-    var objectWillChange : PassthroughSubject<Void, Never> {
-      if let subject =
-        _objectWillChangeHolder as? PassthroughSubject<Void, Never> {
-        return subject
-      }
-      let subject = PassthroughSubject<Void, Never>()
-      _objectWillChangeHolder = subject
-      return subject
-    }
-  }
-
-#elseif swift(>=5)
+#if swift(>=5)
   @dynamicMemberLookup
   open class ActiveRecord : ActiveRecordBase {
     
@@ -431,9 +387,38 @@ open class ActiveRecordBase : ActiveRecordType, SmartDescription {
       get { return value(forKey: member) }
     }
   }
-#else
+#else // < Swift 5, no dynamicMemberLoop
   open class ActiveRecord : ActiveRecordBase {}
 #endif
+
+
+#if canImport(Combine)
+  // Looks like we can't add this to the `ActiveRecord` using @availability
+  // features.
+  // Defining the `objectWillChange` property in an extension, will link in
+  // Combine, which fails on older platforms :-/
+  #if false // doesn't fly
+    @available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    public extension ActiveRecord {
+      var objectWillChange : PassthroughSubject<Void, Never> { fatalError() }
+    }
+  #endif
+  
+  import Combine
+
+  @available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+  @dynamicMemberLookup
+  open class OActiveRecord : ActiveRecord, ObservableObject {
+    // FIXME: Hate the name. Hate the whole requirement to have this.
+
+    public let objectWillChange = PassthroughSubject<Void, Never>()
+
+    override open func willChange() {
+      objectWillChange.send()
+      super.willChange()
+    }
+  }
+#endif // Combine
 
 
 #if TBD
