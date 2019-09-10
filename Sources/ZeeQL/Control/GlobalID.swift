@@ -11,12 +11,12 @@ open class GlobalID : EquatableType, Hashable {
   
   public init() {}
   
-  public func isEqual(to object: Any?) -> Bool {
+  open func isEqual(to object: Any?) -> Bool {
     guard let gid = object as? GlobalID else { return false }
     return gid === self
   }
   
-  public func hash(into hasher: inout Hasher) {
+  open func hash(into hasher: inout Hasher) {
     // well, what?? :-)
   }
   
@@ -42,9 +42,9 @@ public class KeyGlobalID : GlobalID {
     self.entityName = entityName
   }
   
-  public var keyCount : Int { return 0 }
+  open var keyCount : Int { return 0 }
   
-  public subscript(i: Int) -> Any? { return nil }
+  open subscript(i: Int) -> Any? { return nil }
 
   static func make(entityName: String, values: [ Any? ]) -> KeyGlobalID {
     if values.count == 1, let i = values[0] as? Int {
@@ -54,7 +54,7 @@ public class KeyGlobalID : GlobalID {
   }
 }
 
-public class ComplexKeyGlobalID : KeyGlobalID {
+public final class ComplexKeyGlobalID : KeyGlobalID {
   // TODO: FIXME: Any? should be EquatableType?
   
   public let values : [ Any? ]
@@ -90,7 +90,7 @@ public class ComplexKeyGlobalID : KeyGlobalID {
   }
 }
 
-public class SingleIntKeyGlobalID : KeyGlobalID {
+public final class SingleIntKeyGlobalID : KeyGlobalID {
   
   public let value : Int
   
