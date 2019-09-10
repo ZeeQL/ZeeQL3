@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 03/03/2017.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2019 ZeeZide GmbH. All rights reserved.
 //
 
 /**
@@ -12,6 +12,10 @@
  * Unlike an `ObjectEditingContext` it doesn't track changes and e.g. is useful
  * in combination w/ `ActiveRecord` objects (which track changes inside the
  * object itself).
+ *
+ * An `ObjectTrackingContext` can be wrapped around a `DatabaseContext`.
+ * It can also be used in a nested way! (though that is more useful w/
+ * editing contexts).
  */
 open class ObjectTrackingContext : ObjectStore {
   
@@ -88,12 +92,9 @@ open class ObjectTrackingContext : ObjectStore {
   }
   
   public func globalIDFor(object: AnyObject) -> GlobalID? {
-    if let smartObject = object as? ObjectWithGlobalID {
-      return smartObject.globalID
-    }
-    else {
-      return gidToObject.firstKeyFor(value: object)
-    }
+    if let smartObject = object as? ObjectWithGlobalID,
+       let gid = smartObject.globalID { return gid }
+    return gidToObject.firstKeyFor(value: object)
   }
 
   public func globalIDsFor(objects: [ AnyObject ]) -> [ GlobalID? ] {

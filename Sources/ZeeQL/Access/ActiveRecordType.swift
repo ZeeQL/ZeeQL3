@@ -15,7 +15,8 @@
  * See `ActiveRecord` for a concrete implementation of the protocol.
  */
 public protocol ActiveRecordType : DatabaseObject,
-                                   DatabaseBoundObject, SnapshotHoldingObject
+                                   DatabaseBoundObject, SnapshotHoldingObject,
+                                   ObjectWithGlobalID
 {
   init()
 
@@ -30,6 +31,12 @@ public protocol ActiveRecordType : DatabaseObject,
   
   func save()   throws
   func delete() throws
+}
+
+public extension ActiveRecordType {
+  var globalID: GlobalID? {
+    return entity.globalIDForRow(self)
+  }
 }
 
 public protocol DatabaseBoundObject {
