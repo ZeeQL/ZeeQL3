@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 26/02/2017.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2019 ZeeZide GmbH. All rights reserved.
 //
 
 /**
@@ -35,10 +35,18 @@ public protocol SnapshotObject : SwiftObject, StoreKeyValueCodingType {
 }
 
 public protocol SnapshotHoldingObject : SnapshotObject {
-  // TBD: Snapshot Management is an ActiveRecord only thing?! Regular EOs use
-  //      the EditingContext?
-
+  // Snapshot Management is an ActiveRecord only thing. Regular EOs use
+  // the ObjectStore for snapshotting.
+  
+  /**
+   * The snapshot associated with the object.
+   */
   var snapshot : Snapshot? { get }
+
+  /**
+   * Revert all the changes recorded in the object's snapshot.
+   */
+  func revert()
 }
 
 /**
@@ -76,7 +84,8 @@ public extension SnapshotObject { // default imp
   
   /* snapshot management */
   
-  func updateFromSnapshot (_ snap: Snapshot) -> Bool {
+  @discardableResult
+  func updateFromSnapshot(_ snap: Snapshot) -> Bool {
     takeStoredValues(snap)
     return true
   }
@@ -116,6 +125,20 @@ public extension SnapshotObject { // default imp
   func reapplyChangesFromDictionary(_ snap: AdaptorRecord) {
     for ( key, snapValue ) in snap {
       takeStoredValue(snapValue, forKey: key) // TBD
+    }
+  }
+}
+
+public extension SnapshotHoldingObject {
+  
+  func revert() {
+    guard let snapshot = snapshot else { return } // no snap?
+    let changes = changesFromSnapshot(snapshot)
+    guard !changes.isEmpty else { return } // nothing changed, feel the same.
+    
+    for key in changes.keys {
+      guard let oldValue = snapshot[key] else { continue } // double any
+      takeStoredValue(oldValue, forKey: key)
     }
   }
 }
