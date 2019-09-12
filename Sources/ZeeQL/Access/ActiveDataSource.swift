@@ -67,7 +67,8 @@ open class ActiveDataSource<Object: ActiveRecordType> : AccessDataSource<Object>
   override open var entity : Entity? { return _entity }
   
   override open func _primaryFetchObjects(_ fs: FetchSpecification,
-                                          cb: ( Object ) throws -> Void) throws
+                                          yield: ( Object ) throws -> Void)
+                     throws
   {
     let channel = TypedDatabaseChannel<Object>(database: database)
 
@@ -79,7 +80,64 @@ open class ActiveDataSource<Object: ActiveRecordType> : AccessDataSource<Object>
         continue
       }
       
-      try cb(o)
+      try yield(o)
+    }
+  }
+  
+  override open func _primaryFetchGlobalIDs(_ fs: FetchSpecification,
+                                            yield: ( GlobalID ) throws -> Void)
+                       throws
+  {
+    func lookupEntity() -> Entity? {
+      if let entity = fs.entity { return entity }
+      if let name = fs.entityName {
+        if let dsEntity = entity, dsEntity.name == name {
+          return dsEntity
+        }
+        if let entity = database.model?[entity: name] { return entity }
+        globalZeeQLLogger.error("did not find fetchspec entity:", name, fs)
+        return nil
+      }
+      if let entity = self.entity { return entity }
+      if let name = self.entityName {
+        if let entity = database.model?[entity: name] { return entity }
+        globalZeeQLLogger.error("did not find datasource entity:", name, self)
+        return nil
+      }
+      globalZeeQLLogger.error("no entity for GlobalID fetch:", fs, self)
+      return nil
+    }
+    
+    guard let entity = lookupEntity() else { return }
+    guard let pkeys = entity.primaryKeyAttributeNames, !pkeys.isEmpty else {
+      globalZeeQLLogger.error("entity has no primary keys for gid fetch:",
+                              entity)
+      throw AccessDataSourceError.MissingEntity
+    }
+    
+    var cfs = fs
+    cfs.fetchesReadOnly     = true
+    cfs.fetchAttributeNames = pkeys
+    
+    let pkeyAttrs = pkeys.compactMap { entity[attribute: $0] }
+    assert(pkeyAttrs.count == pkeys.count, "could not lookup all pkeys!")
+    
+    let adaptor = database.adaptor
+    let expr = adaptor.expressionFactory
+      .selectExpressionForAttributes(pkeyAttrs,
+                                     lock: false, cfs, entity)
+    
+    let channel = try adaptor.openChannelFromPool()
+    defer { adaptor.releaseChannel(channel) }
+    
+    try channel.evaluateQueryExpression(expr, pkeyAttrs) { record in
+      guard let gid = entity.globalIDForRow(record) else {
+        globalZeeQLLogger.error("could not derive GID from row:", record,
+                                "  entity:", entity,
+                                "  pkeys: ", pkeys.joined(separator: ","))
+        return // TBD: throw?
+      }
+      try yield(gid)
     }
   }
   
@@ -105,12 +163,12 @@ open class ActiveDataSource<Object: ActiveRecordType> : AccessDataSource<Object>
     #endif
     
     let adaptor = database.adaptor
-    let channel = try adaptor.openChannelFromPool()
-    defer { adaptor.releaseChannel(channel) }
-    
     let expr = adaptor.expressionFactory
       .selectExpressionForAttributes([ countAttr ], lock: false, cfs,
                                      fs.entity ?? entity)
+    
+    let channel = try adaptor.openChannelFromPool()
+    defer { adaptor.releaseChannel(channel) }
     
     // TODO: improve, less overhead just for the count
     var fetchCount : Int? = nil

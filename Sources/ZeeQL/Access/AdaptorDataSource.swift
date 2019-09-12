@@ -52,7 +52,7 @@ open class AdaptorDataSource : AccessDataSource<AdaptorRecord> {
 
   override
   open func _primaryFetchObjects(_ fs: FetchSpecification,
-                                 cb: ( AdaptorRecord ) throws -> Void) throws
+                                 yield: ( AdaptorRecord ) throws -> Void) throws
   {
     let channel = try adaptor.openChannel()
     defer { adaptor.releaseChannel(channel) }
@@ -62,7 +62,7 @@ open class AdaptorDataSource : AccessDataSource<AdaptorRecord> {
      * and build an iterator on top of that.
      */
     try channel.selectAttributes(nil, fs, lock: fs.locksObjects, entity) {
-      try cb($0)
+      try yield($0)
     }
   }
 }

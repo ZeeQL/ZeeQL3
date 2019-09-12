@@ -9,6 +9,7 @@
 public enum AccessDataSourceError : Swift.Error { // cannot nest in generic
   case CannotConstructFetchSpecification
   case CannotConstructCountFetchSpecification
+  case MissingEntity
   case CountFetchReturnedNoResults
   case FetchReturnedMoreThanOneResult(fetchSpecification: FetchSpecification,
                                       firstObject: SwiftObject)

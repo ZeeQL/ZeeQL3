@@ -86,21 +86,28 @@ open class AccessDataSource<Object: SwiftObject> : DataSource<Object> {
   }
   
   open func _primaryFetchObjects(_ fs: FetchSpecification,
-                                 cb: ( Object ) throws -> Void) throws
+                                 yield: ( Object ) throws -> Void) throws
   {
     fatalError("implement in subclass: \(#function)")
   }
   open func _primaryFetchCount(_ fs: FetchSpecification) throws -> Int {
     fatalError("implement in subclass: \(#function)")
   }
-  
-  override open func fetchObjects(cb: ( Object ) -> Void) throws {
-    try _primaryFetchObjects(try fetchSpecificationForFetch(), cb: cb)
+  open func _primaryFetchGlobalIDs(_ fs: FetchSpecification,
+                                   yield: ( GlobalID ) throws -> Void) throws {
+    fatalError("implement in subclass: \(#function)")
+  }
+
+  override open func fetchObjects(cb yield: ( Object ) -> Void) throws {
+    try _primaryFetchObjects(try fetchSpecificationForFetch(), yield: yield)
   }
   override open func fetchCount() throws -> Int {
     return try _primaryFetchCount(try fetchSpecificationForFetch())
   }
-  
+  open func fetchGlobalIDs(yield: ( GlobalID ) throws -> Void) throws {
+    try _primaryFetchGlobalIDs(try fetchSpecificationForFetch(), yield: yield)
+  }
+
   
   // MARK: - Bindings
   

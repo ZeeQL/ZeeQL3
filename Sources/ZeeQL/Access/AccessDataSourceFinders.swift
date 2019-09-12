@@ -18,10 +18,10 @@ public extension AccessDataSource {
   func fetchObjects(_ fs: FetchSpecification, cb: ( Object ) throws -> Void)
        throws
   {
-    try _primaryFetchObjects(fs, cb: cb)
+    try _primaryFetchObjects(fs, yield: cb)
   }
   func fetchObjects(_ fs: FetchSpecification, cb: ( Object ) -> Void) throws {
-    try _primaryFetchObjects(fs, cb: cb)
+    try _primaryFetchObjects(fs, yield: cb)
   }
   
   func fetchObjectsFor(sql: String) throws -> [ Object ] {
@@ -33,7 +33,7 @@ public extension AccessDataSource {
   func fetchObjectsFor(sql: String, cb: ( Object ) -> Void) throws {
     var fs = ModelFetchSpecification(entityName: entityName)
     fs[hint: CustomQueryExpressionHintKey] = sql
-    try _primaryFetchObjects(fs, cb: cb)
+    try _primaryFetchObjects(fs, yield: cb)
   }
   
   func fetchObjectsFor(attribute name: String, with values: [Any]) throws
@@ -53,7 +53,7 @@ public extension AccessDataSource {
     // override qualifier, but merge in AUX
     let q  = KeyValueQualifier(StringKey(name), .Contains, values)
     fs.qualifier = and(q, auxiliaryQualifier)
-    try _primaryFetchObjects(fs, cb: cb)
+    try _primaryFetchObjects(fs, yield: cb)
   }
   
   /**
@@ -90,6 +90,26 @@ public extension AccessDataSource {
     try fetchObjectsFor(attribute: pkeys[0], with: values) { objects.append($0)}
     return objects
   }
+}
+
+public extension AccessDataSource { // GIDs
+  
+  func fetchGlobalIDs(_ fs: FetchSpecification, yield: ( GlobalID ) -> Void)
+         throws
+  {
+    try _primaryFetchGlobalIDs(fs, yield: yield)
+  }
+  func fetchGlobalIDs(_ fs: FetchSpecification) throws -> [ GlobalID ] {
+    var objects = [ GlobalID ]()
+    try fetchGlobalIDs(fs) { objects.append($0) }
+    return objects
+  }
+  func fetchGlobalIDs() throws -> [ GlobalID ] {
+    var objects = [ GlobalID ]()
+    try fetchGlobalIDs() { objects.append($0) }
+    return objects
+  }
+
 }
 
 public extension AccessDataSource { // Finders
