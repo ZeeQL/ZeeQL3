@@ -99,6 +99,29 @@ public func or(_ a: Qualifier?, _ b: Qualifier?) -> Qualifier? {
   return b
 }
 
+public extension Sequence where Element == Qualifier {
+  
+  func and() -> Qualifier {
+    return reduce(nil, { ZeeQL.and($0, $1) }) ?? BooleanQualifier.falseQualifier
+  }
+  func or() -> Qualifier {
+    return reduce(nil, { ZeeQL.or($0, $1) }) ?? BooleanQualifier.falseQualifier
+  }
+}
+public extension Collection where Element == Qualifier {
+  
+  func and() -> Qualifier {
+    if isEmpty { return BooleanQualifier.falseQualifier }
+    if count == 1 { return self[self.startIndex] }
+    return CompoundQualifier(qualifiers: Array(self), op: .And)
+  }
+  func or() -> Qualifier {
+    if isEmpty { return BooleanQualifier.falseQualifier }
+    if count == 1 { return self[self.startIndex] }
+    return CompoundQualifier(qualifiers: Array(self), op: .Or)
+  }
+}
+
 /**
  * This method returns a set of KeyValueQualifiers combined with an
  * AndQualifier. The keys/values for the KeyValueQualifier are taken
