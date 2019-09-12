@@ -127,6 +127,14 @@ public extension AccessDataSource { // GIDs
     try fetchObjects(with: globalIDs) { objects.append($0) }
     return objects
   }
+  func fetchObjects<S: Collection>(with globalIDs: S) throws -> [ Object ]
+         where S.Element : GlobalID
+  {
+    var objects = [ Object ]()
+    objects.reserveCapacity(globalIDs.count)
+    try fetchObjects(with: globalIDs) { objects.append($0) }
+    return objects
+  }
 }
 
 public extension AccessDataSource { // Finders
