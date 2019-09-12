@@ -110,6 +110,23 @@ public extension AccessDataSource { // GIDs
     return objects
   }
 
+  func fetchObjects<S: Sequence>(with globalIDs: S,
+                                 yield: ( Object ) throws -> Void) throws
+         where S.Element : GlobalID
+  {
+    guard let entity = entity else { throw AccessDataSourceError.MissingEntity }
+    let gidQualifiers = globalIDs.map { entity.qualifierForGlobalID($0) }
+    let fs = ModelFetchSpecification(entity: entity,
+                                     qualifier: gidQualifiers.or())
+    try fetchObjects(fs, cb: yield)
+  }
+  func fetchObjects<S: Sequence>(with globalIDs: S) throws -> [ Object ]
+         where S.Element : GlobalID
+  {
+    var objects = [ Object ]()
+    try fetchObjects(with: globalIDs) { objects.append($0) }
+    return objects
+  }
 }
 
 public extension AccessDataSource { // Finders

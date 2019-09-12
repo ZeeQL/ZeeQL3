@@ -121,9 +121,17 @@ class SQLite3OGoAdaptorTests: AdaptorOGoTestCase {
     do {
       let gids = try persons.fetchGlobalIDs()
       if printResults {
-        print("got person count: #\(gids)")
+        print("got person count: \(gids)")
       }
       XCTAssert(gids.count > 2)
+      
+      // and now lets fetch the GIDs
+      
+      let objects = try persons.fetchObjects(with: gids)
+      if printResults {
+        print("got persons: #\(objects.count)")
+      }
+      XCTAssertEqual(objects.count, gids.count)
     }
     catch {
       XCTAssertNil(error, "catched error: \(error)")

@@ -153,6 +153,34 @@ public extension Entity { // default imp
     }
     return KeyGlobalID.make(entityName: name, values: pkeyValues)
   }
+  
+  func qualifierForGlobalID(_ globalID: GlobalID) -> Qualifier {
+    guard let kglobalID = globalID as? KeyGlobalID else {
+      globalZeeQLLogger.warn("globalID is not a KeyGlobalID:", globalID,
+                             type(of: globalID))
+      assertionFailure("attempt to use an unsupported globalID \(globalID)")
+      return BooleanQualifier.falseQualifier
+    }
+    guard kglobalID.keyCount != 0 else {
+      globalZeeQLLogger.warn("globalID w/o keys:", globalID)
+      assertionFailure("globalID w/o keys: \(globalID)")
+      return BooleanQualifier.falseQualifier
+    }
+    guard let pkeys = primaryKeyAttributeNames,
+          pkeys.count == kglobalID.keyCount
+     else { return BooleanQualifier.falseQualifier }
+    
+    if kglobalID.keyCount == 1 {
+      return KeyValueQualifier(pkeys[0], .EqualTo, kglobalID[0])
+    }
+    
+    var qualifiers = [ Qualifier ]()
+    qualifiers.reserveCapacity(kglobalID.keyCount)
+    for i in 0..<kglobalID.keyCount {
+      qualifiers[i] = KeyValueQualifier(pkeys[i], .EqualTo, kglobalID[i])
+    }
+    return CompoundQualifier(qualifiers: qualifiers, op: .And)
+  }
 
   
   // MARK: - Attributes & Relationships
