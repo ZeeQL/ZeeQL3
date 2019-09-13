@@ -17,7 +17,7 @@
  * may need to be 'filled' by querying the database information schema. This can
  * involve incomplete attribute sets or a pattern name.
  */
-public protocol Entity: class, SmartDescription {
+public protocol Entity: class, EquatableType, SmartDescription {
 
   var name                     : String              { get }
   var externalName             : String?             { get }
@@ -360,6 +360,65 @@ public extension Entity { // primary keys
   
 }
 
+public extension Entity {
+  
+  func isEqual(to object: Any?) -> Bool {
+    guard let other = object as? Entity else { return false }
+    return other.isEqual(to: self)
+  }
+  
+  func isEqual(to other: Entity) -> Bool {
+    if other === self { return true  }
+    guard name                  == other.name         else { return false }
+    guard externalName          == other.externalName else { return false }
+    guard className             == other.className    else { return false }
+    guard objectType            == other.objectType   else { return false }
+    guard schemaName            == other.schemaName   else { return false }
+    guard isReadOnly            == other.isReadOnly   else { return false }
+    guard isPattern             == other.isPattern    else { return false }
+
+    guard attributes.count    == other.attributes.count    else { return false }
+    guard relationships.count == other.relationships.count else { return false }
+    guard attributesUsedForLocking?.count ==
+            other.attributesUsedForLocking?.count else { return false }
+
+    guard shouldRefetchOnInsert ==  other.shouldRefetchOnInsert else {
+      return false
+    }
+    guard primaryKeyAttributeNames == other.primaryKeyAttributeNames else {
+      return false
+    }
+    guard classPropertyNames == other.classPropertyNames else {
+      return false
+    }
+    guard eq(restrictingQualifier, other.restrictingQualifier) else {
+      return false
+    }
+    
+    for attr in attributes {
+      guard let other = other[attribute: attr.name] else { return false }
+      guard attr.isEqual(to: other)                 else { return false }
+    }
+    if let v  = attributesUsedForLocking,
+       let ov = other.attributesUsedForLocking
+    {
+      let mn = Set(v .lazy.map { $0.name })
+      let on = Set(ov.lazy.map { $0.name })
+      guard mn == on else { return false }
+    }
+    for rs in relationships {
+      guard let other = other[relationship: rs.name] else { return false }
+      guard rs.isEqual(to: other)                    else { return false }
+    }
+
+    return true
+  }
+  
+  static func ==(lhs: Entity, rhs: Entity) -> Bool {
+    return lhs.isEqual(to: rhs)
+  }
+}
+
 
 /**
  * An Entity description which stores the info as variables.
@@ -367,7 +426,7 @@ public extension Entity { // primary keys
  * Suitable for use with models loaded from XML, or models fetched from a
  * database.
  */
-open class ModelEntity : Entity {
+open class ModelEntity : Entity, Equatable {
   
   /*
    * When adding ivars remember to clone them in:
@@ -520,6 +579,12 @@ open class ModelEntity : Entity {
       if relship.isPattern { return true }
     }
     return false
+  }
+  
+  // MARK: - Equatable
+  
+  public static func ==(lhs: ModelEntity, rhs: ModelEntity) -> Bool {
+    return lhs.isEqual(to: rhs)
   }
 }
 

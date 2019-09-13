@@ -13,7 +13,7 @@
  */
 public struct Join : Equatable, SmartDescription {
   
-  public enum Semantic {
+  public enum Semantic : Hashable {
     case fullOuterJoin, innerJoin, leftOuterJoin, rightOuterJoin
   }
   

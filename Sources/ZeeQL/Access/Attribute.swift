@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 18/02/2017.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2019 ZeeZide GmbH. All rights reserved.
 //
 
 /**
@@ -113,6 +113,34 @@ public extension Attribute { // default imp
   }
 }
 
+public extension Attribute { // default imp
+  
+  func isEqual(to object: Any?) -> Bool {
+    guard let other = object as? Attribute else { return false }
+    return other.isEqual(to: self)
+  }
+  
+  func isEqual(to other: Attribute) -> Bool {
+    if other === self { return true  }
+    guard name            == other.name            else { return false }
+    guard columnName      == other.columnName      else { return false }
+    guard externalType    == other.externalType    else { return false }
+    guard allowsNull      == other.allowsNull      else { return false }
+    guard isAutoIncrement == other.isAutoIncrement else { return false }
+    guard width           == other.width           else { return false }
+    guard precision       == other.precision       else { return false }
+    guard valueType       == other.valueType       else { return false }
+    guard readFormat      == other.readFormat      else { return false }
+    guard writeFormat     == other.writeFormat     else { return false }
+    guard isPattern       == other.isPattern       else { return false }
+    return true
+  }
+  
+  static func ==(lhs: Attribute, rhs: Attribute) -> Bool {
+    return lhs.isEqual(to: rhs)
+  }
+}
+
 /// Commonly used within the framework, but should not be public API
 extension Attribute {
   var columnNameOrName : String { return columnName ?? name }
@@ -125,7 +153,7 @@ extension Attribute {
  * Suitable for use with models loaded from XML, or models fetched from a
  * database.
  */
-open class ModelAttribute : Attribute {
+open class ModelAttribute : Attribute, Equatable {
 
   public final var name            : String
   public final var columnName      : String?
@@ -154,7 +182,7 @@ open class ModelAttribute : Attribute {
   
   /// A persistent ID used to track renaming when doing model-to-model
   /// migrations.
-  public final var elementID                : String?
+  public final var elementID       : String?
   
   public init(name         : String,
               column       : String? = nil,
@@ -299,6 +327,13 @@ open class ModelAttribute : Attribute {
   public func valueFor(object: Any?) -> Any? {
     return KeyValueCoding.value(forKeyPath: name, inObject: object)
   }
+  
+  
+  // MARK: - Equatable
+  
+  public static func ==(lhs: ModelAttribute, rhs: ModelAttribute) -> Bool {
+    return lhs.isEqual(to: rhs)
+  }
 
 
   // MARK: - Own Description
@@ -343,174 +378,6 @@ open class ModelAttribute : Attribute {
       ms += "]"
     }
   }
-}
-
-
-// MARK: - AttributeValue
-
-import struct Foundation.Data
-import struct Foundation.Date
-import struct Foundation.URL
-import struct Foundation.Decimal
-
-// marker interface for types that can be used as columns
-public protocol AttributeValue {
-  
-  static var  isOptional : Bool { get }
-  
-  static func shouldUseBindVariable(for attribute: Attribute) -> Bool
-  
-  /// Returns the type wrapped by the Optional, e.g. `Int` for `Int?`
-  static var optionalBaseType : AttributeValue.Type? { get }
-  
-  /// Returns an Optional type for the AttributeValue. If it is already an
-  /// optional, this is the same. E.g. `Int?` is returned for `Int`
-  static var optionalType     : AttributeValue.Type? { get }
-
-  // TBD: static var attributeValueType: Enum
-  //        Enum { int(width), float(width), string, url, decimal }
-  //               var isStringRepresentable:..,
-}
-
-public extension AttributeValue {
-  static var isOptional : Bool { return false }
-  static func shouldUseBindVariable(for attribute: Attribute) -> Bool {
-    return false
-  }
-  
-  static var optionalBaseType : AttributeValue.Type? { return nil }
-  static var optionalType     : AttributeValue.Type? { return nil }
-  
-  // TBD: do we even need this?
-  var optionalBaseType : Any.Type? { return type(of: self).optionalBaseType }
-}
-
-extension String : AttributeValue {
-  public static func shouldUseBindVariable(for attribute: Attribute) -> Bool {
-    return true
-  }
-  public static var optionalBaseType : AttributeValue.Type? { return self }
-  public static var optionalType     : AttributeValue.Type? {
-    return Optional<String>.self
-  }
-}
-extension Data   : AttributeValue {
-  public static func shouldUseBindVariable(for attribute: Attribute) -> Bool {
-    return true
-  }
-  public static var optionalBaseType : AttributeValue.Type? { return self }
-  public static var optionalType     : AttributeValue.Type? {
-    return Optional<Data>.self
-  }
-}
-
-extension Int     : AttributeValue {
-  public static var optionalBaseType : AttributeValue.Type? { return self }
-  public static var optionalType     : AttributeValue.Type? {
-    return Optional<Int>.self
-  }
-}
-extension Int8    : AttributeValue {
-  public static var optionalBaseType : AttributeValue.Type? { return self }
-  public static var optionalType     : AttributeValue.Type? {
-    return Optional<Int8>.self
-  }
-}
-extension Int16   : AttributeValue {
-  public static var optionalBaseType : AttributeValue.Type? { return self }
-  public static var optionalType     : AttributeValue.Type? {
-    return Optional<Int16>.self
-  }
-}
-extension Int32   : AttributeValue {
-  public static var optionalBaseType : AttributeValue.Type? { return self }
-  public static var optionalType     : AttributeValue.Type? {
-    return Optional<Int32>.self
-  }
-}
-extension Int64   : AttributeValue {
-  public static var optionalBaseType : AttributeValue.Type? { return self }
-  public static var optionalType     : AttributeValue.Type? {
-    return Optional<Int64>.self
-  }
-}
-
-extension UInt    : AttributeValue {
-  public static var optionalBaseType : AttributeValue.Type? { return self }
-  public static var optionalType     : AttributeValue.Type? {
-    return Optional<UInt>.self
-  }
-}
-extension UInt8   : AttributeValue {
-  public static var optionalBaseType : AttributeValue.Type? { return self }
-  public static var optionalType     : AttributeValue.Type? {
-    return Optional<UInt8>.self
-  }
-}
-extension UInt16  : AttributeValue {
-  public static var optionalBaseType : AttributeValue.Type? { return self }
-  public static var optionalType     : AttributeValue.Type? {
-    return Optional<UInt16>.self
-  }
-}
-extension UInt32  : AttributeValue {
-  public static var optionalBaseType : AttributeValue.Type? { return self }
-  public static var optionalType     : AttributeValue.Type? {
-    return Optional<UInt32>.self
-  }
-}
-extension UInt64  : AttributeValue {
-  public static var optionalBaseType : AttributeValue.Type? { return self }
-  public static var optionalType     : AttributeValue.Type? {
-    return Optional<UInt64>.self
-  }
-}
-
-extension Float   : AttributeValue {
-  public static var optionalBaseType : AttributeValue.Type? { return self }
-  public static var optionalType     : AttributeValue.Type? {
-    return Optional<Float>.self
-  }
-}
-extension Double  : AttributeValue {
-  public static var optionalBaseType : AttributeValue.Type? { return self }
-  public static var optionalType     : AttributeValue.Type? {
-    return Optional<Double>.self
-  }
-}
-extension Bool    : AttributeValue {
-  public static var optionalBaseType : AttributeValue.Type? { return self }
-  public static var optionalType     : AttributeValue.Type? {
-    return Optional<Bool>.self
-  }
-}
-
-extension Date    : AttributeValue {
-  public static var optionalBaseType : AttributeValue.Type? { return self }
-  public static var optionalType     : AttributeValue.Type? {
-    return Optional<Date>.self
-  }
-}
-extension URL     : AttributeValue {
-  public static var optionalBaseType : AttributeValue.Type? { return self }
-  public static var optionalType     : AttributeValue.Type? {
-    return Optional<URL>.self
-  }
-}
-extension Decimal : AttributeValue {
-  public static var optionalBaseType : AttributeValue.Type? { return self }
-  public static var optionalType     : AttributeValue.Type? {
-    return Optional<Decimal>.self
-  }
-}
-
-extension Optional : AttributeValue {
-  public static var isOptional : Bool { return true }
-
-  public static var optionalBaseType : AttributeValue.Type? {
-    return Wrapped.self as? AttributeValue.Type
-  }
-  public static var optionalType : AttributeValue.Type? { return self }
 }
 
 

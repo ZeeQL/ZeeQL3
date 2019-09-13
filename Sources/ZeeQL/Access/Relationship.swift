@@ -8,7 +8,7 @@
 
 
 /**
- * A relationship connects two `Entity`'s using `Join`'s. It is one-way,
+ * A Relationship connects two `Entity`'s using `Join`'s. It is one-way,
  * so you need to have separate `Relationship` objects for each direction.
  */
 public protocol Relationship : Property, ExpressionEvaluation,
@@ -34,16 +34,17 @@ public protocol Relationship : Property, ExpressionEvaluation,
   var  deleteRule        : ConstraintRule? { get }
   var  ownsDestination   : Bool            { get }
   
-  var constraintName     : String?         { get }
+  var  constraintName     : String?        { get }
   
-  var isMandatory        : Bool            { get }
+  var  isMandatory        : Bool           { get }
 }
 
 /**
  * Specifies what happens with the target if the source object of a
  * relationship gets deleted.
  */
-public enum ConstraintRule {
+public enum ConstraintRule: Hashable {
+  
   case nullify      // SET NULL
   case cascade
   case deny         // RESTRICT
@@ -115,6 +116,37 @@ public extension Relationship { // default imp
     // TBD: I think this is right, if a delete cascades, we own the target
     if case .cascade = deleteRule { return true }
     return false
+  }
+}
+
+public extension Relationship { // extra methods
+  
+  func isEqual(to object: Any?) -> Bool {
+    guard let other = object as? Relationship else { return false }
+    return other.isEqual(to: self)
+  }
+  
+  func isEqual(to other: Relationship) -> Bool {
+    if other === self { return true  }
+    guard name              ==  other.name              else { return false }
+    guard isToMany          ==  other.isToMany          else { return false }
+    guard entity            === other.entity            else { return false }
+    guard destinationEntity === other.destinationEntity else { return false }
+    guard ownsDestination   ==  other.ownsDestination   else { return false }
+    guard isMandatory       ==  other.isMandatory       else { return false }
+    guard minCount          ==  other.minCount          else { return false }
+    guard maxCount          ==  other.maxCount          else { return false }
+    guard joinSemantic      ==  other.joinSemantic      else { return false }
+    guard joins             ==  other.joins             else { return false }
+    guard isPattern         ==  other.isPattern         else { return false }
+    guard updateRule        ==  other.updateRule        else { return false }
+    guard deleteRule        ==  other.deleteRule        else { return false }
+    guard constraintName    ==  other.constraintName    else { return false }
+    return true
+  }
+  
+  static func ==(lhs: Relationship, rhs: Relationship) -> Bool {
+    return lhs.isEqual(to: rhs)
   }
 }
 
@@ -459,6 +491,14 @@ open class ModelRelationship : Relationship {
     }
   }
   
+  
+  // MARK: - Equatable
+  
+  static func ==(lhs: ModelRelationship, rhs: ModelRelationship) -> Bool {
+    if lhs === rhs { return true }
+    return lhs.isEqual(to: rhs)
+  }
+
   
   // MARK: - Own Description
   

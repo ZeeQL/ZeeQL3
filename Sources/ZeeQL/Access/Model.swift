@@ -85,7 +85,7 @@
  * TODO: explain `CoreDataModelLoader`
  *
  */
-open class Model : SmartDescription {
+open class Model : SmartDescription, EquatableType, Equatable {
   // TODO: actually implement pattern models
   // TODO: add loading
 
@@ -244,7 +244,29 @@ open class Model : SmartDescription {
       entities.append(entity)
     }
   }
+
   
+  // MARK: - EquatableType
+  
+  open func isEqual(to object: Any?) -> Bool {
+    guard let other = object as? Model else { return false }
+    return other.isEqual(to: self)
+  }
+  open func isEqual(to other: Model) -> Bool {
+    if other === self             { return true  }
+    guard eq(tag, other.tag) else { return false }
+    guard entities.count == other.entities.count else { return false }
+    
+    // Not very scientific
+    let ownEntities   = Set(self .entities.lazy.map { ObjectIdentifier($0) })
+    let otherEntities = Set(other.entities.lazy.map { ObjectIdentifier($0) })
+    return ownEntities == otherEntities
+  }
+  
+  public static func ==(lhs: Model, rhs: Model) -> Bool {
+    return lhs.isEqual(to: rhs)
+  }
+
   
   // MARK: - Description
   
