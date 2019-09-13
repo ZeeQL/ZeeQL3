@@ -1202,17 +1202,27 @@ open class TypedDatabaseChannel<ObjectType: DatabaseObject> : DatabaseChannelBas
     
     /* open TX */
     
-    try begin()
+    var didBeginTX = false
+    do {
+      if !isInTransaction {
+        try begin()
+        didBeginTX = true
+      }
+    }
+    catch { throw error }
     defer {
       do {
         /* Note: We do not commit because we just fetched stuff and commits
          *       increase the likeliness that something fails. So: rollback in
          *       both ways.
          */
-        try rollback()
+        if didBeginTX {
+          try rollback()
+        }
       }
       catch {
         // TBD: hm
+        globalZeeQLLogger.warn("could not rollback transaction:", error)
       }
     }
     
