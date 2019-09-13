@@ -183,7 +183,7 @@ public protocol RelationshipManipulation : class, KeyValueCodingType {
    */
   func removeObject(_ object: AnyObject, fromPropertyWithKey key: String)
   
-  // MARK: - Both Sides
+  // MARK: - Both Sides (called by DatabaseChannel)
 
   func addObject   (_ object: RelationshipManipulation,
                     toBothSidesOfRelationshipWithKey key: String)
@@ -208,7 +208,8 @@ public extension RelationshipManipulation { // default imp
                     toBothSidesOfRelationshipWithKey key: String)
   {
     /* Note: we don't know the Entity here, so we can't access the inverse
-     *       relationship. ActiveRecord changes this.
+     *       relationship. ActiveRecord COULD change this. It doesn't, because
+     *       it creates a cycle.
      */
     addObject(object, toPropertyWithKey: key)
   }
@@ -217,7 +218,8 @@ public extension RelationshipManipulation { // default imp
                     fromBothSidesOfRelationshipWithKey key: String)
   {
     /* Note: we don't know the Entity here, so we can't access the inverse
-     *       relationship. ActiveRecord changes this.
+     *       relationship. ActiveRecord COULD change this. It doesn't, because
+     *       it creates a cycle.
      */
     removeObject(object, fromPropertyWithKey: key)
   }

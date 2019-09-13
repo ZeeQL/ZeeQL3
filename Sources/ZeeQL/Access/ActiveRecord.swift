@@ -167,11 +167,18 @@ open class ActiveRecordBase : ActiveRecordType, SmartDescription {
   }
   
   public func addObject(_ object: AnyObject, toPropertyWithKey key: String) {
-    willChange()
-    
     // TBD: this is, sigh.
     // also, the KVC access is still a little open, this should do
     // takeValueForKey in case the subclass overrides it
+    
+    willChange()
+    
+    // If it is a to-one, we push the object itself into the relship.
+    if let relship = entity[relationship: key], !relship.isToMany {
+      values[key] = object
+      return
+    }
+    
     if var list = values[key] as? [ AnyObject ] {
       list.append(object)
       values[key] = list
@@ -182,7 +189,13 @@ open class ActiveRecordBase : ActiveRecordType, SmartDescription {
   }
   public func removeObject(_ o: AnyObject, fromPropertyWithKey key: String) {
     willChange()
-    
+
+    // If it is a to-one, we clear the object itself into the relship.
+    if let relship = entity[relationship: key], !relship.isToMany {
+      values.removeValue(forKey: key)
+      return
+    }
+
     guard var list = values[key] as? [ AnyObject ] else { return }
     #if swift(>=5)
       guard let idx = list.firstIndex(where: { $0 === o }) else { return }
