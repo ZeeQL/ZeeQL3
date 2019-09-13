@@ -269,7 +269,7 @@ extension Array : KeyValueCodingType {
     
     guard !isEmpty else { return [] }
 
-    return map { KeyValueCoding.defaultValue(forKey: k, inObject: $0) }
+    return map { KeyValueCoding.value(forKey: k, inObject: $0) }
   }
 }
 
