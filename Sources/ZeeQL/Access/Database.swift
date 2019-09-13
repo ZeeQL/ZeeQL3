@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 26/02/2017.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2019 ZeeZide GmbH. All rights reserved.
 //
 
 /**
@@ -22,7 +22,7 @@
  *           ds.findByMatchingAll("lastname", "Duck", "firstname", "Donald")
  *
  */
-open class Database {
+open class Database : EquatableType, Equatable {
   
   open   var log               : ZeeQLLogger = globalZeeQLLogger
   public let adaptor           : Adaptor
@@ -91,6 +91,22 @@ open class Database {
       try? channel.rollback() // yes, ignore follow-up errors
       throw error
     }
+  }
+  
+  
+  // MARK: - Equatable
+  
+  public func isEqual(to object: Any?) -> Bool {
+    guard let other = object as? Database else { return false }
+    return other.isEqual(to: self)
+  }
+  public func isEqual(to other: Database) -> Bool {
+    if self === other { return true }
+    return false
+  }
+  
+  public static func ==(lhs: Database, rhs: Database) -> Bool {
+    return lhs.isEqual(to: rhs)
   }
 }
 

@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 24/02/17.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2019 ZeeZide GmbH. All rights reserved.
 //
 
 /**
@@ -13,7 +13,7 @@
  * The ZeeQL DataSources always have an FetchSpecification which specifies
  * the environment for fetches.
  */
-open class DataSource<Object: SwiftObject> {
+open class DataSource<Object: SwiftObject>: EquatableType, Equatable {
   // Used to be a protocol, but Swift 3 and generic protocols ....
   
   open var fetchSpecification : FetchSpecification?
@@ -23,6 +23,20 @@ open class DataSource<Object: SwiftObject> {
   }
   open func fetchCount() throws -> Int {
     fatalError("Subclass must implement: \(#function)")
+  }
+  
+  // MARK: - Equatable
+  
+  public func isEqual(to object: Any?) -> Bool {
+    guard let other = object as? DataSource else { return false }
+    return other.isEqual(to: self)
+  }
+  public func isEqual(to object: DataSource) -> Bool {
+    return self === object
+  }
+  
+  public static func ==(lhs: DataSource, rhs: DataSource) -> Bool {
+    return lhs.isEqual(to: rhs)
   }
 }
 

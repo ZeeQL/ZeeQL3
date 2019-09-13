@@ -58,7 +58,7 @@ import struct Foundation.URL
  *     let ds = AdaptorDataSource(adaptor: adaptor, entity: entity)
  *     let user = ds.findBy(id: 9999)
  */
-public protocol Adaptor : class, AdaptorQueryType {
+public protocol Adaptor : class, AdaptorQueryType, EquatableType {
   
   func openChannelFromPool() throws -> AdaptorChannel
   func openChannel()         throws -> AdaptorChannel
@@ -90,6 +90,18 @@ public extension Adaptor {
   /// Note: Returns a stateful object (a new one every time it is accessed).
   var synchronizationFactory : SchemaSynchronizationFactory {
     return SchemaSynchronizationFactory(adaptor: self)
+  }
+  
+  func isEqual(to object: Any?) -> Bool {
+    guard let other = object as? Adaptor else { return false }
+    return other.isEqual(to: self)
+  }
+  func isEqual(to other: Adaptor) -> Bool {
+    return self === other
+  }
+  
+  static func ==(lhs: Adaptor, rhs: Adaptor) -> Bool {
+    return lhs.isEqual(to: rhs)
   }
 }
 
