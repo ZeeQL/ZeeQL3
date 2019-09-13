@@ -513,6 +513,11 @@ public extension AdaptorChannel {
       throw AdaptorError.OperationDidNotAffectOne
     }
     
+    // TODO: We need to refetch the pkey if it is auto-increment?! This just
+    //       does the insert, no reload.
+    //       => only if refetchAll is enabled, or if the value of the pkey is
+    //          missing in the row.
+    
     guard let entity = entity else {
       // Note: we don't know the pkey w/o entity and we don't want to reflect in
       //       here
@@ -521,7 +526,9 @@ public extension AdaptorChannel {
 
     if let pkey = entity.primaryKeyForRow(row) {
       // already had the pkey assigned
+      
       // TODO: properly refetch in a transaction
+      
       return refetchAll ? row : pkey
     }
     
