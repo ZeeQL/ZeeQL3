@@ -107,6 +107,9 @@ public extension Sequence where Element == Qualifier {
   func or() -> Qualifier {
     return reduce(nil, { ZeeQL.or($0, $1) }) ?? BooleanQualifier.falseQualifier
   }
+  func compactingOr() -> Qualifier {
+    return Array(self).compactingOr()
+  }
 }
 public extension Collection where Element == Qualifier {
   
@@ -119,6 +122,54 @@ public extension Collection where Element == Qualifier {
     if isEmpty { return BooleanQualifier.falseQualifier }
     if count == 1 { return self[self.startIndex] }
     return CompoundQualifier(qualifiers: Array(self), op: .Or)
+  }
+  func compactingOr() -> Qualifier {
+    if isEmpty { return BooleanQualifier.falseQualifier }
+    if count == 1 { return self[self.startIndex] }
+    return Array(self).compactingOr()
+  }
+}
+public extension Array where Element == Qualifier {
+  func compactingOr() -> Qualifier {
+    if isEmpty { return BooleanQualifier.falseQualifier }
+    if count == 1 { return self[self.startIndex] }
+    guard let kva = self as? [ KeyValueQualifier ] else {
+      return CompoundQualifier(qualifiers: Array(self), op: .Or)
+    }
+    return kva.compactingOr()
+  }
+}
+public extension Collection where Element == KeyValueQualifier {
+  func compactingOr() -> Qualifier {
+    if isEmpty { return BooleanQualifier.falseQualifier }
+    if count == 1 { return self[self.startIndex] }
+    
+    var keyToValues = [ String : [ Any? ] ]()
+    var extra = [ Qualifier ]()
+    
+    for kvq in self {
+      if kvq.operation != .EqualTo {
+        extra.append(kvq)
+        continue
+      }
+      
+      let key = kvq.key, value = kvq.value
+      if keyToValues[key] == nil { keyToValues[key] = [ value ]    }
+      else                       { keyToValues[key]!.append(value) }
+    }
+    
+    for ( key, values ) in keyToValues {
+      if values.isEmpty { continue }
+      if values.count == 1 {
+        extra.append(KeyValueQualifier(key, .EqualTo, values.first!))
+      }
+      else {
+        extra.append(KeyValueQualifier(key, .Contains, values))
+      }
+    }
+    
+    if extra.count == 1 { return extra[extra.startIndex] }
+    return CompoundQualifier(qualifiers: extra, op: .Or)
   }
 }
 

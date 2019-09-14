@@ -141,4 +141,39 @@ class QualifierEvaluationTests: XCTestCase {
     guard let q = qq as? QualifierEvaluation else { return false }
     return q.evaluateWith(object: object)
   }
+  
+  
+  func testCombiningOr() {
+    let qualifiers = [
+      KeyValueQualifier("a", .EqualTo, 10),
+      KeyValueQualifier("a", .EqualTo, 10),
+      KeyValueQualifier("a", .EqualTo, 11),
+      KeyValueQualifier("b", .EqualTo, "hello")
+    ]
+    let q = qualifiers.compactingOr()
+    XCTAssert(q is CompoundQualifier)
+    guard let tl = q as? CompoundQualifier else { return }
+    XCTAssert(tl.op == .Or)
+    XCTAssert(tl.qualifiers.count == 2)
+    guard tl.qualifiers.count >= 2 else { return }
+    
+    let first  = tl.qualifiers[0]
+    let second = tl.qualifiers[1]
+    XCTAssert(first is KeyValueQualifier && second is KeyValueQualifier)
+    guard let fk = first  as? KeyValueQualifier,
+          let sk = second as? KeyValueQualifier else { return }
+    
+    assert(fk.operation == .Contains || sk.operation == .Contains)
+    assert(fk.operation == .EqualTo  || sk.operation == .EqualTo)
+    let aQual = fk.operation == .Contains ? fk : sk
+    let bQual = fk.operation == .EqualTo  ? fk : sk
+
+    XCTAssertEqual(bQual.key, "b")
+    XCTAssertEqual(bQual.operation, .EqualTo)
+    XCTAssertEqual(bQual.value as? String, "hello")
+    
+    XCTAssertEqual(aQual.key, "a")
+    XCTAssertEqual(aQual.operation, .Contains)
+    XCTAssertEqual(aQual.value as? [ Int ], [ 10, 10, 11 ])
+  }
 }

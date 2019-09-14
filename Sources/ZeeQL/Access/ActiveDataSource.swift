@@ -118,6 +118,7 @@ open class ActiveDataSource<Object: ActiveRecordType> : AccessDataSource<Object>
     var cfs = fs
     cfs.fetchesReadOnly     = true
     cfs.fetchAttributeNames = pkeys
+    cfs.prefetchingRelationshipKeyPathes = nil
     
     let pkeyAttrs = pkeys.compactMap { entity[attribute: $0] }
     assert(pkeyAttrs.count == pkeys.count, "could not lookup all pkeys!")
