@@ -262,7 +262,7 @@ open class SQLite3ModelFetch: AdaptorModelFetch {
             case "r", "R": relship.deleteRule = .deny
             case "c", "C": relship.deleteRule = .cascade
             
-            case "s":
+            case "s", "S":
               let n = (fkey["on_delete"] as? String)?.uppercased() ?? ""
               if      n == "SET NULL"    { relship.deleteRule = .nullify      }
               else if n == "SET DEFAULT" { relship.deleteRule = .applyDefault }
