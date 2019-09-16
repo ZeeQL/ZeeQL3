@@ -177,7 +177,7 @@ public extension Entity { // default imp
     var qualifiers = [ Qualifier ]()
     qualifiers.reserveCapacity(kglobalID.keyCount)
     for i in 0..<kglobalID.keyCount {
-      qualifiers[i] = KeyValueQualifier(pkeys[i], .EqualTo, kglobalID[i])
+      qualifiers.append(KeyValueQualifier(pkeys[i], .EqualTo, kglobalID[i]))
     }
     return CompoundQualifier(qualifiers: qualifiers, op: .And)
   }
