@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 27/02/17.
-//  Copyright © 2017-2019 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2020 ZeeZide GmbH. All rights reserved.
 //
 
 open class DatabaseChannelBase {
@@ -402,7 +402,9 @@ open class DatabaseChannelBase {
       throw Error.MissingEntity(fs.entityName)
     }
     
-    let selectList = selectListForFetchSpecification(currentEntity, fs)
+    #if false // unused?!
+      let selectList = selectListForFetchSpecification(currentEntity, fs)
+    #endif
 
     makesNoSnapshots = false
     if let entity = currentEntity, entity.isReadOnly {
@@ -1194,8 +1196,7 @@ open class TypedDatabaseChannel<ObjectType: DatabaseObject> : DatabaseChannelBas
     }
     assert(adaptorChannel != nil,
            "got no adaptor channel, but no error thrown?")
-    guard let ac = adaptorChannel
-     else { throw Error.CouldNotAcquireChannel(nil) }
+    guard adaptorChannel != nil else { throw Error.CouldNotAcquireChannel(nil) }
     
     defer { if didOpenChannel { releaseChannel() } }
 
@@ -1356,8 +1357,7 @@ open class DatabaseChannel : DatabaseChannelBase, IteratorProtocol {
     }
     assert(adaptorChannel != nil,
            "got no adaptor channel, but no error thrown?")
-    guard let ac = adaptorChannel
-     else { throw Error.CouldNotAcquireChannel(nil) }
+    guard adaptorChannel != nil else { throw Error.CouldNotAcquireChannel(nil) }
     
     defer { if didOpenChannel { releaseChannel() } }
 
