@@ -3,7 +3,7 @@
 //  ZeeQL3
 //
 //  Created by Helge Hess on 12.02.18.
-//  Copyright © 2018-2019 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2018-2020 ZeeZide GmbH. All rights reserved.
 //
 
 import XCTest
@@ -96,7 +96,7 @@ extension Entity {
   
   func descriptionForObject(_ object: Any) -> String {
     var ms = "<\(type(of: object))[\(name)]:"
-    for prop in classPropertyNames ?? attributes.map { $0.name } {
+    for prop in classPropertyNames ?? attributes.map({ $0.name }) {
       let v = KeyValueCoding.value(forKey: prop, inObject: object)
       if let v = v {
         ms += " \(prop)="
