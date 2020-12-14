@@ -57,6 +57,7 @@ import struct Foundation.URL
  *
  *     let ds = AdaptorDataSource(adaptor: adaptor, entity: entity)
  *     let user = ds.findBy(id: 9999)
+ * 
  */
 public protocol Adaptor : class, AdaptorQueryType, EquatableType {
   

@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 03/03/17.
-//  Copyright © 2017-2019 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2020 ZeeZide GmbH. All rights reserved.
 //
 
 import struct Foundation.TimeInterval
@@ -16,6 +16,68 @@ import struct Foundation.URLQueryItem
   import CSQLite3
 #endif
 
+/**
+ * The ZeeQL database adaptor for SQLite3.
+ * 
+ * An adaptor is a low level object coordinating access to a specific database.
+ * It is similar to a JDBC or ODBC driver.
+ * 
+ * In user level code you usually work with `Database` and `DataSource` objects,
+ * but you can drop down to the Adaptor level if you need/want more direct
+ * access to the databases.
+ *
+ * Since SQLite3 is available on essentially all platforms, this is a standard
+ * component of ZeeQL.
+ *
+ * The SQLite adaptor supports schema reflection using `fetchModel` (and
+ * `fetchModelTag`).
+ *
+ * ### Adaptor creation
+ *
+ * Initializing the adaptor doesn't touch the filesystem/database yet. This
+ * only happens when a channel is opened.
+ *
+ *     let adaptor = SQLite3Adaptor(url.path, autocreate: true, readonly: false,
+ *                                  options: .init())
+ *     try adaptor.select("SELECT name, count FROM pets") {
+ *       (name : String, count : Int) in
+ *       print("\(name): #\(count)")
+ *     }
+ *
+ * The options can be used to enable things like WAL mode or auto-vacuum.
+ *
+ * ### Channels
+ *
+ * To run queries the adaptor creates `AdaptorChannel` objects. Those represent
+ * a single connection to the database (i.e. a `sqlite_open`).
+ *
+ * ### AdaptorQueryType
+ *
+ * Adaptor itself is an `AdaptorQueryType` (like `AdaptorChannel`).
+ * Which means, you can queries directly against the adaptor. The adaptor will
+ * then auto-create and release channels.
+ *
+ * Example, type-safe query:
+ *
+ *     try adaptor.select("SELECT name, count FROM pets") {
+ *       (name : String, count : Int) in
+ *       print("\(name): #\(count)")
+ *     }
+ *
+ * ### AdaptorDataSource
+ *
+ * If you don't want object mapping, but still want to use datasources, you
+ * can use an `AdaptorDataSource`. With or without an attached entity. See
+ * the `AdaptorDataSource` class for more info.
+ *
+ * AdaptorDataSources return raw `AdaptorRecord` objects.
+ *
+ * Example:
+ *
+ *     let ds = AdaptorDataSource(adaptor: adaptor, entity: entity)
+ *     let user = ds.findBy(id: 9999)
+ *
+ */
 open class SQLite3Adaptor : Adaptor, SmartDescription {
   
   public enum Error : Swift.Error {
@@ -29,9 +91,9 @@ open class SQLite3Adaptor : Adaptor, SmartDescription {
     case autocreate
     
     init(autocreate: Bool = false, readonly: Bool = false) {
-      if readonly        { self = .readOnly }
+      if readonly        { self = .readOnly   }
       else if autocreate { self = .autocreate }
-      else               { self = .readWrite }
+      else               { self = .readWrite  }
     }
     
     var flags : Int32 {
@@ -81,6 +143,9 @@ open class SQLite3Adaptor : Adaptor, SmartDescription {
   
   // MARK: - Channels
 
+  /**
+   * Open a SQLite channel and execute the SQL required for the runtime options.
+   */
   open func openChannel() throws -> AdaptorChannel {
     var db : OpaquePointer? = nil
     let rc = sqlite3_open_v2(path, &db, openMode.flags, nil)
@@ -131,12 +196,23 @@ open class SQLite3Adaptor : Adaptor, SmartDescription {
   
   // MARK: - Model
   
+  /**
+   * Fetches a database model based on the SQL catalog of the database.
+   *
+   * Note: The `FancyModelMaker` can be used to convert the Model to one with
+   *       Swiftier model names.
+   */
   public func fetchModel() throws -> Model {
     let channel = try openChannelFromPool()
     defer { releaseChannel(channel) }
     
     return try SQLite3ModelFetch(channel: channel).fetchModel()
   }
+  /**
+   * Fetches the current database 'model tag'. The model tag is an indicator
+   * whether the database catalog may have changed (i.e. whether the model
+   * should be rebuilt).
+   */
   public func fetchModelTag() throws -> ModelTag {
     let channel = try openChannelFromPool()
     defer { releaseChannel(channel) }
