@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 24/02/17.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2020 ZeeZide GmbH. All rights reserved.
 //
 
 /**
@@ -34,7 +34,7 @@ open class AdaptorDataSource : AccessDataSource<AdaptorRecord> {
     /* determine name of datasource entity */
     
     let ename : String
-    if let entityName = entityName {
+    if let entityName = _entityName {
       ename = entityName
     }
     else if let fs = fetchSpecification, let entityName = fs.entityName {
