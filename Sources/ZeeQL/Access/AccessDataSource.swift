@@ -3,34 +3,34 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 24/02/17.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2020 ZeeZide GmbH. All rights reserved.
 //
 
 /**
  * This class has a set of operations targetted at SQL based applications. It
  * has three major subclasses with specific characteristics:
  *
- * - DatabaseDataSource
- * - ActiveDataSource
- * - AdaptorDataSource
+ * - `DatabaseDataSource`
+ * - `ActiveDataSource`
+ * - `AdaptorDataSource`
  *
  * All of those datasources are very similiar in the operations they provide,
  * but they differ in the feature set and overhead.
  *
- * DatabaseDataSource works on top of an EditingContext. It has the biggest
+ * `DatabaseDataSource` works on top of an `EditingContext`. It has the biggest
  * overhead but provides features like object uniquing/registry. Eg if you need
  * to fetch a bunch of objects and then perform subsequent processing on them
  * (for example permission checks), it is convenient because the context
  * remembers the fetched objects. This datasource returns DatabaseObject's as
  * specified in the associated Model.
  *
- * ActiveDataSource is similiar to DatabaseDataSource, but it directly works
+ * `ActiveDataSource` is similiar to `DatabaseDataSource`, but it directly works
  * on a channel. It has a reasonably small overhead and still provides a good
  * feature set, like object mapping or prefetching.
  *
- * Finally AdaptorDataSource. This datasource does not perform object mapping,
- * that is, it returns Map objects and works directly on top of an
- * AdaptorChannel.
+ * Finally `AdaptorDataSource`. This datasource does not perform object mapping,
+ * that is, it returns `AdaptorRecord` objects and works directly on top of an
+ * `AdaptorChannel`.
  */
 open class AccessDataSource<Object: SwiftObject> : DataSource<Object> {
   

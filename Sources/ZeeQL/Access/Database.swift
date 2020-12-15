@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 26/02/2017.
-//  Copyright © 2017-2019 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2020 ZeeZide GmbH. All rights reserved.
 //
 
 /**
@@ -28,15 +28,18 @@ open class Database : EquatableType, Equatable {
   public let adaptor           : Adaptor
   public let typeLookupContext : ObjectTypeLookupContext?
   
+  @inlinable
   public init(adaptor: Adaptor, objectTypes: ObjectTypeLookupContext? = nil) {
     self.adaptor           = adaptor
     self.typeLookupContext = objectTypes
   }
   
+  @inlinable
   public var model : Model? { return adaptor.model }
   
   // TODO
   
+  @inlinable
   public subscript(entity n: String) -> Entity? {
     return model?[entity:n ]
   }
@@ -47,6 +50,7 @@ open class Database : EquatableType, Equatable {
    * isn't (eg a POSO), the model will be asked whether one of the entities is
    * mapped to the given object.
    */
+  @inlinable
   func entityForObject(_ object: Any?) -> Entity? {
     guard let object = object else { return nil }
     
@@ -56,6 +60,7 @@ open class Database : EquatableType, Equatable {
     return model.entityForObject(object)
   }
   
+  @inlinable
   func classForEntity(_ entity: Entity?) -> DatabaseObject.Type? {
     if let t = entity?.objectType { return t }
     
@@ -69,6 +74,7 @@ open class Database : EquatableType, Equatable {
   
   // MARK: - Operations
   
+  @inlinable
   public func performDatabaseOperation(_ op: DatabaseOperation) throws {
     let channel = DatabaseChannel(database: self)
     try channel.performDatabaseOperations([ op ])
@@ -77,6 +83,7 @@ open class Database : EquatableType, Equatable {
   /**
    * Performs the set of database operations in a single database transaction.
    */
+  @inlinable
   public func performDatabaseOperations(_ ops: [ DatabaseOperation ]) throws {
     guard !ops.isEmpty else { return } /* nothing to do */
     
@@ -96,36 +103,62 @@ open class Database : EquatableType, Equatable {
   
   // MARK: - Equatable
   
+  @inlinable
   public func isEqual(to object: Any?) -> Bool {
     guard let other = object as? Database else { return false }
     return other.isEqual(to: self)
   }
+  @inlinable
   public func isEqual(to other: Database) -> Bool {
     if self === other { return true }
     return false
   }
   
+  @inlinable
   public static func ==(lhs: Database, rhs: Database) -> Bool {
     return lhs.isEqual(to: rhs)
   }
 }
 
-// Essentially: NSClassFromString() ...
+/**
+ * Essentially: NSClassFromString() ...
+ *
+ * In Swift we can't lookup classes by name yet, hence a mapping needs to
+ * be provided. This protocol allows for that.
+ *
+ * A very simple dictionary based implementation is
+ * `StaticObjectTypeLookupContext`.
+ */
 public protocol ObjectTypeLookupContext {
   
   func lookupObjectType(name: String) -> DatabaseObject.Type?
   
 }
 
-// A way to easily register a set of types
+/**
+ * A way to easily register a set of Entity name to Swift class mappings.
+ * The classes need to conform to the `DatabaseObject` protocol.
+ *
+ * Example:
+ *
+ *    let db = Database(adaptor: adaptor,
+ *                      objectTypes: StaticObjectTypeLookupContext([
+ *        "Person"  : Person.self,
+ *        "Address" : Address.self
+ *    ]))
+ *
+ */
 public struct StaticObjectTypeLookupContext : ObjectTypeLookupContext {
 
+  @usableFromInline
   let types : [ String : DatabaseObject.Type ]
   
+  @inlinable
   public init(_ types: [ String : DatabaseObject.Type ]) {
     self.types = types
   }
   
+  @inlinable
   public init(_ types: [ DatabaseObject.Type ]) {
     var map = [ String : DatabaseObject.Type ]()
     
@@ -136,6 +169,7 @@ public struct StaticObjectTypeLookupContext : ObjectTypeLookupContext {
     self.types = map
   }
 
+  @inlinable
   public func lookupObjectType(name: String) -> DatabaseObject.Type? {
     return types[name]
   }

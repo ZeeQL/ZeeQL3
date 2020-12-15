@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 24/02/17.
-//  Copyright © 2017-2019 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2020 ZeeZide GmbH. All rights reserved.
 //
 
 /**
@@ -12,6 +12,11 @@
  *
  * The ZeeQL DataSources always have an FetchSpecification which specifies
  * the environment for fetches.
+ *
+ * The DataSource is very general, but ORM specific subclasses include:
+ * - DatabaseDataSource
+ * - ActiveDataSource
+ * - AdaptorDataSource
  */
 open class DataSource<Object: SwiftObject>: EquatableType, Equatable {
   // Used to be a protocol, but Swift 3 and generic protocols ....
