@@ -180,7 +180,11 @@ open class SQLExpression: SmartDescription {
     /* fields and values */
     
     for key in row.keys {
-      guard let attr = entity[attribute: key] else { continue }
+      guard let attr = entity[attribute: key] ?? entity[columnName: key] else {
+        globalZeeQLLogger.log("did not find attribute", key, "of", row,
+                              "in", entity)
+        continue
+      }
       if let value = row[key] {
         addInsertListAttribute(attr, value: value)
       }
