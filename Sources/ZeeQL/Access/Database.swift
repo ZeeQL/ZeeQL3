@@ -16,9 +16,10 @@
  *
  * Example:
  *
+ *     let entity = adaptor.model?[entity: "Person"]
  *     let db = Database(adaptor)
- *     let ds = db.dataSourceForEntity("person")
- *     let donald = 
+ *     let ds = ActiveDataSource<ActiveRecord>(database: db, entity: entity)
+ *     let donald =
  *           ds.findByMatchingAll("lastname", "Duck", "firstname", "Donald")
  *
  */
