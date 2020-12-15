@@ -139,7 +139,8 @@ open class AccessDataSource<Object: SwiftObject> : DataSource<Object> {
       fs = ModelFetchSpecification(entityName: entityName)
     }
     else {
-      throw AccessDataSourceError.CannotConstructFetchSpecification
+      throw AccessDataSourceError
+              .CannotConstructFetchSpecification(.missingEntity)
     }
     
     let qb  = qualifierBindings
@@ -155,7 +156,8 @@ open class AccessDataSource<Object: SwiftObject> : DataSource<Object> {
     /* apply bindings */
     if let qb = qb {
       guard let fs = try fs.fetchSpecificiationWith(bindings: qb) else {
-        throw AccessDataSourceError.CannotConstructFetchSpecification
+        throw AccessDataSourceError
+                .CannotConstructFetchSpecification(.bindingFailed)
       }
       return fs
     }
