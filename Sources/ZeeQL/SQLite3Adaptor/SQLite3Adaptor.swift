@@ -53,7 +53,7 @@ import struct Foundation.URLQueryItem
  *
  * ### AdaptorQueryType
  *
- * Adaptor itself is an `AdaptorQueryType` (like `AdaptorChannel`).
+ * `Adaptor` itself is an `AdaptorQueryType` (like `AdaptorChannel`).
  * Which means, you can queries directly against the adaptor. The adaptor will
  * then auto-create and release channels.
  *
@@ -70,7 +70,7 @@ import struct Foundation.URLQueryItem
  * can use an `AdaptorDataSource`. With or without an attached entity. See
  * the `AdaptorDataSource` class for more info.
  *
- * AdaptorDataSources return raw `AdaptorRecord` objects.
+ * `AdaptorDataSources` return raw `AdaptorRecord` objects.
  *
  * Example:
  *
@@ -86,6 +86,7 @@ open class SQLite3Adaptor : Adaptor, SmartDescription {
   }
   
   public enum OpenMode {
+    
     case readOnly
     case readWrite
     case autocreate
@@ -96,7 +97,7 @@ open class SQLite3Adaptor : Adaptor, SmartDescription {
       else               { self = .readWrite  }
     }
     
-    var flags : Int32 {
+    fileprivate var flags : Int32 {
       switch self {
         case .readOnly:   return SQLITE_OPEN_READONLY
         case .readWrite:  return SQLITE_OPEN_READWRITE
@@ -105,20 +106,32 @@ open class SQLite3Adaptor : Adaptor, SmartDescription {
     }
   }
   
-  let path     : String
-  let openMode : OpenMode
-  let options  : RuntimeOptions
+  public  let path     : String
+  public  let openMode : OpenMode
+  public  let options  : RuntimeOptions
+  private let pool     : AdaptorChannelPool?
   
-  public init(_ path: String, autocreate: Bool = false, readonly: Bool = false,
-              options: RuntimeOptions = RuntimeOptions())
+  public init(_  path    : String,
+              autocreate : Bool = false, readonly: Bool = false,
+              options    : RuntimeOptions = RuntimeOptions(),
+              pool       : AdaptorChannelPool? = nil)
   {
     self.path     = path
     self.openMode = OpenMode(autocreate: autocreate, readonly: readonly)
     self.options  = options
+    self.pool     = pool
   }
   
+  /**
+   * Returns a URL representing the connection info.
+   *
+   * Example:
+   *
+   *     sqlite3:///tmp/mydb.sqlite?mode=readonly
+   *
+   */
   public var url: URL? {
-    var url = URLComponents()
+    var url    = URLComponents()
     url.scheme = "sqlite3"
     url.path   = path
     
@@ -189,8 +202,17 @@ open class SQLite3Adaptor : Adaptor, SmartDescription {
     return channel
   }
   
+  public func openChannelFromPool() throws -> AdaptorChannel {
+    if let channel = pool?.grab() {
+      globalZeeQLLogger.info("reusing pooled channel:", channel)
+    }
+    return try openChannel()
+  }
+  
   public func releaseChannel(_ channel: AdaptorChannel) {
-    // not maintaing a pool
+    guard let pool = pool else { return }
+    assert(channel is SQLite3AdaptorChannel)
+    pool.add(channel)
   }
   
   
