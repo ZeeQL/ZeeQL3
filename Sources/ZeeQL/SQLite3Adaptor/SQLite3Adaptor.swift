@@ -204,15 +204,33 @@ open class SQLite3Adaptor : Adaptor, SmartDescription {
   
   public func openChannelFromPool() throws -> AdaptorChannel {
     if let channel = pool?.grab() {
-      globalZeeQLLogger.info("reusing pooled channel:", channel)
+      log.info("reusing pooled channel:", channel)
+      return channel
     }
-    return try openChannel()
+    do {
+      let channel = try openChannel()
+      if pool != nil {
+        log.info("opened new channel:", channel)
+      }
+      return channel
+    }
+    catch {
+      throw error
+    }
   }
   
   public func releaseChannel(_ channel: AdaptorChannel) {
-    guard let pool = pool else { return }
-    assert(channel is SQLite3AdaptorChannel)
-    pool.add(channel)
+    guard let pool = pool else {
+      return
+    }
+    if let channel = channel as? SQLite3AdaptorChannel {
+      log.info("releasing channel:", ObjectIdentifier(channel))
+      pool.add(channel)
+    }
+    else {
+      log.info("invalid channel type:", channel)
+      assert(channel is SQLite3AdaptorChannel)
+    }
   }
   
   
