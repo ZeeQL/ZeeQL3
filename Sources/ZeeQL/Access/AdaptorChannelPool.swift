@@ -48,11 +48,11 @@ public final class SingleConnectionPool: AdaptorChannelPool {
 
   private let maxAge          : TimeInterval
   private let lock            = NSLock()
-  private let expirationQueue = DispatchQueue(label: "de.zeezide.zeeql.pck.expire")
+  private let expirationQueue = DispatchQueue(label: "de.zeezide.zeeql.expire")
   private var entry           : Entry? // here we just pool one :-)
   private var gc              : DispatchWorkItem?
   
-  init(maxAge: TimeInterval) {
+  public init(maxAge: TimeInterval) {
     self.maxAge = maxAge
   }
   
