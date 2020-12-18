@@ -286,6 +286,13 @@ public extension AdaptorChannel {
   
 }
 
+/**
+ * A `[ String : Any? ]` dictionary with an optional value to represent
+ * NULL columns.
+ *
+ * So not mix up w/ `AdaptorRecord`, which are primarily used for fetching
+ * (to share the keys of a schema)
+ */
 public typealias AdaptorRow = Dictionary<String, Any?>
 
 public extension AdaptorChannel {

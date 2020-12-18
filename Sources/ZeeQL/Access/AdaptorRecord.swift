@@ -10,6 +10,10 @@
  * A specialized Dictionary<String, Any?> to be used for raw records returned
  * from the database.
  * One feature is that it shares all keys between the records.
+ *
+ * Note: Do not confuse w/ `AdaptorRow`, which is a straight
+ *         `[ String : Any? ]`
+ *       dictionary with an optional value to represent NULL columns.
  */
 open class AdaptorRecord : SwiftObject, SmartDescription {
   // Note: used to be a struct, but for DataSource we need an object, and well.
