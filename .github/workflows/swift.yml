@@ -18,7 +18,9 @@ jobs:
     container: ${{ matrix.image }}
     steps:
       - name: Install SQLite
-        run: apt-get -y install libsqlite3-dev
+        run: |
+          apt-get update
+          apt-get -y install libsqlite3-dev
       - name: Checkout Repository
         uses: actions/checkout@v2
       - name: Build Swift Debug Package
