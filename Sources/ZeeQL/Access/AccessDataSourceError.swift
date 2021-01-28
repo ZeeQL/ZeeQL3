@@ -3,11 +3,17 @@
 //  ZeeQL
 //
 //  Created by Helge Heß on 22.08.19.
-//  Copyright © 2019 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2019-2020 ZeeZide GmbH. All rights reserved.
 //
 
 public enum AccessDataSourceError : Swift.Error { // cannot nest in generic
-  case CannotConstructFetchSpecification
+  public enum ConstructionErrorReason {
+    case missingEntity
+    case bindingFailed
+    case invalidPrimaryKey
+  }
+
+  case CannotConstructFetchSpecification(ConstructionErrorReason)
   case CannotConstructCountFetchSpecification
   case MissingEntity
   case CountFetchReturnedNoResults

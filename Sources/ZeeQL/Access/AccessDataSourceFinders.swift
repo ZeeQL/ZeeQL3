@@ -66,7 +66,8 @@ public extension AccessDataSource {
    */
   func fetchObjectsFor(ids values: Any..., cb: ( Object ) -> Void) throws {
     guard let pkeys = entity?.primaryKeyAttributeNames, pkeys.count == 1 else {
-      throw AccessDataSourceError.CannotConstructFetchSpecification
+      throw AccessDataSourceError
+              .CannotConstructFetchSpecification(.invalidPrimaryKey)
     }
     
     try fetchObjectsFor(attribute: pkeys[0], with: values, cb: cb)
@@ -83,7 +84,8 @@ public extension AccessDataSource {
    */
   func fetchObjectsFor(ids values: Any...) throws -> [ Object ] {
     guard let pkeys = entity?.primaryKeyAttributeNames, pkeys.count == 1 else {
-      throw AccessDataSourceError.CannotConstructFetchSpecification
+      throw AccessDataSourceError
+              .CannotConstructFetchSpecification(.invalidPrimaryKey)
     }
     
     var objects = [ Object ]()
@@ -162,13 +164,15 @@ public extension AccessDataSource { // Finders
     guard !_pkeyVals.isEmpty else { return nil }
     
     guard let findEntity = entity else {
-      throw AccessDataSourceError.CannotConstructFetchSpecification
+      throw AccessDataSourceError
+              .CannotConstructFetchSpecification(.missingEntity)
     }
     
     guard let pkeys = findEntity.primaryKeyAttributeNames, !pkeys.isEmpty else{
       // TODO: hm, should we invoke a 'primary key find' policy here? (like
       //       matching 'id' or 'tablename_id')
-      throw AccessDataSourceError.CannotConstructFetchSpecification
+      throw AccessDataSourceError
+              .CannotConstructFetchSpecification(.invalidPrimaryKey)
      }
     
     /* build qualifier for primary keys */

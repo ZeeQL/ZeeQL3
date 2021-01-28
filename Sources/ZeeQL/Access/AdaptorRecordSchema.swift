@@ -1,11 +1,21 @@
 //
-//  File.swift
+//  AdaptorRecordSchema.swift
 //  ZeeQL3
 //
 //  Created by Helge Hess on 08.05.17.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2020 ZeeZide GmbH. All rights reserved.
 //
 
+/**
+ * The schema is used for `AdaptorRecord` objects. It represents the
+ * keys in the record.
+ *
+ * This is a class because the same schema is used for all objects.
+ *
+ * There are two builtin implementations for this:
+ * - `AdaptorRecordSchemaWithAttributes` (w/ resolved Attribute values)
+ * - `AdaptorRecordSchemaWithNames`      (just the attribute names)
+ */
 public protocol AdaptorRecordSchema : class, SmartDescription {
   // often shared between all records of a single query, hence a class
   var attributes     : [ Attribute ]? { get }

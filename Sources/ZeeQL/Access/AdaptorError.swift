@@ -3,7 +3,7 @@
 //  ZeeQL3
 //
 //  Created by Helge Hess on 29/04/17.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2020 ZeeZide GmbH. All rights reserved.
 //
 
 /**
@@ -36,6 +36,8 @@ public enum AdaptorChannelError : Swift.Error {
   case QueryFailed(sql: String, error: Swift.Error)
   
   case CouldNotOpenChannel(Swift.Error?)
+  
+  case RecordNotFound
 }
 
 // TODO: consolidate on just AdaptorError

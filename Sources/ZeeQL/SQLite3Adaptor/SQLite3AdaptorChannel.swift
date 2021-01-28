@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 03/03/17.
-//  Copyright © 2017-2019 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2020 ZeeZide GmbH. All rights reserved.
 //
 
 import struct Foundation.Data
@@ -443,5 +443,15 @@ open class SQLite3AdaptorChannel : AdaptorChannel {
     guard error != SQLITE_OK else { return nil }
     guard let cmsg = sqlite3_errmsg(handle) else { return nil }
     return String(cString: cmsg)
+  }
+}
+
+extension SQLite3AdaptorChannel: CustomStringConvertible {
+  
+  public var description: String {
+    var ms = "<SQLiteChannel: \(handle)"
+    if !closeHandle { ms += " not-closing" }
+    ms += ">"
+    return ms
   }
 }

@@ -45,6 +45,7 @@ public extension AdaptorQueryType {
    *
    * TODO: document use of attributes.
    */
+  @inlinable
   func querySQL(_ sql: String, _ optAttrs: [ Attribute ]?)
          throws -> [ AdaptorRecord ]
   {
@@ -56,6 +57,7 @@ public extension AdaptorQueryType {
   /**
    * Execute the raw SQL and return the results as an array of `AdaptorRecord`s.
    */
+  @inlinable
   func querySQL(_ sql: String) throws -> [ AdaptorRecord ] {
     var results = [ AdaptorRecord ]()
     try querySQL(sql, nil) { results.append($0) }
@@ -65,6 +67,7 @@ public extension AdaptorQueryType {
   /**
    * Execute the raw SQL and call the result callback for every record returned.
    */
+  @inlinable
   func querySQL(_ sql: String, cb: ( AdaptorRecord ) throws -> Void) throws {
     try querySQL(sql, nil, cb: cb)
   }
@@ -87,6 +90,7 @@ public extension AdaptorQueryType { // typed SQL queries
    *       print("\(name): #\(count)")
    *     }
    */
+  @inlinable
   func select<T0>(_ sql: String, cb : ( T0 ) throws -> Void) throws
         where T0 : AdaptorQueryColumnRepresentable
   {
@@ -95,6 +99,7 @@ public extension AdaptorQueryType { // typed SQL queries
     }
   }
   
+  @inlinable
   func select<T0, T1>(_ sql: String, cb : ( T0, T1 ) throws -> Void) throws
         where T0 : AdaptorQueryColumnRepresentable,
               T1 : AdaptorQueryColumnRepresentable
@@ -105,6 +110,7 @@ public extension AdaptorQueryType { // typed SQL queries
     }
   }
   
+  @inlinable
   func select<T0, T1, T2>(_ sql: String,
                           cb : ( T0, T1, T2 ) throws -> Void) throws
         where T0 : AdaptorQueryColumnRepresentable,
@@ -118,6 +124,7 @@ public extension AdaptorQueryType { // typed SQL queries
     }
   }
   
+  @inlinable
   func select<T0, T1, T2, T3>(_ sql: String,
                               cb: ( T0, T1, T2, T3 ) throws -> Void) throws
         where T0 : AdaptorQueryColumnRepresentable,
@@ -133,6 +140,7 @@ public extension AdaptorQueryType { // typed SQL queries
     }
   }
   
+  @inlinable
   func select<T0, T1, T2, T3, T4>(_ sql: String,
                                   cb: ( T0, T1, T2, T3, T4 ) throws -> Void)
         throws
@@ -156,6 +164,7 @@ public extension AdaptorQueryType { // typed SQL queries
 
   // MARK: - And return typed based variants
   
+  @inlinable
   func select<T0>(_ sql: String) throws -> [ T0 ]
         where T0 : AdaptorQueryColumnRepresentable
   {
@@ -165,6 +174,8 @@ public extension AdaptorQueryType { // typed SQL queries
     }
     return records
   }
+  
+  @inlinable
   func select<T0, T1>(_ sql: String) throws -> [ ( T0, T1 ) ]
         where T0 : AdaptorQueryColumnRepresentable,
               T1 : AdaptorQueryColumnRepresentable
@@ -178,4 +189,23 @@ public extension AdaptorQueryType { // typed SQL queries
     return records
   }
   
+}
+
+public extension AdaptorQueryType {
+  
+  @inlinable
+  func fetchOne<T0>(_ sql: String) throws -> T0
+         where T0 : AdaptorQueryColumnRepresentable
+  {
+    var optResult : T0? = nil
+    
+    try querySQL(sql) { result in
+      optResult = try T0.fromAdaptorQueryValue(result[0])
+    }
+    
+    guard let result = optResult else {
+      throw AdaptorChannelError.RecordNotFound
+    }
+    return result
+  }
 }

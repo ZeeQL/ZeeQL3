@@ -62,6 +62,7 @@ open class DatabaseChannelBase {
    *
    * Be sure to always commit or rollback the transaction!
    */
+  @usableFromInline
   func begin() throws {
     guard !isInTransaction else { throw Error.TransactionInProgress }
     
@@ -87,6 +88,7 @@ open class DatabaseChannelBase {
     }
   }
   
+  @usableFromInline
   func commitOrRollback(doRollback: Bool = false) throws {
     guard let ac = adaptorChannel else { return } // noop
       // not considered an error, nothing happened
@@ -111,6 +113,7 @@ open class DatabaseChannelBase {
    * Commits a database transaction. This also releases the associated adaptor
    * channel back to the connection pool.
    */
+  @inlinable
   open func commit() throws {
     try commitOrRollback(doRollback: false)
   }
@@ -119,6 +122,7 @@ open class DatabaseChannelBase {
    * Rolls back a database transaction. This also releases the associated
    * adaptor channel back to the connection pool.
    */
+  @inlinable
   func rollback() throws {
     try commitOrRollback(doRollback: true)
   }
