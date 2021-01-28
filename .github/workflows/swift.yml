@@ -38,9 +38,13 @@ jobs:
           xcode-version: 12.2
       - name: Checkout Repository
         uses: actions/checkout@v2
+      - name: Build Xcode Project
+        run: xcodebuild -project ZeeQL3.xcodeproj -scheme ZeeQL
       - name: Build Swift Debug Package
         run: swift build -c debug
       - name: Build Swift Release Package
         run: swift build -c release
-#      - name: Run Tests
+#      - name: Run Package Tests
 #        run: swift test
+      - name: Run Xcode Tests
+        run: xcodebuild -project ZeeQL3.xcodeproj -scheme ZeeQL test
