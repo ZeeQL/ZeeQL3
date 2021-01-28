@@ -17,6 +17,8 @@ jobs:
           - swift:5.3.2-bionic
     container: ${{ matrix.image }}
     steps:
+      - name: Install SQLite
+        run: sudo apt-get -y install libsqlite3-dev
       - name: Checkout Repository
         uses: actions/checkout@v2
       - name: Build Swift Debug Package
