@@ -42,5 +42,5 @@ jobs:
         run: swift build -c debug
       - name: Build Swift Release Package
         run: swift build -c release
-      - name: Run Tests
-        run: swift test
+#      - name: Run Tests
+#        run: swift test
