@@ -3,7 +3,7 @@
 //  ZeeQL3
 //
 //  Created by Helge Hess on 08.05.17.
-//  Copyright © 2017-2020 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2021 ZeeZide GmbH. All rights reserved.
 //
 
 /**
@@ -16,7 +16,7 @@
  * - `AdaptorRecordSchemaWithAttributes` (w/ resolved Attribute values)
  * - `AdaptorRecordSchemaWithNames`      (just the attribute names)
  */
-public protocol AdaptorRecordSchema : class, SmartDescription {
+public protocol AdaptorRecordSchema : AnyObject, SmartDescription {
   // often shared between all records of a single query, hence a class
   var attributes     : [ Attribute ]? { get }
   var attributeNames : [ String ]     { get }

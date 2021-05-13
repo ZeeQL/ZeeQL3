@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 24/02/17.
-//  Copyright © 2017-2020 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2021 ZeeZide GmbH. All rights reserved.
 //
 
 /**
@@ -50,7 +50,7 @@ open class DataSource<Object: SwiftObject>: EquatableType, Equatable {
  * constraint).
  * Like `AnyObject` w/o the `@objc`.
  */
-public protocol SwiftObject: class {
+public protocol SwiftObject: AnyObject {
   // is there a standard protocol for this? `AnyObject` also does @objc ...
 }
 

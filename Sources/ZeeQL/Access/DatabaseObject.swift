@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 26/02/2017.
-//  Copyright © 2017-2019 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2021 ZeeZide GmbH. All rights reserved.
 //
 
 /**
@@ -171,7 +171,7 @@ public enum DatabaseObjectError : Swift.Error {
  *
  * Special KVC functions for toMany keys in ORM objects.
  */
-public protocol RelationshipManipulation : class, KeyValueCodingType {
+public protocol RelationshipManipulation : AnyObject, KeyValueCodingType {
   
   /**
    * Add an object to the array stored under '_key'.

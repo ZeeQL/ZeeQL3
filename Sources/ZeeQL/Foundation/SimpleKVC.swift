@@ -3,7 +3,7 @@
 //  ZeeQL3
 //
 //  Created by Helge Heß on 6/1/16.
-//  Copyright © 2016-2019 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2016-2021 ZeeZide GmbH. All rights reserved.
 //
 
 import class Foundation.NSObject
@@ -14,14 +14,14 @@ public protocol KeyValueCodingType {
   
 }
 
-public protocol MutableKeyValueCodingType : class {
+public protocol MutableKeyValueCodingType : AnyObject {
   // MutableKeyValueCodingType only really makes sense for classes, right?
   // Well, it could return 'self' with the updated struct?
   
   func takeValue(_ value : Any?, forKey k: String) throws
   
 }
-public protocol KeyValueCodingTargetValue : class {
+public protocol KeyValueCodingTargetValue : AnyObject {
   // Again, only makes sense for classes? But we'd like to have structs.
   func setValue(_ value: Any?) throws
 }
