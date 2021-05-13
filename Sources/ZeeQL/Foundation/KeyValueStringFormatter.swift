@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 24/02/17.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2021 ZeeZide GmbH. All rights reserved.
 //
 
 import Foundation
@@ -244,7 +244,7 @@ final class KeyValueStringFormatter : Formatter {
   }
 }
 
-fileprivate protocol KeyValueStringFormatterValueHandler: class {
+fileprivate protocol KeyValueStringFormatterValueHandler: AnyObject {
   // Swift 3: Cannot nest protocols in classes, hence outside of the class
   // - if that isn't a class protocol, swiftc 3.1.1 crashes on Linux
   

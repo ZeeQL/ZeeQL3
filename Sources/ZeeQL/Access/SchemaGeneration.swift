@@ -3,10 +3,10 @@
 //  ZeeQL3
 //
 //  Created by Helge Hess on 08.06.17.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2021 ZeeZide GmbH. All rights reserved.
 //
 
-public protocol SchemaGeneration: class {
+public protocol SchemaGeneration: AnyObject {
   
   var adaptor : Adaptor     { get }
   var log     : ZeeQLLogger { get }

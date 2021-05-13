@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 18/02/2017.
-//  Copyright © 2017-2019 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2021 ZeeZide GmbH. All rights reserved.
 //
 
 /**
@@ -17,7 +17,7 @@
  * may need to be 'filled' by querying the database information schema. This can
  * involve incomplete attribute sets or a pattern name.
  */
-public protocol Entity: class, EquatableType, SmartDescription {
+public protocol Entity: AnyObject, EquatableType, SmartDescription {
 
   var name                     : String              { get }
   var externalName             : String?             { get }

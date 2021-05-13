@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 21/02/2017.
-//  Copyright © 2017-2019 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2021 ZeeZide GmbH. All rights reserved.
 //
 
 import struct Foundation.URL
@@ -59,7 +59,7 @@ import struct Foundation.URL
  *     let user = ds.findBy(id: 9999)
  * 
  */
-public protocol Adaptor : class, AdaptorQueryType, EquatableType {
+public protocol Adaptor : AnyObject, AdaptorQueryType, EquatableType {
   
   func openChannelFromPool() throws -> AdaptorChannel
   func openChannel()         throws -> AdaptorChannel
