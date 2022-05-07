@@ -900,7 +900,7 @@ class CodableModelTests: XCTestCase {
   }
   
   func testSchemaWithToOneInlineCycle() {
-    // TODO: this needs to throw - w/o optional this can't create
+    // This needs to throw - w/o optional this can't create
     
     class Person : CodableObjectType {
       var firstname  : String
@@ -919,25 +919,27 @@ class CodableModelTests: XCTestCase {
       }
     #else
       do {
-        try reflector.add(Person .self)
-        XCTAssert(false, "did not throw error")
+        try reflector.add(Person.self)
+        XCTFail("did not throw error")
       }
       catch let error as CodableModelDecoder.Error {
         if case .reflectionDepthExceeded = error {
           // good
+          return
         }
         else {
-          XCTAssert(false, "unexpected error: \(error)")
+          XCTFail("unexpected error: \(error)")
         }
       }
       catch {
-        XCTAssert(false, "unexpected error")
+        XCTFail("unexpected error")
       }
     #endif
 
     // we should never get here
     let model = reflector.buildModel()
-    model.dump()
+    model.dump() // crashes on unowned reference in -description
+    XCTFail("Reached unexpected point")
   }
   
   func testSchemaWithOptionalToOneInlineCycle() {

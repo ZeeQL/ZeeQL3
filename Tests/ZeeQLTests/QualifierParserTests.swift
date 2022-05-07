@@ -173,28 +173,28 @@ class QualifierParserTests: XCTestCase {
       XCTAssertEqual(v, "lastname = ", "1st raw value doesn't match")
     }
     else {
-      XCTAssertTrue(false, "first part is not a SQL value: \(parts[0])")
+      XCTFail("first part is not a SQL value: \(parts[0])")
     }
     
     if case .QualifierVariable(let id) = parts[1] {
       XCTAssertEqual(id, "lastname", "2nd part qvar doesn't match")
     }
     else {
-      XCTAssertTrue(false, "2nd part is not a QualifierVariable: \(parts[1])")
+      XCTFail("2nd part is not a QualifierVariable: \(parts[1])")
     }
     
     if case .RawSQLValue(let v) = parts[2] {
       XCTAssertEqual(v, " AND balance = ", "3rd raw value doesn't match")
     }
     else {
-      XCTAssertTrue(false, "3rd part is not a SQL value: \(parts[2])")
+      XCTFail("3rd part is not a SQL value: \(parts[2])")
     }
 
     if case .QualifierVariable(let id) = parts[3] {
       XCTAssertEqual(id, "balance", "4th part qvar doesn't match")
     }
     else {
-      XCTAssertTrue(false, "4th part is not a QualifierVariable: \(parts[3])")
+      XCTFail("4th part is not a QualifierVariable: \(parts[3])")
     }
   }
 

@@ -81,7 +81,7 @@ class AdapterActiveRecordTests: XCTestCase {
       try person.save()
     }
     catch {
-      XCTAssert(false, "save failed: \(error)")
+      XCTFail("save failed: \(error)")
     }
     if verbose { print("after save: \(person)") }
     
@@ -116,7 +116,7 @@ class AdapterActiveRecordTests: XCTestCase {
       try refetch?.delete()
     }
     catch {
-      XCTAssert(false, "delete failed: \(error)")
+      XCTFail("delete failed: \(error)")
     }
   }
 
