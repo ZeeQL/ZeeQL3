@@ -919,19 +919,19 @@ class CodableModelTests: XCTestCase {
       }
     #else
       do {
-        try reflector.add(Person .self)
-        XCTAssert(false, "did not throw error")
+        try reflector.add(Person.self)
+        XCTFail("did not throw error")
       }
       catch let error as CodableModelDecoder.Error {
         if case .reflectionDepthExceeded = error {
           // good
         }
         else {
-          XCTAssert(false, "unexpected error: \(error)")
+          XCTFail("unexpected error: \(error)")
         }
       }
       catch {
-        XCTAssert(false, "unexpected error")
+        XCTFail("unexpected error")
       }
     #endif
 
