@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 28/02/17.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2022 ZeeZide GmbH. All rights reserved.
 //
 
 public struct NotQualifier : Qualifier, Equatable {
@@ -35,7 +35,9 @@ public struct NotQualifier : Qualifier, Equatable {
   public func qualifierWith(bindings: Any?, requiresAll: Bool) throws
               -> Qualifier?
   {
-    return try qualifierWith(bindings: bindings, requiresAll: requiresAll)?.not
+    return try qualifier
+      .qualifierWith(bindings: bindings, requiresAll: requiresAll)?
+      .not
   }
   
   
