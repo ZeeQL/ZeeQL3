@@ -3,7 +3,7 @@
 //  ZeeQL3
 //
 //  Created by Helge Hess on 14/04/17.
-//  Copyright © 2017-2019 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2021 ZeeZide GmbH. All rights reserved.
 //
 
 /**
@@ -49,7 +49,7 @@ open class SQLite3ModelFetch: AdaptorModelFetch {
   public func describeDatabaseNames(like: String?) throws -> [String] {
     // TBD: what about the _like? Which syntax is expected?
     var dbNames = [ String ]()
-    try channel.querySQL("pragma database_list") { record in
+    try channel.querySQL("PRAGMA database_list") { record in
       if let name = record["name"] as? String, name != "temp" {
         dbNames.append(name)
       }
@@ -89,14 +89,14 @@ open class SQLite3ModelFetch: AdaptorModelFetch {
   func _fetchColumnsOfTable(_ table: String) throws -> [ AdaptorRecord ] {
     // keys: cid, name, type, notnull, dflt_value, pk
     let records : [ AdaptorRecord ] =
-                      try channel.querySQL("pragma table_info(\(table))")
+                      try channel.querySQL("PRAGMA table_info(\(table))")
     return records
   }
   
   func _fetchForeignKeysOfTable(_ table: String) throws -> [ AdaptorRecord ] {
     // keys: id, seq, table, from, to, on_update, on_delete, match
     let records : [ AdaptorRecord ] =
-                      try channel.querySQL("pragma foreign_key_list(\(table))")
+                      try channel.querySQL("PRAGMA foreign_key_list(\(table))")
     return records
   }
   
