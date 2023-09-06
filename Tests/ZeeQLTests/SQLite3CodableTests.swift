@@ -232,16 +232,16 @@ public class AdaptorRecordDecoder<T: Decodable> : Decoder {
   
   /* Containers */
   
-  internal final class KeyedContainer<T: Decodable, Key: CodingKey>
+  internal final class KeyedContainer<D: Decodable, Key: CodingKey>
                          : KeyedDecodingContainerProtocol
   {
-    let decoder : AdaptorRecordDecoder<T>
+    let decoder : AdaptorRecordDecoder<D>
     let log     : ZeeQLLogger
 
     let codingPath : [ CodingKey ]
     let allKeys    : [ Key ]
 
-    init(decoder: AdaptorRecordDecoder<T>) {
+    init(decoder: AdaptorRecordDecoder<D>) {
       self.decoder    = decoder
       self.log        = decoder.log
       self.codingPath = decoder.codingPath
@@ -275,8 +275,8 @@ public class AdaptorRecordDecoder<T: Decodable> : Decoder {
      *         - base types column arrays, like `[Int]`,
      *         - arrays of CodableObjectType`s aka relationships
      */
-    func decode<T>(_ type: T.Type, forKey key: Key) throws -> T
-           where T : Decodable
+    func decode<X>(_ type: X.Type, forKey key: Key) throws -> X
+           where X : Decodable
     {
       switch type {
         case is RelationshipHolderType.Type:
@@ -331,9 +331,9 @@ public class AdaptorRecordDecoder<T: Decodable> : Decoder {
     }
     
     private
-    func decodeImplicitRelationshipHolder<T>(_ type: T.Type, forKey key: Key)
-      throws -> T
-      where T : Decodable
+    func decodeImplicitRelationshipHolder<X>(_ type: X.Type, forKey key: Key)
+      throws -> X
+      where X : Decodable
     {
       // Right now this is an Array, eg `var addresses : [ Address ]`.
       // We just want to return an empty array here.
@@ -346,8 +346,8 @@ public class AdaptorRecordDecoder<T: Decodable> : Decoder {
       return v
     }
     
-    func decodeOtherType<T>(_ type: T.Type, forKey key: Key) throws -> T
-      where T : Decodable
+    func decodeOtherType<X>(_ type: X.Type, forKey key: Key) throws -> X
+      where X : Decodable
     {
       log.trace("out of band type:", type, "for key:", key)
       
@@ -358,10 +358,10 @@ public class AdaptorRecordDecoder<T: Decodable> : Decoder {
     /**
      * Decode base type column arrays, like `[ Int ]`
      */
-    func decodeBaseTypeArray<T, E>(_ type: T.Type,
+    func decodeBaseTypeArray<X, E>(_ type: X.Type,
                                    _ elementType: E.Type,
-                                   forKey key: Key) throws -> T
-      where T : Decodable
+                                   forKey key: Key) throws -> X
+      where X : Decodable
     {
       log.error("TODO: Array<Int>")
       throw Error.unsupportedValueType(type)
@@ -376,9 +376,9 @@ public class AdaptorRecordDecoder<T: Decodable> : Decoder {
      * while the other was reflected on.
      */
     private
-    func decodeRelationshipHolder<T>(erasedHolderType : T.Type,
-                                     forKey key       : Key) throws -> T
-      where T : Decodable
+    func decodeRelationshipHolder<X>(erasedHolderType : X.Type,
+                                     forKey key       : Key) throws -> X
+      where X : Decodable
     {
       guard let reflectedHolderType =
         erasedHolderType as? RelationshipHolderType.Type
@@ -402,9 +402,9 @@ public class AdaptorRecordDecoder<T: Decodable> : Decoder {
      *
      * This is not actually supported in the AdaptorDecoder.
      */
-    private func decodeDecodableObject<T>(_ type: T.Type,
-                                          forKey key: Key) throws -> T
-                   where T : Decodable
+    private func decodeDecodableObject<X>(_ type: X.Type,
+                                          forKey key: Key) throws -> X
+                   where X : Decodable
     {
       log.trace(":decode:", key.stringValue, type)
       throw Error.unsupportedValueType(type) // FIXME: proper error
@@ -445,14 +445,14 @@ public class AdaptorRecordDecoder<T: Decodable> : Decoder {
       log.trace("decoded-value for key:", key, anyValue)
       return anyValue
     }
-    func decodeBaseType<T>(forKey key: Key) throws -> T {
+    func decodeBaseType<X>(forKey key: Key) throws -> X {
       let anyValue = try valueForKey(key)
-      guard let v = anyValue as? T else {
+      guard let v = anyValue as? X else {
         log.error("unexpected base value:", key,
                   "\n  value:", anyValue,
                   "\n  types:",
-                  type(of: anyValue), "vs", T.self, "\n")
-        throw Error.unsupportedValueType(T.self)
+                  type(of: anyValue), "vs", X.self, "\n")
+        throw Error.unsupportedValueType(X.self)
       }
       log.trace("decoded-key:", key, v)
       return v
@@ -542,11 +542,11 @@ public class AdaptorRecordDecoder<T: Decodable> : Decoder {
    *     var addresses : [ Address ]
    *
    */
-  internal struct UnkeyedContainer<T: Decodable> : UnkeyedDecodingContainer {
+  internal struct UnkeyedContainer<D: Decodable> : UnkeyedDecodingContainer {
     // TBD: is this also for `[ Int ]` and such? (I think we want to capture
     //      those earlier as `[Int]`, `[Float]` etc).
     let log          : ZeeQLLogger
-    let decoder      : AdaptorRecordDecoder<T>
+    let decoder      : AdaptorRecordDecoder<D>
     
     let sourceKey    : CodingKey
     
@@ -556,7 +556,7 @@ public class AdaptorRecordDecoder<T: Decodable> : Decoder {
     
     var count : Int? { return 0 } // no need to decode anything!
 
-    init(decoder : AdaptorRecordDecoder<T>, key : CodingKey) {
+    init(decoder : AdaptorRecordDecoder<D>, key : CodingKey) {
       self.decoder   = decoder
       self.log       = decoder.log
       self.sourceKey = key
@@ -571,7 +571,7 @@ public class AdaptorRecordDecoder<T: Decodable> : Decoder {
      *
      * We create our ToMany relationship in here.
      */
-    mutating func decode<T>(_ type: T.Type) throws -> T where T : Decodable {
+    mutating func decode<X>(_ type: X.Type) throws -> X where X : Decodable {
       log.trace("decode index:", currentIndex, type, "source-key:", sourceKey)
       throw Error.adaptorCannotDecodeRelationships
     }

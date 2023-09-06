@@ -77,14 +77,14 @@ extension CodableModelDecoder {
     
     // MARK: - SingleContainer
     
-    private struct SingleContainer<EntityType: Decodable>
+    private struct SingleContainer<E: Decodable>
                      : SingleValueDecodingContainer
     {
       let log          : ZeeQLLogger
-      let decoder      : CodableModelEntityDecoder<EntityType>
+      let decoder      : CodableModelEntityDecoder<E>
       var codingPath   : [ CodingKey ] { return decoder.codingPath }
       
-      init(decoder: CodableModelEntityDecoder<EntityType>) {
+      init(decoder: CodableModelEntityDecoder<E>) {
         self.decoder = decoder
         self.log     = decoder.log
       }

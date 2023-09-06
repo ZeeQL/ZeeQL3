@@ -1145,9 +1145,9 @@ open class TypedDatabaseChannel<ObjectType: DatabaseObject> : DatabaseChannelBas
     return ObjectType.self
   }
 
-  func fetchObject<ObjectType>() -> ObjectType? {
+  func fetchObject<O>() -> O? {
     guard let o = super.fetchObject() else { return nil }
-    guard let to = o as? ObjectType else {
+    guard let to = o as? O else {
       // throw something
       log.warn("fetchObject returned an unexpected type:", o, type(of: o))
       return nil
