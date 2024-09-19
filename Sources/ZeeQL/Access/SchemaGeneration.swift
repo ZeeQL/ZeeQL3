@@ -35,6 +35,8 @@ public protocol SchemaGeneration: AnyObject {
    *         FOREIGN KEY ( target_id ) REFERENCES target( target_id );
    *   ALTER TABLE table DROP CONSTRAINT table2target;
    *     - Note: constraint name must be known!
+   *
+   * SQLite doesn't support this (2023-09-06).
    */
   var supportsDirectForeignKeyModification : Bool { get }
 }
