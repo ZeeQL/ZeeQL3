@@ -246,15 +246,38 @@ open class CoreDataModelLoader : ModelLoader {
     
     // GETobjects:
     
+    if let offset = attrs["offset"], !offset.isEmpty {
+      fs.fetchOffset = Int(offset)
+      assert(fs.fetchOffset != nil)
+      assert(fs.fetchOffset ?? 0 >= 0)
+    }
+    
     if boolValue(attrs["requiresAllBindings"]) {
       fs.requiresAllQualifierBindingVariables = true
     }
-    
+    if boolValue(attrs["rawrows"])  { fs.fetchesRawRows  = true }
+    if boolValue(attrs["distinct"]) { fs.usesDistinct    = true }
+    if boolValue(attrs["deep"])     { fs.deep            = true }
+    if boolValue(attrs["readonly"]) { fs.fetchesReadOnly = true }
+    if boolValue(attrs["lock"])     { fs.locksObjects    = true }
+
     if let v = attrs["flags"]?.split(separator: ","), !v.isEmpty {
-      if v.contains("rawrows")  { fs.fetchesRawRows = true }
+      if v.contains("rawrows")  { fs.fetchesRawRows  = true }
       if v.contains("readonly") { fs.fetchesReadOnly = true }
       if v.contains("allbinds") {
-        fs.requiresAllQualifierBindingVariables = true }
+        fs.requiresAllQualifierBindingVariables = true
+      }
+    }
+    // TODO: both as XML attribute and as element
+    // TODO: prefetch
+    // TODO: ordering
+    if let v = attrs["attributes"]?.split(separator: ","), !v.isEmpty {
+      if fs.fetchAttributeNames == nil {
+        fs.fetchAttributeNames = v.map(String.init)
+      }
+      else {
+        fs.fetchAttributeNames?.append(contentsOf: v.map(String.init))
+      }
     }
     for xml in xml.childElementsWithName("attributes") {
       // <attributes>objectId,permissions</attributes>
@@ -286,10 +309,20 @@ open class CoreDataModelLoader : ModelLoader {
       }
     }
     if let xml = xml.firstChildElementWithName("sql") {
+      // TODO: pattern (it IS being used!)
+      /*
+       final Boolean pat =
+         this.getBoolAttribute((Element) sqlNodes.item(0), "pattern");
+       if (pat != null && pat)
+         hints.put("EOCustomQueryExpressionHintKeyBindPattern", s);
+       else
+         hints.put("EOCustomQueryExpressionHintKey", s);
+
+       */
       //<sql>%(select)s %(columns)s FROM %(tables)s %(where)s
       //     GROUP BY object_id;</sql>
       if let v = xml.textContent, !v.isEmpty {
-        // TODO
+        // TODO: put into hints?
       }
       else {
         log.warn("<sql> tag w/o content?", xml)
