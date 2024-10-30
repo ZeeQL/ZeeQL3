@@ -3,7 +3,7 @@
 //  ZeeQL3
 //
 //  Created by Helge Hess on 04/06/17.
-//  Copyright © 2017-2019 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
 //
 
 import struct Foundation.URL
@@ -18,7 +18,32 @@ import CoreFoundation
  * Load `Model` objects from files (vs. from the database or a code declaration)
  *
  * This version supports the format emitted by the CoreData modeling
- * application in Xcode.
+ * application in Xcode (`.xcdatamodel`/`.mom`).
+ *
+ * It also supports the GETobjects XML model:
+ *
+ * ```xml
+ * <?xml version="1.0" encoding="utf-8"?>
+ * <model version="1.0">
+ *   <entity name="ACLEntries" table="object_acl" primarykey="id"
+ *           class="OGoACLEntry" datasource="OGoACLEntries"
+ *   >
+ *     <attribute name="id"          column="object_acl_id" type="INT" />
+ *     <attribute name="objectId"    column="object_id"     type="INT" />
+ *     <attribute name="principalId" column="auth_id"       type="INT" />
+ *
+ *     <to-one name="team" to="Teams" join="principalId,id" />
+ *
+ *    <fetch name="authzCountFetch" flags="readonly,rawrows,allbinds">
+ *      <attributes>objectId</attributes>
+ *      <qualifier>objectId IN $ids</qualifier>
+ *      <sql>
+ *        %(select)s %(columns)s FROM %(tables)s %(where)s GROUP BY object_id;
+ *      </sql>
+ *    </fetch>
+ *   </entity>
+ * </model>
+ * ```
  */
 open class ModelLoader {
 
@@ -121,7 +146,7 @@ open class CoreDataModelLoader : ModelLoader {
     for node in root.childElementsWithName("fetchRequest") {
       _ = loadFetchSpecification(from: node, into: model)
     }
-    
+
     for _ in root.childElementsWithName("configurations") {
       // TODO: process configurations (@name + <memberEntity name="entity"/>)
     }
@@ -131,15 +156,13 @@ open class CoreDataModelLoader : ModelLoader {
   
   func fixupToMany(in model: Model) {
     for entry in toManyRelationshipFixups {
-      guard let destEntity = model[entity: entry.inverseEntity]
-       else {
+      guard let destEntity = model[entity: entry.inverseEntity] else {
         log.warn("did not find inverse entity of relationship:", entry)
         continue
        }
       entry.relationship.destinationEntity = destEntity // hook up, safe work
       
-      guard let revRelship = destEntity[relationship: entry.inverseName]
-       else {
+      guard let revRelship = destEntity[relationship: entry.inverseName] else {
         log.warn("did not find inverse of relationship:", entry,
                  "in", destEntity)
         continue
@@ -154,7 +177,34 @@ open class CoreDataModelLoader : ModelLoader {
   func loadFetchSpecification(from xml: XMLElement, into model: Model)
        -> FetchSpecification?
   {
-    // TODO: 
+    assert(xml.name == "fetchRequest" || xml.name == "fetch" /*Go*/)
+    
+    let attrs = xml.attributesAsDict
+    guard let name = attrs["name"], let entityName = attrs["entity"] else {
+      log.warn("fetchspec has no name or entity:", xml)
+      return nil
+    }
+    
+    guard let entity = model[entity: entityName] as? ModelEntity else {
+      log.warn("did not find entity of fetchspec:", entityName, xml)
+      return nil
+    }
+    
+    let fs = loadFetchSpecification(from: xml, entity: entity)
+    
+    if let fs = entity.fetchSpecifications[name] {
+      log.warn("duplicate fetchspecs for name:", name, "in entity:", entity, fs)
+      assertionFailure("Entity already has fetchspec \(name)")
+    }
+    
+    entity.fetchSpecifications[name] = fs
+    return fs
+  }
+  
+  func loadFetchSpecification(from xml: XMLElement, entity: Entity)
+       -> FetchSpecification?
+  {
+    // TODO:
     // faulting stuff:
     // - returnObjectsAsFaults
     // - fetchBatchSize
@@ -162,29 +212,31 @@ open class CoreDataModelLoader : ModelLoader {
     // - includeSubentities
     // State:
     // - includesPendingChanges
+    /*
+      GETobjects:
+        <fetch name="authzCountFetch" flags="readonly,rawrows,allbinds">
+          <!-- Required Parameters: 'ids' -->
+          <attributes>objectId</attributes>
+          <qualifier>objectId IN $ids</qualifier>
+          <sql>
+            %(select)s %(columns)s FROM %(tables)s %(where)s GROUP BY object_id;
+          </sql>
+        </fetch>
+     */
     
-    assert(xml.name == "fetchRequest")
+    assert(xml.name == "fetchRequest" || xml.name == "fetch" /*Go*/)
     
     let attrs = xml.attributesAsDict
-    guard let name = attrs["name"], let entityName = attrs["entity"]
-     else {
-      log.warn("fetchspec has no name or entity:", xml)
-      return nil
-     }
-    
-    guard let entity = model[entity: entityName] as? ModelEntity
-     else {
-      log.warn("did not find entity of fetchspec:", entityName, xml)
-      return nil
-     }
     
     let q : Qualifier?
     if let qs = attrs["predicateString"] { q = qualifierWith(format: qs) }
     else                                 { q = nil                       }
 
     let limit : Int?
-    if let l = attrs["fetchLimit"], !l.isEmpty { limit = Int(l) }
-    else                                       { limit = nil    }
+    if let l = attrs["fetchLimit"] ?? attrs["limit"], !l.isEmpty {
+      limit = Int(l)
+    }
+    else { limit = nil }
     
     let sos   : [ SortOrdering ]? = nil
     var fs = ModelFetchSpecification(entity: entity, qualifier: q,
@@ -192,44 +244,116 @@ open class CoreDataModelLoader : ModelLoader {
     
     fs.usesDistinct = boolValue(attrs["returnDistinctResults"])
     
-    if let fs = entity.fetchSpecifications[name] {
-      log.warn("duplicate fetchspecs for name:", name, "in entity:", entity, fs)
+    // GETobjects:
+    
+    if boolValue(attrs["requiresAllBindings"]) {
+      fs.requiresAllQualifierBindingVariables = true
     }
     
-    entity.fetchSpecifications[name] = fs
+    if let v = attrs["flags"]?.split(separator: ","), !v.isEmpty {
+      if v.contains("rawrows")  { fs.fetchesRawRows = true }
+      if v.contains("readonly") { fs.fetchesReadOnly = true }
+      if v.contains("allbinds") {
+        fs.requiresAllQualifierBindingVariables = true }
+    }
+    for xml in xml.childElementsWithName("attributes") {
+      // <attributes>objectId,permissions</attributes>
+      guard let v = xml.textContent?.split(separator: ","), !v.isEmpty else {
+        assertionFailure("<attributes> tag w/o content?")
+        continue
+      }
+      if fs.fetchAttributeNames == nil {
+        fs.fetchAttributeNames = v.map(String.init)
+      }
+      else {
+        fs.fetchAttributeNames?.append(contentsOf: v.map(String.init))
+      }
+    }
+    if let xml = xml.firstChildElementWithName("qualifier") {
+      // <qualifier>(principalId IN $authIds) AND (objectId IN $ids)</qualifier>
+      if let v = xml.textContent, !v.isEmpty {
+        if let q = QualifierParser(string: v).parseQualifier() {
+          fs.qualifier = q
+        }
+        else {
+          log.error("Could not parse qualifier:", v)
+          assertionFailure("Could not parse qualifier \(v)?")
+        }
+      }
+      else {
+        log.warn("<qualifier> tag w/o content?", xml)
+        assertionFailure("qualifier tag w/o content?")
+      }
+    }
+    if let xml = xml.firstChildElementWithName("sql") {
+      //<sql>%(select)s %(columns)s FROM %(tables)s %(where)s
+      //     GROUP BY object_id;</sql>
+      if let v = xml.textContent, !v.isEmpty {
+        // TODO
+      }
+      else {
+        log.warn("<sql> tag w/o content?", xml)
+        assertionFailure("sql tag w/o content?")
+      }
+    }
+
     return fs
   }
-  
+
   func loadEntity(from xml: XMLElement) -> Entity? {
     assert(xml.name == "entity")
     
     let attrs = xml.attributesAsDict
-    guard let name = attrs["name"] ?? attrs["representedClassName"]
+    guard let name = attrs["name"]
+            ?? attrs["representedClassName"]
+            ?? attrs["class"] // GETobjects
      else { return nil }
     
     let entity = ModelEntity(name: name)
     
-    if let v = attrs["elementID"], !v.isEmpty { entity.elementID          = v }
-    if let v = attrs["representedClassName"]  { entity.className          = v }
-    if let v = attrs["codeGenerationType"]    { entity.codeGenerationType = v }
+    if let v = attrs["datasource"], !v.isEmpty { // GETobjects
+      entity.dataSourceClassName = v
+    }
+    
+    if let v = attrs["elementID"], !v.isEmpty { entity.elementID = v }
+    if let v = attrs["representedClassName"] ?? attrs["class"] {
+      entity.className = v
+    }
+    // TBD: what is `codeGenerationType`?
+    if let v = attrs["codeGenerationType"] { entity.codeGenerationType = v }
     
     // support 'externalName' in userdata
     var ud = loadUserInfo(from: xml.firstChildElementWithName("userInfo"))
     if let extName = ud.removeValue(forKey: "externalName"), !extName.isEmpty {
       entity.externalName = extName
     }
-    
+    else if let v = attrs["table"], !v.isEmpty { // GETobjects
+      entity.externalName = v
+    }
+    else if let v = attrs["tableNameLike"], !v.isEmpty { // GETobjects
+      entity.externalName = v
+      entity.isExternalNamePattern = true
+    }
+    if let v = attrs["schema"], !v.isEmpty { entity.schemaName = v } // Go
+    if boolValue(attrs["readonly"]) { entity.isReadOnly = true } // Go
+    if let v = attrs["restrictingQualifier"] { // Go
+      entity.restrictingQualifier = QualifierParser(string: v).parseQualifier()
+    }
+
     var idAttribute : Attribute? = nil
     for attribute in xml.childElementsWithName("attribute") {
       guard let attr = loadAttribute(from: attribute) else { continue }
       entity.attributes.append(attr)
       if attr.name == "id" { idAttribute = attr }
     }
-    
+    if let pkeyName = attrs["primarykey"], !pkeyName.isEmpty { // GETobjects
+      entity.primaryKeyAttributeNames = [ pkeyName ]
+    }
+
     var toManyRelships = [ ( ModelRelationship, XMLElement ) ]()
     for rs in xml.childElementsWithName("relationship") {
       guard let ( attr, relship ) = loadRelationship(from: rs, entity: entity)
-         else { continue }
+       else { continue }
       
       if let attr = attr { entity.attributes.append(attr) }
       entity.relationships.append(relship)
@@ -237,18 +361,42 @@ open class CoreDataModelLoader : ModelLoader {
       // remember for inverse processing
       if relship.isToMany { toManyRelships.append((relship, rs)) }
     }
-    
+    for rs in xml.childElementsWithName("to-one") { // GETobjects
+      guard let ( attr, relship ) = loadRelationship(from: rs, entity: entity)
+       else { continue }
+      assert(attr == nil, "not expected w/ Go XML")
+      assert(!relship.isToMany)
+      if let attr = attr { entity.attributes.append(attr) }
+      entity.relationships.append(relship)
+      
+      // remember for inverse processing
+      if relship.isToMany { toManyRelships.append((relship, rs)) }
+    }
+    for rs in xml.childElementsWithName("to-many") { // GETobjects
+      guard let ( attr, relship ) = loadRelationship(from: rs, entity: entity)
+       else { continue }
+      assert(attr == nil, "not expected w/ Go XML")
+      assert(relship.isToMany)
+      if let attr = attr { entity.attributes.append(attr) }
+      entity.relationships.append(relship)
+      
+      // remember for inverse processing
+      if relship.isToMany { toManyRelships.append((relship, rs)) }
+    }
+
     addPrimaryKeyIfNecessary(to: entity, idAttribute: idAttribute)
     
     for ( toManyRS, node ) in toManyRelships {
       let attrs = node.attributesAsDict
       
-      guard let iname = attrs["inverseName"], !iname.isEmpty
-       else {
-        log.warn("Consistency Error:", toManyRS.name, "relationship does not",
-                 "have an inverse, this is an advanced setting")
+      guard let iname = attrs["inverseName"], !iname.isEmpty else {
+        #if false // this happens w/ GETobjects templates, need to fixup later?
+        log.warn("Consistency Error: \(entity.name).\(toManyRS.name)",
+                 "relationship does not have an inverse set,",
+                 "this is an advanced setting")
+        #endif
         continue
-       }
+      }
       
       let ient = attrs["inverseEntity"] ?? toManyRS.destinationEntityName
       let entry = ToManyEntry(entity: entity, relationship: toManyRS,
@@ -257,6 +405,24 @@ open class CoreDataModelLoader : ModelLoader {
       toManyRelationshipFixups.append(entry)
     }
     
+    // Go also has `<operation>` to specify `EOAdaptorOperation`s,
+    // but apparently unused.
+    for node in xml.childElementsWithName("fetch") { // GETobjects
+      let attrs = node.attributesAsDict
+      guard let name = attrs["name"] else {
+        log.warn("fetchspec has no name:", xml)
+        continue
+      }
+
+      let fs = loadFetchSpecification(from: node, entity: entity)
+      if let fs = entity.fetchSpecifications[name] {
+        log.warn("duplicate fetchspecs for name:", name, "in entity:", entity,
+                 fs)
+        assertionFailure("Entity already has fetchspec \(name)")
+      }
+      entity.fetchSpecifications[name] = fs
+    }
+
     return entity
   }
   
@@ -292,13 +458,25 @@ open class CoreDataModelLoader : ModelLoader {
     assert(xml.name == "attribute")
     
     let attrs = xml.attributesAsDict
-    guard let name = attrs["name"] else { return nil }
+    let name = attrs["name"] ?? attrs["column"] ?? ""
     
     // Note: we don't care about usesScalarValueType
     let attribute = ModelAttribute(name: name)
     let allowsNull       = boolValue(attrs["optional"])
     attribute.allowsNull = allowsNull
     
+    // GETobjects:
+    if let v = attrs["column"], !v.isEmpty     { attribute.columnName   = v }
+    if let v = attrs["width"].map({ Int($0) }) { attribute.width        = v }
+    if let v = attrs["type"], !v.isEmpty       { attribute.externalType = v }
+    if let v = attrs["columnNameLike"], !v.isEmpty {
+      // <attribute columnNameLike="*" />
+      assert(attribute.columnName == nil, "both columnName and columnNameLike?")
+      attribute.columnName = v
+      attribute.isColumnNamePattern = true
+    }
+
+    // CoreData
     if let v = attrs["elementID"], !v.isEmpty { attribute.elementID = v }
     
     if let attrType = attrs["attributeType"], !attrType.isEmpty {
@@ -357,15 +535,18 @@ open class CoreDataModelLoader : ModelLoader {
   {
     // TODO: Add support 'ordered=YES/NO'
     
-    assert(xml.name == "relationship")
+    assert(xml.name == "relationship" ||
+           xml.name == "to-one" || xml.name == "to-many") // GETobjects
     
     let attrs = xml.attributesAsDict
     guard let name = attrs["name"] else { return nil }
     
     let relship = ModelRelationship(name: name, source: entity)
-    relship.isToMany   = boolValue(attrs["toMany"])
+    if      xml.name == "to-one"  { relship.isToMany = false }
+    else if xml.name == "to-many" { relship.isToMany = true  }
+    else { relship.isToMany = boolValue(attrs["toMany"]) }
     
-    if let de = attrs["destinationEntity"], !de.isEmpty {
+    if let de = attrs["destinationEntity"] ?? attrs["to"], !de.isEmpty {
       relship.destinationEntityName = de
     }
 
@@ -385,23 +566,35 @@ open class CoreDataModelLoader : ModelLoader {
     }
     
     let attributeOpt : Attribute?
-    if relship.isToMany {
-      attributeOpt = nil // the fkey lives in the reverse, we do that later
+    if let v = attrs["join"]?.split(separator: ",", maxSplits: 1) {// GETobjects
+      // join="companyId,id"
+      assert(v.count == 2)
+      attributeOpt = nil
+      if let sourceName = v.first, let destinationName = v.last {
+        relship.joins = [
+          Join(source: String(sourceName), destination: String(destinationName))
+        ]
+      }
     }
     else {
-      // 'person' => 'personId'
-      let attributeName = name + foreignKeyRelationshipSuffix
-      
-      let attribute = ModelAttribute(name: attributeName)
+      if relship.isToMany {
+        attributeOpt = nil // the fkey lives in the reverse, we do that later
+      }
+      else {
+        // 'person' => 'personId'
+        let attributeName = name + foreignKeyRelationshipSuffix
+        
+        let attribute = ModelAttribute(name: attributeName)
 
-      if let v = attrs["elementID"], !v.isEmpty { attribute.elementID = v }
-      
-      let allowsNull       = boolValue(attrs["optional"])
-      attribute.allowsNull = allowsNull
-      
-      relship.joins = [ Join(source      : attributeName,
-                             destination : primaryKeyAttributeName) ]
-      attributeOpt = attribute
+        if let v = attrs["elementID"], !v.isEmpty { attribute.elementID = v }
+        
+        let allowsNull       = boolValue(attrs["optional"])
+        attribute.allowsNull = allowsNull
+        
+        relship.joins = [ Join(source      : attributeName,
+                               destination : primaryKeyAttributeName) ]
+        attributeOpt = attribute
+      }
     }
     
     return ( attributeOpt, relship )
@@ -1049,6 +1242,9 @@ open class CoreDataModelLoader : ModelLoader {
   }
 #endif
 
+
+// MARK: - Enhancements
+
 fileprivate extension XMLElement {
 
   func firstChildElementWithName(_ name: String) -> XMLElement? {
@@ -1090,6 +1286,16 @@ fileprivate extension XMLElement {
     return map
   }
   
+  var textContent : String? {
+    guard let children else { return nil }
+    var content : String?
+    for child in children where child.kind == .text {
+      if let s = child.stringValue {
+        if content == nil { content = s } else { content?.append(s) }
+      }
+    }
+    return content
+  }
 }
 
 fileprivate extension Bool { // Linux compat
