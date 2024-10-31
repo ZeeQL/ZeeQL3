@@ -401,19 +401,15 @@ open class CoreDataModelLoader : ModelLoader {
     }
     if let xml = xml.firstChildElementWithName("sql") {
       // TODO: pattern (it IS being used!)
-      /*
-       final Boolean pat =
-         this.getBoolAttribute((Element) sqlNodes.item(0), "pattern");
-       if (pat != null && pat)
-         hints.put("EOCustomQueryExpressionHintKeyBindPattern", s);
-       else
-         hints.put("EOCustomQueryExpressionHintKey", s);
-
-       */
       //<sql>%(select)s %(columns)s FROM %(tables)s %(where)s
       //     GROUP BY object_id;</sql>
       if let v = xml.textContent, !v.isEmpty {
         // TODO: put into hints?
+        let isPattern = boolValue(attrs["pattern"])
+        let key = isPattern
+                ? "CustomQueryExpressionHintKeyBindPattern"
+                : "CustomQueryExpressionHintKey"
+        fs.hints[key] = v
       }
       else {
         log.warn("<sql> tag w/o content?", xml)
