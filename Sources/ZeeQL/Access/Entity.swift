@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 18/02/2017.
-//  Copyright © 2017-2021 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
 //
 
 /**
@@ -77,19 +77,19 @@ public protocol Entity: AnyObject, EquatableType, SmartDescription {
 
 public extension Entity { // default imp
   
-  var externalName          : String? { return nil   }
-  var schemaName            : String? { return nil   }
+  @inlinable var externalName          : String? { return nil   }
+  @inlinable var schemaName            : String? { return nil   }
 
-  var isReadOnly            : Bool    { return false }
-  var shouldRefetchOnInsert : Bool    { return true  }
+  @inlinable var isReadOnly            : Bool    { return false }
+  @inlinable var shouldRefetchOnInsert : Bool    { return true  }
 
-  var className  : String? {
+  @inlinable var className  : String? {
     if let t = objectType { return "\(t)" }
     return nil
   }
-  var objectType : DatabaseObject.Type? { return nil }
+  @inlinable var objectType : DatabaseObject.Type? { return nil }
 
-  var primaryKeyAttributeNames : [ String ]? {
+  @inlinable var primaryKeyAttributeNames : [ String ]? {
     return lookupPrimaryKeyAttributeNames()
   }
   
@@ -185,20 +185,24 @@ public extension Entity { // default imp
   
   // MARK: - Attributes & Relationships
   
+  @inlinable
   subscript(attribute n: String) -> Attribute? {
     for attr in attributes { if attr.name == n { return attr } }
     return nil
   }
+  @inlinable
   subscript(columnName n: String) -> Attribute? {
     for attr in attributes { if attr.columnName == n { return attr } }
     return nil
   }
   
+  @inlinable
   subscript(relationship n: String) -> Relationship? {
     for rel in relationships { if rel.name == n { return rel } }
     return nil
   }
   
+  @inlinable
   func attributesWithNames(_ names: [ String ]) -> [ Attribute ] {
     guard !names.isEmpty else { return [] }
     var attributes = [ Attribute ]()
@@ -210,27 +214,32 @@ public extension Entity { // default imp
     return attributes
   }
   
+  @inlinable
   func keyForAttributeWith(name: String) -> Key {
     guard let attr = self[attribute: name] else { return StringKey(name) }
     return AttributeKey(attr, entity: self)
   }
+  @inlinable
   func keyForAttributeWith(name: String, requireLookup: Bool) -> Key? {
     guard let attr = self[attribute: name]
      else { return requireLookup ? nil : StringKey(name) }
     return AttributeKey(attr, entity: self)
   }
   
+  @inlinable
   func connectRelationships(in model : Model) {
     for relship in relationships {
       relship.connectRelationships(in: model, entity: self)
     }
   }
+  @inlinable
   func disconnectRelationships() {
     for relship in relationships {
       relship.disconnectRelationships()
     }
   }
   
+  @inlinable
   var classPropertyNames : [ String ]? {
     if attributes.isEmpty && relationships.isEmpty { return nil }
     var names = [ String ]()
@@ -239,13 +248,17 @@ public extension Entity { // default imp
     for rs   in relationships { names.append(rs.name)   }
     return names
   }
+  @inlinable
   var attributesUsedForLocking : [ Attribute ]? { return nil }
 
   
   // MARK: - Fetch Specifications
   
+  @inlinable
   var restrictingQualifier: Qualifier? { return nil }
+  @inlinable
   subscript(fetchSpecification n: String) -> FetchSpecification? { return nil }
+  @inlinable
   subscript(adaptorOperation   n: String) -> AdaptorOperation?   { return nil }
 
   
@@ -256,24 +269,14 @@ public extension Entity { // default imp
     
     ms += " \(name)"
     if let cn = externalName {
-      if let sn = schemaName {
-        ms += "[\(sn).\(cn)]"
-      }
-      else {
-        ms += "[\(cn)]"
-      }
+      if let sn = schemaName { ms += "[\(sn).\(cn)]" }
+      else                   { ms += "[\(cn)]"       }
     }
     
-    if let ot = objectType {
-      ms += " \(ot)"
-    }
-    else if let cn = className {
-      ms += " '\(cn)'"
-    }
+    if      let ot = objectType { ms += " \(ot)"   }
+    else if let cn = className  { ms += " '\(cn)'" }
     
-    if isReadOnly {
-      ms += " r/o"
-    }
+    if isReadOnly { ms += " r/o" }
     
     if let pkeys = primaryKeyAttributeNames, !pkeys.isEmpty {
       if pkeys.count == 1 {
@@ -287,30 +290,29 @@ public extension Entity { // default imp
     
     ms += " #attrs=\(attributes.count)"
     
-    if relationships.count > 0 {
-      ms += " #rel=\(relationships.count)"
-    }
-    
+    if relationships.count > 0 { ms += " #rel=\(relationships.count)" }
+
     // TODO: restrictingQualifier, fetchspecs
   }
 }
 
 public extension Entity { // keypath attribute lookup
   
+  @inlinable
   subscript(keyPath path: String) -> Attribute? {
-    let parts = path.components(separatedBy: ".")
+    let parts = path.split(separator: ".")
     let count = parts.count
     guard count > 1 else { return self[attribute: path] }
     
     var cursor : Entity? = self
     for i in 0..<(count - 1) {
-      let part = parts[i]
+      let part = String(parts[i])
       guard let relship = cursor?[relationship: part] else { return nil }
       guard let entity  = relship.destinationEntity   else { return nil }
       cursor = entity
     }
     
-    return cursor?[attribute: parts[count - 1]]
+    return cursor?[attribute: String(parts[count - 1])]
   }
 }
 
@@ -362,11 +364,13 @@ public extension Entity { // primary keys
 
 public extension Entity {
   
+  @inlinable
   func isEqual(to object: Any?) -> Bool {
     guard let other = object as? Entity else { return false }
     return other.isEqual(to: self)
   }
   
+  @inlinable
   func isEqual(to other: Entity) -> Bool {
     if other === self { return true  }
     guard name                  == other.name         else { return false }
@@ -414,6 +418,7 @@ public extension Entity {
     return true
   }
   
+  @inlinable
   static func ==(lhs: Entity, rhs: Entity) -> Bool {
     return lhs.isEqual(to: rhs)
   }
@@ -490,11 +495,14 @@ open class ModelEntity : Entity, Equatable {
   final var _classPropertyNames : [ String ]?
   
   /* patterns */
-  public final var isExternalNamePattern    = false
+  public final var isExternalNamePattern = false
   
-  public init(name: String, table: String? = nil) {
-    self.name         = name
-    self.externalName = table
+  @inlinable
+  public init(name: String, table: String? = nil, isPattern: Bool = false)
+  {
+    self.name                  = name
+    self.externalName          = table
+    self.isExternalNamePattern = isPattern
   }
   
   public init(entity: Entity, deep: Bool = false) {
@@ -562,27 +570,26 @@ open class ModelEntity : Entity, Equatable {
     }
   }
   
+  @inlinable
   public subscript(fetchSpecification n: String) -> FetchSpecification? {
     return fetchSpecifications[n]
   }
 
+  @inlinable
   public subscript(adaptorOperation n: String) -> AdaptorOperation? {
     return adaptorOperations[n]
   }
 
+  @inlinable
   public var isPattern : Bool {
-    if isExternalNamePattern { return true }
-    for attribute in attributes {
-      if attribute.isPattern { return true }
-    }
-    for relship in relationships {
-      if relship.isPattern { return true }
-    }
-    return false
+    return isExternalNamePattern
+        || attributes.contains(where: { $0.isPattern })
+        || relationships.contains(where: { $0.isPattern })
   }
   
   // MARK: - Equatable
   
+  @inlinable
   public static func ==(lhs: ModelEntity, rhs: ModelEntity) -> Bool {
     return lhs.isEqual(to: rhs)
   }
@@ -590,5 +597,7 @@ open class ModelEntity : Entity, Equatable {
 
 /// Commonly used within the framework, but should not be public API
 extension Entity {
+
+  @inlinable
   var externalNameOrName : String { return externalName ?? name }
 }

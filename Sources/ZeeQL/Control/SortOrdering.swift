@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 15/02/2017.
-//  Copyright © 2017-2019 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
 //
 
 /**
@@ -19,7 +19,8 @@ public struct SortOrdering : Expression, Equatable, EquatableType,
                              SmartDescription
 {
   
-  public enum Selector : Equatable {
+  public enum Selector: RawRepresentable, Equatable {
+    // TODO: lowercase cases
 
     case CompareAscending
     case CompareDescending
@@ -27,7 +28,19 @@ public struct SortOrdering : Expression, Equatable, EquatableType,
     case CompareCaseInsensitiveDescending
     case Other(String)
     
-    var stringRepresentation : String {
+    @inlinable
+    public init(rawValue: String) {
+      switch rawValue.uppercased() {
+        case "ASC"                : self = .CompareAscending
+        case "DESC"               : self = .CompareDescending
+        case "CASE ASC",  "IASC"  : self = .CompareCaseInsensitiveAscending
+        case "CASE DESC", "IDESC" : self = .CompareCaseInsensitiveDescending
+        default: self = .Other(rawValue)
+      }
+    }
+    
+    @inlinable
+    public var rawValue : String {
       switch self {
         case .CompareAscending:                 return "ASC"
         case .CompareDescending:                return "DESC"
@@ -36,7 +49,10 @@ public struct SortOrdering : Expression, Equatable, EquatableType,
         case .Other(let op):                    return op
       }
     }
-    
+    @inlinable
+    public var stringRepresentation : String { rawValue }
+
+    @inlinable
     public static func ==(lhs: Selector, rhs: Selector) -> Bool {
       switch ( lhs, rhs ) {
         case ( .CompareAscending,  .CompareAscending  ):  return true
@@ -54,17 +70,21 @@ public struct SortOrdering : Expression, Equatable, EquatableType,
   public let keyExpr  : Key
   public let selector : Selector
   
+  @inlinable
   public var key      : String { return keyExpr.key }
   
+  @inlinable
   public init(key: String, selector: Selector) {
     self.keyExpr  = StringKey(key)
     self.selector = selector
   }
+  @inlinable
   public init(key: Key, selector: Selector) {
     self.keyExpr  = key
     self.selector = selector
   }
   
+  @inlinable
   public func addReferencedKeys(to set: inout Set<String>) {
     set.insert(key)
   }
@@ -72,12 +92,12 @@ public struct SortOrdering : Expression, Equatable, EquatableType,
   
   // MARK: - Equatable
   
+  @inlinable
   public static func ==(lhs: SortOrdering, rhs: SortOrdering) -> Bool {
-    guard lhs.key      == rhs.key      else { return false }
-    guard lhs.selector == rhs.selector else { return false }
-    return true
+    return lhs.key == rhs.key &&  lhs.selector == rhs.selector
   }
 
+  @inlinable
   public func isEqual(to object: Any?) -> Bool {
     guard let rhs = object as? SortOrdering else { return false }
     return self == rhs
@@ -85,10 +105,12 @@ public struct SortOrdering : Expression, Equatable, EquatableType,
   
   // MARK: - Description
   
+  @inlinable
   public var stringRepresentation : String {
     return key + " " + selector.stringRepresentation
   }
 
+  @inlinable
   public func appendToDescription(_ ms: inout String) {
     ms += " "
     ms += stringRepresentation

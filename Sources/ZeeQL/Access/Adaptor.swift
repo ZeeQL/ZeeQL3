@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 21/02/2017.
-//  Copyright © 2017-2021 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
 //
 
 import struct Foundation.URL
@@ -39,11 +39,12 @@ import struct Foundation.URL
  * then auto-create and release channels from the pool.
  *
  * Example, type-safe query:
- *
- *     try adaptor.select("SELECT name, count FROM pets") {
- *       (name : String, count : Int) in
- *       print("\(name): #\(count)")
- *     }
+ * ```swift
+ * try adaptor.select("SELECT name, count FROM pets") {
+ *   (name : String, count : Int) in
+ *   print("\(name): #\(count)")
+ * }
+ * ```
  *
  * ### AdaptorDataSource
  *
@@ -54,10 +55,10 @@ import struct Foundation.URL
  * AdaptorDataSources return raw `AdaptorRecord` objects.
  *
  * Example:
- *
- *     let ds = AdaptorDataSource(adaptor: adaptor, entity: entity)
- *     let user = ds.findBy(id: 9999)
- * 
+ * ```swift
+ * let ds = AdaptorDataSource(adaptor: adaptor, entity: entity)
+ * let user = ds.findBy(id: 9999)
+ * ```
  */
 public protocol Adaptor : AnyObject, AdaptorQueryType, EquatableType {
   
@@ -79,28 +80,36 @@ public protocol Adaptor : AnyObject, AdaptorQueryType, EquatableType {
 
 public extension Adaptor {
   
+  @inlinable
   func openChannelFromPool() throws -> AdaptorChannel {
     return try openChannel()
   }
+  @inlinable
   func releaseChannel(_ channel: AdaptorChannel) {}
   
+  @inlinable
   var log : ZeeQLLogger { return globalZeeQLLogger }
   
+  @inlinable
   var url : URL? { return nil }
   
   /// Note: Returns a stateful object (a new one every time it is accessed).
+  @inlinable
   var synchronizationFactory : SchemaSynchronizationFactory {
     return SchemaSynchronizationFactory(adaptor: self)
   }
   
+  @inlinable
   func isEqual(to object: Any?) -> Bool {
     guard let other = object as? Adaptor else { return false }
     return other.isEqual(to: self)
   }
+  @inlinable
   func isEqual(to other: Adaptor) -> Bool {
     return self === other
   }
   
+  @inlinable
   static func ==(lhs: Adaptor, rhs: Adaptor) -> Bool {
     return lhs.isEqual(to: rhs)
   }
@@ -111,6 +120,7 @@ public extension Adaptor {
 
 public extension Adaptor { // AdaptorQueryType
   
+  @inlinable
   func querySQL(_ sql: String, _ optAttrs : [ Attribute ]? = nil,
                 cb: ( AdaptorRecord ) throws -> Void) throws
   {
@@ -120,6 +130,7 @@ public extension Adaptor { // AdaptorQueryType
     try ch.querySQL(sql, optAttrs, cb: cb)
   }
   
+  @inlinable
   @discardableResult
   func performSQL(_ sql: String) throws -> Int {
     let ch = try openChannelFromPool()
