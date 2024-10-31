@@ -124,6 +124,31 @@ open class CoreDataModelLoader : ModelLoader {
     return s == "true" || s == "yes" || s == "1"
   }
   
+  /**
+   * Load either a CoreData or GETobjects `<model>` tag.
+   *
+   * ### GetObjects tag
+   *
+   * Attributes (currently unsupported):
+   * ```
+   *   version
+   *   schema  - String - the default schema
+   * ```
+   *
+   * Children:
+   * - `<entity>` tags
+   *
+   * ### CoreData tag
+   *
+   * Children:
+   * - `<entity>` tags
+   * - `fetchRequest` tags
+   * - `configurations` tags (unsupported)
+   *
+   * - Parameters:
+   *   - xml: The `XMLDocument` representing the model.
+   * - Returns: The ``Model``, if it could be loaded.
+   */
   open func loadDataModelContents(from xml: XMLDocument) throws -> Model {
     guard let root = xml.rootElement(), root.name == "model" else {
       throw Error.InvalidFileFormat
@@ -173,6 +198,14 @@ open class CoreDataModelLoader : ModelLoader {
     }
   }
 
+  /**
+   * Load either a CoreData `<fetchRequest>` tag, or a Go `<fetch>`.
+   *
+   * - Parameters:
+   *   - xml:   The XML node representing the ``FetchRequest``.
+   *   - model: The model to add the ``FetchRequest`` to.
+   * - Returns: The ``FetchSpecification``, if it could be constructed.
+   */
   @discardableResult
   func loadFetchSpecification(from xml: XMLElement, into model: Model)
        -> FetchSpecification?
@@ -201,6 +234,57 @@ open class CoreDataModelLoader : ModelLoader {
     return fs
   }
   
+  /**
+   * Load either a CoreData `<fetchRequest>` tag, or a Go `<fetch>`.
+   *
+   *
+   * ### GetObjects fetch tag
+   *
+   * Attributes:
+   * - name       (String),   name of fetch specification
+   * - rawrows    (boolean),  do not map to objects, return raw Map's
+   * - distinct   (boolean),  make results distinct
+   * - deep       (boolean),  make a deep query (for hierarchical datasets)
+   * - readonly   (boolean),  do not store a snapshot to track modifications
+   * - lock       (boolean),  attempt some SQL lock
+   * - requiresAllBindings (boolean), all bindings must be filled
+   * - attributes (CSV),      rawrows|distinct|deep|readonly|lock|allbinds
+   * - limit      (int)
+   * - offset     (int)
+   * - prefetch   (CSV),      list of prefetch pathes
+   *
+   * Child Tags:
+   * - `<attribute>` tags - CSV (eg name,lastname,firstname)
+   * - `<prefetch>`  tags - CSV (eg employments.company,projects)
+   * - `<qualifier>` tags
+   * - `<ordering>`  tags
+   * - `<sql>`       tags (with pattern attribute)
+   *   - `CustomQueryExpressionHintKeyBindPattern` (with pattern)
+   *   - `CustomQueryExpressionHintKey` (w/o pattern)
+   *
+   * Example:
+   *
+   * ```xml
+   *   <fetch name="count" rawrows="true">
+   *     <sql>SELECT COUNT(*) FROM table</sql>
+   *   </fetch>
+   *
+   *   <fetch name="abc" distinct="true" deep="false" lock="false"
+   *          requiresAllBindings="true" limit="100" offset="0"
+   *          entity="Contact"
+   *          attributes="id,lastname,firstname"
+   *     >
+   *     <qualifier>lastname like $name</qualifier>
+   *     <ordering key="balance" order="DESC" />
+   *     <ordering key="lastname" />
+   *   </fetch>
+   * ```
+   *
+   * - Parameters:
+   *   - xml:   The XML node representing the ``FetchRequest``.
+   *   - model: The model to add the ``FetchRequest`` to.
+   * - Returns: The ``FetchSpecification``, if it could be constructed.
+   */
   func loadFetchSpecification(from xml: XMLElement, entity: Entity)
        -> FetchSpecification?
   {
@@ -333,6 +417,36 @@ open class CoreDataModelLoader : ModelLoader {
     return fs
   }
 
+  /**
+   * Load either a CoreData or GETobjects `<entity>` tag.
+   *
+   * ### GetObjects tag
+   *
+   * Attributes:
+   * - name          (String), name of entity
+   * - table         (String),
+   * - schema        (String), none => inherit from model, "" => no schema
+   *   (unsupported)
+   * - class         (String), name of class for rows
+   * - datasource    (String), name of datasource class
+   * - tableNameLike (String), makes this a pattern entity for matches
+   * - primarykey    (String), name of primary key attribute
+   * - primarykeys   (String), comma separated names of pkey attributes
+   * - readonly      (bool),
+   * - flags         (String), 'readonly' flag
+   * - restrictingQualifier (String), a Qualifier
+   *
+   * Children:
+   * - `<attribute>` tags
+   * - `<to-one>`    tags
+   * - `<to-many>`   tags
+   * - `<fetch>`     tags
+   * - `<operation>` tags (not yet implemented)
+   *
+   * - Parameters:
+   *   - xml: The `XMLElement` representing the entity.
+   * - Returns: The ``Entity``, if it could be loaded.
+   */
   func loadEntity(from xml: XMLElement) -> Entity? {
     assert(xml.name == "entity")
     
@@ -485,6 +599,38 @@ open class CoreDataModelLoader : ModelLoader {
     }
   }
   
+  /**
+   * Load either a CoreData or GETobjects `<attribute>` tag.
+   *
+   * ### GetObjects tag
+   *
+   * Attributes:
+   * - name          , property name of attribute (defaults to column)
+   * - column        , column name of attribute
+   * - columnNameLike, makes this a pattern attribute for matching columns
+   * - autoincrement , boolean -
+   * - null          , boolean -
+   * - type          , String  - SQL type, eg VARCHAR2
+   * - readformat    , String
+   * - writeformat   , String
+   *
+   * ### CoreData tag
+   *
+   * Attributes:
+   * - name
+   * - optional
+   * - elementID
+   * - attributeType
+   *
+   * Example:
+   * ```xml
+   * <attribute column="id" autoincrement="true" null="false" />
+   * ```
+   *
+   * - Parameters:
+   *   - xml: The `XMLElement` representing the attribute.
+   * - Returns: The ``Attribute``, if it could be constructed.
+   */
   func loadAttribute(from xml: XMLElement) -> Attribute? {
     // TODO: add support for minValueString/maxValueString
     // TODO: add support for 'indexed'
@@ -563,6 +709,27 @@ open class CoreDataModelLoader : ModelLoader {
     return attribute
   }
   
+  /**
+   * Load either a CoreData `<relationship>` tag,
+   * or a Go `<to-one>` or `<to-many>`.
+   *
+   * ### GetObjects tags
+   *
+   * Attributes:
+   * ```
+   *   name              - name of relationship
+   *   to or destination - name of target entity
+   *   target            - name of target entity
+   *   join              - Strings separated by comma
+   * ```
+   *
+   * Example:
+   * ```
+   *   <to-one  name="toProject" to="Project" join="companyId,ownerId" />
+   *   <to-many name="toOwner"   to="Account" join="ownerId,companyId" />
+   *   <to-one  to="Project" join="companyId,ownerId" />
+   * ```
+   */
   func loadRelationship(from xml: XMLElement, entity: Entity)
        -> ( Attribute?, ModelRelationship )?
   {
