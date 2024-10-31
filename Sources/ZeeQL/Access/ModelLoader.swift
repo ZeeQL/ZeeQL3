@@ -353,8 +353,15 @@ open class CoreDataModelLoader : ModelLoader {
       }
     }
     // TODO: both as XML attribute and as element
-    // TODO: prefetch
-    // TODO: ordering
+    // TODO: prefetch (not used in OGo)
+    
+    for xml in xml.childElementsWithName("ordering") {
+      // `<ordering key="name" />` (multiple are possible!)
+      guard let ordering = loadSortOrdering(from: xml) else { continue }
+      if fs.sortOrderings == nil { fs.sortOrderings = [] }
+      fs.sortOrderings?.append(ordering)
+    }
+
     if let v = attrs["attributes"]?.split(separator: ","), !v.isEmpty {
       if fs.fetchAttributeNames == nil {
         fs.fetchAttributeNames = v.map(String.init)
@@ -596,6 +603,27 @@ open class CoreDataModelLoader : ModelLoader {
       {
         entity.primaryKeyAttributeNames = [ idAttribute.name ]
       }
+    }
+  }
+    
+  func loadSortOrdering(from xml: XMLElement) -> SortOrdering? { // Go
+    // <ordering key="status"   />
+    // <ordering key="lastModified" order="DESC" />
+    // <ordering>startDate</ordering>
+    assert(xml.name == "ordering")
+    let attrs = xml.attributesAsDict
+    let orderString = attrs["order"] ?? attrs["op"] ?? attrs["operation"]
+    let order = orderString.map { SortOrdering.Selector(rawValue: $0) }
+    if let key = attrs["key"], !key.isEmpty {
+      return SortOrdering(key: key, selector: order ?? .CompareAscending)
+    }
+    else if let key = xml.textContent, !key.isEmpty {
+      return SortOrdering(key: key, selector: order ?? .CompareAscending)
+    }
+    else {
+      log.warn("<ordering> element w/o a key:", xml)
+      assertionFailure("ordering element w/o key?")
+      return nil
     }
   }
   
