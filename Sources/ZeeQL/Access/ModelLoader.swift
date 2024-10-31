@@ -770,7 +770,9 @@ open class CoreDataModelLoader : ModelLoader {
     else if xml.name == "to-many" { relship.isToMany = true  }
     else { relship.isToMany = boolValue(attrs["toMany"]) }
     
-    if let de = attrs["destinationEntity"] ?? attrs["to"], !de.isEmpty {
+    if let de = attrs["destinationEntity"]
+             ?? attrs["to"] ?? attrs["destination"], !de.isEmpty
+    {
       relship.destinationEntityName = de
     }
 
