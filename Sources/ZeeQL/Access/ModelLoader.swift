@@ -665,7 +665,7 @@ open class CoreDataModelLoader : ModelLoader {
     
     // Note: we don't care about usesScalarValueType
     let attribute = ModelAttribute(name: name)
-    let allowsNull       = boolValue(attrs["optional"])
+    let allowsNull       = boolValue(attrs["optional"] ?? attrs["null"])
     attribute.allowsNull = allowsNull
     
     // GETobjects:
