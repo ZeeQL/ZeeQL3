@@ -495,12 +495,14 @@ open class ModelEntity : Entity, Equatable {
   final var _classPropertyNames : [ String ]?
   
   /* patterns */
-  public final var isExternalNamePattern    = false
+  public final var isExternalNamePattern = false
   
   @inlinable
-  public init(name: String, table: String? = nil) {
-    self.name         = name
-    self.externalName = table
+  public init(name: String, table: String? = nil, isPattern: Bool = false)
+  {
+    self.name                  = name
+    self.externalName          = table
+    self.isExternalNamePattern = isPattern
   }
   
   public init(entity: Entity, deep: Bool = false) {
