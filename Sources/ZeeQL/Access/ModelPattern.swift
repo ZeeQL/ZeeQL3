@@ -8,8 +8,14 @@
 
 fileprivate extension ModelAttribute {
   
+  /**
+   * - Parameters:
+   *   - inAttrs: The attributes that got fetched from the database
+   *   - entity:  The template entity.
+   *   - attrs:   The list to be filled.
+   */
   func addAttributesMatchingAttributes(_ inAttrs: [ Attribute ],
-                                       entity: Entity?,
+                                       entity: Entity,
                                        to attrs: inout [ Attribute ])
   {
     if !isColumnNamePattern {
@@ -17,23 +23,56 @@ fileprivate extension ModelAttribute {
       // TODO: is this correct, could be more than 1 attribute with the same
       //       column?
       /* check whether we are contained */
-      guard let columnName = columnName else { return }
-      if inAttrs.contains(where: { $0.columnName == columnName }) {
-        attrs.append(self)
+      if let columnName = columnName { // this CAN be nil!
+        if inAttrs.contains(where: { $0.columnName == columnName }) {
+          attrs.append(self)
+        }
+        else {
+          globalZeeQLLogger.warn("Did not find column", columnName,
+                                 "in template", entity.name,
+                                 "in database:", inAttrs)
+          
+        }
       }
+      else {
+        // If we do NOT have a column name, this means that columnName is the
+        // SAME like the attributeName, e.g. `zip` in `address`.
+        if inAttrs.contains(where: { $0.columnName == name }) {
+          let attr = ModelAttribute(attribute: self)
+          attr.columnName = name
+          attrs.append(attr)
+        }
+        else {
+          globalZeeQLLogger.warn("Did not find column as name", columnName,
+                                 "in template", entity.name,
+                                 "in database:", inAttrs)
+          
+        }
+      }
+      
+      // We have NO column name!
       return
     }
     
     /* OK, now we need to evaluate the pattern and clone ourselves */
     
     for inAttr in inAttrs {
-      guard let colname = inAttr.columnName, doesColumnNameMatchPattern(colname)
-       else { continue }
+      guard let colname = inAttr.columnName else {
+        assert(inAttr.columnName != nil, "Attribute has no column name?")
+        continue
+      }
+      guard doesColumnNameMatchPattern(colname) else {
+        print("MISMATCH:", colname, "ME:", self.columnName ?? "-", self.name, self)
+        continue
+      }
       
       /* check whether we already have an attribute for that column */
       
-      if let entity = entity {
+      do {
         if entity.attributes.contains(where: { $0.columnName == colname }) {
+          #if false // this is OK
+          print("template:", entity.name, "already contains column", colname)
+          #endif
           continue
         }
         
@@ -41,6 +80,9 @@ fileprivate extension ModelAttribute {
          *     in the schema */
         if entity[attribute: colname] != nil { // TBD
           // TBD: better keep the other attr and rename it
+          #if false // this also happens
+          print("template:", entity.name, "already contains attr:", colname)
+          #endif
           continue
         }
       }
@@ -120,6 +162,13 @@ fileprivate extension ModelEntity {
       modelAttr.addAttributesMatchingAttributes(storedEntity.attributes,
                                                 entity: self, to: &resolvedList)
     }
+    #if DEBUG
+    do {
+      var patCount = attributes.count
+      if attributes.last?.isPattern ?? false { patCount -= 1 } // *
+      assert(patCount <= resolvedList.count)
+    }
+    #endif
 
     /* fill column attributes */
 
@@ -171,6 +220,13 @@ fileprivate extension ModelEntity {
     }
 
     let lAttrs = resolvedList
+    #if DEBUG
+    do {
+      var patCount = attributes.count
+      if attributes.last?.isPattern ?? false { patCount -= 1 } // *
+      assert(patCount <= lAttrs.count)
+    }
+    #endif
 
     /* derive information from the peer */
 
@@ -237,7 +293,7 @@ public extension Adaptor {
 
     /* determine set of entities to work upon (tableNameLike) */
 
-    if pattern.hasEntitiesWithExternalNamePattern{
+    if pattern.hasEntitiesWithExternalNamePattern {
       // TODO: maybe we should improve this for database which have a
       //       large number of dynamic tables (some kind of on-demand
       //       loading?)
@@ -282,6 +338,7 @@ public extension Adaptor {
       /* now give all entities a chance to update their information */
 
       for ( idx, entity ) in zip(entities.indices, entities) {
+        log.info("    resolving entity:", entity.name);
         guard let modelEntity = entity as? ModelEntity else {
           log.warn("Pattern model resolved non-ModelEntity?", entity)
           continue
