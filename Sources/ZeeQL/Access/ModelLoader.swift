@@ -130,10 +130,8 @@ open class CoreDataModelLoader : ModelLoader {
    * ### GetObjects tag
    *
    * Attributes (currently unsupported):
-   * ```
-   *   version
-   *   schema  - String - the default schema
-   * ```
+   * - version
+   * - schema  - String - the default schema
    *
    * Children:
    * - `<entity>` tags
@@ -497,7 +495,14 @@ open class CoreDataModelLoader : ModelLoader {
       if attr.name == "id" { idAttribute = attr }
     }
     if let pkeyName = attrs["primarykey"], !pkeyName.isEmpty { // GETobjects
+      assert(entity.primaryKeyAttributeNames == nil)
       entity.primaryKeyAttributeNames = [ pkeyName ]
+    }
+    if let pkeyNames = attrs["primarykeys"]?.split(separator: ","),
+       !pkeyNames.isEmpty
+    { // GETobjects
+      assert(entity.primaryKeyAttributeNames == nil)
+      entity.primaryKeyAttributeNames = pkeyNames.map(String.init)
     }
 
     var toManyRelships = [ ( ModelRelationship, XMLElement ) ]()
