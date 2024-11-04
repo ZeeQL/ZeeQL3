@@ -276,8 +276,20 @@ fileprivate extension ModelEntity {
 
 public extension Adaptor {
   
+  /**
+   * Resolves a pattern model against data fetched from the information schema.
+   *
+   * This does not touch the `model` property of the adaptor. It opens a channel
+   * to the database, fetches the information schema and then resolves the
+   * pattern against that.
+   *
+   * - Parameters:
+   *   - pattern: A pattern Model, if the model is not a pattern, it is
+   *              returned as is.
+   * - Returns:   The resolved pattern model.
+   */
   func resolveModelPattern(_ pattern: Model) throws -> Model? {
-    guard pattern.isPattern else { return pattern}
+    guard pattern.isPattern else { return pattern }
 
     var entities = pattern.entities
     if entities.isEmpty { /* not sure whether this is a good idea */
