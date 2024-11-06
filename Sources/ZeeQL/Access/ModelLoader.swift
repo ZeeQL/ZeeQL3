@@ -666,13 +666,17 @@ open class CoreDataModelLoader : ModelLoader {
     assert(xml.name == "attribute")
     
     let attrs = xml.attributesAsDict
-    let name = attrs["name"] ?? attrs["column"] ?? ""
+    let name = attrs["name"] ?? attrs["column"] ?? attrs["skip"] ?? ""
     
     // Note: we don't care about usesScalarValueType
     let attribute = ModelAttribute(name: name)
     let allowsNull       = boolValue(attrs["optional"] ?? attrs["null"])
     attribute.allowsNull = allowsNull
-    
+
+    if name == attrs["skip"] { // <attribute skip="is_person">
+      assert(attribute.patternType == .none)
+      attribute.patternType = .skip
+    }
     // GETobjects:
     if let v = attrs["column"], !v.isEmpty     { attribute.columnName   = v }
     if let v = attrs["width"].map({ Int($0) }) { attribute.width        = v }
@@ -680,9 +684,11 @@ open class CoreDataModelLoader : ModelLoader {
     if let v = attrs["columnNameLike"], !v.isEmpty {
       // <attribute columnNameLike="*" />
       assert(attribute.columnName == nil, "both columnName and columnNameLike?")
+      assert(attribute.patternType == .none)
       attribute.columnName = v
-      attribute.isColumnNamePattern = true
+      attribute.patternType = .columnName
     }
+    
 
     // CoreData
     if let v = attrs["elementID"], !v.isEmpty { attribute.elementID = v }

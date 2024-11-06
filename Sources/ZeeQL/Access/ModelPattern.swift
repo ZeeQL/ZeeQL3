@@ -18,7 +18,8 @@ fileprivate extension ModelAttribute {
                                        entity: Entity,
                                        to attrs: inout [ Attribute ])
   {
-    if !isColumnNamePattern {
+    if patternType == .skip { return } // do not add
+    if patternType != .columnName {
       /* check whether we are contained */
       // TODO: is this correct, could be more than 1 attribute with the same
       //       column?
@@ -162,13 +163,6 @@ fileprivate extension ModelEntity {
       modelAttr.addAttributesMatchingAttributes(storedEntity.attributes,
                                                 entity: self, to: &resolvedList)
     }
-    #if DEBUG
-    do {
-      var patCount = attributes.count
-      if attributes.last?.isPattern ?? false { patCount -= 1 } // *
-      assert(patCount <= resolvedList.count)
-    }
-    #endif
 
     /* fill column attributes */
 
@@ -220,13 +214,6 @@ fileprivate extension ModelEntity {
     }
 
     let lAttrs = resolvedList
-    #if DEBUG
-    do {
-      var patCount = attributes.count
-      if attributes.last?.isPattern ?? false { patCount -= 1 } // *
-      assert(patCount <= lAttrs.count)
-    }
-    #endif
 
     /* derive information from the peer */
 

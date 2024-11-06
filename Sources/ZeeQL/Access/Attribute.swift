@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 18/02/2017.
-//  Copyright © 2017-2019 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
 //
 
 /**
@@ -148,7 +148,7 @@ extension Attribute {
 
 
 /**
- * An Attribute description which stores the info as regular variables.
+ * An ``Attribute`` description which stores the info as regular variables.
  *
  * Suitable for use with models loaded from XML, or models fetched from a
  * database.
@@ -175,8 +175,15 @@ open class ModelAttribute : Attribute, Equatable {
   public final var readFormat      : String?
   public final var writeFormat     : String?
   
-  // patterns
-  public final var isColumnNamePattern = false
+  /// Pattern types.
+  public enum PatternType: String, Sendable {
+    case none       = ""
+    /// The columnName is a pattern
+    case columnName = "columnName"
+    /// The attribute should be skipped in the entity.
+    case skip       = "skip"
+  }
+  public final var patternType : PatternType = .none
 
   public final var userData        = [ String : Any ]()
   
@@ -211,14 +218,14 @@ open class ModelAttribute : Attribute, Equatable {
     self.valueType       = attr.valueType
     
     if let ma = attr as? ModelAttribute {
-      self.defaultValue        = ma.defaultValue
-      self.comment             = ma.comment
-      self.collation           = ma.collation
-      self.privileges          = ma.privileges
-      self.isColumnNamePattern = ma.isColumnNamePattern
+      self.defaultValue = ma.defaultValue
+      self.comment      = ma.comment
+      self.collation    = ma.collation
+      self.privileges   = ma.privileges
+      self.patternType  = ma.patternType
       
-      self.userData            = ma.userData
-      self.elementID           = ma.elementID
+      self.userData     = ma.userData
+      self.elementID    = ma.elementID
     }
   }
   
@@ -233,13 +240,13 @@ open class ModelAttribute : Attribute, Equatable {
   // MARK: - Pattern Models
   
   public var isPattern : Bool {
-    if isColumnNamePattern { return true }
-    if externalType == nil { return true }
+    if patternType != .none { return true }
+    if externalType == nil  { return true }
     return false
   }
   
   public func doesColumnNameMatchPattern(_ columnName: String) -> Bool {
-    if !isColumnNamePattern   { return columnName == self.columnName }
+    if patternType != .columnName { return columnName == self.columnName }
     if self.columnName == "*" { return true } // match all
     
     // TODO: fix pattern handling, properly process '*' etc
@@ -264,7 +271,7 @@ open class ModelAttribute : Attribute, Equatable {
     if let v = attr.privileges      { rAttr.privileges      = v }
     
     /* construct */
-    rAttr.isColumnNamePattern = false // TBD: do we need to fix the colName?
+    rAttr.patternType = .none // TBD: do we need to fix the colName?
     return rAttr
   }
   
@@ -272,7 +279,8 @@ open class ModelAttribute : Attribute, Equatable {
                                               attributes:    [ Attribute ],
                                               entity: Entity? = nil) -> Bool
   {
-    if !isColumnNamePattern {
+    if patternType == .skip { return false }
+    if patternType != .columnName {
       /* check whether we are contained */
       // TODO: is this correct, could be more than 1 attribute with the same
       //       column?
@@ -307,9 +315,9 @@ open class ModelAttribute : Attribute, Equatable {
       /* clone and add */
       
       let attrCopy = ModelAttribute(attribute: self)
-      attrCopy.name       = attr.name
-      attrCopy.columnName = attr.columnName
-      attrCopy.isColumnNamePattern = false
+      attrCopy.name        = attr.name
+      attrCopy.columnName  = attr.columnName
+      attrCopy.patternType = .none
       list.append(attrCopy)
     }
     return true
@@ -343,9 +351,11 @@ open class ModelAttribute : Attribute, Equatable {
     if let cn = columnName {
       ms += "["
       ms += cn
-      if isColumnNamePattern { ms += "*" }
+      if patternType == .columnName { ms += "*" }
       ms += "]"
     }
+    
+    if patternType == .skip { ms += " SKIP" }
     
     // TODO: precision
     let ws : String
