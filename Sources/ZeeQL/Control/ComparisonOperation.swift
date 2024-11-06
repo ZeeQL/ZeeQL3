@@ -3,7 +3,7 @@
 //  ZeeQLTests
 //
 //  Created by Helge Heß on 24.08.19.
-//  Copyright © 2019 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2019-2024 ZeeZide GmbH. All rights reserved.
 //
 
 // TODO: Update to modern Swift API standards (e.g. lowercase)
@@ -105,6 +105,7 @@ public enum ComparisonOperation : Equatable, SmartDescription {
     ms += stringRepresentation
   }
   
+  @inlinable
   public static func ==(lhs: ComparisonOperation, rhs: ComparisonOperation)
                      -> Bool
   {
@@ -131,6 +132,7 @@ public extension ComparisonOperation {
   // Note: Had this as KeyValueQualifier<T>, but this makes class-checks harder.
   //       Not sure what the best Swift approach would be to avoid the Any
 
+  @inlinable
   func compare(_ a: Any?, _ b: Any?) -> Bool {
     // Everytime you compare an Any, a 🐄 dies.
     switch self {
@@ -178,3 +180,7 @@ public extension ComparisonOperation {
     }
   }
 }
+
+#if swift(>=5.5)
+extension ComparisonOperation: Sendable {}
+#endif
