@@ -3,8 +3,12 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 06/03/17.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
 //
+
+#if canImport(Foundation)
+import Foundation
+#endif
 
 /**
  * CodeValueAttribute objects are used to describe properties of Entity objects
@@ -96,7 +100,16 @@ public extension ActiveRecord {
       return box(name: name, column: column, externalType: externalType,
                  value: value)
     }
-    
+    public static func OptInt(name         : Swift.String? = nil,
+                              column       : Swift.String? = nil,
+                              externalType : Swift.String? = nil,
+                              _ value      : Swift.Int?    = nil)
+                       -> CodeValueAttribute<Swift.Int?>
+    {
+      return box(name: name, column: column, externalType: externalType,
+                 value: value)
+    }
+
     public static func String(name         : Swift.String? = nil,
                               column       : Swift.String? = nil,
                               externalType : Swift.String? = nil,
@@ -120,6 +133,31 @@ public extension ActiveRecord {
                  externalType: externalType, width: width,
                  value: value)
     }
+
+    #if canImport(Foundation)
+    public static func Date(name         : Swift.String? = nil,
+                            column       : Swift.String? = nil,
+                            externalType : Swift.String? = nil,
+                            _ value      : Foundation.Date = Foundation.Date())
+                       -> CodeValueAttribute<Foundation.Date>
+    {
+      return box(name: name, column: column,
+                 externalType: externalType,
+                 value: value)
+    }
+    
+    public static func OptDate(name         : Swift.String?    = nil,
+                               column       : Swift.String?    = nil,
+                               externalType : Swift.String?    = nil,
+                               width        : Swift.Int?       = nil,
+                               _ value      : Foundation.Date? = nil)
+                       -> CodeValueAttribute<Foundation.Date?>
+    {
+      return box(name: name, column: column,
+                 externalType: externalType, width: width,
+                 value: value)
+    }
+    #endif // canImport(Foundation)
   }
 }
 
