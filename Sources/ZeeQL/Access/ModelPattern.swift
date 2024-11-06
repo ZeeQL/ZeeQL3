@@ -224,7 +224,25 @@ fileprivate extension ModelEntity {
     let props : [ String ]? = nil
 
     // TODO: this would probably need some more work
+    #if false
     let rels = storedEntity.relationships
+    #else
+    let rels : [ Relationship ]
+    if relationships.isEmpty {
+      rels = storedEntity.relationships
+    }
+    else if storedEntity.relationships.isEmpty {
+      rels = relationships
+      // They are still connected to the pattern model, reset this.
+      rels.compactMap { $0 as? ModelRelationship }.forEach {
+        $0.destinationEntity = nil
+      }
+    }
+    else {
+      assertionFailure("relship merge missing")
+      rels = storedEntity.relationships + relationships
+    }
+    #endif
 
     // not derived:
     //   restrictingQualifier
@@ -358,6 +376,16 @@ public extension Adaptor {
     log.info("finished resolving pattern model:", newModel)
 
     newModel.connectRelationships()
+
+    #if DEBUG
+    for entity in entities {
+      for relship in entity.relationships {
+        assert(relship.isConnected)
+        assert(relship.destinationEntity != nil)
+      }
+    }
+    #endif
+    
     return newModel
   }
 }

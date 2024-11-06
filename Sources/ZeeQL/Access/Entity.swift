@@ -226,12 +226,23 @@ public extension Entity { // default imp
     return AttributeKey(attr, entity: self)
   }
   
+  /**
+   * Iterates over the relationships and calls
+   * ``Relationship/connectRelationships(in:entity:)`` on them.
+   *
+   * - Parameters:
+   *   - model: The model to resolve the entities.
+   */
   @inlinable
   func connectRelationships(in model : Model) {
     for relship in relationships {
       relship.connectRelationships(in: model, entity: self)
     }
   }
+  /**
+   * Iterates over the relationships and calls
+   * ``Relationship/disconnectRelationships()`` on them.
+   */
   @inlinable
   func disconnectRelationships() {
     for relship in relationships {
@@ -239,6 +250,9 @@ public extension Entity { // default imp
     }
   }
   
+  /**
+   * Returns the names of the attributes and relationships of the entity.
+   */
   @inlinable
   var classPropertyNames : [ String ]? {
     if attributes.isEmpty && relationships.isEmpty { return nil }
