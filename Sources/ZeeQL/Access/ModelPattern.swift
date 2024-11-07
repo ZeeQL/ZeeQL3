@@ -233,14 +233,14 @@ fileprivate extension ModelEntity {
     }
     else if storedEntity.relationships.isEmpty {
       rels = relationships
-      // They are still connected to the pattern model, reset this.
-      rels.compactMap { $0 as? ModelRelationship }.forEach {
-        $0.destinationEntity = nil
-      }
     }
     else {
-      assertionFailure("relship merge missing")
+      assertionFailure("Cannot (properly) merge relationships just yet.")
       rels = storedEntity.relationships + relationships
+    }
+    // They are still connected to the original model, reset this.
+    rels.compactMap { $0 as? ModelRelationship }.forEach {
+      $0.destinationEntity = nil
     }
     #endif
 
