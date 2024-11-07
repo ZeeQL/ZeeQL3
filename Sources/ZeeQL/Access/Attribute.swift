@@ -259,16 +259,38 @@ open class ModelAttribute : Attribute, Equatable {
     /* derive info */
     
     let rAttr = ModelAttribute(attribute: self)
-    if let v = attr.externalType    { rAttr.externalType    = v }
-    if let v = attr.isAutoIncrement { rAttr.isAutoIncrement = v }
-    if let v = attr.allowsNull      { rAttr.allowsNull      = v }
-    if let v = attr.width           { rAttr.width           = v }
-    if let v = attr.readFormat      { rAttr.readFormat      = v }
-    if let v = attr.writeFormat     { rAttr.writeFormat     = v }
-    if let v = attr.defaultValue    { rAttr.defaultValue    = v }
-    if let v = attr.comment         { rAttr.comment         = v }
-    if let v = attr.collation       { rAttr.collation       = v }
-    if let v = attr.privileges      { rAttr.privileges      = v }
+    // The pattern *overrides* the external spec! If you want the information
+    // schema to win, leave out the value in the pattern.
+    if rAttr.externalType    == nil, let v = attr.externalType    {
+      rAttr.externalType    = v
+    }
+    if rAttr.isAutoIncrement == nil, let v = attr.isAutoIncrement {
+      rAttr.isAutoIncrement = v
+    }
+    if rAttr.allowsNull      == nil, let v = attr.allowsNull      {
+      rAttr.allowsNull      = v
+    }
+    if rAttr.width           == nil, let v = attr.width           {
+      rAttr.width           = v
+    }
+    if rAttr.readFormat      == nil, let v = attr.readFormat      {
+      rAttr.readFormat      = v
+    }
+    if rAttr.writeFormat     == nil, let v = attr.writeFormat     {
+      rAttr.writeFormat     = v
+    }
+    if rAttr.defaultValue    == nil, let v = attr.defaultValue    {
+      rAttr.defaultValue    = v
+    }
+    if rAttr.comment         == nil, let v = attr.comment         {
+      rAttr.comment         = v
+    }
+    if rAttr.collation       == nil, let v = attr.collation       {
+      rAttr.collation       = v
+    }
+    if rAttr.privileges      == nil, let v = attr.privileges      {
+      rAttr.privileges      = v
+    }
     
     /* construct */
     rAttr.patternType = .none // TBD: do we need to fix the colName?
