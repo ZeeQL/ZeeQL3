@@ -242,6 +242,7 @@ open class ModelAttribute : Attribute, Equatable {
   public var isPattern : Bool {
     if patternType != .none { return true }
     if externalType == nil  { return true }
+    if allowsNull   == nil  { return true }
     return false
   }
   
