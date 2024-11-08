@@ -18,7 +18,8 @@ fileprivate extension ModelAttribute {
                                        entity: Entity,
                                        to attrs: inout [ Attribute ])
   {
-    if !isColumnNamePattern {
+    if patternType == .skip { return } // do not add
+    if patternType != .columnName {
       /* check whether we are contained */
       // TODO: is this correct, could be more than 1 attribute with the same
       //       column?
@@ -162,13 +163,6 @@ fileprivate extension ModelEntity {
       modelAttr.addAttributesMatchingAttributes(storedEntity.attributes,
                                                 entity: self, to: &resolvedList)
     }
-    #if DEBUG
-    do {
-      var patCount = attributes.count
-      if attributes.last?.isPattern ?? false { patCount -= 1 } // *
-      assert(patCount <= resolvedList.count)
-    }
-    #endif
 
     /* fill column attributes */
 
@@ -220,13 +214,6 @@ fileprivate extension ModelEntity {
     }
 
     let lAttrs = resolvedList
-    #if DEBUG
-    do {
-      var patCount = attributes.count
-      if attributes.last?.isPattern ?? false { patCount -= 1 } // *
-      assert(patCount <= lAttrs.count)
-    }
-    #endif
 
     /* derive information from the peer */
 
@@ -237,7 +224,25 @@ fileprivate extension ModelEntity {
     let props : [ String ]? = nil
 
     // TODO: this would probably need some more work
+    #if false
     let rels = storedEntity.relationships
+    #else
+    let rels : [ Relationship ]
+    if relationships.isEmpty {
+      rels = storedEntity.relationships
+    }
+    else if storedEntity.relationships.isEmpty {
+      rels = relationships
+    }
+    else {
+      assertionFailure("Cannot (properly) merge relationships just yet.")
+      rels = storedEntity.relationships + relationships
+    }
+    // They are still connected to the original model, reset this.
+    rels.compactMap { $0 as? ModelRelationship }.forEach {
+      $0.destinationEntity = nil
+    }
+    #endif
 
     // not derived:
     //   restrictingQualifier
@@ -276,8 +281,20 @@ fileprivate extension ModelEntity {
 
 public extension Adaptor {
   
+  /**
+   * Resolves a pattern model against data fetched from the information schema.
+   *
+   * This does not touch the `model` property of the adaptor. It opens a channel
+   * to the database, fetches the information schema and then resolves the
+   * pattern against that.
+   *
+   * - Parameters:
+   *   - pattern: A pattern Model, if the model is not a pattern, it is
+   *              returned as is.
+   * - Returns:   The resolved pattern model.
+   */
   func resolveModelPattern(_ pattern: Model) throws -> Model? {
-    guard pattern.isPattern else { return pattern}
+    guard pattern.isPattern else { return pattern }
 
     var entities = pattern.entities
     if entities.isEmpty { /* not sure whether this is a good idea */
@@ -359,6 +376,16 @@ public extension Adaptor {
     log.info("finished resolving pattern model:", newModel)
 
     newModel.connectRelationships()
+
+    #if DEBUG
+    for entity in entities {
+      for relship in entity.relationships {
+        assert(relship.isConnected)
+        assert(relship.destinationEntity != nil)
+      }
+    }
+    #endif
+    
     return newModel
   }
 }

@@ -666,13 +666,21 @@ open class CoreDataModelLoader : ModelLoader {
     assert(xml.name == "attribute")
     
     let attrs = xml.attributesAsDict
-    let name = attrs["name"] ?? attrs["column"] ?? ""
+    let name = attrs["name"] ?? attrs["column"] ?? attrs["skip"] ?? ""
     
     // Note: we don't care about usesScalarValueType
     let attribute = ModelAttribute(name: name)
-    let allowsNull       = boolValue(attrs["optional"] ?? attrs["null"])
-    attribute.allowsNull = allowsNull
-    
+    if let v = attrs["optional"] ?? attrs["null"] {
+      attribute.allowsNull = boolValue(v)
+    }
+    else {
+      assert(attribute.allowsNull == nil)
+    }
+
+    if name == attrs["skip"] { // <attribute skip="is_person">
+      assert(attribute.patternType == .none)
+      attribute.patternType = .skip
+    }
     // GETobjects:
     if let v = attrs["column"], !v.isEmpty     { attribute.columnName   = v }
     if let v = attrs["width"].map({ Int($0) }) { attribute.width        = v }
@@ -680,9 +688,11 @@ open class CoreDataModelLoader : ModelLoader {
     if let v = attrs["columnNameLike"], !v.isEmpty {
       // <attribute columnNameLike="*" />
       assert(attribute.columnName == nil, "both columnName and columnNameLike?")
+      assert(attribute.patternType == .none)
       attribute.columnName = v
-      attribute.isColumnNamePattern = true
+      attribute.patternType = .columnName
     }
+    
 
     // CoreData
     if let v = attrs["elementID"], !v.isEmpty { attribute.elementID = v }
@@ -690,41 +700,26 @@ open class CoreDataModelLoader : ModelLoader {
     if let attrType = attrs["attributeType"], !attrType.isEmpty {
       let lc = attrType.lowercased()
       
+      // Note: The valueType is NOT the Optional<X> if the attribute is
+      //       optional!
       if lc == "string" {
-        attribute.valueType = allowsNull ? Optional<String>.self : String.self
+        attribute.valueType = String.self
       }
       else if lc.hasPrefix("int") { // funny, ?: doesn't work here
-        if attrType.hasSuffix("16") {
-          if allowsNull { attribute.valueType = Optional<Int16>.self }
-          else          { attribute.valueType = Int16.self           }
-        }
-        else if attrType.hasSuffix("32") {
-          if allowsNull { attribute.valueType = Optional<Int32>.self }
-          else          { attribute.valueType = Int32.self           }
-        }
-        else if attrType.hasSuffix("64") {
-          if allowsNull { attribute.valueType = Optional<Int64>.self }
-          else          { attribute.valueType = Int64.self           }
-        }
-        else {
-          if allowsNull { attribute.valueType = Optional<Int>.self }
-          else          { attribute.valueType = Int.self           }
-        }
+        if      attrType.hasSuffix("16") { attribute.valueType = Int16.self }
+        else if attrType.hasSuffix("32") { attribute.valueType = Int32.self }
+        else if attrType.hasSuffix("64") { attribute.valueType = Int64.self }
+        else                             { attribute.valueType = Int  .self }
       }
-      else if lc == "date" {
-        attribute.valueType = allowsNull ? Optional<Date>.self : Date.self
-      }
+      else if lc == "date" { attribute.valueType = Date.self }
       else if lc == "binary" || lc ==  "data" {
-        attribute.valueType = allowsNull ? Optional<Data>.self : Data.self
+        attribute.valueType = Data.self
       }
       else if lc == "decimal" {
         // TODO: 'usesScalarValueType=YES'
-        if allowsNull { attribute.valueType = Optional<Decimal>.self }
-        else          { attribute.valueType = Decimal.self           }
+        attribute.valueType = Decimal.self
       }
-      else if lc.hasPrefix("bool") {
-        attribute.valueType = allowsNull ? Optional<Bool>.self : Bool.self
-      }
+      else if lc.hasPrefix("bool") { attribute.valueType = Bool.self }
       else if lc.hasPrefix("transformable") {
         // valueTransformerName="xx"
         // customClassName="xx"
@@ -819,8 +814,9 @@ open class CoreDataModelLoader : ModelLoader {
 
         if let v = attrs["elementID"], !v.isEmpty { attribute.elementID = v }
         
-        let allowsNull       = boolValue(attrs["optional"])
-        attribute.allowsNull = allowsNull
+        if let v = attrs["optional"] ?? attrs["null"] {
+          attribute.allowsNull = boolValue(v)
+        }
         
         relship.joins = [ Join(source      : attributeName,
                                destination : primaryKeyAttributeName) ]

@@ -3,17 +3,26 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 28/02/2017.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
 //
+
+#if canImport(Foundation)
+import Foundation
+#endif
 
 open class CodeEntityBase : Entity {
   // Those are available in subclasses, which makes it convenient
   // (can't do this in Generic classes, hence this intermediate)
   public enum Attribute {
     public typealias Int            = CodeAttribute<Swift.Int>
+    public typealias OptInt         = CodeAttribute<Swift.Int?>
     public typealias String         = CodeAttribute<Swift.String>
     public typealias NullableString = CodeAttribute<Swift.String?>
     public typealias OptString      = CodeAttribute<Swift.String?>
+    #if canImport(Foundation)
+    public typealias Date           = CodeAttribute<Foundation.Date>
+    public typealias OptDate        = CodeAttribute<Foundation.Date?>
+    #endif
   }
   public typealias Info = Attribute
   

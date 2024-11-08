@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 18/02/2017.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
 //
 
 
@@ -229,8 +229,8 @@ public extension Relationship { // extra methods
   
   
   /**
-   * Checks whether the Relationship got resolved (whether the Entity of
-   * the destination entity was looked up).
+   * Checks whether the Relationship got resolved (whether the ``Entity`` of
+   * the destination entity was looked up and whether all joins are connected).
    */
   var isConnected : Bool {
     if destinationEntity == nil { return false }
@@ -305,7 +305,7 @@ public extension Relationship {
     
     ms += " \(name)"
     ms += isToMany ? "[1:n]" : "[1:1]"
-    ms += " \(entity.name)"
+    ms += " '\(entity.name)'"
     
     if let to = destinationEntity { ms += " to=\(to.name)" }
     
@@ -526,7 +526,7 @@ open class ModelRelationship : Relationship {
       ms += " to=\(to.name)"
     }
     else if let ton = destinationEntityName {
-      ms += " to=\(ton)!"
+      ms += " to=\(ton)(unresolved)"
     }
     else {
       ms += " to=?"
