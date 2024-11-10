@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 26/02/2017.
-//  Copyright © 2017-2021 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
 //
 
 /**
@@ -171,7 +171,9 @@ public enum DatabaseObjectError : Swift.Error {
  *
  * Special KVC functions for toMany keys in ORM objects.
  */
-public protocol RelationshipManipulation : AnyObject, KeyValueCodingType {
+public protocol RelationshipManipulation
+  : AnyObject, KeyValueCodingType, MutableKeyValueCodingType
+{
   
   /**
    * Add an object to the array stored under '_key'.
@@ -194,8 +196,36 @@ public protocol RelationshipManipulation : AnyObject, KeyValueCodingType {
 public extension RelationshipManipulation { // default imp
   
   func addObject(_ object: AnyObject, toPropertyWithKey key: String) {
-    // TODO
-    fatalError("not implemented: \(#function)")
+    // TBD: this is, sigh.
+    // also, the KVC access is still a little open, this should do
+    // takeValueForKey in case the subclass overrides it
+    let log = globalZeeQLLogger
+    
+    // If it is a to-one, we push the object itself into the relship.
+    if let object = object as? DatabaseObject {
+      do {
+        try takeValue(object, forKey: key)
+      }
+      catch {
+        log.error("Could not take toOne relationship for key:", key)
+      }
+      return
+    }
+    
+    // TBD: Really AnyObject? Rather `DatabaseObject`?
+    // Because the input is like that!
+    do {
+      if var list = value(forKey: key) as? [ AnyObject ] {
+        list.append(object)
+        try takeValue(list, forKey: key)
+      }
+      else {
+        try takeValue([ object ], forKey: key)
+      }
+    }
+    catch {
+      log.error("Could not take toMany relationship for key:", key)
+    }
   }
   func removeObject(_ object: AnyObject, fromPropertyWithKey key: String) {
     // TODO
