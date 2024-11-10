@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 27/02/17.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
 //
 
 /**
@@ -211,9 +211,10 @@ fileprivate let countAttr : Attribute = {
 
 public extension Database {
   
-  func datasource<Object>(_ type: Object.Type) -> ActiveDataSource<Object> {
-    // use type argument to capture, is there a nicer way?
+  @inlinable
+  func datasource<Object>(_ type: Object.Type = Object.self)
+       -> ActiveDataSource<Object>
+  {
     return ActiveDataSource<Object>(database: self)
   }
-  
 }
