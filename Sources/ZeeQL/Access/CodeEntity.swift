@@ -32,6 +32,7 @@ open class CodeEntityBase : Entity {
   public final var name                     : String = ""
   public final var externalName             : String?
   public final var className                : String? // TBD: Hm.
+  public final var restrictingQualifier     : Qualifier?
 
   public final var attributes               = Array<ZeeQL.Attribute>()
   public final var relationships            = [ Relationship  ]()
@@ -179,7 +180,8 @@ open class CodeObjectEntity<T: CodeObjectType> : CodeEntityBase {
 
 // MARK: - Reflection
 
-fileprivate let specialTableKey = "table"
+fileprivate let specialTableKey = "table" // TBD
+fileprivate let specialRestrictingQualifierKey = "_restrictingQualifier"
 
 fileprivate extension CodeEntityBase {
 
@@ -209,7 +211,14 @@ fileprivate extension CodeEntityBase {
         externalName = v
         continue
       }
-      
+      if propname == specialRestrictingQualifierKey {
+        assert(propValue is Qualifier)
+        if let v = propValue as? Qualifier {
+          restrictingQualifier = v
+          continue
+        }
+      }
+
       if let attribute = CodeAttributeFactory.attributeFor(property: propname,
                                                            value: propValue)
       {
