@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 03/03/2017.
-//  Copyright © 2017-2019 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
 //
 
 /**
@@ -26,13 +26,14 @@ open class ObjectTrackingContext : ObjectStore {
   var gidToObject = [ GlobalID : AnyObject ]()
   
   // the store from which we fetch objects, usually a DatabaseContext
-  let parentObjectStore : ObjectStore
+  public let parentObjectStore : ObjectStore
   
   init(parent: ObjectStore) {
     parentObjectStore = parent
   }
   
-  var rootObjectStore : ObjectStore {
+  @inlinable
+  public var rootObjectStore : ObjectStore {
     if let tc = parentObjectStore as? ObjectTrackingContext {
       return tc.rootObjectStore
     }
