@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 03/03/2017.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
 //
 
 /**
@@ -14,7 +14,7 @@ open class DatabaseDataSource<Object: DatabaseObject>
              : AccessDataSource<Object>
 {
   
-  let objectContext : ObjectTrackingContext
+  public let objectContext : ObjectTrackingContext
   
   public init(_ oc: ObjectTrackingContext, entityName: String) {
     self.objectContext = oc
