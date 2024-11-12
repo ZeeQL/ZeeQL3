@@ -287,7 +287,7 @@ open class ActiveRecordBase : ActiveRecordType, SmartDescription {
   
   // MARK: - Description
 
-  public func appendToDescription(_ ms: inout String) {
+  open func appendToDescription(_ ms: inout String) {
     ms += " [\(entity.name)]"
     
     if isNew { ms += " NEW" }
