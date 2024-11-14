@@ -3,18 +3,19 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 24/02/17.
-//  Copyright © 2017-2020 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
 //
 
 /**
- * A specialized Dictionary<String, Any?> to be used for raw records returned
+ * A specialized `Dictionary<String, Any?>` to be used for raw records returned
  * from the database.
  * One feature is that it shares all keys between the records.
  *
- * Note: Do not confuse w/ `AdaptorRow`, which is a straight
+ * Note: Do not confuse w/ ``AdaptorRow``, which is a straight
  *         `[ String : Any? ]`
  *       dictionary with an optional value to represent NULL columns.
  */
+@dynamicMemberLookup
 open class AdaptorRecord : SwiftObject, SmartDescription {
   // Note: used to be a struct, but for DataSource we need an object, and well.
   
@@ -22,7 +23,13 @@ open class AdaptorRecord : SwiftObject, SmartDescription {
   public var values  : [ Any? ] // TBD: is it Any or some DB column base class?
   
   public var isEmpty : Bool { return values.isEmpty }
-  
+
+  @inlinable
+  public subscript(dynamicMember name: String) -> Any? {
+    set { self[name] = newValue }
+    get { self[name] }
+  }
+
   @inlinable
   public subscript(name: String) -> Any? {
     set {
