@@ -56,4 +56,17 @@ open class DatabaseDataSource<Object: DatabaseObject>
     guard let db = database else { return nil }
     return db[entity: ename]
   }
+
+  @inlinable
+  override open func _primaryFetchObjects(_ fs: FetchSpecification,
+                                          yield: ( Object ) throws -> Void)
+    throws
+  {
+    let results = try objectContext.objectsWith(fetchSpecification: fs)
+    for result in results {
+      assert(result is Object)
+      guard let object = result as? Object else { continue }
+      try yield(object)
+    }
+  }
 }
