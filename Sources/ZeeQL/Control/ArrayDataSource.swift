@@ -3,7 +3,7 @@
 //  ZeeQL3
 //
 //  Created by Helge Hess on 18/04/17.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
 //
 
 open class ArrayDataSource<Object: SwiftObject> : DataSource<Object>,
@@ -20,11 +20,12 @@ open class ArrayDataSource<Object: SwiftObject> : DataSource<Object>,
     self.objects = objects
   }
 
+  @inlinable
   override open func fetchCount() throws -> Int {
     return objects.count
   }
   
-  override open func fetchObjects(cb: ( Object ) -> Void) throws {
+  override open func fetchObjects(yield cb: ( Object ) -> Void) throws {
     // FIXME: Not nice. Too many dupe code.
     // TODO:  optimize
     

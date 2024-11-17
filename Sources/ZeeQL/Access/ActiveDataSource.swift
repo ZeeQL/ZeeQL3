@@ -38,6 +38,7 @@ open class ActiveDataSource<Object: ActiveRecordType> : AccessDataSource<Object>
     self.log = database.log
   }
   
+  @inlinable
   public convenience init(database: Database) {
     if let t = Object.self as? EntityType.Type {
       self.init(database: database, entity: t.entity)
@@ -50,12 +51,14 @@ open class ActiveDataSource<Object: ActiveRecordType> : AccessDataSource<Object>
   
   // MARK: - Create
   
+  @inlinable
   open func createObject() -> Object {
     let object = Object()
     object.bind(to: database, entity: entity)
     return object
   }
   
+  @inlinable
   open func insertObject(_ object: Object) throws {
     object.bind(to: database, entity: entity)
     try object.save()

@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 24/02/17.
-//  Copyright © 2017-2021 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
 //
 
 /**
@@ -23,23 +23,28 @@ open class DataSource<Object: SwiftObject>: EquatableType, Equatable {
   
   open var fetchSpecification : FetchSpecification?
   
-  open func fetchObjects(cb: ( Object ) -> Void) throws {
+  open func fetchObjects(yield: ( Object ) -> Void) throws {
     fatalError("Subclass must implement: \(#function)")
   }
-  open func fetchCount() throws -> Int {
-    fatalError("Subclass must implement: \(#function)")
+  open func fetchCount() throws -> Int { // inefficient default implementation
+    var count = 0
+    try fetchObjects(yield: { _ in count += 1 })
+    return count
   }
   
   // MARK: - Equatable
   
+  @inlinable
   public func isEqual(to object: Any?) -> Bool {
     guard let other = object as? DataSource else { return false }
     return other.isEqual(to: self)
   }
+  @inlinable
   public func isEqual(to object: DataSource) -> Bool {
     return self === object
   }
   
+  @inlinable
   public static func ==(lhs: DataSource, rhs: DataSource) -> Bool {
     return lhs.isEqual(to: rhs)
   }
@@ -56,6 +61,7 @@ public protocol SwiftObject: AnyObject {
 
 public extension DataSource {
   
+  @inlinable
   func fetchObjects() throws -> [ Object ] {
     var objects = [ Object ]()
     try fetchObjects { objects.append($0) }

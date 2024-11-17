@@ -101,7 +101,8 @@ open class AccessDataSource<Object: SwiftObject> : DataSource<Object> {
     fatalError("implement in subclass: \(#function)")
   }
 
-  override open func fetchObjects(cb yield: ( Object ) -> Void) throws {
+  override open func fetchObjects(yield: ( Object ) -> Void) throws {
+    // `iteratorForObjects` in GETobjects
     try _primaryFetchObjects(try fetchSpecificationForFetch(), yield: yield)
   }
   override open func fetchCount() throws -> Int {
