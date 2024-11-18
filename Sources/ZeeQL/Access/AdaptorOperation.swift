@@ -36,10 +36,12 @@ public class AdaptorOperation: Comparable, EquatableType, SmartDescription {
   /// Run when the operation did complete
   open   var completionBlock : (() -> ())?
   
-  init(entity: Entity) {
+  @inlinable
+  public init(entity: Entity) {
     self.entity = entity
   }
-  init(_ op: AdaptorOperation) {
+  @inlinable
+  public init(_ op: AdaptorOperation) {
     entity          = op.entity
     adaptorOperator = op.adaptorOperator
     attributes      = op.attributes
@@ -119,3 +121,7 @@ public class AdaptorOperation: Comparable, EquatableType, SmartDescription {
     }
   }
 }
+
+#if swift(>=5.5)
+extension AdaptorOperation.Operator: Sendable {}
+#endif
