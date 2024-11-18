@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Heß on 18.02.17.
-//  Copyright © 2017-2019 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
 //
 
 import struct Foundation.Date
@@ -30,10 +30,12 @@ import struct Foundation.Date
  * but the assembly will be done using the SQL pattern.
  *
  * Example:
- *
- *     SELECT COUNT(*) FROM %(tables)s %(where)s %(limit)s
+ * ```sql
+ * SELECT COUNT(*) FROM %(tables)s %(where)s %(limit)s
+ * ```
  *
  * Keys:
+ * ```
  * | select       | eg SELECT or SELECT DISTINCT
  * | columns      | eg BASE.lastname, BASE.firstname
  * | tables       | eg BASE.customer
@@ -43,14 +45,16 @@ import struct Foundation.Date
  * | limit        | eg OFFSET 0 LIMIT 1
  * | lock         | eg FOR UPDATE
  * | joins        |
+ * ```
  *
  * Compound:
- *
+ * ```
  * | where        | eg WHERE lastname LIKE 'Duck%'
  * | andQualifier | eg AND lastname LIKE 'Duck%'   (nothing w/o qualifier)
  * | orQualifier  | eg OR  lastname LIKE 'Duck%'   (nothing w/o qualifier)
  * | orderby      | eg ORDER BY mod_date DESC (nothing w/o orderings)
  * | andOrderBy   | eg mod_date DESC (nothing w/o orderings)
+ * ```
  *
  * Note: parts which involve bind variables (eg andQualifier) can only be used
  *       ONCE! This is because the bindings are generated only once, but the
@@ -220,9 +224,10 @@ open class SQLExpression: SmartDescription {
    * generate multiple INSERT statements separated by a semicolon.
    *
    * In PostgreSQL this is available with 8.2.x, the syntax is:
+   * ```sql
+   * INSERT INTO Log ( a, b ) VALUES (1,2), (3,4), (5,6);
+   * ```
    *
-   *     INSERT INTO Log ( a, b ) VALUES (1,2), (3,4), (5,6);
-   * 
    * @param rows        - list of rows to insert
    * @param _tableList  - SQL table reference (eg 'address')
    * @param _columnList - SQL list of columns (eg 'firstname, lastname')
@@ -772,12 +777,12 @@ open class SQLExpression: SmartDescription {
     if (sel == SortOrdering.Selector.CompareCaseInsensitiveAscending ||
         sel == SortOrdering.Selector.CompareAscending)
     {
-      s += " ASC";
+      s += " ASC"
     }
     else if sel == SortOrdering.Selector.CompareCaseInsensitiveDescending ||
             sel == SortOrdering.Selector.CompareDescending
     {
-      s += " DESC";
+      s += " DESC"
     }
     
     /* add to list */
@@ -836,7 +841,7 @@ open class SQLExpression: SmartDescription {
           continue
         }
 
-        sb.append(", ");
+        sb.append(", ")
         
         let tableName = entity.externalName ?? entity.name
         sb += sqlStringFor(schemaObjectName: tableName)
@@ -928,8 +933,8 @@ open class SQLExpression: SmartDescription {
           continue
         }
 
-        //left  = join.sourceAttribute().name();
-        //right = join.destinationAttribute().name();
+        //left  = join.sourceAttribute().name()
+        //right = join.destinationAttribute().name()
         let left  = sqlStringForAttribute(sa, lastRelPath)
         let right = sqlStringForAttribute(da, relPath)
         
@@ -1094,7 +1099,7 @@ open class SQLExpression: SmartDescription {
   public func formatStringValue(_ v: String?) -> String {
     // TODO: whats the difference to sqlStringForString?
     guard let v = v else { return "NULL" }
-    return "'" + escapeSQLString(v) + "'";
+    return "'" + escapeSQLString(v) + "'"
   }
 
   /**
@@ -1110,7 +1115,7 @@ open class SQLExpression: SmartDescription {
     // TBD: whats the difference to formatStringValue()? check docs
     guard let v = v else { return "NULL" }
 
-    return "'" + escapeSQLString(v) + "'";
+    return "'" + escapeSQLString(v) + "'"
   }
   
   /**
@@ -1299,7 +1304,7 @@ open class SQLExpression: SmartDescription {
     // TBD: check whether the value is an Expression?
     
     if _value is QualifierVariable {
-      useBind = true;
+      useBind = true
     }
     else if let _ = _value as? [ Any? ] {
       /* Not sure whether this should really override the attribute? Its for
@@ -1498,7 +1503,7 @@ open class SQLExpression: SmartDescription {
    * - returns:        a SQL string, like: "BASE.c_last_name"
    */
   func sqlStringForAttribute(_ attr: Attribute) -> String {
-    return self.sqlStringForAttribute(attr, "" /* relship path, BASE */);
+    return self.sqlStringForAttribute(attr, "" /* relship path, BASE */)
   }
   
   /**
@@ -1663,7 +1668,7 @@ open class SQLExpression: SmartDescription {
       return q + nn + q
     }
     
-    return q + name + q;
+    return q + name + q
   }
   
   open var lockClause : String? {
@@ -1766,7 +1771,7 @@ open class SQLExpression: SmartDescription {
   
   public func sqlStringForBooleanQualifier(_ q: BooleanQualifier) -> String {
     // TBD: we could return an empty qualifier for true?
-    return !q.value ? "1 = 2" : "1 = 1";
+    return !q.value ? "1 = 2" : "1 = 1"
   }
   
   /**
@@ -2130,12 +2135,12 @@ open class SQLExpression: SmartDescription {
   #if false // TODO
   func sqlStringForCSVKeyValueQualifier(_ q: CSVKeyValueQualifier) -> String {
     /* the default implementation just builds a LIKE qualifier */
-    return self.sqlStringForQualifier(_q.rewriteAsPlainQualifier());
+    return self.sqlStringForQualifier(_q.rewriteAsPlainQualifier())
   }
   
   func sqlStringForOverlapsQualifier(_ q: OverlapsQualifier) -> String {
     /* the default implementation just builds the range qualifier manually */
-    return self.sqlStringForQualifier(_q.rewriteAsPlainQualifier());
+    return self.sqlStringForQualifier(_q.rewriteAsPlainQualifier())
   }
   #endif
   
@@ -2364,7 +2369,7 @@ open class SQLExpression: SmartDescription {
   }
   
   public func allowsNullClauseForConstraint(_ allowNull: Bool) -> String {
-    return allowNull ? " NULL" : " NOT NULL";
+    return allowNull ? " NULL" : " NOT NULL"
   }
   
   

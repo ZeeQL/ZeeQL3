@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 18/02/2017.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
 //
 
 /**
@@ -51,11 +51,13 @@ public class AdaptorOperation: Comparable, EquatableType, SmartDescription {
   
   // MARK: - Comparable
 
+  @inlinable
   public func isEqual(to object: Any?) -> Bool {
     guard let oa = object as? AdaptorOperation else { return false }
     return self == oa
   }
 
+  @inlinable
   public static func ==(lhs: AdaptorOperation, rhs: AdaptorOperation) -> Bool {
     guard lhs.entity === rhs.entity                  else { return false }
     guard lhs.adaptorOperator == rhs.adaptorOperator else { return false }
@@ -65,6 +67,7 @@ public class AdaptorOperation: Comparable, EquatableType, SmartDescription {
     return true
   }
   
+  @inlinable
   public static func < (lhs: AdaptorOperation, rhs: AdaptorOperation) -> Bool {
     // first order by entity name
     if lhs.entity.name < rhs.entity.name { return true }
@@ -80,6 +83,7 @@ public class AdaptorOperation: Comparable, EquatableType, SmartDescription {
   
   // MARK: - bindings
   
+  @inlinable
   func operationWith(bindings: Any?) throws -> AdaptorOperation? {
     guard let q = qualifier else { return self }
     
