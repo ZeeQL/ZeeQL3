@@ -1793,7 +1793,7 @@ open class SQLExpression: SmartDescription {
     for part in parts {
       switch part {
         case .RawSQLValue(let value):
-          let rv = RawSQLValue(value: value)
+          let rv = RawSQLValue(value)
           // TBD: Whats correct here? Should we escape parts or not? For now we
           //      assume that values are just that and need to be escaped. Which
           //      implies that bindings cannot contain dynamic SQL.
