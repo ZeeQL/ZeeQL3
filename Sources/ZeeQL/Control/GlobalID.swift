@@ -3,11 +3,25 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 17/02/17.
-//  Copyright © 2017-2019 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
 //
+
+// FIXME(hh 2024-11-19): Those should not be classes!
+// - see below
+// - make GlobalID a protocol
+// - and the specific ones structs
+// Should not break anything, they are immutable? Or not, for the temporary
+// ID?
+// - maybe we could just makes this an enum? no one is going to invent own
+//   additional GIDs?
 
 open class GlobalID : EquatableType, Hashable {
   // Note: cannot be a protocol because Hashable (because Equatable)
+  // hh(2024-11-19):
+  // Explanation: This is often used as a key. And Equality does NOT depend on
+  // the type, e.g. a `ComplexKeyGlobalID<[Int]>` can match
+  // `SingleIntKeyGlobalID`
+  // - In modern Swift it can? Even in old using AnyHashable?
   
   public init() {}
   
