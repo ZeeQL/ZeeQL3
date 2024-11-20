@@ -6,14 +6,199 @@
 //  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
 //
 
-// FIXME(hh 2024-11-19): Those should not be classes!
-// - see below
-// - make GlobalID a protocol
-// - and the specific ones structs
-// Should not break anything, they are immutable? Or not, for the temporary
-// ID?
-// - maybe we could just makes this an enum? no one is going to invent own
-//   additional GIDs?
+#if !GLOBALID_AS_OPEN_CLASS
+
+import Foundation
+
+// For ZeeQL we only really need this.
+// Avoid the overdesign of arbitrary GIDs. At least for now.
+// This could also be a protocol, but again, this just overcomplicates the thing
+// and right now we only really need KeyGlobalID's for ZeeQL.
+public typealias GlobalID = KeyGlobalID
+
+public typealias SingleIntKeyGlobalID = KeyGlobalID // compact to object version
+
+public struct KeyGlobalID: Hashable, @unchecked Sendable {
+  // unchecked Sendable for AnyHashable, but those will only contain base types.
+  
+  public enum Value: Hashable {
+    // This is a little more complicated than it seems, because values may be
+    // `nil`. Consider this: `id INTEGER NULL PRIMARY KEY`.
+    // The `[AnyHashable?]` `init` actually normalizes those values.,
+    // careful w/ assigning such manually.
+    
+    case int      (Int)
+    case string   (String)
+    case uuid     (UUID)
+    case singleNil
+    
+    case values([ AnyHashable? ]) // TBD: issue for Sendable
+      // maybe this should be `any Hashable & Sendable`, but restricts Swift
+      // version.
+    
+    @inlinable
+    public var count: Int {
+      switch self {
+        case .int, .string, .uuid, .singleNil: return 1
+        case .values(let values): return values.count
+      }
+    }
+    
+    @inlinable // legacy
+    public var keyCount: Int { return count }
+    
+    @inlinable
+    public subscript(i: Int) -> Any? {
+      guard i >= 0 && i < count else { return nil }
+      switch self {
+        case .singleNil             : return Optional.none // vs `nil`?
+        case .int      (let value)  : return value
+        case .string   (let value)  : return value
+        case .uuid     (let value)  : return value
+        case .values   (let values) : return values[i]
+      }
+    }
+  }
+  
+  public let entityName : String
+  public let value      : Value
+
+  @inlinable
+  public var count: Int { return value.count }
+  @inlinable // legacy
+  public var keyCount: Int { return count }
+
+  @inlinable
+  public subscript(i: Int) -> Any? { return value[i] }
+}
+
+public extension KeyGlobalID.Value { // Initializers and Factory
+
+  @inlinable
+  init(_ values: [ AnyHashable? ]) {
+    if values.count == 1, let opt = values.first {
+      if let v = opt {
+        switch v { // TBD: `as any BinaryInteger`, but requires 5.5+?
+          case let v as Int    : self = .int(v)
+          case let v as Int64  : self = .int(Int(v))
+          case let v as Int32  : self = .int(Int(v))
+          case let v as UInt32 : self = .int(Int(v)) // assumes 64-bit
+          case let v as String : self = .string(v)
+          case let v as UUID   : self = .uuid(v)
+          default:
+            assert(!(v.base is any BinaryInteger), "Unexpected BinaryInteger")
+            self = .values(values)
+        }
+      }
+      else {
+        self = .singleNil
+      }
+    }
+    else { self = .values(values) }
+  }
+}
+
+public extension KeyGlobalID { // Initializers and Factory
+  
+  @inlinable
+  init<I: BinaryInteger>(entityName: String, value: I) {
+    self.entityName = entityName
+    self.value = .int(Int(value))
+  }
+  @inlinable
+  init(entityName: String, value: String) {
+    self.entityName = entityName
+    self.value = .string(value)
+  }
+  @inlinable
+  init(entityName: String, value: UUID) {
+    self.entityName = entityName
+    self.value = .uuid(value)
+  }
+  
+  @inlinable
+  init(entityName: String, values: [ AnyHashable? ]) {
+    self.entityName = entityName
+    self.value      = Value(values)
+  }
+
+  @inlinable // legacy
+  static func make(entityName: String, values: [ Any? ]) -> KeyGlobalID
+  {
+    if values.isEmpty { return KeyGlobalID(entityName: entityName, values: []) }
+
+    if values.count == 1, let opt = values.first {
+      if let v = opt {
+        switch v { // TBD: `as any BinaryInteger`, but requires 5.5+?
+          case let v as Int    :
+            return KeyGlobalID(entityName: entityName, value: v)
+          case let v as Int64  :
+            return KeyGlobalID(entityName: entityName, value: Int(v))
+          case let v as Int32  :
+            return KeyGlobalID(entityName: entityName, value: Int(v))
+          case let v as UInt32 :
+            return KeyGlobalID(entityName: entityName, value: Int(v)) // assumes 64-bit
+          case let v as String :
+            return KeyGlobalID(entityName: entityName, value: v)
+          case let v as UUID   :
+            return KeyGlobalID(entityName: entityName, value: v)
+          default:
+            assert(!(v is any BinaryInteger), "Unexpected BinaryInteger")
+            assertionFailure("Custom key value type, add explicit check")
+            if let v = v as? AnyHashable {
+              return KeyGlobalID(entityName: entityName, values: [ v ])
+            }
+            fatalError("Unsupported key type \(type(of: v))")
+        }
+      }
+      else {
+        return KeyGlobalID(entityName: entityName,
+                           values: [ Optional<AnyHashable>.none ])
+      }
+    }
+    let hashables : [ AnyHashable? ] = values.compactMap {
+      guard let value = $0 else { return nil }
+      guard let h = value as? any Hashable else {
+        fatalError("Key value must be Hashable \(entityName) \(values)")
+      }
+      return AnyHashable(h)
+    }
+    assert(hashables.count == values.count)
+    return KeyGlobalID(entityName: entityName, values: hashables)
+  }
+}
+
+extension KeyGlobalID: EquatableType {
+  
+  @inlinable
+  public func isEqual(to other: Any?) -> Bool {
+    return self == (other as? GlobalID)
+  }
+  @inlinable
+  public func isEqual(to other: Self) -> Bool { self == other }
+}
+
+extension KeyGlobalID: CustomStringConvertible {
+  
+  public var description: String {
+    var ms = "<GID: \(entityName)"
+    switch value {
+      case .int   (let value)  : ms += " \(value)"
+      case .string(let value)  : ms += " \(value)"
+      case .uuid  (let value)  : ms += " \(value.uuidString)"
+      case .singleNil          : ms += " <nil>"
+      case .values(let values) :
+        for value in values {
+          if let value = value { ms += " \(value)"  }
+          else                 { ms += " <nil>"     }
+        }
+    }
+    ms += ">"
+    return ms
+  }
+}
+
+#else // GLOBALID_AS_OPEN_CLASS
 
 open class GlobalID : EquatableType, Hashable {
   // Note: cannot be a protocol because Hashable (because Equatable)
@@ -175,3 +360,4 @@ public final class SingleIntKeyGlobalID : KeyGlobalID {
   }
 }
 
+#endif // GLOBALID_AS_OPEN_CLASS

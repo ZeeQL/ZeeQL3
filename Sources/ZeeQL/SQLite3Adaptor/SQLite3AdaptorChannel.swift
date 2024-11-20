@@ -340,30 +340,65 @@ open class SQLite3AdaptorChannel : AdaptorChannel {
         if doLogSQL { log.log("  BIND[\(idx)]: \(attr.name)") }
       }
       
+      func bindAnyValue(_ value: Any?) throws -> Int32 {
+        guard let value = value else {
+          if doLogSQL { log.log("      [\(idx)]> bind NULL") }
+          return sqlite3_bind_null(stmt, idx)
+        }
+        switch value {
+          case let value as String:
+            if doLogSQL { log.log("      [\(idx)]> bind string \"\(value)\"") }
+            return sqlite3_bind_text(stmt, idx, pool.pstrdup(value), -1, nil)
+          case let value as Int:
+            if doLogSQL { log.log("      [\(idx)]> bind int \(value)") }
+            return sqlite3_bind_int64(stmt, idx, sqlite3_int64(value))
+          case let value as Int32:
+            if doLogSQL { log.log("      [\(idx)]> bind int \(value)") }
+            return sqlite3_bind_int64(stmt, idx, sqlite3_int64(value))
+          case let value as Int64:
+            if doLogSQL { log.log("      [\(idx)]> bind int \(value)") }
+            return sqlite3_bind_int64(stmt, idx, sqlite3_int64(value))
+          case let value as GlobalID:
+            assert(value.keyCount == 1)
+            switch value.value {
+              case .singleNil:
+                if doLogSQL { log.log("      [\(idx)]> bind NULL") }
+                return sqlite3_bind_null(stmt, idx)
+              case .int(let value):
+                if doLogSQL { log.log("      [\(idx)]> bind int \(value)") }
+                return sqlite3_bind_int64(stmt, idx, sqlite3_int64(value))
+              case .string(let value):
+                if doLogSQL {
+                  log.log("      [\(idx)]> bind string \"\(value)\"") }
+                return sqlite3_bind_text(stmt, idx, pool.pstrdup(value), -1, nil)
+              case .uuid(let value):
+                if doLogSQL {
+                  log.log("      [\(idx)]> bind string \"\(value)\"") }
+                return sqlite3_bind_text(stmt, idx,
+                                       pool.pstrdup(value.uuidString), -1, nil)
+              case .values(let values):
+                if values.count > 1 {
+                  let rc = SQLITE_MISMATCH // TBD
+                  throw Error.BindFailed(rc, message(for: rc), bind)
+                }
+                if let value = values.first {
+                  return try bindAnyValue(value)
+                }
+                else {
+                  assertionFailure("Empty key")
+                  if doLogSQL { log.log("      [\(idx)]> bind NULL") }
+                  return sqlite3_bind_null(stmt, idx)
+                }
+            }
+          default:
+            assertionFailure("Unexpected value, please add explicit type")
+            if doLogSQL { log.log("      [\(idx)]> bind other \(value)") }
+            return sqlite3_bind_text(stmt, idx, pool.pstrdup(value), -1, nil)
+        }
+      }
+      
       // TODO: Add a protocol to do this?
-      let rc : Int32
-      if let value = bind.value {
-        if let value = value as? String {
-          if doLogSQL { log.log("      [\(idx)]> bind string \"\(value)\"") }
-          rc = sqlite3_bind_text(stmt, idx, pool.pstrdup(value), -1, nil)
-        }
-        else if let value = value as? SingleIntKeyGlobalID { // hacky
-          if doLogSQL { log.log("      [\(idx)]> bind key \(value)") }
-          rc = sqlite3_bind_int64(stmt, idx, sqlite3_int64(value.value))
-        }
-        else if let value = value as? Int { // TODO: Other Integers
-          if doLogSQL { log.log("      [\(idx)]> bind int \(value)") }
-          rc = sqlite3_bind_int64(stmt, idx, sqlite3_int64(value))
-        }
-        else { // TODO
-          if doLogSQL { log.log("      [\(idx)]> bind other \(value)") }
-          rc = sqlite3_bind_text(stmt, idx, pool.pstrdup(value), -1, nil)
-        }
-      }
-      else {
-        if doLogSQL { log.log("      [\(idx)]> bind NULL") }
-        rc = sqlite3_bind_null(stmt, idx)
-      }
+      let rc = try bindAnyValue(bind.value)
       
       guard rc == SQLITE_OK
        else { throw Error.BindFailed(rc, message(for: rc), bind) }
