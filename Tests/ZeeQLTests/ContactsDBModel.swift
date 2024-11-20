@@ -151,11 +151,16 @@ import class Foundation.FileManager
 import struct Foundation.URL
 
 internal func lookupTestDataPath() -> String {
-  let path = ProcessInfo.processInfo.environment["SRCROOT"]
-          ?? FileManager.default.currentDirectoryPath
+  let fm = FileManager.default
   
-  let dataPath : String = {
-    let fm = FileManager.default
+  // This isn't set anymore when running the test in Xcode 16.1?
+  if let path = ProcessInfo.processInfo.environment["SRCROOT"], !path.isEmpty {
+    if fm.fileExists(atPath: "\(path)/data") { return "\(path)/data" }
+    fatalError("could not locate data path in SRCROOT: \(path)")
+  }
+    
+  do { // Xcode 16: runs in /private/tmp
+    let path = FileManager.default.currentDirectoryPath
     if fm.fileExists(atPath: "\(path)/data") { return "\(path)/data" }
     
     // on Linux we seem to be in `/src/Tests/ZeeQLTests`, so step up two
@@ -164,9 +169,23 @@ internal func lookupTestDataPath() -> String {
               .deletingLastPathComponent()
               .appendingPathComponent("data")
     if fm.fileExists(atPath: url.path) { return url.path }
-    
-    print("could not locate data path in:", path)
-    return "\(path)/data"
-  }()
-  return dataPath
+    print("could not locate data path in current dir:", path)
+  }
+  
+  do {
+    let path = #filePath // Tests/ZeeQLTests/ContactsDBModel.swift
+    let url = URL(fileURLWithPath: path)
+              .deletingLastPathComponent()
+              .deletingLastPathComponent()
+              .deletingLastPathComponent()
+              .appendingPathComponent("data")
+    if fm.fileExists(atPath: url.path) { return url.path }
+    print("could not locate data path in src dir:", path)
+  }
+
+  for ( key, value ) in ProcessInfo.processInfo.environment {
+    print("\(key):", value)
+  }
+  fatalError("Missing data path?")
+  //return "\(path)/data"
 }
