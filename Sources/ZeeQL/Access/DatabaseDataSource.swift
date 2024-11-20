@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 03/03/2017.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
 //
 
 /**
@@ -14,7 +14,7 @@ open class DatabaseDataSource<Object: DatabaseObject>
              : AccessDataSource<Object>
 {
   
-  let objectContext : ObjectTrackingContext
+  public let objectContext : ObjectTrackingContext
   
   public init(_ oc: ObjectTrackingContext, entityName: String) {
     self.objectContext = oc
@@ -55,5 +55,18 @@ open class DatabaseDataSource<Object: DatabaseObject>
     
     guard let db = database else { return nil }
     return db[entity: ename]
+  }
+
+  @inlinable
+  override open func _primaryFetchObjects(_ fs: FetchSpecification,
+                                          yield: ( Object ) throws -> Void)
+    throws
+  {
+    let results = try objectContext.objectsWith(fetchSpecification: fs)
+    for result in results {
+      assert(result is Object)
+      guard let object = result as? Object else { continue }
+      try yield(object)
+    }
   }
 }

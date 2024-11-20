@@ -3,16 +3,19 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 28/02/17.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
 //
 
-public struct SQLQualifier : Qualifier, Equatable {
+public struct SQLQualifier : Qualifier, Hashable {
   // TBD: maybe rename to 'RawQualifier'?
   
-  public enum Part: Equatable {
+  public enum Part: Hashable {
+    // TODO: lowercase cases for modern Swift
+    
     case RawSQLValue(String)
     case QualifierVariable(String)
     
+    @inlinable
     public static func ==(lhs: Part, rhs: Part) -> Bool {
       switch ( lhs, rhs ) {
         case ( RawSQLValue(let a), RawSQLValue(let b) ):
@@ -28,12 +31,14 @@ public struct SQLQualifier : Qualifier, Equatable {
   
   public let parts : [ Part ]
   
+  @inlinable
   public init(parts: [ Part ]) {
     self.parts = parts // TODO: compact?
   }
 
   // MARK: - Bindings
   
+  @inlinable
   public func addBindingKeys(to set: inout Set<String>) {
     for part in parts {
       if case .QualifierVariable(let key) = part {
@@ -42,6 +47,7 @@ public struct SQLQualifier : Qualifier, Equatable {
     }
   }
   
+  @inlinable
   public var hasUnresolvedBindings : Bool {
     for part in parts {
       if case .QualifierVariable = part { return true }
@@ -49,6 +55,7 @@ public struct SQLQualifier : Qualifier, Equatable {
     return false
   }
 
+  @inlinable
   public func qualifierWith(bindings: Any?, requiresAll: Bool) throws
               -> Qualifier?
   {
@@ -74,10 +81,12 @@ public struct SQLQualifier : Qualifier, Equatable {
   
   // MARK: - Equality
   
+  @inlinable
   public static func ==(lhs: SQLQualifier, rhs: SQLQualifier) -> Bool {
     return lhs.parts == rhs.parts
   }
-  
+    
+  @inlinable
   public func isEqual(to object: Any?) -> Bool {
     guard let other = object as? SQLQualifier else { return false }
     return self == other
@@ -104,3 +113,8 @@ public struct SQLQualifier : Qualifier, Equatable {
     ms += "]"
   }
 }
+
+#if swift(>=5.5)
+extension SQLQualifier      : Sendable {}
+extension SQLQualifier.Part : Sendable {}
+#endif

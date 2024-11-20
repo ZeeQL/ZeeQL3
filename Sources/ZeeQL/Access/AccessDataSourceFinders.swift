@@ -114,7 +114,8 @@ public extension AccessDataSource { // GIDs
 
   func fetchObjects<S: Sequence>(with globalIDs: S,
                                  yield: ( Object ) throws -> Void) throws
-         where S.Element : GlobalID
+         //where S.Element : GlobalID
+         where S.Element == KeyGlobalID
   {
     guard let entity = entity else { throw AccessDataSourceError.MissingEntity }
     let gidQualifiers = globalIDs.map { entity.qualifierForGlobalID($0) }
@@ -123,14 +124,16 @@ public extension AccessDataSource { // GIDs
     try fetchObjects(fs, cb: yield)
   }
   func fetchObjects<S: Sequence>(with globalIDs: S) throws -> [ Object ]
-         where S.Element : GlobalID
+         //where S.Element : GlobalID
+         where S.Element == KeyGlobalID
   {
     var objects = [ Object ]()
     try fetchObjects(with: globalIDs) { objects.append($0) }
     return objects
   }
   func fetchObjects<S: Collection>(with globalIDs: S) throws -> [ Object ]
-         where S.Element : GlobalID
+         //where S.Element : GlobalID
+         where S.Element == KeyGlobalID
   {
     var objects = [ Object ]()
     objects.reserveCapacity(globalIDs.count)

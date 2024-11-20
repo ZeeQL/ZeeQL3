@@ -3,12 +3,12 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 24/02/17.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
 //
 
 /**
- * Adaptor channels represent database connections. Usually subclassed by
- * specific adaptors (e.g. there is a SQLite3AdaptorChannel) to implement
+ * Adaptor channels represent database connections. Usually implemented by
+ * specific adaptors (e.g. there is a ``SQLite3AdaptorChannel``) to implement
  * the operations.
  */
 public protocol AdaptorChannel : AdaptorQueryType, ModelNameMapper {
@@ -215,6 +215,7 @@ public extension AdaptorChannel {
    * - parameters:
    *   - op: the `AdaptorOperation` object
    */
+  @inlinable
   func performAdaptorOperation(_ op: AdaptorOperation) throws {
     let affectedRows = try performAdaptorOperationN(op)
     guard affectedRows == 1 else {
@@ -434,6 +435,7 @@ public extension AdaptorChannel {
     }
   }
   
+  @inlinable
   func columnNameForAttribute(_ a: Attribute) -> String {
     if let c = a.columnName { return c }
     // TODO: derive column-name based on some configurable algorithm, e.g.
@@ -451,6 +453,7 @@ public extension AdaptorChannel {
    *   - entity:    the entity which should be updated
    * - returns: number of affected rows or -1 on error
    */
+  @inlinable
   func updateValuesInRowsDescribedByQualifier(_ values    : [ String: Any? ],
                                               _ qualifier : Qualifier,
                                               _ entity    : Entity) throws
@@ -461,6 +464,7 @@ public extension AdaptorChannel {
     return try evaluateUpdateExpression(expr)
   }
   
+  @inlinable
   func deleteRowsDescribedByQualifier(_ q: Qualifier, _ e: Entity) throws
        -> Int
   {
@@ -477,6 +481,7 @@ public extension AdaptorChannel {
    *   - entity:    the entity which contains the row
    * - returns:     true if exactly one row was deleted, false otherwise
    */
+  @inlinable
   func deleteRowDescribedByQualifier(_ qualifier: Qualifier, _ entity: Entity)
          throws -> Bool
   {
@@ -550,11 +555,12 @@ public extension AdaptorChannel {
    * The method returns true if exactly one row was affected by the SQL
    * statement. If the operation failed the error is thrown.
    *
-   * - parameters:
+   * - Parameters:
    *   - row:    the record which should be inserted
    *   - entity: optionally an entity representing the table
-   * - returns:  the record, potentially refetched and updated
+   * - Returns:  the record, potentially refetched and updated
    */
+  @inlinable
   func insertRow(_ row: AdaptorRow, _ entity: Entity? = nil)
          throws -> AdaptorRow
   {
@@ -570,10 +576,11 @@ extension AdaptorChannel {
    * Scans the given array for attributes whose name does not match their
    * external name (the database column).
    * 
-   * - parameters:
+   * - Parameters:
    *   - attributes: the attributes array to be checked
-   * - returns: an array of attributes which need to be mapped
+   * - Returns: an array of attributes which need to be mapped
    */
+  @inlinable
   func attributesWhichRequireRowNameMapping(_ attributes: [ Attribute ])
        -> [ Attribute ]
   {
@@ -592,6 +599,7 @@ public extension AdaptorChannel { // Utility
 
   /* utility */
   
+  @inlinable
   func fetchSingleStringRows(_ _sql: String, column: String) throws
        -> [ String ]
   {
@@ -609,15 +617,18 @@ public extension AdaptorChannel { // Utility
 
 public extension AdaptorChannel {
   
-  func entityNameForTableName(_ tableName : String) -> String {
+  @inlinable
+  func entityNameForTableName(_ tableName: String) -> String {
     return tableName
   }
 
-  func attributeNameForColumnName(_ colName   : String) -> String {
+  @inlinable
+  func attributeNameForColumnName(_ colName: String) -> String {
     return colName
   }
   
-  func describeModelWithTableNames(_ tableNames : [ String ]) throws -> Model? {
+  @inlinable
+  func describeModelWithTableNames(_ tableNames: [ String ]) throws -> Model? {
     guard !tableNames.isEmpty else { return nil }
     
     var entities = [ Entity ]()

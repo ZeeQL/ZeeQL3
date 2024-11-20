@@ -44,9 +44,9 @@ fileprivate extension ModelAttribute {
           attrs.append(attr)
         }
         else {
-          globalZeeQLLogger.warn("Did not find column as name", columnName,
-                                 "in template", entity.name,
-                                 "in database:", inAttrs)
+          globalZeeQLLogger.warn("Did not find column w/ name", columnName,
+                                 "\n  in template", entity.name,
+                                 "\n  in database:", inAttrs)
           
         }
       }

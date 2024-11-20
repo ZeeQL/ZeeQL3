@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 28/02/17.
-//  Copyright © 2017-2019 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
 //
 
 public struct KeyValueQualifier : Qualifier, Equatable {
@@ -12,34 +12,42 @@ public struct KeyValueQualifier : Qualifier, Equatable {
   public let value     : Any? // TBD: change to Expression?
   public let operation : ComparisonOperation
 
+  @inlinable
   public init(_ key: Key, _ op: ComparisonOperation = .EqualTo, _ value: Any?) {
     self.keyExpr   = key
     self.value     = value
     self.operation = op
   }
+  @inlinable
   public init(_ key: String, _ op: ComparisonOperation = .EqualTo,
               _ value: Any?)
   {
     self.init(StringKey(key), op, value)
   }
+  @inlinable
   public init(_ key: String, _ op: String = "==", _ value: Any?) {
     self.init(StringKey(key), ComparisonOperation(string: op), value)
   }
   
+  @inlinable
   public var key : String { return keyExpr.key }
   
+  @inlinable
   public var leftExpression  : Expression { return keyExpr }
   public var rightExpression : Expression {
     guard let value = value else { return NullExpression.shared }
     return ConstantValue(value: value)
   }
   
+  @inlinable
   public var variable : QualifierVariable? {
     return value as? QualifierVariable
   }
   
+  @inlinable
   public var isEmpty : Bool { return false }
   
+  @inlinable
   public func addReferencedKeys(to set: inout Set<String>) {
     set.insert(keyExpr.key)
   }
@@ -47,21 +55,23 @@ public struct KeyValueQualifier : Qualifier, Equatable {
   
   // MARK: - Bindings
   
+  @inlinable
   public func addBindingKeys(to set: inout Set<String>) {
     guard let v = variable else { return }
     set.insert(v.key)
   }
   
-  public var hasUnresolvedBindings : Bool {
-    return variable != nil
-  }
+  @inlinable
+  public var hasUnresolvedBindings : Bool { return variable != nil }
   
+  @inlinable
   public func keyPathForBindingKey(_ variable: String) -> String? {
     guard let v = self.variable else { return nil }
     guard variable == v.key     else { return nil }
     return key
   }
   
+  @inlinable
   public func qualifierWith(bindings: Any?, requiresAll: Bool) throws
               -> Qualifier?
   {
@@ -82,6 +92,7 @@ public struct KeyValueQualifier : Qualifier, Equatable {
   
   // MARK: - Equality
   
+  @inlinable
   public static func ==(lhs: KeyValueQualifier, rhs: KeyValueQualifier)
                      -> Bool
   {
@@ -100,6 +111,7 @@ public struct KeyValueQualifier : Qualifier, Equatable {
     return true
   }
   
+  @inlinable
   public func isEqual(to object: Any?) -> Bool {
     guard let other = object as? KeyValueQualifier else { return false }
     return self == other
@@ -108,6 +120,7 @@ public struct KeyValueQualifier : Qualifier, Equatable {
   
   // MARK: - Description
   
+  @inlinable
   public func appendToDescription(_ ms: inout String) {
     // TODO: improve
     ms += " \(keyExpr) \(operation) \(value as Optional)"

@@ -3,17 +3,17 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 03/03/2017.
-//  Copyright © 2017-2019 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
 //
 
 /**
- * An `ObjectTrackingContext` is primarily used as an object uniquer.
+ * An ``ObjectTrackingContext`` is primarily used as an object uniquer.
  *
- * Unlike an `ObjectEditingContext` it doesn't track changes and e.g. is useful
- * in combination w/ `ActiveRecord` objects (which track changes inside the
+ * Unlike an ``EditingContext`` it doesn't track changes and e.g. is useful
+ * in combination w/ ``ActiveRecord`` objects (which track changes inside the
  * object itself).
  *
- * An `ObjectTrackingContext` can be wrapped around a `DatabaseContext`.
+ * An ``ObjectTrackingContext`` can be wrapped around a ``DatabaseContext``.
  * It can also be used in a nested way! (though that is more useful w/
  * editing contexts).
  */
@@ -23,16 +23,19 @@ open class ObjectTrackingContext : ObjectStore {
     case FetchSpecificationHasUnresolvedBindings(FetchSpecification)
   }
   
+  @usableFromInline
   var gidToObject = [ GlobalID : AnyObject ]()
   
   // the store from which we fetch objects, usually a DatabaseContext
-  let parentObjectStore : ObjectStore
+  public let parentObjectStore : ObjectStore
   
-  init(parent: ObjectStore) {
+  @inlinable
+  public init(parent: ObjectStore) {
     parentObjectStore = parent
   }
   
-  var rootObjectStore : ObjectStore {
+  @inlinable
+  public var rootObjectStore : ObjectStore {
     if let tc = parentObjectStore as? ObjectTrackingContext {
       return tc.rootObjectStore
     }
@@ -45,6 +48,7 @@ open class ObjectTrackingContext : ObjectStore {
    * Fetches the objects for the given specification. This works by calling
    * `objectsWith(fetchSpecification:in:)` with the tracking context itself.
    */
+  @inlinable
   open func objectsWith(fetchSpecification fs: FetchSpecification) throws
             -> [ Any ]
   {
@@ -60,6 +64,7 @@ open class ObjectTrackingContext : ObjectStore {
    * in the _fs.
    * Objects will get registered in the given tracking context.
    */
+  @inlinable
   open func objectsWith(fetchSpecification fs: FetchSpecification,
                         in tc: ObjectTrackingContext,
                         _ cb: ( Any ) -> Void) throws
@@ -78,34 +83,41 @@ open class ObjectTrackingContext : ObjectStore {
   
   // MARK: - Object Registry
   
+  @inlinable
   public func record(object: AnyObject, with gid: GlobalID) {
     gidToObject[gid] = object
   }
+  @inlinable
   public func forget(object: AnyObject) {
     if let gid = gidToObject.firstKeyFor(value: object) {
       gidToObject.removeValue(forKey: gid)
     }
   }
 
+  @inlinable
   public func objectFor(globalID: GlobalID) -> AnyObject? {
     return gidToObject[globalID]
   }
   
+  @inlinable
   public func globalIDFor(object: AnyObject) -> GlobalID? {
     if let smartObject = object as? ObjectWithGlobalID,
        let gid = smartObject.globalID { return gid }
     return gidToObject.firstKeyFor(value: object)
   }
 
+  @inlinable
   public func globalIDsFor(objects: [ AnyObject ]) -> [ GlobalID? ] {
     // TODO: this could reduce the Dictionary backward scanning
     return objects.map { globalIDFor(object: $0) }
   }
   
+  @inlinable
   public var registeredObjects : [ AnyObject ] {
     return Array(gidToObject.values)
   }
   
+  @inlinable
   public func reset() {
     gidToObject.removeAll()
   }
@@ -115,8 +127,9 @@ open class ObjectTrackingContext : ObjectStore {
 // MARK: - Helper
 
 
-fileprivate extension Dictionary where Value: AnyObject {
-  
+extension Dictionary where Value: AnyObject {
+
+  @usableFromInline
   func firstKeyFor(value: Value) -> Key? {
     for ( k, v ) in self {
       if v === value { return k }

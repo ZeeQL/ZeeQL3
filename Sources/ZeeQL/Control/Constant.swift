@@ -3,43 +3,47 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 16/02/2017.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
 //
 
-class Constant : Expression {
+public protocol Constant : Expression {
 }
 
-class ConstantValue<T> : Constant, ExpressionEvaluation {
+public final class ConstantValue<T> : Constant, ExpressionEvaluation {
   
-  let value : T
+  public let value : T
   
-  init(value: T) {
-    self.value = value
-  }
+  @inlinable
+  public init(value: T) { self.value = value }
 
-  func valueFor(object: Any?) -> Any? {
-    return value
-  }
+  @inlinable
+  public func valueFor(object: Any?) -> Any? { return value }
 }
 
-class NullExpression : Constant, ExpressionEvaluation {
+
+public final class NullExpression : Constant, ExpressionEvaluation {
   
   static let shared = NullExpression()
   
-  func valueFor(object: Any?) -> Any? {
-    return nil
-  }
+  @inlinable
+  public func valueFor(object: Any?) -> Any? { return nil }
 }
 
 /**
- * RawSQLValue
- *
  * This is used to insert some raw SQL for example as values in an
- * AdaptorOperation.
- * Also used by SQLQualifier to represent the SQL sections of its value.
+ * ``AdaptorOperation``.
+ * Also used by ``SQLQualifier`` to represent the SQL sections of its value.
  */
-struct RawSQLValue {
+public struct RawSQLValue: Hashable {
   
-  let value : String
+  public let value : String
   
+  @inlinable
+  public init(_ value: String) { self.value = value }
 }
+
+#if swift(>=5.5)
+extension ConstantValue  : Sendable where T: Sendable {}
+extension NullExpression : Sendable {}
+extension RawSQLValue    : Sendable {}
+#endif

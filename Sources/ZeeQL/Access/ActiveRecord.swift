@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 26/02/2017.
-//  Copyright © 2017-2019 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
 //
 
 /**
@@ -123,11 +123,16 @@ open class ActiveRecordBase : ActiveRecordType, SmartDescription {
   
 
   // MARK: - KVC
+  // TBD: the KVC and StoredKVC are very similar, but not the same? They should
+  //      be the same as they perform no extra work here?
 
   open func takeValue(_ value: Any?, forKey k: String) throws {
     // Note: `values` itself is a [String:Any?], so all that may be superfluous.
     willChange()
     
+    // Note: There is no default setter! This is why this always pushes into
+    //       the dictionary!
+    // TODO: Since the stable v5 ABI we *can* do KVC setters, implement them!
     if let value = value {
       values[k] = value // values is wrapped again in an Optional<Any>
     }
@@ -168,23 +173,22 @@ open class ActiveRecordBase : ActiveRecordType, SmartDescription {
   
   public func addObject(_ object: AnyObject, toPropertyWithKey key: String) {
     // TBD: this is, sigh.
-    // also, the KVC access is still a little open, this should do
-    // takeValueForKey in case the subclass overrides it
-    
     willChange()
     
     // If it is a to-one, we push the object itself into the relship.
     if let relship = entity[relationship: key], !relship.isToMany {
-      values[key] = object
+      takeStoredValue(object, forKey: key)
       return
     }
     
-    if var list = values[key] as? [ AnyObject ] {
+    // TBD: Really AnyObject? Rather `DatabaseObject`?
+    // Because the input is like that!
+    if var list = storedValue(forKey: key) as? [ AnyObject ] {
       list.append(object)
-      values[key] = list
+      takeStoredValue(list, forKey: key)
     }
     else {
-      values[key] = [ object ]
+      takeStoredValue([ object ], forKey: key)
     }
   }
   public func removeObject(_ o: AnyObject, fromPropertyWithKey key: String) {
@@ -192,11 +196,11 @@ open class ActiveRecordBase : ActiveRecordType, SmartDescription {
 
     // If it is a to-one, we clear the object itself into the relship.
     if let relship = entity[relationship: key], !relship.isToMany {
-      values.removeValue(forKey: key)
+      takeStoredValue(nil, forKey: key)
       return
     }
 
-    guard var list = values[key] as? [ AnyObject ] else { return }
+    guard var list = storedValue(forKey: key) as? [ AnyObject ] else { return }
     #if swift(>=5)
       guard let idx = list.firstIndex(where: { $0 === o }) else { return }
     #else
@@ -204,7 +208,7 @@ open class ActiveRecordBase : ActiveRecordType, SmartDescription {
     #endif
     
     list.remove(at: idx)
-    values[key] = [ list ]
+    takeStoredValue([ list ], forKey: key)
   }
   
   
@@ -283,7 +287,7 @@ open class ActiveRecordBase : ActiveRecordType, SmartDescription {
   
   // MARK: - Description
 
-  public func appendToDescription(_ ms: inout String) {
+  open func appendToDescription(_ ms: inout String) {
     ms += " [\(entity.name)]"
     
     if isNew { ms += " NEW" }

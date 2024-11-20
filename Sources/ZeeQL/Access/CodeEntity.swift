@@ -32,6 +32,8 @@ open class CodeEntityBase : Entity {
   public final var name                     : String = ""
   public final var externalName             : String?
   public final var className                : String? // TBD: Hm.
+  public final var restrictingQualifier     : Qualifier?
+  public final var fetchSpecifications      = [ String : FetchSpecification ]()
 
   public final var attributes               = Array<ZeeQL.Attribute>()
   public final var relationships            = [ Relationship  ]()
@@ -173,15 +175,41 @@ open class CodeObjectEntity<T: CodeObjectType> : CodeEntityBase {
     }
     
     primaryKeyAttributeNames = lookupPrimaryKeyAttributeNames()
+    
+    /// Resolve fetch specification entities.
+    if !fetchSpecifications.isEmpty {
+      for ( fsName, fs ) in fetchSpecifications where fs.entity == nil {
+        assert(fs.entityName == self.name)
+        if var fs = fs as? ModelFetchSpecification {
+          fs.entity = self
+          fetchSpecifications[fsName] = fs
+        }
+      }
+    }
   }
 }
 
 
 // MARK: - Reflection
 
-fileprivate let specialTableKey = "table"
+fileprivate let specialTableKey                = "table" // TBD
+fileprivate let specialRestrictingQualifierKey = "_restrictingQualifier"
+fileprivate let specialFetchSpecificationsKey  = "_fetchSpecifications"
 
 fileprivate extension CodeEntityBase {
+
+  private func processFetchSpecificationMirror(_ mirror: Mirror) {
+    for ( propName, propValue ) in mirror.children {
+      assert(propName != nil)
+      assert(propValue is ModelFetchSpecification)
+      guard let fs = propValue as? FetchSpecification, let name = propName else {
+        continue
+      }
+      
+      assert(fetchSpecifications[name] == nil, "Duplicate fetchspec: \(fs)")
+      fetchSpecifications[name] = fs
+    }
+  }
 
   /**
    * Walk a Swift Mirror object and try to create `Attribute` and
@@ -200,20 +228,31 @@ fileprivate extension CodeEntityBase {
     for i in 0..<attributes   .count { nameToIdx   [attributes   [i].name] = i }
     for i in 0..<relationships.count { relNameToIdx[relationships[i].name] = i }
     
-    for ( propname, propValue ) in mirror.children {
-      guard let propname = propname else { continue }
+    for ( propName, propValue ) in mirror.children {
+      guard let propName = propName else { continue }
       
-      if propname == specialTableKey, // || propname == "externalType",
+      if propName == specialTableKey, // || propname == "externalType",
          let v = propValue as? String
       {
         externalName = v
         continue
       }
-      
-      if let attribute = CodeAttributeFactory.attributeFor(property: propname,
+      if propName == specialRestrictingQualifierKey {
+        assert(propValue is Qualifier)
+        if let v = propValue as? Qualifier {
+          restrictingQualifier = v
+          continue
+        }
+      }
+      if propName == specialFetchSpecificationsKey {
+        processFetchSpecificationMirror(Mirror(reflecting: propValue))
+        continue
+      }
+
+      if let attribute = CodeAttributeFactory.attributeFor(property: propName,
                                                            value: propValue)
       {
-        if let idx = nameToIdx[propname] {
+        if let idx = nameToIdx[propName] {
           attributes[idx] = attribute // override
         }
         else {
@@ -225,7 +264,7 @@ fileprivate extension CodeEntityBase {
         if let mrelship = relship as? ModelRelationship {
           if mrelship.name.isEmpty {
             // hack in name
-            mrelship.name = propname
+            mrelship.name = propName
           }
         }
         
@@ -233,7 +272,7 @@ fileprivate extension CodeEntityBase {
           crelship.codeEntity = self
         }
         
-        if let idx = relNameToIdx[propname] {
+        if let idx = relNameToIdx[propName] {
           relationships[idx] = relship // override
         }
         else {

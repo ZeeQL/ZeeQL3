@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 27/02/17.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
 //
 
 /**
@@ -38,6 +38,7 @@ open class ActiveDataSource<Object: ActiveRecordType> : AccessDataSource<Object>
     self.log = database.log
   }
   
+  @inlinable
   public convenience init(database: Database) {
     if let t = Object.self as? EntityType.Type {
       self.init(database: database, entity: t.entity)
@@ -50,12 +51,14 @@ open class ActiveDataSource<Object: ActiveRecordType> : AccessDataSource<Object>
   
   // MARK: - Create
   
+  @inlinable
   open func createObject() -> Object {
     let object = Object()
     object.bind(to: database, entity: entity)
     return object
   }
   
+  @inlinable
   open func insertObject(_ object: Object) throws {
     object.bind(to: database, entity: entity)
     try object.save()
@@ -211,9 +214,10 @@ fileprivate let countAttr : Attribute = {
 
 public extension Database {
   
-  func datasource<Object>(_ type: Object.Type) -> ActiveDataSource<Object> {
-    // use type argument to capture, is there a nicer way?
+  @inlinable
+  func datasource<Object>(_ type: Object.Type = Object.self)
+       -> ActiveDataSource<Object>
+  {
     return ActiveDataSource<Object>(database: self)
   }
-  
 }

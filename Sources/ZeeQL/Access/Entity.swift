@@ -93,6 +93,7 @@ public extension Entity { // default imp
     return lookupPrimaryKeyAttributeNames()
   }
   
+  @inlinable
   func lookupPrimaryKeyAttributeNames() -> [ String ]? {
     // FancyModelMaker also has a `assignPrimaryKeyIfMissing`
     guard !attributes.isEmpty else { return nil }
@@ -127,6 +128,7 @@ public extension Entity { // default imp
   
   // MARK: - GlobalIDs
   
+  @inlinable
   func globalIDForRow(_ row: AdaptorRecord?) -> GlobalID? {
     guard let row = row else { return nil }
     guard let pkeys = primaryKeyAttributeNames, !pkeys.isEmpty
@@ -135,6 +137,7 @@ public extension Entity { // default imp
     let pkeyValues = pkeys.map { row[$0] }
     return KeyGlobalID.make(entityName: name, values: pkeyValues)
   }
+  @inlinable
   func globalIDForRow(_ row: AdaptorRow?) -> GlobalID? {
     guard let row = row else { return nil }
     guard let pkeys = primaryKeyAttributeNames, !pkeys.isEmpty
@@ -143,6 +146,7 @@ public extension Entity { // default imp
     let pkeyValues = pkeys.map { row[$0] ?? nil }
     return KeyGlobalID.make(entityName: name, values: pkeyValues)
   }
+  @inlinable
   func globalIDForRow(_ row: Any?) -> GlobalID? {
     guard let row = row else { return nil }
     guard let pkeys = primaryKeyAttributeNames, !pkeys.isEmpty
@@ -154,13 +158,18 @@ public extension Entity { // default imp
     return KeyGlobalID.make(entityName: name, values: pkeyValues)
   }
   
+  @inlinable
   func qualifierForGlobalID(_ globalID: GlobalID) -> Qualifier {
+    #if !GLOBALID_AS_OPEN_CLASS
+    let kglobalID = globalID
+    #else
     guard let kglobalID = globalID as? KeyGlobalID else {
       globalZeeQLLogger.warn("globalID is not a KeyGlobalID:", globalID,
                              type(of: globalID))
       assertionFailure("attempt to use an unsupported globalID \(globalID)")
       return BooleanQualifier.falseQualifier
     }
+    #endif
     guard kglobalID.keyCount != 0 else {
       globalZeeQLLogger.warn("globalID w/o keys:", globalID)
       assertionFailure("globalID w/o keys: \(globalID)")
