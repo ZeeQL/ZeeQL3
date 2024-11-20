@@ -14,7 +14,7 @@ class AdapterActiveRecordTests: XCTestCase {
   // Is there a better way to share test cases?
   
   var adaptor : Adaptor! {
-    XCTAssertFalse(type(of: self) == AdapterActiveRecordTests.self,
+    XCTAssertFalse(type(of: self) == Self.self,
                    "Running test superclass as test")
     XCTAssertNotNil(nil, "override in subclass")
     return nil
@@ -24,6 +24,7 @@ class AdapterActiveRecordTests: XCTestCase {
   let model   = ActiveRecordContactsDBModel.model
   
   func testSnapshotting() throws {
+    try XCTSkipIf(type(of: self) == Self.self, "Test.super")
     let db = Database(adaptor: try XCTUnwrap(adaptor))
     
     let entity : Entity! = model[entity: "Person"]
@@ -41,6 +42,7 @@ class AdapterActiveRecordTests: XCTestCase {
   }
   
   func testSimpleChange() throws {
+    try XCTSkipIf(type(of: self) == Self.self, "Test.super")
     let db    = Database(adaptor: try XCTUnwrap(adaptor))
     
     let entity : Entity! = model[entity: "Person"]
@@ -65,6 +67,7 @@ class AdapterActiveRecordTests: XCTestCase {
   }
   
   func testInsertAndDelete() throws {
+    try XCTSkipIf(type(of: self) == Self.self, "Test.super")
     let db    = Database(adaptor: try XCTUnwrap(adaptor))
     let ds    = db.datasource(ActiveRecordContactsDBModel.Person.self)
     

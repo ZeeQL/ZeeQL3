@@ -42,6 +42,7 @@ class AdaptorOGoTestCase: XCTestCase {
   // MARK: - tests
   
   func testRawAdaptorChannelQuery() throws {
+    try XCTSkipIf(type(of: self) == Self.self, "Test.super")
     let adaptor = try XCTUnwrap(adaptor)
     var resultCount = 0
     let sql = "SELECT company_id AS id, login, name FROM person LIMIT 5"
@@ -61,6 +62,7 @@ class AdaptorOGoTestCase: XCTestCase {
   }
   
   func testEvaluateQueryExpression() throws {
+    try XCTSkipIf(type(of: self) == Self.self, "Test.super")
     let adaptor = try XCTUnwrap(adaptor)
     let fs = ModelFetchSpecification(entity: entity,
                                      qualifier: Qualifiers.templateUser)
@@ -92,6 +94,7 @@ class AdaptorOGoTestCase: XCTestCase {
   }
   
   func testRawTypeSafeQuery() throws {
+    try XCTSkipIf(type(of: self) == Self.self, "Test.super")
     let adaptor = try XCTUnwrap(adaptor)
     try adaptor.select("SELECT company_id, name FROM person LIMIT 3") {
       ( id: Int, name: String ) in
@@ -102,6 +105,7 @@ class AdaptorOGoTestCase: XCTestCase {
   }
   
   func testSimpleTX() throws {
+    try XCTSkipIf(type(of: self) == Self.self, "Test.super")
     let adaptor = try XCTUnwrap(adaptor)
     let channel = try adaptor.openChannel()
     defer { adaptor.releaseChannel(channel) }
@@ -124,6 +128,7 @@ class AdaptorOGoTestCase: XCTestCase {
   }
   
   func testAdaptorDataSourceFindByID() throws {
+    try XCTSkipIf(type(of: self) == Self.self, "Test.super")
     let adaptor = try XCTUnwrap(adaptor)
     let ds = AdaptorDataSource(adaptor: adaptor, entity: entity)
     
@@ -141,6 +146,7 @@ class AdaptorOGoTestCase: XCTestCase {
   }
   
   func testBasicReflection() throws {
+    try XCTSkipIf(type(of: self) == Self.self, "Test.super")
     let channel = try (try XCTUnwrap(adaptor)).openChannel()
     defer { adaptor.releaseChannel(channel) }
     
@@ -165,6 +171,7 @@ class AdaptorOGoTestCase: XCTestCase {
   }
   
   func testTableReflection() throws {
+    try XCTSkipIf(type(of: self) == Self.self, "Test.super")
     let adaptor = try XCTUnwrap(adaptor)
     let channel = try adaptor.openChannel()
     defer { adaptor.releaseChannel(channel) }
@@ -199,6 +206,7 @@ class AdaptorOGoTestCase: XCTestCase {
   
   #if false // the inner class cannot refer to 'db'
   func testRecordAttachedSchema() throws {
+    try XCTSkipIf(type(of: self) == Self.self, "Test.super")
     let adaptor = try XCTUnwrap(adaptor)
     let db = Database(adaptor: adaptor)
     
@@ -226,6 +234,7 @@ class AdaptorOGoTestCase: XCTestCase {
   #endif
   
   func testCodeSchema() throws {
+    try XCTSkipIf(type(of: self) == Self.self, "Test.super")
     let adaptor = try XCTUnwrap(adaptor)
     let db = Database(adaptor: adaptor)
     
@@ -291,6 +300,7 @@ class AdaptorOGoTestCase: XCTestCase {
   
   
   func testCodeSchemaWithJoinQualifier() throws {
+    try XCTSkipIf(type(of: self) == Self.self, "Test.super")
     let adaptor = try XCTUnwrap(adaptor)
     let db = Database(adaptor: adaptor)
 
@@ -368,6 +378,7 @@ class AdaptorOGoTestCase: XCTestCase {
   }
 
   func testCodeSchemaWithRelshipPrefetch() throws {
+    try XCTSkipIf(type(of: self) == Self.self, "Test.super")
     let db = Database(adaptor: try XCTUnwrap(adaptor))
 
     class OGoObject : ActiveRecord {
@@ -459,6 +470,7 @@ class AdaptorOGoTestCase: XCTestCase {
   }
 
   func testCodeSchemaWithTypedFetchSpec() throws {
+    try XCTSkipIf(type(of: self) == Self.self, "Test.super")
     let db = Database(adaptor: try XCTUnwrap(adaptor))
 
     class OGoObject : ActiveRecord {
