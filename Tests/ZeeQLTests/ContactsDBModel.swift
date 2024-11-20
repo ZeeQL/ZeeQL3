@@ -169,7 +169,6 @@ internal func lookupTestDataPath() -> String {
               .deletingLastPathComponent()
               .appendingPathComponent("data")
     if fm.fileExists(atPath: url.path) { return url.path }
-    print("could not locate data path in current dir:", path)
   }
   
   do {
