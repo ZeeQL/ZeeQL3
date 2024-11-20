@@ -3,7 +3,7 @@
 //  ZeeQL3
 //
 //  Created by Helge Hess on 18/05/17.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
 //
 
 import Foundation
@@ -14,6 +14,8 @@ class AdapterActiveRecordTests: XCTestCase {
   // Is there a better way to share test cases?
   
   var adaptor : Adaptor! {
+    XCTAssertFalse(type(of: self) == AdapterActiveRecordTests.self,
+                   "Running test superclass as test")
     XCTAssertNotNil(nil, "override in subclass")
     return nil
   }
@@ -22,7 +24,7 @@ class AdapterActiveRecordTests: XCTestCase {
   let model   = ActiveRecordContactsDBModel.model
   
   func testSnapshotting() throws {
-    let db = Database(adaptor: adaptor)
+    let db = Database(adaptor: try XCTUnwrap(adaptor))
     
     let entity : Entity! = model[entity: "Person"]
     XCTAssert(entity != nil, "did not find person entity ...")
@@ -39,7 +41,7 @@ class AdapterActiveRecordTests: XCTestCase {
   }
   
   func testSimpleChange() throws {
-    let db    = Database(adaptor: adaptor)
+    let db    = Database(adaptor: try XCTUnwrap(adaptor))
     
     let entity : Entity! = model[entity: "Person"]
     XCTAssert(entity != nil, "did not find person entity ...")
@@ -63,7 +65,7 @@ class AdapterActiveRecordTests: XCTestCase {
   }
   
   func testInsertAndDelete() throws {
-    let db    = Database(adaptor: adaptor)
+    let db    = Database(adaptor: try XCTUnwrap(adaptor))
     let ds    = db.datasource(ActiveRecordContactsDBModel.Person.self)
     
     // clear

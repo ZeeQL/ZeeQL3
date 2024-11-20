@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 02/03/2017.
-//  Copyright © 2017-2019 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
 //
 
 import XCTest
@@ -13,6 +13,8 @@ class AdaptorOGoTestCase: XCTestCase {
   // Is there a better way to share test cases?
   
   var adaptor : Adaptor! {
+    XCTAssertFalse(type(of: self) == AdapterActiveRecordTests.self,
+                   "Running test superclass as test")
     XCTAssertNotNil(nil, "override in subclass")
     return nil
   }
@@ -40,6 +42,7 @@ class AdaptorOGoTestCase: XCTestCase {
   // MARK: - tests
   
   func testRawAdaptorChannelQuery() throws {
+    let adaptor = try XCTUnwrap(adaptor)
     var resultCount = 0
     let sql = "SELECT company_id AS id, login, name FROM person LIMIT 5"
 
@@ -58,6 +61,7 @@ class AdaptorOGoTestCase: XCTestCase {
   }
   
   func testEvaluateQueryExpression() throws {
+    let adaptor = try XCTUnwrap(adaptor)
     let fs = ModelFetchSpecification(entity: entity,
                                      qualifier: Qualifiers.templateUser)
     
@@ -88,6 +92,7 @@ class AdaptorOGoTestCase: XCTestCase {
   }
   
   func testRawTypeSafeQuery() throws {
+    let adaptor = try XCTUnwrap(adaptor)
     try adaptor.select("SELECT company_id, name FROM person LIMIT 3") {
       ( id: Int, name: String ) in
       if printResults {
@@ -97,6 +102,7 @@ class AdaptorOGoTestCase: XCTestCase {
   }
   
   func testSimpleTX() throws {
+    let adaptor = try XCTUnwrap(adaptor)
     let channel = try adaptor.openChannel()
     defer { adaptor.releaseChannel(channel) }
     
@@ -118,6 +124,7 @@ class AdaptorOGoTestCase: XCTestCase {
   }
   
   func testAdaptorDataSourceFindByID() throws {
+    let adaptor = try XCTUnwrap(adaptor)
     let ds = AdaptorDataSource(adaptor: adaptor, entity: entity)
     
     let templateUser = try ds.findBy(id: 9999)
@@ -134,7 +141,7 @@ class AdaptorOGoTestCase: XCTestCase {
   }
   
   func testBasicReflection() throws {
-    let channel = try adaptor.openChannel()
+    let channel = try (try XCTUnwrap(adaptor)).openChannel()
     defer { adaptor.releaseChannel(channel) }
     
     let dbs = try channel.describeDatabaseNames()
@@ -158,6 +165,7 @@ class AdaptorOGoTestCase: XCTestCase {
   }
   
   func testTableReflection() throws {
+    let adaptor = try XCTUnwrap(adaptor)
     let channel = try adaptor.openChannel()
     defer { adaptor.releaseChannel(channel) }
     
@@ -191,6 +199,7 @@ class AdaptorOGoTestCase: XCTestCase {
   
   #if false // the inner class cannot refer to 'db'
   func testRecordAttachedSchema() throws {
+    let adaptor = try XCTUnwrap(adaptor)
     let db = Database(adaptor: adaptor)
     
     class Person : ActiveRecord {
@@ -217,6 +226,7 @@ class AdaptorOGoTestCase: XCTestCase {
   #endif
   
   func testCodeSchema() throws {
+    let adaptor = try XCTUnwrap(adaptor)
     let db = Database(adaptor: adaptor)
     
     class OGoObject : ActiveRecord {
@@ -281,6 +291,7 @@ class AdaptorOGoTestCase: XCTestCase {
   
   
   func testCodeSchemaWithJoinQualifier() throws {
+    let adaptor = try XCTUnwrap(adaptor)
     let db = Database(adaptor: adaptor)
 
     class OGoObject : ActiveRecord {
@@ -357,7 +368,7 @@ class AdaptorOGoTestCase: XCTestCase {
   }
 
   func testCodeSchemaWithRelshipPrefetch() throws {
-    let db = Database(adaptor: adaptor)
+    let db = Database(adaptor: try XCTUnwrap(adaptor))
 
     class OGoObject : ActiveRecord {
       // TODO: actually add KVC to store the key in this var
@@ -448,7 +459,7 @@ class AdaptorOGoTestCase: XCTestCase {
   }
 
   func testCodeSchemaWithTypedFetchSpec() throws {
-    let db = Database(adaptor: adaptor)
+    let db = Database(adaptor: try XCTUnwrap(adaptor))
 
     class OGoObject : ActiveRecord {
       // TODO: actually add KVC to store the key in this var
@@ -541,17 +552,17 @@ class AdaptorOGoTestCase: XCTestCase {
   
   //( "testRecordAttachedSchema",  testRecordAttachedSchema    ),
   static var sharedTests = [
-    ( "testRawAdaptorChannelQuery",  testRawAdaptorChannelQuery  ),
-    ( "testEvaluateQueryExpression", testEvaluateQueryExpression ),
-    ( "testRawTypeSafeQuery",        testRawTypeSafeQuery        ),
-    ( "testSimpleTX",                testSimpleTX                ),
-    ( "testAdaptorDataSourceFindByID", testAdaptorDataSourceFindByID ),
-    ( "testBasicReflection",         testBasicReflection         ),
-    ( "testTableReflection",         testTableReflection         ),
-    ( "testCodeSchema",              testCodeSchema              ),
-    ( "testCodeSchemaWithJoinQualifier",   testCodeSchemaWithJoinQualifier ),
+    ( "testRawAdaptorChannelQuery",        testRawAdaptorChannelQuery        ),
+    ( "testEvaluateQueryExpression",       testEvaluateQueryExpression       ),
+    ( "testRawTypeSafeQuery",              testRawTypeSafeQuery              ),
+    ( "testSimpleTX",                      testSimpleTX                      ),
+    ( "testAdaptorDataSourceFindByID",     testAdaptorDataSourceFindByID     ),
+    ( "testBasicReflection",               testBasicReflection               ),
+    ( "testTableReflection",               testTableReflection               ),
+    ( "testCodeSchema",                    testCodeSchema                    ),
+    ( "testCodeSchemaWithJoinQualifier",   testCodeSchemaWithJoinQualifier   ),
     ( "testCodeSchemaWithRelshipPrefetch", testCodeSchemaWithRelshipPrefetch ),
-    ( "testCodeSchemaWithTypedFetchSpec",  testCodeSchemaWithTypedFetchSpec ),
+    ( "testCodeSchemaWithTypedFetchSpec",  testCodeSchemaWithTypedFetchSpec  ),
   ]
 }
 
