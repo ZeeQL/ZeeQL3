@@ -36,6 +36,8 @@
  * top of an ``AdaptorChannel``.
  */
 open class AccessDataSource<Object: SwiftObject> : DataSource<Object> {
+  // TODO: Both DataSource and AccessDataSource should be protocols w/ PATs now,
+  //       generics are good enough in Swift now.
   
   open var log : ZeeQLLogger = globalZeeQLLogger
   var _fsname  : String?
@@ -87,7 +89,7 @@ open class AccessDataSource<Object: SwiftObject> : DataSource<Object> {
   open var entity : Entity? {
     fatalError("implement in subclass: \(#function)")
   }
-  
+    
   open func _primaryFetchObjects(_ fs: FetchSpecification,
                                  yield: ( Object ) throws -> Void) throws
   {
@@ -100,6 +102,9 @@ open class AccessDataSource<Object: SwiftObject> : DataSource<Object> {
                                    yield: ( GlobalID ) throws -> Void) throws {
     fatalError("implement in subclass: \(#function)")
   }
+  
+  
+  // MARK: - Fetch Convenience
 
   override open func fetchObjects(yield: ( Object ) -> Void) throws {
     // `iteratorForObjects` in GETobjects
@@ -112,6 +117,58 @@ open class AccessDataSource<Object: SwiftObject> : DataSource<Object> {
     try _primaryFetchGlobalIDs(try fetchSpecificationForFetch(), yield: yield)
   }
 
+  /**
+   * This method takes the name of a fetch specification. It looks up the fetch
+   * spec in the `Entity` associated with the datasource and then binds the
+   * spec with the given key/value pairs.
+   *
+   * Example:
+   * ```swift
+   * let persons = try ds.fetchObjects("myContacts", "contactId", 12345)
+   * ```
+   *
+   * This will lookup the `FetchSpecification` named "myContacts" in
+   * the `Entity` of the datasource. It then calls
+   * `fetchSpecificationWithQualifierBindings()`
+   * and passes in the given key/value pair (contactId=12345).
+   *
+   * Finally the fetch will be performed using
+   * ``_primaryFetchObjects``.
+   *
+   * - Parameters:
+   *   - fetchSpecificationName: The name of the fetch specification to use.
+   *   - keysAndValues: The key/value pairs to apply as bindings.
+   * - Returns: The fetched objects.
+   */
+  public func fetchObjects(_ fetchSpecificationName: String,
+                           _ keysAndValues: Any...) throws -> [ Object ]
+  {
+    guard let findEntity = entity else {
+      // TBD: improve exception
+      log.error("did not find entity, cannot construct fetchspec");
+      throw AccessDataSourceError.MissingEntity
+    }
+     
+    guard let fs = findEntity[fetchSpecification: fetchSpecificationName] else {
+      throw AccessDataSourceError
+        .DidNotFindFetchSpecification(name: fetchSpecificationName,
+                                      entity: findEntity)
+    }
+     
+    let binds   = [ String: Any ].createArgs(keysAndValues)
+    var results = [ Object ]()
+    if !binds.isEmpty {
+      guard let fs = try fs.fetchSpecificiationWith(bindings: binds) else {
+        throw AccessDataSourceError
+          .CouldNotResolveBindings(fetchSpecification: fs, bindings: binds)
+      }
+      try _primaryFetchObjects(fs) { results.append($0) }
+    }
+    else {
+      try _primaryFetchObjects(fs) { results.append($0) }
+    }
+    return results
+  }
   
   // MARK: - Bindings
   
@@ -130,6 +187,15 @@ open class AccessDataSource<Object: SwiftObject> : DataSource<Object> {
   
   // MARK: - Fetch Specification
   
+  /**
+   * Takes the configured fetch specification and applies the auxiliary
+   * qualifier and qualifier bindings on it.
+   *
+   * This method always returns a copy of the fetch specification object,
+   * so callers are free to modify the result of this method.
+   *
+   * - Returns: A new fetch specification with bindings/qualifier applied.
+   */
   func fetchSpecificationForFetch() throws -> FetchSpecification {
     /* copy fetchspec */
     var fs : FetchSpecification
@@ -165,7 +231,28 @@ open class AccessDataSource<Object: SwiftObject> : DataSource<Object> {
       }
       return fs
     }
-    else { return fs }
+    
+    return fs
   }
 
+}
+
+fileprivate extension Dictionary where Key == String, Value == Any {
+  
+  /**
+   * This method creates a new `Dictionary` from a set of given array containing
+   * key/value arguments.
+   */
+  static func createArgs(_ values: [ Any ]) -> Self {
+    guard !values.isEmpty else { return [:] }
+    var me = Self()
+    me.reserveCapacity(values.count / 2 + 1)
+    
+    for idx in stride(from: 0, to: values.count, by: 2) {
+      let anyKey = values[idx]
+      let value  = values[idx + 1]
+      me[anyKey as? String ?? String(describing: anyKey)] = value
+    }
+    return me
+  }
 }
