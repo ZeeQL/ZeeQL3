@@ -6,33 +6,21 @@
 //  Copyright © 2017-2020 ZeeZide GmbH. All rights reserved.
 //
 
-/**
- * This datasource operates at the adaptor level, that is, it does not return
- * DatabaseObject instances but plain records.
- *
- * Important: If a model is set in the adaptor, the Map will contain mapped
- * keys! (the keys of the Map are the attribute names in the model, NOT the
- * column names in the database). Unless of course you specify 'rawrows' in
- * the FetchSpecification.
- *
- * THREAD: this class is for use in one thread.
- */
-open class AdaptorDataSource : AccessDataSource<AdaptorRecord> {
-  // TBD: do we need a way to initialize a datasource with an EOAdaptorChannel?
+public protocol AdaptorDataSourceType: AccessDataSourceType
+  where Object == AdaptorRecord
+{
+  var adaptor : Adaptor { get }
   
-  let adaptor : Adaptor
-  let _entity : Entity?
-  
-  public init(adaptor: Adaptor, entity: Entity? = nil) {
-    self.adaptor = adaptor
-    self._entity = entity
-  }
+  init(adaptor: Adaptor, entity: Entity?)
+}
 
-  override open var entity : Entity? {
-    if let entity = _entity { return entity } // set explicitly
-    
-    /* determine name of datasource entity */
-    
+public extension AdaptorDataSourceType {
+  
+  @inlinable
+  init(adaptor: Adaptor) { self.init(adaptor: adaptor, entity: nil) }
+  
+  @inlinable
+  func findEntity(for _entityName: String?) -> Entity? {
     let ename : String
     if let entityName = _entityName {
       ename = entityName
@@ -48,6 +36,35 @@ open class AdaptorDataSource : AccessDataSource<AdaptorRecord> {
     
     guard let model = adaptor.model else { return nil }
     return model[entity: ename]
+  }
+}
+
+/**
+ * This datasource operates at the adaptor level, that is, it does not return
+ * DatabaseObject instances but plain records.
+ *
+ * Important: If a model is set in the adaptor, the Map will contain mapped
+ * keys! (the keys of the Map are the attribute names in the model, NOT the
+ * column names in the database). Unless of course you specify 'rawrows' in
+ * the FetchSpecification.
+ *
+ * THREAD: this class is for use in one thread.
+ */
+open class AdaptorDataSource : AccessDataSource<AdaptorRecord>,
+                               AdaptorDataSourceType
+{
+  // TBD: do we need a way to initialize a datasource with an EOAdaptorChannel?
+  
+  public let adaptor : Adaptor
+  let _entity : Entity?
+  
+  required public init(adaptor: Adaptor, entity: Entity?) {
+    self.adaptor = adaptor
+    self._entity = entity
+  }
+
+  override open var entity : Entity? {
+    return _entity ?? findEntity(for: _entityName)
   }
 
   override

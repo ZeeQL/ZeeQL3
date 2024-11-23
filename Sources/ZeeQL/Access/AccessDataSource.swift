@@ -6,6 +6,30 @@
 //  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
 //
 
+public protocol AccessDataSourceType: DataSourceType {
+  
+  var log : ZeeQLLogger { get }
+  
+  var entityName             : String?    { get set }
+  var entity                 : Entity?    { get }
+  var fetchSpecificationName : String?    { get set }
+
+  var auxiliaryQualifier     : Qualifier? { get set }
+  var isFetchEnabled         : Bool       { get set }
+  var qualifierBindings      : Any?       { get set }
+  
+  var qualifierBindingKeys   : [ String ] { get }
+  
+  func fetchGlobalIDs(yield: ( GlobalID ) throws -> Void) throws
+  
+  // TODO: remove `_`
+  func _primaryFetchObjects  (_ fs: FetchSpecification,
+                              yield: ( Object ) throws -> Void) throws
+  func _primaryFetchCount    (_ fs: FetchSpecification) throws -> Int
+  func _primaryFetchGlobalIDs(_ fs: FetchSpecification,
+                              yield: ( GlobalID ) throws -> Void) throws
+}
+
 /**
  * This class has a set of operations targetted at SQL based applications. It
  * has three major subclasses with specific characteristics:
@@ -35,7 +59,9 @@
  * mapping, that is, it returns ``AdaptorRecord`` objects and works directly on
  * top of an ``AdaptorChannel``.
  */
-open class AccessDataSource<Object: SwiftObject> : DataSource<Object> {
+open class AccessDataSource<Object: SwiftObject> : DataSource<Object>,
+                                                   AccessDataSourceType
+{
   // TODO: Both DataSource and AccessDataSource should be protocols w/ PATs now,
   //       generics are good enough in Swift now.
   
@@ -102,7 +128,7 @@ open class AccessDataSource<Object: SwiftObject> : DataSource<Object> {
                                    yield: ( GlobalID ) throws -> Void) throws {
     fatalError("implement in subclass: \(#function)")
   }
-  
+
   
   // MARK: - Fetch Convenience
 
@@ -110,13 +136,16 @@ open class AccessDataSource<Object: SwiftObject> : DataSource<Object> {
     // `iteratorForObjects` in GETobjects
     try _primaryFetchObjects(try fetchSpecificationForFetch(), yield: yield)
   }
-  override open func fetchCount() throws -> Int {
+  open func fetchCount() throws -> Int {
     return try _primaryFetchCount(try fetchSpecificationForFetch())
   }
   open func fetchGlobalIDs(yield: ( GlobalID ) throws -> Void) throws {
     try _primaryFetchGlobalIDs(try fetchSpecificationForFetch(), yield: yield)
   }
+}
 
+public extension AccessDataSourceType {
+  
   /**
    * This method takes the name of a fetch specification. It looks up the fetch
    * spec in the `Entity` associated with the datasource and then binds the
@@ -140,8 +169,8 @@ open class AccessDataSource<Object: SwiftObject> : DataSource<Object> {
    *   - keysAndValues: The key/value pairs to apply as bindings.
    * - Returns: The fetched objects.
    */
-  public func fetchObjects(_ fetchSpecificationName: String,
-                           _ keysAndValues: Any...) throws -> [ Object ]
+  func fetchObjects(_ fetchSpecificationName: String,
+                    _ keysAndValues: Any...) throws -> [ Object ]
   {
     guard let findEntity = entity else {
       // TBD: improve exception
@@ -172,6 +201,7 @@ open class AccessDataSource<Object: SwiftObject> : DataSource<Object> {
   
   // MARK: - Bindings
   
+  @inlinable
   var qualifierBindingKeys : [ String ] {
     let q   = fetchSpecification?.qualifier
     let aux = auxiliaryQualifier

@@ -21,7 +21,7 @@ open class ArrayDataSource<Object: SwiftObject> : DataSource<Object>,
   }
 
   @inlinable
-  override open func fetchCount() throws -> Int {
+  open func fetchCount() throws -> Int {
     return objects.count
   }
   
@@ -94,6 +94,8 @@ open class ArrayDataSource<Object: SwiftObject> : DataSource<Object>,
       }
     }
   }
+  
+  // MARK: - Description
 
   public func appendToDescription(_ ms: inout String) {
     ms += " #objects=\(objects.count)"

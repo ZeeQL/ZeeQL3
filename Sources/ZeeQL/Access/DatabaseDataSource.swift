@@ -6,17 +6,27 @@
 //  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
 //
 
+public protocol DatabaseDataSourceType: AccessDataSourceType
+  where Object: DatabaseObject
+{
+  
+  var objectContext : ObjectTrackingContext { get }
+  var database      : Database?             { get }
+
+  init(_ oc: ObjectTrackingContext, entityName: String)
+}
+
 /**
  * A datasource which works on top of an EditingContext. That is, the editing
  * context does all the fetching.
  */
 open class DatabaseDataSource<Object: DatabaseObject>
-             : AccessDataSource<Object>
+             : AccessDataSource<Object>, DatabaseDataSourceType
 {
   
   public let objectContext : ObjectTrackingContext
   
-  public init(_ oc: ObjectTrackingContext, entityName: String) {
+  required public init(_ oc: ObjectTrackingContext, entityName: String) {
     self.objectContext = oc
     
     super.init()
