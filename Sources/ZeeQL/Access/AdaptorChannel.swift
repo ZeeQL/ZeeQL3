@@ -138,6 +138,11 @@ public protocol AdaptorChannel : AdaptorQueryType, ModelNameMapper {
    */
   func insertRow(_ row: AdaptorRow, _ entity: Entity, refetchAll: Bool) throws
        -> AdaptorRow
+  
+  #if false // TBD: GETobjects also has a insertRow variant that takes the table
+  func insertRow(_ table: String, _ row: AdaptorRow, refetchAll: Bool) throws
+       -> AdaptorRow
+  #endif
 }
 
 public protocol ModelNameMapper {
