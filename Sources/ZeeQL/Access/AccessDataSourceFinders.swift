@@ -270,7 +270,30 @@ public extension AccessDataSource { // Finders
     
     return try find(fs)
   }
-  
+  /**
+   * This method locates a named ``FetchSpecification`` from a ``Model``
+   * associated with this datasource. It then fetches the object according to
+   * the specification.
+   *
+   * Example:
+   * ```swift
+   * let authToken = tokenDataSource.find("findByToken",
+   *                   "token", "12345", "login", "donald")
+   * ```
+   *
+   * - Parameters:
+   *   - _fname: the name of the fetch specification in the Model
+   * - Returns: an object that matches the named specification
+   */
+  func find(_ name: String, _ firstBinding: String, _ firstValue: Any,
+            _ bindings: Any...) throws -> Object?
+  {
+    var bindings = [ String: Any ].createArgs(bindings)
+    assert(bindings[firstBinding] == nil, "Duplicate binding.")
+    bindings[firstBinding] = firstValue
+    return try find(name, bindings)
+  }
+
   /**
    * This method locates objects using their primary key(s). Usually you have
    * just one primary key, but technically compound keys are supported as well.
