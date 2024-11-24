@@ -146,25 +146,30 @@ public extension AccessDataSource { // Finders
   
   /**
    * Returns a FetchSpecification which qualifies by the given primary key
-   * values. Example:
+   * values.
    *
-   *     DatabaseDataSource ds = DatabaseDataSource(oc, "Persons")
-   *     FetchSpecification fs = ds.fetchSpecificationForFind(10000)
+   * Example:
+   * ```swift
+   * let ds = DatabaseDataSource(oc, "Persons")
+   * let fs = ds.fetchSpecificationForFind(10000)
+   * ```
    *
-   * This returns a fetchspec which will return the Person with primary key
+   * This returns a fetchspec which will return the `Person` with primary key
    * '10000'.
    *
    * This method acquires a fetchspec by calling fetchSpecificationForFetch(),
    * it then applies the primarykey qualifier and the auxiliaryQualifier if
    * one is set. Finally it resets sorting and pushes a fetch limit of 1.
    *
-   * @param _pkeyVals - the primary key value(s)
-   * @return a FetchSpecification to fetch the record with the given key
+   * - Parameters:
+   *   - primaryKeyValues: the primary key value(s)
+   * - Returns: a ``FetchSpecification`` to fetch the record with the given key
    */
-  func fetchSpecificationForFind(_ _pkeyVals : [ Any ]) throws
+  @inlinable
+  func fetchSpecificationForFind(_ primaryKeyValues : [ Any ]) throws
        -> FetchSpecification?
   {
-    guard !_pkeyVals.isEmpty else { return nil }
+    guard !primaryKeyValues.isEmpty else { return nil }
     
     guard let findEntity = entity else {
       throw AccessDataSourceError
@@ -185,13 +190,13 @@ public extension AccessDataSource { // Finders
     let q : Qualifier
     if pkeys.count == 1 {
       let key = findEntity.keyForAttributeWith(name: pkeys[0])
-      q = KeyValueQualifier(key, .EqualTo, _pkeyVals[0])
+      q = KeyValueQualifier(key, .EqualTo, primaryKeyValues[0])
     }
     else {
       var qualifiers = [ Qualifier ]()
       for i in 0..<pkeys.count {
         let key = findEntity.keyForAttributeWith(name: pkeys[i])
-        let q = KeyValueQualifier(key, .EqualTo, _pkeyVals[i])
+        let q = KeyValueQualifier(key, .EqualTo, primaryKeyValues[i])
         qualifiers.append(q)
       }
       q = CompoundQualifier(qualifiers: qualifiers, op: .And)
@@ -211,43 +216,47 @@ public extension AccessDataSource { // Finders
    * fetch specification has no limit of 1, this copies the spec and sets that
    * limit.
    *
-   * @param _fs - the fetch specification
-   * @return the first record matching the fetchspec
+   * - Parameters:
+   *   - _fs:   The fetch specification.
+   * - Returns: The first record matching the fetchspec.
    */
+  @inlinable
   func find(_ _fs: FetchSpecification) throws -> Object? {
     var fs = _fs // copies, struct
     fs.fetchLimit = 2
     
     var object: Object? = nil
     try _primaryFetchObjects(fs) {
-      guard object == nil
-       else {
+      guard object == nil else {
         throw AccessDataSourceError
           .FetchReturnedMoreThanOneResult(fetchSpecification: fs,
                                           firstObject: object!)
-       }
+      }
       object = $0
     }
     return object
   }
   
   /**
-   * This method locates a named FetchSpecification from a Model associated
-   * with this datasource. It then fetches the object according to the
-   * specification.
+   * This method locates a named ``FetchSpecification`` from a ``Model``
+   * associated with this datasource. It then fetches the object according to
+   * the specification.
    *
    * Example:
-   *
-   *     let a = personDataSource.find("firstCustomer")
-   *
+   * ```swift
+   * let a = personDataSource.find("firstCustomer")
+   * ```
    * or:
+   * ```swift
+   * let authToken = tokenDataSource.find("findByToken",
+   *                   [ "token": "12345", "login": "donald" ])
+   * ```
    *
-   *     let authToken = tokenDataSource.find("findByToken",
-   *                       [ "token": "12345", "login": "donald" ])
-   *
-   * @param _fname the name of the fetch specification in the Model
-   * @return an object which matches the named specification
+   * - Parameters:
+   *   - _fname: the name of the fetch specification in the Model
+   * - Returns: an object that matches the named specification
    */
+  @inlinable
   func find(_ name: String, _ bindings: Any? = nil) throws -> Object? {
     guard let entity = entity else { return nil }
     guard var fs = entity[fetchSpecification: name] else { return nil }
@@ -273,9 +282,11 @@ public extension AccessDataSource { // Finders
    * The primary key column(s) is(are) specified in the associated Entity
    * model object.
    *
-   * @param _pkeys the primary key value(s) to locate.
-   * @return the object matching the primary key (or null if none was found)
+   * - Parameters:
+   *   - _pkeys: The primary key value(s) to locate.
+   * - Returns:  The object matching the primary key (or null if none was found)
    */
+  @inlinable
   func findBy(id: Any...) throws -> Object? {
     guard let fs = try fetchSpecificationForFind(id) else {
       return nil
@@ -284,11 +295,12 @@ public extension AccessDataSource { // Finders
   }
   
   /**
-   * This method works like fetch() with the difference that it just accepts
-   * one or no object as a result.
+   * This method works like ``fetchObjects(yield:)`` with the difference that it
+   * just accepts one or no object as a result.
    *
-   * @return an object matching the fetch specification of the datasource.
+   * - Returns: an object matching the fetch specification of the datasource.
    */
+  @inlinable
   func find() throws -> Object? {
     return try find(try fetchSpecificationForFetch())
   }
@@ -299,13 +311,16 @@ public extension AccessDataSource { // Finders
    * specification of an Model.
    *
    * Example:
+   * ```swift
+   * let account = ds.findBy(
+   *   sql: "SELECT * FROM Account WHERE ID=10000 AND IsActive=TRUE")
+   * ```
    *
-   *     let account = ds.findBy(
-   *       sql: "SELECT * FROM Account WHERE ID=10000 AND IsActive=TRUE")
-   *
-   * @param _sql the SQL used to locate the object
-   * @return an object matching the SQL
+   * - Parameters:
+   *   - _sql: The SQL used to locate the object
+   * - Returns: an object matching the SQL
    */
+  @inlinable
   func findBy(sql: String) throws -> Object? {
     // TBD: shouldn't we support bindings?
     guard !sql.isEmpty else { return nil }
@@ -320,13 +335,17 @@ public extension AccessDataSource { // Finders
    * Locate an object which matches all the specified key/value combinations.
    *
    * Example:
-   *
-   *     let donald = ds.findBy(matchingAll: [ "lastname"  : "Duck",
-   *                                           "firstname" : "Donald"])
+   * ```swift
+   * let donald = ds.findBy(matchingAll: [ "lastname"  : "Duck",
+   *                                       "firstname" : "Donald"])
+   * ```
    *
    * This will construct an AndQualifier containing KeyValueQualifiers to
    * perform the matches.
+   *
+   * - Returns: an object matching the values.
    */
+  @inlinable
   func findBy(matchingAll values: [ String : Any? ]) throws -> Object? {
     var fs = try fetchSpecificationForFetch()
     fs.qualifier = qualifierToMatchAllValues(values)
@@ -337,17 +356,19 @@ public extension AccessDataSource { // Finders
    * Locate an object which matches any of the specified key/value combinations.
    *
    * Example:
-   *
-   *     let donaldOrMickey = ds.findBy(matchingAny: ["firstname" : "Mickey",
-   *                                                  "firstname" : "Donald"])
+   * ```
+   * let donaldOrMickey = ds.findBy(matchingAny: ["firstname" : "Mickey",
+   *                                              "firstname" : "Donald"])
+   * ```
    *
    * This will construct an OrQualifier containing KeyValueQualifiers to
    * perform the matches.
+   *
+   * - Returns: an object matching the values.
    */
   func findBy(matchingAny values: [ String : Any? ]) throws -> Object? {
     var fs = try fetchSpecificationForFetch()
     fs.qualifier = qualifierToMatchAnyValue(values)
     return try find(fs)
   }
-  
 }
