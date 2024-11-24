@@ -6,7 +6,7 @@
 //  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
 //
 
-public protocol DatabaseDataSourceType: AccessDataSourceType
+public protocol DatabaseDataSourceType<Object>: AccessDataSourceType
   where Object: DatabaseObject
 {
   

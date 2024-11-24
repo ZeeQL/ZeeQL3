@@ -6,7 +6,7 @@
 //  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
 //
 
-public protocol ActiveDataSourceType: AccessDataSourceType
+public protocol ActiveDataSourceType<Object>: AccessDataSourceType
   where Object: ActiveRecordType
 {
   

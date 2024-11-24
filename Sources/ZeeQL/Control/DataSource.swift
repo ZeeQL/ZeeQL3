@@ -18,7 +18,7 @@
  * - ``ActiveDataSource``
  * - ``AdaptorDataSource``
  */
-public protocol DataSourceType: EquatableType, Equatable {
+public protocol DataSourceType<Object>: EquatableType, Equatable {
   
   associatedtype Object: SwiftObject
   
