@@ -33,6 +33,9 @@
 		E802854D1EE6CDCF00F25AD7 /* SQLite3SchemaSynchronizationFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = E802854B1EE6CDCF00F25AD7 /* SQLite3SchemaSynchronizationFactory.swift */; };
 		E80285521EE6DFFB00F25AD7 /* FakeAdaptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = E802854E1EE6DFF200F25AD7 /* FakeAdaptor.swift */; };
 		E80285531EE6DFFC00F25AD7 /* FakeAdaptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = E802854E1EE6DFF200F25AD7 /* FakeAdaptor.swift */; };
+		E807ADF82CF396AB007A7A8E /* Dictionary+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = E807ADF72CF396AB007A7A8E /* Dictionary+Extensions.swift */; };
+		E807ADF92CF396AB007A7A8E /* Dictionary+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = E807ADF72CF396AB007A7A8E /* Dictionary+Extensions.swift */; };
+		E807ADFA2CF396AB007A7A8E /* Dictionary+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = E807ADF72CF396AB007A7A8E /* Dictionary+Extensions.swift */; };
 		E80B3DE81FE159CD0081DC43 /* CodableModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E80B3DE71FE159CD0081DC43 /* CodableModelTests.swift */; };
 		E80B3DE91FE159CD0081DC43 /* CodableModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E80B3DE71FE159CD0081DC43 /* CodableModelTests.swift */; };
 		E80B3DEB1FE15B0B0081DC43 /* CodeObjectModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E80B3DEA1FE15B0B0081DC43 /* CodeObjectModelTests.swift */; };
@@ -441,6 +444,7 @@
 		E80285481EE6CBE100F25AD7 /* SchemaSyncTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SchemaSyncTests.swift; sourceTree = "<group>"; };
 		E802854B1EE6CDCF00F25AD7 /* SQLite3SchemaSynchronizationFactory.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SQLite3SchemaSynchronizationFactory.swift; path = Sources/ZeeQL/SQLite3Adaptor/SQLite3SchemaSynchronizationFactory.swift; sourceTree = "<group>"; };
 		E802854E1EE6DFF200F25AD7 /* FakeAdaptor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FakeAdaptor.swift; sourceTree = "<group>"; };
+		E807ADF72CF396AB007A7A8E /* Dictionary+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Dictionary+Extensions.swift"; sourceTree = "<group>"; };
 		E80B3DE71FE159CD0081DC43 /* CodableModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodableModelTests.swift; sourceTree = "<group>"; };
 		E80B3DEA1FE15B0B0081DC43 /* CodeObjectModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodeObjectModelTests.swift; sourceTree = "<group>"; };
 		E80B3FA01E606D1700D6F0ED /* Adaptor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Adaptor.swift; path = Sources/ZeeQL/Access/Adaptor.swift; sourceTree = SOURCE_ROOT; };
@@ -841,6 +845,7 @@
 				E81AA9FE1E64EACB001B9B3E /* SmartDescription.swift */,
 				E8EB9E5C1EA1117100C6DA54 /* Logger.swift */,
 				E8F96E131EE4A968005FDC40 /* Pluralize.swift */,
+				E807ADF72CF396AB007A7A8E /* Dictionary+Extensions.swift */,
 			);
 			name = Foundation;
 			path = Sources/ZeeQL/Foundation;
@@ -1284,6 +1289,7 @@
 				E8263CA91E93C89200508276 /* ObjectStore.swift in Sources */,
 				E8263CBA1E93C89200508276 /* AdaptorQueryType.swift in Sources */,
 				E8E480C51EC2035900350EDF /* ZeeQLTypes.swift in Sources */,
+				E807ADF92CF396AB007A7A8E /* Dictionary+Extensions.swift in Sources */,
 				E8263CBC1E93C89200508276 /* EntityType.swift in Sources */,
 				E8263CAE1E93C89200508276 /* ActiveDataSource.swift in Sources */,
 				E8263CB51E93C89200508276 /* AdaptorDataSource.swift in Sources */,
@@ -1414,6 +1420,7 @@
 				E8ACA3632313E498000F6BEC /* ActiveDataSource.swift in Sources */,
 				E8ACA3722313E49C000F6BEC /* AdaptorRecordSchema.swift in Sources */,
 				E8C23BB823202B3500B4B803 /* ActiveRecordType.swift in Sources */,
+				E807ADFA2CF396AB007A7A8E /* Dictionary+Extensions.swift in Sources */,
 				E8ACA3762313E49C000F6BEC /* AdaptorError.swift in Sources */,
 				E8ACA38C2313E4B2000F6BEC /* CodableRelationship.swift in Sources */,
 				E8ACA3842313E4A8000F6BEC /* CodeAttribute.swift in Sources */,
@@ -1517,6 +1524,7 @@
 				E80B3FB71E606D1700D6F0ED /* SQLExpressionFactory.swift in Sources */,
 				E80B3FB11E606D1700D6F0ED /* Entity.swift in Sources */,
 				E8DD6120231EC22700D93C96 /* ActiveRecordType.swift in Sources */,
+				E807ADF82CF396AB007A7A8E /* Dictionary+Extensions.swift in Sources */,
 				E8BA82D11E683B1500F09D76 /* EntityType.swift in Sources */,
 				E8A20F15230EE5CF00AEE53E /* AccessDataSourceFinders.swift in Sources */,
 				E8400F5D1E64677000346028 /* DatabaseChannel.swift in Sources */,
@@ -1692,7 +1700,6 @@
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 10.2;
 				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1719,7 +1726,6 @@
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 10.2;
 				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1765,7 +1771,6 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				INFOPLIST_FILE = Tests/ZeeQLTests/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 10.2;
 				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
