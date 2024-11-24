@@ -136,7 +136,7 @@ public protocol AdaptorChannel : AdaptorQueryType, ModelNameMapper {
    *                 entity are being refetched. Requires the entity!
    * - returns:  the record, potentially refetched and updated
    */
-  func insertRow(_ row: AdaptorRow, _ entity: Entity?, refetchAll: Bool) throws
+  func insertRow(_ row: AdaptorRow, _ entity: Entity, refetchAll: Bool) throws
        -> AdaptorRow
 }
 
@@ -505,13 +505,13 @@ public extension AdaptorChannel { // MARK: - Operations
    *                 entity are being refetched. Requires the entity!
    * - Returns:  the record, potentially refetched and updated
    */
-  func insertRow(_ row: AdaptorRow, _ entity: Entity?, refetchAll: Bool)
+  @inlinable @discardableResult
+  func insertRow(_ row: AdaptorRow, _ entity: Entity, refetchAll: Bool)
          throws -> AdaptorRow
   {
     return try defaultInsertRow(row, entity, refetchAll: refetchAll)
   }
   
-  func defaultInsertRow(_ row: AdaptorRow, _ entity: Entity?, refetchAll: Bool)
   /**
    * This method inserts the given row into the table represented by the entity.
    * To produce the `INSERT` statement using the ``expressionFactory`` of the
@@ -527,12 +527,10 @@ public extension AdaptorChannel { // MARK: - Operations
    * - Returns:  the record, potentially refetched and updated
    */
   @inlinable
+  func defaultInsertRow(_ row: AdaptorRow, _ entity: Entity, refetchAll: Bool)
          throws -> AdaptorRow
   {
     // So that we can reuse the default implementation ...
-    if refetchAll && entity == nil {
-      throw AdaptorError.InsertRefetchRequiresEntity
-    }
     
     let expr = expressionFactory.insertStatementForRow(row, entity)
     
@@ -546,12 +544,6 @@ public extension AdaptorChannel { // MARK: - Operations
     //       => only if refetchAll is enabled, or if the value of the pkey is
     //          missing in the row.
     
-    guard let entity = entity else {
-      // Note: we don't know the pkey w/o entity and we don't want to reflect in
-      //       here
-      return row
-    }
-
     if let pkey = entity.primaryKeyForRow(row) {
       // already had the pkey assigned
       
@@ -576,11 +568,11 @@ public extension AdaptorChannel { // MARK: - Operations
    *   - entity: optionally an entity representing the table
    * - Returns:  the record, potentially refetched and updated
    */
-  @inlinable
-  func insertRow(_ row: AdaptorRow, _ entity: Entity? = nil)
+  @inlinable @discardableResult
+  func insertRow(_ row: AdaptorRow, _ entity: Entity)
          throws -> AdaptorRow
   {
-    return try insertRow(row, entity, refetchAll: entity != nil)
+    return try insertRow(row, entity, refetchAll: true)
   }
 }
 

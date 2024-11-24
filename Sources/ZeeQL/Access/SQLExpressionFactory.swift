@@ -54,7 +54,7 @@ open class SQLExpressionFactory {
     return e
   }
   
-  open func insertStatementForRow(_ row : AdaptorRow, _ entity: Entity?)
+  open func insertStatementForRow(_ row : AdaptorRow, _ entity: Entity)
             -> SQLExpression
   {
     let e = createExpression(entity)

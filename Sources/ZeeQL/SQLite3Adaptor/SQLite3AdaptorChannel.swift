@@ -252,13 +252,9 @@ open class SQLite3AdaptorChannel : AdaptorChannel {
     return Int(sqlite3_changes(handle))
   }
   
-  open func insertRow(_ row: AdaptorRow, _ entity: Entity?, refetchAll: Bool)
+  open func insertRow(_ row: AdaptorRow, _ entity: Entity, refetchAll: Bool)
               throws -> AdaptorRow
   {
-    if refetchAll && entity == nil {
-      throw AdaptorError.InsertRefetchRequiresEntity
-    }
-    
     let expr = expressionFactory.insertStatementForRow(row, entity)
     
     // In SQLite we need a transaction for the refetch
@@ -274,48 +270,41 @@ open class SQLite3AdaptorChannel : AdaptorChannel {
         throw AdaptorError.OperationDidNotAffectOne
       }
 
-      if let entity = entity {
-        let pkey : AdaptorRow
-        if let epkey = entity.primaryKeyForRow(row), !epkey.isEmpty {
-          // already had the primary key assigned
-          pkey = epkey
-        }
-        else if let pkeys = entity.primaryKeyAttributeNames, pkeys.count == 1 {
-          let lastRowId = sqlite3_last_insert_rowid(handle)
-          pkey = [ pkeys[0] : lastRowId ]
-        }
-        else {
-          throw AdaptorError.FailedToGrabNewPrimaryKey(entity: entity, row: row)
-        }
-        
-        if refetchAll {
-          let q  = qualifierToMatchAllValues(pkey)
-          let fs = ModelFetchSpecification(entity: entity, qualifier: q,
-                                           sortOrderings: nil, limit: 2)
-          var rec : AdaptorRecord? = nil
-          try selectAttributes(entity.attributes, fs, lock: false, entity) {
-            record in
-            guard rec == nil else { // multiple matched!
-              throw AdaptorError.FailedToRefetchInsertedRow(
-                                   entity: entity, row: row)
-            }
-            rec = record
-          }
-          guard let rrec = rec else { // none matched!
+      let pkey : AdaptorRow
+      if let epkey = entity.primaryKeyForRow(row), !epkey.isEmpty {
+        // already had the primary key assigned
+        pkey = epkey
+      }
+      else if let pkeys = entity.primaryKeyAttributeNames, pkeys.count == 1 {
+        let lastRowId = sqlite3_last_insert_rowid(handle)
+        pkey = [ pkeys[0] : lastRowId ]
+      }
+      else {
+        throw AdaptorError.FailedToGrabNewPrimaryKey(entity: entity, row: row)
+      }
+      
+      if refetchAll {
+        let q  = qualifierToMatchAllValues(pkey)
+        let fs = ModelFetchSpecification(entity: entity, qualifier: q,
+                                         sortOrderings: nil, limit: 2)
+        var rec : AdaptorRecord? = nil
+        try selectAttributes(entity.attributes, fs, lock: false, entity) {
+          record in
+          guard rec == nil else { // multiple matched!
             throw AdaptorError.FailedToRefetchInsertedRow(
                                  entity: entity, row: row)
           }
-          
-          result = rrec.asAdaptorRow
+          rec = record
         }
-        else {
-          result = pkey
+        guard let rrec = rec else { // none matched!
+          throw AdaptorError.FailedToRefetchInsertedRow(
+                               entity: entity, row: row)
         }
+        
+        result = rrec.asAdaptorRow
       }
       else {
-        // Note: we don't know the pkey w/o entity and we don't want to reflect in
-        //       here
-        result = row
+        result = pkey
       }
     }
     catch {
