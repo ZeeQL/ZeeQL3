@@ -44,30 +44,31 @@ open class CodeEntityBase : Entity {
 }
 
 /**
- * CodeEntity objects are used to describe Entity objects (ORM table
+ * `CodeEntity` objects are used to describe ``Entity`` objects (ORM table
  * mapping) from within Swift source code (opposed to doing this in an XML
  * file or fetching it from the database).
  *
  * Example usage:
+ * ```swift
+ * class Person : ActiveRecord, EntityType {
+ *   class Entity : CodeEntity<Person> {
+ *     let table      = "person"
+ *     let id         = Info.Int(column: "company_id")
+ *     let isPerson   = Info.Int(column: "is_person")
  *
- *     class Person : ActiveRecord, EntityType {
- *       class Entity : CodeEntity<Person> {
- *         let table      = "person"
- *         let id         = Info.Int(column: "company_id")
- *         let isPerson   = Info.Int(column: "is_person")
+ *     let login      = Info.OptString(width: 50)
+ *     let isLocked   = Info.Int(column: "is_locked")
+ *     let number     = Info.String(width: 100)
  *
- *         let login      = Info.OptString(width: 50)
- *         let isLocked   = Info.Int(column: "is_locked")
- *         let number     = Info.String(width: 100)
+ *     let lastname   = Info.OptString(column: "name")
+ *     let firstname  : String? = nil
+ *     let middlename : String? = nil
  *
- *         let lastname   = Info.OptString(column: "name")
- *         let firstname  : String? = nil
- *         let middlename : String? = nil
- *
- *         let addresses  = ToMany<Address>() // auto: foreign-key
- *       }
- *       static let entity : ZeeQL.Entity = Entity()
- *     }
+ *     let addresses  = ToMany<Address>() // auto: foreign-key
+ *   }
+ *   static let entity : ZeeQL.Entity = Entity()
+ * }
+ * ```
  *
  * One can use different styles to declare attributes:
  * - Arbitrary `Attribute` objects (`let id : ModelAttribute(...)`)
@@ -192,6 +193,7 @@ open class CodeObjectEntity<T: CodeObjectType> : CodeEntityBase {
 
 // MARK: - Reflection
 
+fileprivate let specialNameKey                 = "_entityName" // TBD
 fileprivate let specialTableKey                = "table" // TBD
 fileprivate let specialRestrictingQualifierKey = "_restrictingQualifier"
 fileprivate let specialFetchSpecificationsKey  = "_fetchSpecifications"
@@ -235,6 +237,10 @@ fileprivate extension CodeEntityBase {
          let v = propValue as? String
       {
         externalName = v
+        continue
+      }
+      if propName == specialNameKey, let v = propValue as? String {
+        name = v
         continue
       }
       if propName == specialRestrictingQualifierKey {
