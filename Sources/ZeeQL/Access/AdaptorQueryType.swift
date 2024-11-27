@@ -194,7 +194,7 @@ public extension AdaptorQueryType { // typed SQL queries
 public extension AdaptorQueryType {
   
   @inlinable
-  func fetchOne<T0>(_ type: T0.Type = T0.self, _ sql: String) throws -> T0
+  func fetchOne<T0>(_ type: T0.Type, _ sql: String) throws -> T0
          where T0 : AdaptorQueryColumnRepresentable
   {
     var optResult : T0? = nil
@@ -207,5 +207,11 @@ public extension AdaptorQueryType {
       throw AdaptorChannelError.RecordNotFound
     }
     return result
+  }
+  @inlinable
+  func fetchOne<T0>(_ sql: String) throws -> T0
+         where T0 : AdaptorQueryColumnRepresentable
+  {
+    return try fetchOne(T0.self, sql)
   }
 }
