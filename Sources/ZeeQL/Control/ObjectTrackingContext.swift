@@ -83,20 +83,26 @@ open class ObjectTrackingContext : ObjectStore {
    * This is the primitve method of ``ObjectStore``.
    */
   @inlinable
-  open func objectsWithFetchSpecification<O>(_ fs: FetchSpecification,
-                                             in tc: ObjectTrackingContext,
-                                             _ cb: ( O ) throws -> Void) throws
+  open func objectsWithFetchSpecification<O>(
+    _ fetchSpecification: FetchSpecification,
+    in trackingContex: ObjectTrackingContext,
+    _ yield: ( O ) throws -> Void
+  ) throws
     where O: DatabaseObject
   {
-    if fs.requiresAllQualifierBindingVariables {
-      if let q = fs.qualifier {
+    assert(!fetchSpecification.fetchesRawRows,
+           "Attempt to use raw-rows fetch w/ tracking context?")
+    if fetchSpecification.requiresAllQualifierBindingVariables {
+      if let q = fetchSpecification.qualifier {
         if q.hasUnresolvedBindings {
-          throw Error.FetchSpecificationHasUnresolvedBindings(fs)
+          throw Error.FetchSpecificationHasUnresolvedBindings(fetchSpecification)
         }
       }
     }
     
-    return try rootObjectStore.objectsWithFetchSpecification(fs, in: tc, cb)
+    return try rootObjectStore
+      .objectsWithFetchSpecification(fetchSpecification, in: trackingContex,
+                                     yield)
   }
   
   
