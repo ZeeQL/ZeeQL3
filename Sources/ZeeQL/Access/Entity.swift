@@ -278,9 +278,15 @@ public extension Entity { // default imp
   // MARK: - Fetch Specifications
   
   @inlinable
-  var restrictingQualifier: Qualifier? { return nil }
+  var restrictingQualifier: Qualifier? {
+    assert(!(self is ModelEntity || self is CodeEntityBase))
+    return nil
+  }
   @inlinable
-  subscript(fetchSpecification n: String) -> FetchSpecification? { return nil }
+  subscript(fetchSpecification n: String) -> FetchSpecification? {
+    assert(!(self is ModelEntity || self is CodeEntityBase))
+    return nil
+  }
   @inlinable
   subscript(adaptorOperation   n: String) -> AdaptorOperation?   { return nil }
 

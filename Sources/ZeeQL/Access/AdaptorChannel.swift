@@ -121,7 +121,7 @@ public protocol AdaptorChannel : AdaptorQueryType, ModelNameMapper {
   
   /**
    * This method inserts the given row into the table represented by the entity.
-   * To produce the INSERT statement it uses the expressionFactory() of the
+   * To produce the `INSERT` statement it uses the expressionFactory() of the
    * adaptor. The keys in the record map are converted to column names by using
    * the Entity.
    * The method returns true if exactly one row was affected by the SQL
@@ -136,8 +136,13 @@ public protocol AdaptorChannel : AdaptorQueryType, ModelNameMapper {
    *                 entity are being refetched. Requires the entity!
    * - returns:  the record, potentially refetched and updated
    */
-  func insertRow(_ row: AdaptorRow, _ entity: Entity?, refetchAll: Bool) throws
+  func insertRow(_ row: AdaptorRow, _ entity: Entity, refetchAll: Bool) throws
        -> AdaptorRow
+  
+  #if false // TBD: GETobjects also has a insertRow variant that takes the table
+  func insertRow(_ table: String, _ row: AdaptorRow, refetchAll: Bool) throws
+       -> AdaptorRow
+  #endif
 }
 
 public protocol ModelNameMapper {
@@ -296,18 +301,17 @@ public extension AdaptorChannel {
  */
 public typealias AdaptorRow = Dictionary<String, Any?>
 
-public extension AdaptorChannel {
-  // MARK: - Operations
+public extension AdaptorChannel { // MARK: - Operations
 
   /**
    * Locks the database row using the specified criterias. This performs a
    * select with a HOLD LOCK option. 
    * 
-   * - parameters:
-   *   - attrs:     the attributes to be fetched, or null to use the entity
-   *   - entity:    the entity (usually the table) to be fetched
-   *   - qualifier: the qualifier used to select the rows to be locked
-   *   - snapshot:  a set of keys/values specifying a row to be locked
+   * - Parameters:
+   *   - attrs:     The attributes to be fetched, or null to use the entity.
+   *   - entity:    The entity (usually the table) to be fetched.
+   *   - qualifier: The qualifier used to select the rows to be locked.
+   *   - snapshot:  A set of keys/values specifying a row to be locked.
    */
   func lockRowComparingAttributes(_ attrs     : [ Attribute ]?,
                                   _ entity    : Entity,
@@ -341,10 +345,10 @@ public extension AdaptorChannel {
    * Note: to perform a simple SQL query w/o any model mapping, the performSQL()
    * method is available.
    * 
-   * - parameters:
-   *   - attrs: the attributes to be fetched, or null to use the entity
-   *   - fs:    the fetchspecification (qualifier/sorting/etc) to be used
-   *   - lock:  whether the SELECT should include a HOLD LOCK
+   * - Parameters:
+   *   - attrs: The attributes to be fetched, or null to use the entity.
+   *   - fs:    The fetchspecification (qualifier/sorting/etc) to be used.
+   *   - lock:  Whether the `SELECT` should include a `HOLD LOCK`
    *   - e:     the entity (usually the table) to be fetched
    */
   func selectAttributes(_ attrs : [ Attribute ]?,
@@ -384,13 +388,14 @@ public extension AdaptorChannel {
      * SQL expression is built. The SQL expression can still use mapped attrs
      * and what else SQLExpression provides.
      * Sample model:
-     *
-     *     <fetch name="xx" flags="readonly,rawrows,allbinds">
-     *       <attributes>objectId</attributes>
-     *       <qualifier>objectId IN $ids</qualifier>
-     *       <sql>
-     *         %(select)s %(columns)s FROM %(tables)s %(where)s GROUP BY obj_id;
-     *       </sql>
+     * ```xml
+     * <fetch name="xx" flags="readonly,rawrows,allbinds">
+     *   <attributes>objectId</attributes>
+     *   <qualifier>objectId IN $ids</qualifier>
+     *   <sql>
+     *     %(select)s %(columns)s FROM %(tables)s %(where)s GROUP BY obj_id;
+     *   </sql>
+     * ```
      */
     let isRawFetch = fs?.fetchesRawRows ?? true
     
@@ -447,13 +452,13 @@ public extension AdaptorChannel {
    * This method creates a SQLExpression which represents the UPDATE and
    * then calls evaluateUpdateExpression to perform the SQL.
    * 
-   * - parameters:
+   * - Parameters:
    *   - values:    the values to be changed
    *   - qualifier: the qualifier which selects the rows to be updated
    *   - entity:    the entity which should be updated
-   * - returns: number of affected rows or -1 on error
+   * - Returns: number of affected rows or -1 on error
    */
-  @inlinable
+  @inlinable @discardableResult
   func updateValuesInRowsDescribedByQualifier(_ values    : [ String: Any? ],
                                               _ qualifier : Qualifier,
                                               _ entity    : Entity) throws
@@ -464,7 +469,7 @@ public extension AdaptorChannel {
     return try evaluateUpdateExpression(expr)
   }
   
-  @inlinable
+  @inlinable @discardableResult
   func deleteRowsDescribedByQualifier(_ q: Qualifier, _ e: Entity) throws
        -> Int
   {
@@ -476,12 +481,12 @@ public extension AdaptorChannel {
    * This method works like deleteRowsDescribedByQualifier() but only returns
    * true if exactly one row was affected by the DELETE.
    *
-   * - parameters:
+   * - Parameters:
    *   - qualifier: the qualifier to select exactly one row to be deleted
    *   - entity:    the entity which contains the row
-   * - returns:     true if exactly one row was deleted, false otherwise
+   * - Returns:     true if exactly one row was deleted, false otherwise
    */
-  @inlinable
+  @inlinable @discardableResult
   func deleteRowDescribedByQualifier(_ qualifier: Qualifier, _ entity: Entity)
          throws -> Bool
   {
@@ -490,37 +495,51 @@ public extension AdaptorChannel {
   
   /**
    * This method inserts the given row into the table represented by the entity.
-   * To produce the INSERT statement it uses the expressionFactory() of the
+   * To produce the `INSERT` statement using the ``expressionFactory`` of the
    * adaptor. The keys in the record map are converted to column names by using
-   * the Entity.
+   * the ``Entity``.
    * The method returns true if exactly one row was affected by the SQL
    * statement. If the operation failed the error is thrown.
    *
-   * - parameters:
-   *   - row:        the record which should be inserted
-   *   - entity:     the entity representing the table
-   *   - refetchAll: the SQL schema may have default values assigned which are
+   * - Parameters:
+   *   - row:        The record which should be inserted
+   *   - entity:     The entity representing the table
+   *   - refetchAll: The SQL schema may have default values assigned which are
    *                 applied if the corresponding values are not in 'row'.
    *                 Enabling 'refetchAll' makes sure all attributes of the
    *                 entity are being refetched. Requires the entity!
-   * - returns:  the record, potentially refetched and updated
+   * - Returns:  the record, potentially refetched and updated
    */
-  func insertRow(_ row: AdaptorRow, _ entity: Entity?, refetchAll: Bool)
+  @inlinable @discardableResult
+  func insertRow(_ row: AdaptorRow, _ entity: Entity, refetchAll: Bool)
          throws -> AdaptorRow
   {
     return try defaultInsertRow(row, entity, refetchAll: refetchAll)
   }
   
-  func defaultInsertRow(_ row: AdaptorRow, _ entity: Entity?, refetchAll: Bool)
+  /**
+   * This method inserts the given row into the table represented by the entity.
+   * To produce the `INSERT` statement using the ``expressionFactory`` of the
+   * adaptor. The keys in the record map are converted to column names by using
+   * the ``Entity``.
+   * The method returns true if exactly one row was affected by the SQL
+   * statement. If the operation failed the error is thrown.
+   *
+   * - Parameters:
+   *   - row:        The record which should be inserted
+   *   - entity:     An entity representing the table
+   *   - refetchAll: Whether the row should be re-fetched after the insert.
+   * - Returns:  the record, potentially refetched and updated
+   */
+  @inlinable
+  func defaultInsertRow(_ row: AdaptorRow, _ entity: Entity, refetchAll: Bool)
          throws -> AdaptorRow
   {
     // So that we can reuse the default implementation ...
-    if refetchAll && entity == nil {
-      throw AdaptorError.InsertRefetchRequiresEntity
-    }
     
     let expr = expressionFactory.insertStatementForRow(row, entity)
     
+    // Perform the INSERT
     guard try evaluateUpdateExpression(expr) == 1 else {
       throw AdaptorError.OperationDidNotAffectOne
     }
@@ -530,12 +549,6 @@ public extension AdaptorChannel {
     //       => only if refetchAll is enabled, or if the value of the pkey is
     //          missing in the row.
     
-    guard let entity = entity else {
-      // Note: we don't know the pkey w/o entity and we don't want to reflect in
-      //       here
-      return row
-    }
-
     if let pkey = entity.primaryKeyForRow(row) {
       // already had the pkey assigned
       
@@ -560,17 +573,15 @@ public extension AdaptorChannel {
    *   - entity: optionally an entity representing the table
    * - Returns:  the record, potentially refetched and updated
    */
-  @inlinable
-  func insertRow(_ row: AdaptorRow, _ entity: Entity? = nil)
+  @inlinable @discardableResult
+  func insertRow(_ row: AdaptorRow, _ entity: Entity)
          throws -> AdaptorRow
   {
-    return try insertRow(row, entity, refetchAll: entity != nil)
+    return try insertRow(row, entity, refetchAll: true)
   }
 }
 
-extension AdaptorChannel {
-
-  // MARK: - attribute name mapping
+extension AdaptorChannel { // MARK: - attribute name mapping
   
   /**
    * Scans the given array for attributes whose name does not match their
@@ -592,7 +603,6 @@ extension AdaptorChannel {
       return attrname != colname
     }
   }
-  
 }
 
 public extension AdaptorChannel { // Utility

@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 21/02/2017.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
 //
 
 /**
@@ -13,20 +13,21 @@
  * this object to add support for their own SQL syntax. For example MySQL uses
  * backticks for quoting schema identifiers while PostgreSQL uses double quotes.
  *
- * Such differences are covered by subclasses of SQLExpression which generate
- * the actual SQL. This factory constructs the specific SQLExpression objects.
+ * Such differences are covered by subclasses of ``SQLExpression`` which
+ * generate the actual SQL.
+ * This factory constructs the specific ``SQLExpression`` objects.
  *
- * Usually the methods of this class are called by AdaptorChannel to
+ * Usually the methods of this class are called by ``AdaptorChannel`` to
  * build SQL for non-raw fetches and changes.
- * But you can use SQLExpression in your own code if you want to perform
+ * But you can use ``SQLExpression`` in your own code if you want to perform
  * raw SQL but still want to generate database independend SQL.
- * However its recommended to use FetchSpecification's with an SQL hint
+ * However its recommended to use ``FetchSpecification``'s with an SQL hint
  * instead, eg:
- *
- *   <fetch name="selectCount">
- *     <sql>SELECT * FROM MyTable</sql>
- *   </fetch>
- *
+ * ```xml
+ * <fetch name="selectCount">
+ *   <sql>SELECT * FROM MyTable</sql>
+ * </fetch>
+ * ```
  */
 open class SQLExpressionFactory {
   
@@ -53,7 +54,7 @@ open class SQLExpressionFactory {
     return e
   }
   
-  open func insertStatementForRow(_ row : AdaptorRow, _ entity: Entity?)
+  open func insertStatementForRow(_ row : AdaptorRow, _ entity: Entity)
             -> SQLExpression
   {
     let e = createExpression(entity)

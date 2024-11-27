@@ -6,13 +6,39 @@
 //  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
 //
 
+public protocol ActiveDataSourceType<Object>: AccessDataSourceType
+  where Object: ActiveRecordType
+{
+  
+  var database : Database { get set }
+
+  init(database: Database, entity: Entity)
+  
+  func createObject() -> Object
+  func insertObject(_ object: Object) throws
+}
+
+extension ActiveDataSourceType {
+  
+  @inlinable
+  public init(database: Database) {
+    if let t = Object.self as? EntityType.Type {
+      self.init(database: database, entity: t.entity)
+    }
+    else {
+      fatalError("Could not determine entity from object")
+    }
+  }
+  
+}
+
 /**
  * Used to query `DatabaseObject`s from a `Database`.
  *
- * W/o it you usually create an
- * Database object with an Adaptor and then use that database object to
- * acquire an DatabaseChannel.
- *  
+ * W/o it you usually create a
+ * ``Database`` object with an ``Adaptor`` and then use that database object to
+ * acquire an ``DatabaseChannel``.
+ *
  * Naming convention:
  * - `find...`     - a method which returns a single object and uses LIMIT 1
  * - `fetch..`     - a method which returns a List of objects
@@ -20,32 +46,24 @@
  * - `perform...`  - a method which applies a change to the database
  *
  * Example:
- *
- *     let persons = db.datasource(Person.self)
+ * ```swift
+ * let persons = db.datasource(Person.self)
+ * ```
  */
-open class ActiveDataSource<Object: ActiveRecordType> : AccessDataSource<Object>
+open class ActiveDataSource<Object: ActiveRecordType>: AccessDataSource<Object>,
+                                                       ActiveDataSourceType
 {
   
   open var database : Database
   let _entity  : Entity
   
-  public init(database: Database, entity: Entity) {
+  required public init(database: Database, entity: Entity) {
     self.database = database
     self._entity  = entity
     
     super.init()
     
     self.log = database.log
-  }
-  
-  @inlinable
-  public convenience init(database: Database) {
-    if let t = Object.self as? EntityType.Type {
-      self.init(database: database, entity: t.entity)
-    }
-    else {
-      fatalError("Could not determine entity from object")
-    }
   }
   
   

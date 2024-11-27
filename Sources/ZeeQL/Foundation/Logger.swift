@@ -114,6 +114,7 @@ public struct ZeeQLPrintLogger : ZeeQLLogger {
     }
     
     if logLevel.rawValue <= stderrLogLevel.rawValue {
+      s += "\n" // fputs, unlike puts, does not add a newline
       fputs(s, stderr)
     }
     else {
