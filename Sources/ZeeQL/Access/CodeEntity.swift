@@ -34,13 +34,18 @@ open class CodeEntityBase : Entity {
   public final var className                : String? // TBD: Hm.
   public final var restrictingQualifier     : Qualifier?
   public final var fetchSpecifications      = [ String : FetchSpecification ]()
-
+  
   public final var attributes               = Array<ZeeQL.Attribute>()
   public final var relationships            = [ Relationship  ]()
   public final var primaryKeyAttributeNames : [ String    ]? = nil
-
+  
   public var objectType : DatabaseObject.Type? { return nil   }
   public var isPattern  : Bool                 { return false }
+  
+  @inlinable
+  public subscript(fetchSpecification n: String) -> FetchSpecification? {
+    return fetchSpecifications[n]
+  }
 }
 
 /**
