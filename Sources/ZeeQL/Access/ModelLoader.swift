@@ -398,15 +398,19 @@ open class CoreDataModelLoader : ModelLoader {
       }
     }
     if let xml = xml.firstChildElementWithName("sql") {
-      // TODO: pattern (it IS being used!)
-      //<sql>%(select)s %(columns)s FROM %(tables)s %(where)s
-      //     GROUP BY object_id;</sql>
+      let attrs = xml.attributesAsDict
+      // <sql>%(select)s %(columns)s FROM %(tables)s %(where)s
+      //      GROUP BY object_id;</sql>
+      // <sql pattern="true">%%(select)s %%(columns)s
       if let v = xml.textContent, !v.isEmpty {
-        // TODO: put into hints?
+        // TODO: Constants for the hints, make them Environment like?
+        //       Or at least an `enum`.
         let isPattern = boolValue(attrs["pattern"])
         let key = isPattern
                 ? "CustomQueryExpressionHintKeyBindPattern"
                 : "CustomQueryExpressionHintKey"
+        assert(isPattern || !v.contains("%%"),
+               "Using pattern %% in non-pattern binding?")
         fs.hints[key] = v
       }
       else {
