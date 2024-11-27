@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 03/03/2017.
-//  Copyright © 2017-2019 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
 //
 
 /**
@@ -50,21 +50,28 @@ public class DatabaseContext : ObjectStore, SmartDescription {
     }
   }
 
-  public func objectsWith(fetchSpecification fs : FetchSpecification,
-                          in tc                 : ObjectTrackingContext,
-                          _ cb                  : ( Any ) -> Void) throws
+  @inlinable
+  public func objectsWithFetchSpecification<O>(
+    _  fetchSpecification : FetchSpecification,
+    in    trackingContext : ObjectTrackingContext,
+    _               yield : ( O ) throws -> Void
+  ) throws
+    where O: DatabaseObject
   {
-    if fs.requiresAllQualifierBindingVariables {
-      if let keys = fs.qualifier?.bindingKeys, !keys.isEmpty {
-        throw Error.FetchSpecificationHasUnresolvedBindings(fs)
+    if fetchSpecification.requiresAllQualifierBindingVariables {
+      if let keys = fetchSpecification.qualifier?.bindingKeys, !keys.isEmpty {
+        throw Error.FetchSpecificationHasUnresolvedBindings(fetchSpecification)
       }
     }
     
-    let ch = DatabaseChannel(database: database)
-    try ch.selectObjectsWithFetchSpecification(fs, tc)
+    let ch = TypedDatabaseChannel<O>(database: database)
+    try ch
+      .selectObjectsWithFetchSpecification(fetchSpecification, trackingContext)
     
     while let o = ch.fetchObject() {
-      cb(o)
+      assert(o is O)
+      guard let typed = o as? O else { continue }
+      try yield(typed)
     }
   }
   

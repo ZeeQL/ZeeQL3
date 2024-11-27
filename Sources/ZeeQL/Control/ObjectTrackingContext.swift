@@ -46,28 +46,47 @@ open class ObjectTrackingContext : ObjectStore {
 
   /**
    * Fetches the objects for the given specification. This works by calling
-   * `objectsWith(fetchSpecification:in:)` with the tracking context itself.
+   * ``objectsWithFetchSpecification(_:in:_:)`` with the tracking context
+   * itself.
    */
   @inlinable
-  open func objectsWith(fetchSpecification fs: FetchSpecification) throws
-            -> [ Any ]
+  open func objectsWithFetchSpecification<O>(_ type: O.Type = O.self,
+                                             _ fs: FetchSpecification) throws
+            -> [ O ]
+    where O: DatabaseObject
   {
-    var objects = [ Any ]()
-    try objectsWith(fetchSpecification: fs, in: self) {
-      objects.append($0)
-    }
+    var objects = [ O ]()
+    try objectsWithFetchSpecification(fs) { objects.append($0) }
     return objects
   }
   
   /**
-   * This method asks the `rootObjectStore` to fetch the objects specified
-   * in the _fs.
-   * Objects will get registered in the given tracking context.
+   * Fetches the objects for the given specification. This works by calling
+   * ``objectsWithFetchSpecification(_:in:_:)`` with the tracking context
+   * itself.
    */
   @inlinable
-  open func objectsWith(fetchSpecification fs: FetchSpecification,
-                        in tc: ObjectTrackingContext,
-                        _ cb: ( Any ) -> Void) throws
+  open func objectsWithFetchSpecification<O>(_ fs: FetchSpecification,
+                                             _ cb: ( O ) throws -> Void) throws
+    where O: DatabaseObject
+  {
+    return try objectsWithFetchSpecification(fs, in: self, cb)
+  }
+
+  /**
+   * This method asks the ``rootObjectStore`` to fetch the objects specified
+   * in the _fs (usually a ``DatabaseContext``).
+   *
+   * Objects will get registered in the given tracking context (usually `self`
+   * for ``ObjectTrackingContext``)
+   *
+   * This is the primitve method of ``ObjectStore``.
+   */
+  @inlinable
+  open func objectsWithFetchSpecification<O>(_ fs: FetchSpecification,
+                                             in tc: ObjectTrackingContext,
+                                             _ cb: ( O ) throws -> Void) throws
+    where O: DatabaseObject
   {
     if fs.requiresAllQualifierBindingVariables {
       if let q = fs.qualifier {
@@ -77,7 +96,7 @@ open class ObjectTrackingContext : ObjectStore {
       }
     }
     
-    return try rootObjectStore.objectsWith(fetchSpecification: fs, in: tc, cb)
+    return try rootObjectStore.objectsWithFetchSpecification(fs, in: tc, cb)
   }
   
   
