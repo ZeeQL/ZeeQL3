@@ -133,13 +133,14 @@ open class ObjectTrackingContext : ObjectStore {
   public func globalIDFor(object: AnyObject) -> GlobalID? {
     if let smartObject = object as? ObjectWithGlobalID,
        let gid = smartObject.globalID { return gid }
-    return gidToObject.firstKeyFor(value: object)
+    return gidToObject.first(where: { $0.value === object })?.key
   }
   @inlinable
   public func globalIDFor<Object>(object: Object) -> GlobalID?
     where Object: ObjectWithGlobalID
   {
-    return object.globalID ?? gidToObject.firstKeyFor(value: object)
+    return object.globalID
+        ?? gidToObject.first(where: { $0.value === object })?.key
   }
 
   @inlinable
@@ -164,16 +165,4 @@ open class ObjectTrackingContext : ObjectStore {
   public func reset() {
     gidToObject.removeAll()
   }
-}
-
-
-// MARK: - Helper
-
-extension Dictionary where Value: AnyObject {
-
-  @usableFromInline
-  func firstKeyFor(value: Value) -> Key? {
-    first(where: { $0.value === value })?.key
-  }
-  
 }
