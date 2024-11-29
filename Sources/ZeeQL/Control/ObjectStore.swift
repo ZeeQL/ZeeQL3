@@ -12,19 +12,15 @@ public protocol ObjectWithGlobalID: AnyObject {
 }
 
 /**
- * A store which stores objects :-)
- *
  * Current subclasses:
  * - ``ObjectTrackingContext`` (an object uniquer)
- * - ``DatabaseContext`` (a store on top of `Database`)
+ * - ``DatabaseContext`` (an ``ObjectStore`` working on top of `Database`)
  */
 public protocol ObjectStore {
   
-  func objectsWithFetchSpecification<O>(
+  func objectsWithFetchSpecification<O: DatabaseObject>(
     _ fetchSpecification : FetchSpecification,
     in   trackingContext : ObjectTrackingContext,
-    _            yield   : ( O ) throws -> Void
+    _              yield : ( O ) throws -> Void
   ) throws
-    where O: DatabaseObject
-  
 }

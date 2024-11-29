@@ -85,7 +85,7 @@ open class ObjectTrackingContext : ObjectStore {
   @inlinable
   open func objectsWithFetchSpecification<O>(
     _ fetchSpecification: FetchSpecification,
-    in trackingContex: ObjectTrackingContext,
+    in trackingContext: ObjectTrackingContext,
     _ yield: ( O ) throws -> Void
   ) throws
     where O: DatabaseObject
@@ -101,7 +101,7 @@ open class ObjectTrackingContext : ObjectStore {
     }
     
     return try rootObjectStore
-      .objectsWithFetchSpecification(fetchSpecification, in: trackingContex,
+      .objectsWithFetchSpecification(fetchSpecification, in: trackingContext,
                                      yield)
   }
   
