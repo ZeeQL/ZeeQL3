@@ -1880,8 +1880,10 @@ open class SQLExpression: SmartDescription {
       sb += " "
       sb += op
       sb += " NULL"
+      return sb
     }
-    else if op == "IN" {
+    
+    if op == "IN" {
       if let v = v as? QualifierVariable {
         log.error("detected unresolved qualifier variable in IN qualifier:\n" +
                   "  \(q)\n  variable: \(v)")
@@ -1900,32 +1902,29 @@ open class SQLExpression: SmartDescription {
 
       
       if let c = v as? [ Any ] {
-        // TBD: can't we move all this to sqlStringForValue? This has similiar
-        //      stuff already
-        let len = c.count
-        if len == 0 {
-          /* An 'IN ()' does NOT work in PostgreSQL, weird. We treat such a
-           * qualifier as always false. */
-          sb.removeAll()
-          sb += sqlFalseExpression
+        if let add = sqlStringForInValues(c, key: k) {
+          return sb + add
         }
         else {
-          sb += " IN ("
-
-          var isFirst = true
-          for subvalue in c {
-            guard let fv = sqlStringForValue(subvalue, k) else { continue }
-            
-            if isFirst { isFirst = false }
-            else { sb += ", " }
-
-            sb += fv
-          }
-
-          sb += ")"
+          /* An 'IN ()' does NOT work in PostgreSQL, weird. We treat such a
+           * qualifier as always false. */
+          return sqlFalseExpression
         }
       }
-      else if let range = v as? TimeRange {
+      
+      if let c = v as? any Collection {
+        if let add = sqlStringForInValues(c, key: k) {
+          return sb + add
+        }
+        else {
+          /* An 'IN ()' does NOT work in PostgreSQL, weird. We treat such a
+           * qualifier as always false. */
+          sb += sqlFalseExpression
+          return sb
+        }
+      }
+
+      if let range = v as? TimeRange {
         // TBD: range query ..
         // eg: birthday IN 2008-09-10 00:00 - 2008-09-11 00:00
         // => birthday >= $start AND birthDay < $end
@@ -1972,8 +1971,10 @@ open class SQLExpression: SmartDescription {
         sb += sqlStringForValue(v, k) ?? "ERROR"
         sb += ")"
       }
+      return sb
     }
-    else if let range = v as? TimeRange {
+    
+    if let range = v as? TimeRange {
       if opsel == .GreaterThan {
         if range.isEmpty { /* empty range, always greater */
           sb.removeAll()
@@ -2013,25 +2014,54 @@ open class SQLExpression: SmartDescription {
         log.error("TimeRange not yet supported as a value for op: ", op)
         return nil
       }
+      return sb
     }
-    else {
-      sb += " "
-      sb += op
-      sb += " "
-      
-      /* a regular value */
-      if let vv = v {
-        if opsel == .Like ||  opsel == .CaseInsensitiveLike {
-          // TODO: unless the DB supports a specific case-search LIKE, we need
-          //       to perform an upper
-          v = self.sqlPatternFromShellPattern(String(describing: vv))
-        }
+    
+    // Other
+
+    sb += " "
+    sb += op
+    sb += " "
+    
+    /* a regular value */
+    if let vv = v {
+      if opsel == .Like ||  opsel == .CaseInsensitiveLike {
+        // TODO: unless the DB supports a specific case-search LIKE, we need
+        //       to perform an upper
+        v = self.sqlPatternFromShellPattern(String(describing: vv))
       }
-    
-      // this does bind stuff if enabled
-      sb += sqlStringForValue(v, k) ?? "ERROR"
     }
-    
+  
+    // this does bind stuff if enabled
+    sb += sqlStringForValue(v, k) ?? "ERROR"
+
+    return sb
+  }
+  
+  private func sqlStringForInValues<C>(_ c: C, key k: String) -> String?
+    where C: Collection
+  {
+    // TBD: can't we move all this to sqlStringForValue? This has similiar
+    //      stuff already
+    guard !c.isEmpty else {
+      /* An 'IN ()' does NOT work in PostgreSQL, weird. We treat such a
+       * qualifier as always false. */
+      return nil
+    }
+    var sb = " IN ("
+
+    var isFirst = true
+    for subvalue in c {
+      guard let fv = sqlStringForValue(subvalue, k) else { continue }
+      
+      if isFirst { isFirst = false }
+      else { sb += ", " }
+
+      sb += fv
+    }
+
+    sb += ")"
+
     return sb
   }
   

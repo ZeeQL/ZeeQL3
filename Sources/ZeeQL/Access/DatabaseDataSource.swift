@@ -72,11 +72,6 @@ open class DatabaseDataSource<Object: DatabaseObject>
                                           yield: ( Object ) throws -> Void)
     throws
   {
-    let results = try objectContext.objectsWith(fetchSpecification: fs)
-    for result in results {
-      assert(result is Object)
-      guard let object = result as? Object else { continue }
-      try yield(object)
-    }
+    try objectContext.objectsWithFetchSpecification(fs, yield)
   }
 }

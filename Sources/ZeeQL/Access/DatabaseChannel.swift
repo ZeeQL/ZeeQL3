@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 27/02/17.
-//  Copyright © 2017-2020 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
 //
 
 open class DatabaseChannelBase {
@@ -490,8 +490,7 @@ open class DatabaseChannelBase {
     
     /* entity */
 
-    guard let entity = entity ?? database[entity: entityName]
-     else {
+    guard let entity = entity ?? database[entity: entityName] else {
       throw Error.MissingEntity(entityName)
     }
 
@@ -514,7 +513,13 @@ open class DatabaseChannelBase {
       /* The relName is never a path, its a level-1 key. the value in
        * leveledPrefetches contains 'subpathes'.
        */
-      try fetchRelationship(entity, relName, baseObjects, value, helper, ec)
+      do {
+        try fetchRelationship(entity, relName, baseObjects, value, helper, ec)
+      }
+      catch {
+        log.error("Could not fetch relationship", relName, value)
+        throw error
+      }
     }
 
     /* fetch flattened relationships (NOT IMPLEMENTED) */
@@ -722,7 +727,7 @@ open class DatabaseChannelBase {
    *
    * - returns: null if there are no more objects, or the fetched object/record
    */
-  func fetchObject() -> DatabaseObject? {
+  public func fetchObject() -> DatabaseObject? {
     /* use iterator if the objects are already fetched in total */
     // TODO: make the function throws
     
@@ -1116,11 +1121,12 @@ open class DatabaseChannelBase {
 
 // MARK: - Typed Concrete Class
 
-open class TypedDatabaseChannel<ObjectType: DatabaseObject> : DatabaseChannelBase,
-                                                              IteratorProtocol
+open class TypedDatabaseChannel<ObjectType> : DatabaseChannelBase,
+                                              IteratorProtocol
+  where ObjectType: DatabaseObject
 {
   
-  public var objects : IndexingIterator<[ObjectType]>?
+  public var objects : IndexingIterator<[ ObjectType ]>?
   
   override var hasObjectIterator : Bool { return objects != nil }
 
@@ -1166,15 +1172,15 @@ open class TypedDatabaseChannel<ObjectType: DatabaseObject> : DatabaseChannelBas
    * This is the primary method for fetches and has additional handling for
    * prefetched relationships.
    * 
-   * - parameters:
+   * - Parameters:
    *   - fs: The FetchSpecification which outlines how objects are being
    *         fetched.
    *   - ec: TODO
    */
-  override func selectObjectsWithFetchSpecification(_ fs: FetchSpecification,
-                                                    _ ec: ObjectTrackingContext?
-                                                              = nil)
-                throws
+  override public func selectObjectsWithFetchSpecification(
+    _ fs: FetchSpecification,
+    _ ec: ObjectTrackingContext? = nil
+  ) throws
   {
     guard let prefetchRelPathes = fs.prefetchingRelationshipKeyPathes,
           !prefetchRelPathes.isEmpty

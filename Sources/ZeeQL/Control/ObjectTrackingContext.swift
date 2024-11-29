@@ -46,38 +46,63 @@ open class ObjectTrackingContext : ObjectStore {
 
   /**
    * Fetches the objects for the given specification. This works by calling
-   * `objectsWith(fetchSpecification:in:)` with the tracking context itself.
+   * ``objectsWithFetchSpecification(_:in:_:)`` with the tracking context
+   * itself.
    */
   @inlinable
-  open func objectsWith(fetchSpecification fs: FetchSpecification) throws
-            -> [ Any ]
+  open func objectsWithFetchSpecification<O>(_ type: O.Type = O.self,
+                                             _ fs: FetchSpecification) throws
+            -> [ O ]
+    where O: DatabaseObject
   {
-    var objects = [ Any ]()
-    try objectsWith(fetchSpecification: fs, in: self) {
-      objects.append($0)
-    }
+    var objects = [ O ]()
+    try objectsWithFetchSpecification(fs) { objects.append($0) }
     return objects
   }
   
   /**
-   * This method asks the `rootObjectStore` to fetch the objects specified
-   * in the _fs.
-   * Objects will get registered in the given tracking context.
+   * Fetches the objects for the given specification. This works by calling
+   * ``objectsWithFetchSpecification(_:in:_:)`` with the tracking context
+   * itself.
    */
   @inlinable
-  open func objectsWith(fetchSpecification fs: FetchSpecification,
-                        in tc: ObjectTrackingContext,
-                        _ cb: ( Any ) -> Void) throws
+  open func objectsWithFetchSpecification<O>(_ fs: FetchSpecification,
+                                             _ cb: ( O ) throws -> Void) throws
+    where O: DatabaseObject
   {
-    if fs.requiresAllQualifierBindingVariables {
-      if let q = fs.qualifier {
+    return try objectsWithFetchSpecification(fs, in: self, cb)
+  }
+
+  /**
+   * This method asks the ``rootObjectStore`` to fetch the objects specified
+   * in the _fs (usually a ``DatabaseContext``).
+   *
+   * Objects will get registered in the given tracking context (usually `self`
+   * for ``ObjectTrackingContext``)
+   *
+   * This is the primitve method of ``ObjectStore``.
+   */
+  @inlinable
+  open func objectsWithFetchSpecification<O>(
+    _ fetchSpecification: FetchSpecification,
+    in trackingContex: ObjectTrackingContext,
+    _ yield: ( O ) throws -> Void
+  ) throws
+    where O: DatabaseObject
+  {
+    assert(!fetchSpecification.fetchesRawRows,
+           "Attempt to use raw-rows fetch w/ tracking context?")
+    if fetchSpecification.requiresAllQualifierBindingVariables {
+      if let q = fetchSpecification.qualifier {
         if q.hasUnresolvedBindings {
-          throw Error.FetchSpecificationHasUnresolvedBindings(fs)
+          throw Error.FetchSpecificationHasUnresolvedBindings(fetchSpecification)
         }
       }
     }
     
-    return try rootObjectStore.objectsWith(fetchSpecification: fs, in: tc, cb)
+    return try rootObjectStore
+      .objectsWithFetchSpecification(fetchSpecification, in: trackingContex,
+                                     yield)
   }
   
   
@@ -89,9 +114,13 @@ open class ObjectTrackingContext : ObjectStore {
   }
   @inlinable
   public func forget(object: AnyObject) {
-    if let gid = gidToObject.firstKeyFor(value: object) {
-      gidToObject.removeValue(forKey: gid)
+    guard let idx = gidToObject.firstIndex(where: { $0.value === object }) else
+    {
+      assertionFailure(
+        "Did not find object to forget, not registered? \(object)")
+      return
     }
+    gidToObject.remove(at: idx)
   }
 
   @inlinable
@@ -126,15 +155,11 @@ open class ObjectTrackingContext : ObjectStore {
 
 // MARK: - Helper
 
-
 extension Dictionary where Value: AnyObject {
 
   @usableFromInline
   func firstKeyFor(value: Value) -> Key? {
-    for ( k, v ) in self {
-      if v === value { return k }
-    }
-    return nil
+    first(where: { $0.value === value })?.key
   }
   
 }
