@@ -1908,8 +1908,7 @@ open class SQLExpression: SmartDescription {
         else {
           /* An 'IN ()' does NOT work in PostgreSQL, weird. We treat such a
            * qualifier as always false. */
-          sb += sqlFalseExpression
-          return sb
+          return sqlFalseExpression
         }
       }
       

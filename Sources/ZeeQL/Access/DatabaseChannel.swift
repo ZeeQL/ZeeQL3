@@ -490,8 +490,7 @@ open class DatabaseChannelBase {
     
     /* entity */
 
-    guard let entity = entity ?? database[entity: entityName]
-     else {
+    guard let entity = entity ?? database[entity: entityName] else {
       throw Error.MissingEntity(entityName)
     }
 
@@ -514,7 +513,13 @@ open class DatabaseChannelBase {
       /* The relName is never a path, its a level-1 key. the value in
        * leveledPrefetches contains 'subpathes'.
        */
-      try fetchRelationship(entity, relName, baseObjects, value, helper, ec)
+      do {
+        try fetchRelationship(entity, relName, baseObjects, value, helper, ec)
+      }
+      catch {
+        log.error("Could not fetch relationship", relName, value)
+        throw error
+      }
     }
 
     /* fetch flattened relationships (NOT IMPLEMENTED) */
