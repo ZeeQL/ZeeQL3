@@ -114,9 +114,13 @@ open class ObjectTrackingContext : ObjectStore {
   }
   @inlinable
   public func forget(object: AnyObject) {
-    if let gid = gidToObject.firstKeyFor(value: object) {
-      gidToObject.removeValue(forKey: gid)
+    guard let idx = gidToObject.firstIndex(where: { $0.value === object }) else
+    {
+      assertionFailure(
+        "Did not find object to forget, not registered? \(object)")
+      return
     }
+    gidToObject.remove(at: idx)
   }
 
   @inlinable
@@ -151,15 +155,11 @@ open class ObjectTrackingContext : ObjectStore {
 
 // MARK: - Helper
 
-
 extension Dictionary where Value: AnyObject {
 
   @usableFromInline
   func firstKeyFor(value: Value) -> Key? {
-    for ( k, v ) in self {
-      if v === value { return k }
-    }
-    return nil
+    first(where: { $0.value === value })?.key
   }
   
 }
