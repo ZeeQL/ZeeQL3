@@ -112,8 +112,9 @@ open class ObjectTrackingContext : ObjectStore {
   public func record(object: AnyObject, with gid: GlobalID) {
     gidToObject[gid] = object
   }
+  
   @inlinable
-  public func forget(object: AnyObject) {
+  open func forget(object: AnyObject) {
     guard let idx = gidToObject.firstIndex(where: { $0.value === object }) else
     {
       assertionFailure(
@@ -134,13 +135,26 @@ open class ObjectTrackingContext : ObjectStore {
        let gid = smartObject.globalID { return gid }
     return gidToObject.firstKeyFor(value: object)
   }
+  @inlinable
+  public func globalIDFor<Object>(object: Object) -> GlobalID?
+    where Object: ObjectWithGlobalID
+  {
+    return object.globalID ?? gidToObject.firstKeyFor(value: object)
+  }
 
   @inlinable
   public func globalIDsFor(objects: [ AnyObject ]) -> [ GlobalID? ] {
     // TODO: this could reduce the Dictionary backward scanning
     return objects.map { globalIDFor(object: $0) }
   }
-  
+  @inlinable
+  public func globalIDsFor<C>(objects: C) -> [ GlobalID? ]
+    where C: Collection, C.Element: ObjectWithGlobalID
+  {
+    // TODO: this could reduce the Dictionary backward scanning
+    return objects.map { globalIDFor(object: $0) }
+  }
+
   @inlinable
   public var registeredObjects : [ AnyObject ] {
     return Array(gidToObject.values)

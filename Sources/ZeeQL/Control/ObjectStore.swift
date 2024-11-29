@@ -6,7 +6,7 @@
 //  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
 //
 
-public protocol ObjectWithGlobalID {
+public protocol ObjectWithGlobalID: AnyObject {
   // Quite often the objects themselves do store their own GID
   var globalID : GlobalID? { get }
 }
