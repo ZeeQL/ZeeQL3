@@ -123,7 +123,12 @@ public struct KeyValueQualifier : Qualifier, Equatable {
   @inlinable
   public func appendToDescription(_ ms: inout String) {
     // TODO: improve
-    ms += " \(keyExpr) \(operation) \(value as Optional)"
+    if let key = keyExpr as? StringKey {
+      ms += " \(key.key) \(operation) \(value as Optional)"
+    }
+    else {
+      ms += " \(keyExpr) \(operation) \(value as Optional)"
+    }
   }
 
   public func appendToStringRepresentation(_ ms: inout String) {

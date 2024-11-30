@@ -53,8 +53,10 @@ public extension Qualifier { // default imp
   
   // MARK: - Convenience
 
+  @inlinable
   var not : Qualifier { return NotQualifier(qualifier: self) }
   
+  @inlinable
   func or(_ q: Qualifier?) -> Qualifier {
     guard let q = q else { return self }
     if let bq = q as? BooleanQualifier {
@@ -62,12 +64,13 @@ public extension Qualifier { // default imp
     }
     return CompoundQualifier(qualifiers: [ self, q ], op: .Or)
   }
-  func and(_ q: Qualifier?) -> Qualifier {
-    guard let q = q else { return self }
-    if let bq = q as? BooleanQualifier {
+  @inlinable
+  func and(_ other: Qualifier?) -> Qualifier {
+    guard let other = other else { return self }
+    if let bq = other as? BooleanQualifier {
       return bq.value ? self : BooleanQualifier.falseQualifier
     }
-    return CompoundQualifier(qualifiers: [ self, q ], op: .And)
+    return CompoundQualifier(qualifiers: [ self, other ], op: .And)
   }
 
 }

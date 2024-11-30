@@ -8,8 +8,9 @@
 
 // TODO: Update to modern Swift API standards (e.g. lowercase)
 
-public enum ComparisonOperation : Equatable, SmartDescription {
+public enum ComparisonOperation: Equatable {
   // Cannot nest in Qualifier protocol in Swift 3.0, maybe later
+  // TODO: lowercase cases (can use static vars for compat)
 
   case Unknown(String)
   
@@ -22,8 +23,9 @@ public enum ComparisonOperation : Equatable, SmartDescription {
    * operator when run against the database, e.g. `%` in most SQL databases).
    *
    * Example:
-   *
-   *     name LIKE 'Zee*'
+   * ```sql
+   * name LIKE 'Zee*'
+   * ```
    *
    * Note: `.Like` coalesces nil values with the empty string. This
    *       can have performance implications in SQL databases. You may choose
@@ -36,8 +38,9 @@ public enum ComparisonOperation : Equatable, SmartDescription {
    * is used as the pattern character, see `.Like` for details.
    *
    * Example:
-   *
-   *     name ILIKE 'zee*'
+   * ```sql
+   * name ILIKE 'zee*'
+   * ```
    *
    * Not all databases support a SQL case insensitive like. The adaptor may
    * rewrite such queries to `LOWER(name) LIKE 'zee*'`.
@@ -50,9 +53,10 @@ public enum ComparisonOperation : Equatable, SmartDescription {
    * In SQL databases a LIKE against a NULL column may have unexpected
    * behaviour. If the column `street` is NULL, *neither* of the two queries
    * match the row:
-   *
-   *     SELECT * FROM address WHERE street LIKE '%way%'
-   *     SELECT * FROM address WHERE NOT street LIKE '%way%'
+   * ```sql
+   * SELECT * FROM address WHERE street LIKE '%way%'
+   * SELECT * FROM address WHERE NOT street LIKE '%way%'
+   * ```
    *
    * Using `.SQLLike` can be faster than `.Like` as the database is more likely
    * able to use an index. Regular `.Like` has the additional processing step
@@ -62,9 +66,12 @@ public enum ComparisonOperation : Equatable, SmartDescription {
   
   /// Check `.SQLLike` for a discussion and the difference to `.Like`.
   case SQLCaseInsensitiveLike
+}
+
+public extension ComparisonOperation {
   
-  
-  public init(string: String) {
+  @inlinable
+  init(string: String) {
     switch string {
       case "=", "==":  self = .EqualTo
       case ">":        self = .GreaterThan
@@ -82,8 +89,8 @@ public enum ComparisonOperation : Equatable, SmartDescription {
         self = .Unknown(string)
     }
   }
-  
-  public var stringRepresentation : String {
+  @inlinable
+  var stringRepresentation : String {
     switch self {
       case .Unknown(let s):         return s
       case .EqualTo:                return "="
@@ -99,31 +106,17 @@ public enum ComparisonOperation : Equatable, SmartDescription {
       case .SQLCaseInsensitiveLike: return "SQLILIKE"
     }
   }
+}
+
+extension ComparisonOperation: SmartDescription {
   
+  @inlinable
+  public var description: String { return stringRepresentation }
+
+  @inlinable
   public func appendToDescription(_ ms: inout String) {
     ms += " "
     ms += stringRepresentation
-  }
-  
-  @inlinable
-  public static func ==(lhs: ComparisonOperation, rhs: ComparisonOperation)
-                     -> Bool
-  {
-    switch ( lhs, rhs ) {
-      case ( EqualTo,                EqualTo                ): return true
-      case ( NotEqualTo,             NotEqualTo             ): return true
-      case ( GreaterThan,            GreaterThan            ): return true
-      case ( GreaterThanOrEqual,     GreaterThanOrEqual     ): return true
-      case ( LessThan,               LessThan               ): return true
-      case ( LessThanOrEqual,        LessThanOrEqual        ): return true
-      case ( Contains,               Contains               ): return true
-      case ( Like,                   Like                   ): return true
-      case ( CaseInsensitiveLike,    CaseInsensitiveLike    ): return true
-      case ( SQLLike,                SQLLike                ): return true
-      case ( SQLCaseInsensitiveLike, SQLCaseInsensitiveLike ): return true
-      case ( Unknown(let lhsV),      Unknown(let rhsV) ): return lhsV == rhsV
-      default: return false
-    }
   }
 }
 
