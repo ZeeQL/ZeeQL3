@@ -169,8 +169,9 @@ public extension AccessDataSourceType {
    *   - keysAndValues: The key/value pairs to apply as bindings.
    * - Returns: The fetched objects.
    */
+  @inlinable
   func fetchObjects(_ fetchSpecificationName: String,
-                    _ binds: [ String : Any ]) throws -> [ Object ]
+                    _ binds: [ String : Any ] = [:]) throws -> [ Object ]
   {
     guard let findEntity = entity else {
       // TBD: improve exception
@@ -222,9 +223,12 @@ public extension AccessDataSourceType {
    * - Returns: The fetched objects.
    */
   func fetchObjects(_ fetchSpecificationName: String,
+                    _ firstKey: String, _ firstValue: Any,
                     _ keysAndValues: Any...) throws -> [ Object ]
   {
-    try fetchObjects(fetchSpecificationName, .createArgs(keysAndValues))
+    var binds = [ String: Any ].createArgs(keysAndValues)
+    binds[firstKey] = firstValue
+    return try fetchObjects(fetchSpecificationName, binds)
   }
   
   // MARK: - Bindings
