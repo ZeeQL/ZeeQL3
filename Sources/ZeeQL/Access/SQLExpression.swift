@@ -324,33 +324,33 @@ open class SQLExpression: SmartDescription {
    * What this method does:
    *
    * - checks for the CustomQueryExpressionHintKey
-   * - conjoins the restrictingQualifier of the Entity with the one of the
-   *   FetchSpecification
-   * - builds the select prefix (SELECT, SELECT DISTINCT) depending on the
-   *   `usesDistinct` setting of the FetchSpecification
-   * - builds the list of columns by calling addSelectListAttribute() with
-   *   each attribute given, or uses '*' if none are specified
-   * - call `whereClauseString` to build the SQL WHERE expression, if
+   * - conjoins the `restrictingQualifier` of the ``Entity`` with the one of the
+   *   ``FetchSpecification``
+   * - builds the select prefix (`SELECT, SELECT DISTINCT`) depending on the
+   *   `usesDistinct` setting of the ``FetchSpecification``
+   * - builds the list of columns by calling ``addSelectListAttribute(_:)`` with
+   *   each ``Attribute`` given, or uses `*` if none are specified
+   * - call `whereClauseString` to build the SQL `WHERE` expression, if
    *   relationships are used in the qualifiers, this will fill join related
    *   maps in the expression context (e.g. aliasesByRelationshipPath)
-   * - builds sort orderings by calling addOrderByAttributeOrdering() wtih
-   *   each SortOrdering in the FetchSpecification
+   * - builds sort orderings by calling ``addOrderByAttributeOrdering(_:)`` with
+   *   each ``SortOrdering`` in the ``FetchSpecification``
    * - calls `joinClauseString` to create the SQL required for the JOINs
    *   to flatten relationships
    * - builds the list of tables
    * - builds lock and limit expressions
    * - finally assembles the statements using either
-   *     `assembleSelectStatementWithAttributes()`
-   *     or
-   *     `assembleCustomSelectStatementWithAttributes()`. The latter is used if
-   *     a `CustomQueryExpressionHintKey` was set.
+   *   ``assembleSelectStatementWithAttributes(_:_:_:_:_:_:_:_:_:_:_:_:)``
+   *   or
+   *   ``assembleCustomSelectStatementWithAttributes(_:_:_:_:_:_:_:_:_:_:_:_:_:)``.
+   *   The latter is used if a `CustomQueryExpressionHintKey` was set.
    *
-   * The result of the method is stored in the `statement` ivar.
-   * 
-   * - parameters:
-   *   - attrs: the attributes to fetch, or null to fetch all (* SELECT)
-   *   - lock:  whether the rows/table should be locked in the database
-   *   - fspec: the FetchSpecification containing the qualifier, etc
+   * The result of the method is stored in the ``statement`` ivar.
+   *
+   * - Parameters:
+   *   - attrs: The ``Attribute``'s to fetch, or null to fetch all (* SELECT).
+   *   - lock:  Whether the rows/table should be locked in the database
+   *   - fspec: The ``FetchSpecification`` containing the qualifier, etc
    */
   open func prepareSelectExpressionWithAttributes(_ attrs : [ Attribute ],
                                                   _ lock  : Bool,

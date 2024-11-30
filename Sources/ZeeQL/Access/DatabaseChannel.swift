@@ -517,7 +517,7 @@ open class DatabaseChannelBase {
         try fetchRelationship(entity, relName, baseObjects, value, helper, ec)
       }
       catch {
-        log.error("Could not fetch relationship", relName, value)
+        log.error("Could not fetch relationship", relName, value, error)
         throw error
       }
     }
