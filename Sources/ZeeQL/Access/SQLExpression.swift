@@ -366,13 +366,14 @@ open class SQLExpression: SmartDescription {
     
     /* apply restricting qualifier */
     
-    let q = entity?.restrictingQualifier
-    if let q = q {
-      if let bq = qualifier {
-        qualifier = bq.and(q)
+    if let entity = entity,
+       let restrictingQualifier = entity.restrictingQualifier
+    {
+      if let baseQualifier = qualifier {
+        qualifier = baseQualifier.and(restrictingQualifier)
       }
       else {
-        qualifier = q
+        qualifier = restrictingQualifier
       }
     }
     
@@ -453,14 +454,14 @@ open class SQLExpression: SmartDescription {
     
     if let customSQL = customSQL {
       statement = assembleCustomSelectStatementWithAttributes(
-                     attrs, lock, q, fetchOrder,
+                     attrs, lock, qualifier, fetchOrder,
                      customSQL,
                      select, columns, tables, whereClause, joinClause, orderBy,
                      limitClause, lockClause) ?? ""
     }
     else {
       statement = assembleSelectStatementWithAttributes(
-                     attrs, lock, q, fetchOrder,
+                     attrs, lock, qualifier, fetchOrder,
                      select, columns, tables, whereClause, joinClause, orderBy,
                      limitClause, lockClause)
     }
