@@ -153,6 +153,59 @@ public extension AccessDataSourceType {
    *
    * Example:
    * ```swift
+   * let persons = try ds.fetchObjects("myContacts", ["contactId": 12345])
+   * ```
+   *
+   * This will lookup the `FetchSpecification` named "myContacts" in
+   * the `Entity` of the datasource. It then calls
+   * `fetchSpecificationWithQualifierBindings()`
+   * and passes in the given key/value pair (contactId=12345).
+   *
+   * Finally the fetch will be performed using
+   * ``_primaryFetchObjects``.
+   *
+   * - Parameters:
+   *   - fetchSpecificationName: The name of the fetch specification to use.
+   *   - keysAndValues: The key/value pairs to apply as bindings.
+   * - Returns: The fetched objects.
+   */
+  @inlinable
+  func fetchObjects(_ fetchSpecificationName: String,
+                    _ binds: [ String : Any ] = [:]) throws -> [ Object ]
+  {
+    guard let findEntity = entity else {
+      // TBD: improve exception
+      log.error("did not find entity, cannot construct fetchspec");
+      throw AccessDataSourceError.MissingEntity
+    }
+     
+    guard let fs = findEntity[fetchSpecification: fetchSpecificationName] else {
+      throw AccessDataSourceError
+        .DidNotFindFetchSpecification(name: fetchSpecificationName,
+                                      entity: findEntity)
+    }
+     
+    var results = [ Object ]()
+    if !binds.isEmpty {
+      guard let fs = try fs.fetchSpecificiationWith(bindings: binds) else {
+        throw AccessDataSourceError
+          .CouldNotResolveBindings(fetchSpecification: fs, bindings: binds)
+      }
+      try _primaryFetchObjects(fs) { results.append($0) }
+    }
+    else {
+      try _primaryFetchObjects(fs) { results.append($0) }
+    }
+    return results
+  }
+  
+  /**
+   * This method takes the name of a fetch specification. It looks up the fetch
+   * spec in the `Entity` associated with the datasource and then binds the
+   * spec with the given key/value pairs.
+   *
+   * Example:
+   * ```swift
    * let persons = try ds.fetchObjects("myContacts", "contactId", 12345)
    * ```
    *
@@ -170,33 +223,12 @@ public extension AccessDataSourceType {
    * - Returns: The fetched objects.
    */
   func fetchObjects(_ fetchSpecificationName: String,
+                    _ firstKey: String, _ firstValue: Any,
                     _ keysAndValues: Any...) throws -> [ Object ]
   {
-    guard let findEntity = entity else {
-      // TBD: improve exception
-      log.error("did not find entity, cannot construct fetchspec");
-      throw AccessDataSourceError.MissingEntity
-    }
-     
-    guard let fs = findEntity[fetchSpecification: fetchSpecificationName] else {
-      throw AccessDataSourceError
-        .DidNotFindFetchSpecification(name: fetchSpecificationName,
-                                      entity: findEntity)
-    }
-     
-    let binds   = [ String: Any ].createArgs(keysAndValues)
-    var results = [ Object ]()
-    if !binds.isEmpty {
-      guard let fs = try fs.fetchSpecificiationWith(bindings: binds) else {
-        throw AccessDataSourceError
-          .CouldNotResolveBindings(fetchSpecification: fs, bindings: binds)
-      }
-      try _primaryFetchObjects(fs) { results.append($0) }
-    }
-    else {
-      try _primaryFetchObjects(fs) { results.append($0) }
-    }
-    return results
+    var binds = [ String: Any ].createArgs(keysAndValues)
+    binds[firstKey] = firstValue
+    return try fetchObjects(fetchSpecificationName, binds)
   }
   
   // MARK: - Bindings

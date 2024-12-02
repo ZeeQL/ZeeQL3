@@ -85,7 +85,7 @@ open class ObjectTrackingContext : ObjectStore {
   @inlinable
   open func objectsWithFetchSpecification<O>(
     _ fetchSpecification: FetchSpecification,
-    in trackingContex: ObjectTrackingContext,
+    in trackingContext: ObjectTrackingContext,
     _ yield: ( O ) throws -> Void
   ) throws
     where O: DatabaseObject
@@ -101,7 +101,7 @@ open class ObjectTrackingContext : ObjectStore {
     }
     
     return try rootObjectStore
-      .objectsWithFetchSpecification(fetchSpecification, in: trackingContex,
+      .objectsWithFetchSpecification(fetchSpecification, in: trackingContext,
                                      yield)
   }
   
@@ -112,8 +112,9 @@ open class ObjectTrackingContext : ObjectStore {
   public func record(object: AnyObject, with gid: GlobalID) {
     gidToObject[gid] = object
   }
+  
   @inlinable
-  public func forget(object: AnyObject) {
+  open func forget(object: AnyObject) {
     guard let idx = gidToObject.firstIndex(where: { $0.value === object }) else
     {
       assertionFailure(
@@ -132,7 +133,14 @@ open class ObjectTrackingContext : ObjectStore {
   public func globalIDFor(object: AnyObject) -> GlobalID? {
     if let smartObject = object as? ObjectWithGlobalID,
        let gid = smartObject.globalID { return gid }
-    return gidToObject.firstKeyFor(value: object)
+    return gidToObject.first(where: { $0.value === object })?.key
+  }
+  @inlinable
+  public func globalIDFor<Object>(object: Object) -> GlobalID?
+    where Object: ObjectWithGlobalID
+  {
+    return object.globalID
+        ?? gidToObject.first(where: { $0.value === object })?.key
   }
 
   @inlinable
@@ -140,7 +148,14 @@ open class ObjectTrackingContext : ObjectStore {
     // TODO: this could reduce the Dictionary backward scanning
     return objects.map { globalIDFor(object: $0) }
   }
-  
+  @inlinable
+  public func globalIDsFor<C>(objects: C) -> [ GlobalID? ]
+    where C: Collection, C.Element: ObjectWithGlobalID
+  {
+    // TODO: this could reduce the Dictionary backward scanning
+    return objects.map { globalIDFor(object: $0) }
+  }
+
   @inlinable
   public var registeredObjects : [ AnyObject ] {
     return Array(gidToObject.values)
@@ -150,16 +165,4 @@ open class ObjectTrackingContext : ObjectStore {
   public func reset() {
     gidToObject.removeAll()
   }
-}
-
-
-// MARK: - Helper
-
-extension Dictionary where Value: AnyObject {
-
-  @usableFromInline
-  func firstKeyFor(value: Value) -> Key? {
-    first(where: { $0.value === value })?.key
-  }
-  
 }

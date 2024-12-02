@@ -320,8 +320,12 @@ public extension Entity { // default imp
     ms += " #attrs=\(attributes.count)"
     
     if relationships.count > 0 { ms += " #rel=\(relationships.count)" }
+    
+    if let rq = restrictingQualifier {
+      ms += " restrict=\(rq)"
+    }
 
-    // TODO: restrictingQualifier, fetchspecs
+    // TODO: fetchspecs
   }
 }
 

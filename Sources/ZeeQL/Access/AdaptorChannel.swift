@@ -40,6 +40,7 @@ public protocol AdaptorChannel : AdaptorQueryType, ModelNameMapper {
   func describeSequenceNames() throws -> [ String ]
   func describeDatabaseNames() throws -> [ String ]
   func describeEntityWithTableName(_ table: String) throws -> Entity?
+  func describeEntitiesWithTableNames(_ tables: [ String ]) throws -> [ Entity ]
 
   
   // MARK: - Adaptor Operations
@@ -640,17 +641,25 @@ public extension AdaptorChannel {
   @inlinable
   func describeModelWithTableNames(_ tableNames: [ String ]) throws -> Model? {
     guard !tableNames.isEmpty else { return nil }
-    
+    return Model(entities: try describeEntitiesWithTableNames(tableNames))
+  }
+  
+  @inlinable
+  func describeEntitiesWithTableNames(_ tableNames: [ String ])
+         throws -> [ Entity ]
+  {
+    guard !tableNames.isEmpty else { return [] }
+
     var entities = [ Entity ]()
     entities.reserveCapacity(tableNames.count)
     
     for table in tableNames {
-      guard let entity = try describeEntityWithTableName(table)
-       else { return nil }
+      guard let entity = try describeEntityWithTableName(table) else {
+        throw AdaptorChannelError.CouldNotDescribeTable(table)
+      }
       
       entities.append(entity)
     }
-   
-    return Model(entities: entities)
+    return entities
   }
 }

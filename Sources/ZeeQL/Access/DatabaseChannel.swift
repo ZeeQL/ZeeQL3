@@ -509,15 +509,15 @@ open class DatabaseChannelBase {
      */
     let helper = DatabaseChannelFetchHelper(baseObjects: baseObjects)
     
-    for ( relName, value ) in leveledPrefetches {
+    for ( relName, values ) in leveledPrefetches {
       /* The relName is never a path, its a level-1 key. the value in
        * leveledPrefetches contains 'subpathes'.
        */
       do {
-        try fetchRelationship(entity, relName, baseObjects, value, helper, ec)
+        try fetchRelationship(entity, relName, baseObjects, values, helper, ec)
       }
       catch {
-        log.error("Could not fetch relationship", relName, value)
+        log.error("Could not fetch relationship", relName, values, error)
         throw error
       }
     }
@@ -586,8 +586,9 @@ open class DatabaseChannelBase {
     
     /* extract values of source object list for IN query on target */
 
-    guard let srcName = join.source?.name ?? join.sourceName
-     else { throw Error.IncompleteJoin(join) }
+    guard let srcName = join.source?.name ?? join.sourceName else {
+      throw Error.IncompleteJoin(join)
+    }
     
     let srcValues = helper.getSourceValues(srcName)
     
@@ -623,10 +624,13 @@ open class DatabaseChannelBase {
     }
     let targetName = targetAttr.name
     
+    // This does things like:
+    // `companyId in [ 1, 2, 3, 4 ]`
     let joinQualifier = KeyValueQualifier(targetName, .Contains, srcValues)
     
     guard let destEntity = rel.destinationEntity else {
       // TODO: what error
+      assertionFailure("Missing destination Entity for relationship \(rel)")
       return
     }
     
@@ -1183,8 +1187,8 @@ open class TypedDatabaseChannel<ObjectType> : DatabaseChannelBase,
   ) throws
   {
     guard let prefetchRelPathes = fs.prefetchingRelationshipKeyPathes,
-          !prefetchRelPathes.isEmpty
-     else {
+          !prefetchRelPathes.isEmpty else
+    {
       /* simple case, no prefetches */
       return try primarySelectObjectsWithFetchSpecification(fs, ec)
     }
