@@ -23,7 +23,7 @@
  *           ds.findByMatchingAll("lastname", "Duck", "firstname", "Donald")
  *
  */
-open class Database : EquatableType, Equatable {
+open class Database : EquatableType, Equatable, SmartDescription {
   
   open   var log               : ZeeQLLogger = globalZeeQLLogger
   public let adaptor           : Adaptor
@@ -119,6 +119,16 @@ open class Database : EquatableType, Equatable {
   public static func ==(lhs: Database, rhs: Database) -> Bool {
     return lhs.isEqual(to: rhs)
   }
+  
+  
+  // MARK: - Description
+
+  open func appendToDescription(_ ms: inout String) {
+    ms += " \(adaptor)"
+    if let typeLookupContext = typeLookupContext {
+      ms += " types=\(typeLookupContext)"
+    }
+  }
 }
 
 /**
@@ -149,7 +159,9 @@ public protocol ObjectTypeLookupContext {
  *    ]))
  *
  */
-public struct StaticObjectTypeLookupContext : ObjectTypeLookupContext {
+public struct StaticObjectTypeLookupContext : ObjectTypeLookupContext,
+                                              SmartDescription
+{
 
   @usableFromInline
   let types : [ String : DatabaseObject.Type ]
@@ -173,5 +185,10 @@ public struct StaticObjectTypeLookupContext : ObjectTypeLookupContext {
   @inlinable
   public func lookupObjectType(name: String) -> DatabaseObject.Type? {
     return types[name]
+  }
+  
+  public func appendToDescription(_ ms: inout String) {
+    if types.isEmpty { ms += " EMPTY!" }
+    else { ms += " #types=\(types.count)" }
   }
 }
