@@ -37,6 +37,8 @@ public enum AdaptorChannelError : Swift.Error {
   
   case CouldNotOpenChannel(Swift.Error?)
   
+  case CouldNotDescribeTable(String)
+  
   case RecordNotFound
 }
 
