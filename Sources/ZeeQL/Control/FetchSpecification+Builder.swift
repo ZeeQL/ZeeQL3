@@ -155,7 +155,7 @@ public extension DatabaseFetchSpecification
     `where`(key, .EqualTo, value)
   }
 
-  #if swift(>=5.9)
+  #if swift(>=5.10)
   @inlinable
   func order<each V: AttributeValue>(
     by key: repeat Swift.KeyPath<Object.FullEntity, CodeAttribute<each V>>,
@@ -182,5 +182,5 @@ public extension DatabaseFetchSpecification
     let so = SortOrdering(key: AttributeKey(attribute), selector: selector)
     return order(by: so)
   }
-  #endif // swift(>=5.9
+  #endif // swift(>=5.10)
 }
