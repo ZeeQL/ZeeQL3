@@ -159,17 +159,6 @@ public extension DatabaseFetchSpecification
     `where`(key, .EqualTo, value)
   }
 
-  @inlinable
-  func order<V>(by key: Swift.KeyPath<Object.FullEntity, CodeAttribute<V>>,
-                _ selector: SortOrdering.Selector = .CompareAscending)
-         -> Self
-    where V: AttributeValue
-  {
-    let attribute = Object.e[keyPath: key]
-    let so = SortOrdering(key: AttributeKey(attribute), selector: selector)
-    return order(by: so)
-  }
-
   #if swift(>=5.9)
   @inlinable
   func order<each V: AttributeValue>(
@@ -185,6 +174,17 @@ public extension DatabaseFetchSpecification
       else { fs.sortOrderings?.append(so) }
     }
     return fs
+  }
+  #else
+  @inlinable
+  func order<V>(by key: Swift.KeyPath<Object.FullEntity, CodeAttribute<V>>,
+                _ selector: SortOrdering.Selector = .CompareAscending)
+         -> Self
+    where V: AttributeValue
+  {
+    let attribute = Object.e[keyPath: key]
+    let so = SortOrdering(key: AttributeKey(attribute), selector: selector)
+    return order(by: so)
   }
   #endif // swift(>=5.9
 }
