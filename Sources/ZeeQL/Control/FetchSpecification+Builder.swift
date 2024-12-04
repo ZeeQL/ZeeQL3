@@ -169,4 +169,22 @@ public extension DatabaseFetchSpecification
     let so = SortOrdering(key: AttributeKey(attribute), selector: selector)
     return order(by: so)
   }
+
+  #if swift(>=5.9)
+  @inlinable
+  func order<each V: AttributeValue>(
+    by key: repeat Swift.KeyPath<Object.FullEntity, CodeAttribute<each V>>,
+    using selector: SortOrdering.Selector = .CompareAscending
+  ) -> Self
+  {
+    var fs = self
+    for key in repeat each key {
+      let attribute = Object.e[keyPath: key]
+      let so = SortOrdering(key: AttributeKey(attribute), selector: selector)
+      if fs.sortOrderings == nil { fs.sortOrderings = [ so ] }
+      else { fs.sortOrderings?.append(so) }
+    }
+    return fs
+  }
+  #endif // swift(>=5.9
 }
