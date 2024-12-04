@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 02/03/2017.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
 //
 
 /**
@@ -32,6 +32,8 @@ public protocol EntityType { // TODO: better name
  * ``Entity`` assigned, for example when the ``Entity`` is specified in code.
  * If a class has a fixed Entity, we can do more tricks in Swift.
  *
+ * It enhances ``EntityType`` w/ a PAT for the concrete entity type.
+ *
  * Example:
  * ```swift
  * class Address : ActiveRecord, TypedEntityType {
@@ -40,7 +42,7 @@ public protocol EntityType { // TODO: better name
  *     let street : String? = nil
  *     let person = ToOne<Person>()
  *   }
- *   static let e = CodeEntity<Address>(Entity())
+ *   static let e = Entity()
  * }
  * ```
  */
