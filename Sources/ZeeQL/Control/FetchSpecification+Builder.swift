@@ -86,20 +86,42 @@ public extension FetchSpecification {
   
   // MARK: - Prefetches
 
-  /// Note: This overrides previous prefetches!
   @inlinable
-  func prefetch(_ path: String, _ more: String...) -> Self {
-    transform { $0.prefetchingRelationshipKeyPathes = [ path ] + more }
+  func clearPrefetch() -> Self {
+    transform { $0.prefetchingRelationshipKeyPathes = [] }
   }
-  /// Note: This overrides previous prefetches!
+
   @inlinable
-  func prefetch(_ path: Relationship, _ more: Relationship...)
+  func prefetch(_ path: String, _ more: String..., clear: Bool = false) -> Self
+  {
+    transform {
+      if clear { $0.prefetchingRelationshipKeyPathes = [] }
+      if $0.prefetchingRelationshipKeyPathes == nil {
+        $0.prefetchingRelationshipKeyPathes = [ path ]
+      }
+      else {
+        $0.prefetchingRelationshipKeyPathes?.append(path)
+        $0.prefetchingRelationshipKeyPathes?.append(contentsOf: more)
+      }
+    }
+  }
+  @inlinable
+  func prefetch(_ path: Relationship, _ more: Relationship...,
+                clear: Bool = false)
        -> Self
   {
     // TODO: in here we cannot build pathes yet. Like:
     //         `fs.prefetch(Person.e.company.addresses)`
     transform {
-      $0.prefetchingRelationshipKeyPathes = [ path.name ] + more.map { $0.name }
+      if clear { $0.prefetchingRelationshipKeyPathes = [] }
+      if $0.prefetchingRelationshipKeyPathes == nil {
+        $0.prefetchingRelationshipKeyPathes = [ path.name ]
+      }
+      else {
+        $0.prefetchingRelationshipKeyPathes?.append(path.name)
+        $0.prefetchingRelationshipKeyPathes?
+          .append(contentsOf: more.map(\.name))
+      }
     }
   }
 
@@ -171,7 +193,7 @@ public extension DatabaseFetchSpecification
       }
     }
   }
-  #else
+  #else // !compiler(>=6)
   @inlinable
   func order<V>(by key: Swift.KeyPath<Object.FullEntity, CodeAttribute<V>>,
                 _ selector: SortOrdering.Selector = .CompareAscending)
@@ -181,6 +203,53 @@ public extension DatabaseFetchSpecification
     let attribute = Object.e[keyPath: key]
     let so = SortOrdering(key: AttributeKey(attribute), selector: selector)
     return order(by: so)
+  }
+  #endif // !compiler(>=6)
+  
+  #if compiler(>=6)
+  // TODO: can we do both toOne and toMany in one?
+  // a KeyPath that has the parent class (CodeRelationship) doesn't work?
+  func prefetch<each O: DatabaseObject>(
+    _ relationship:
+      repeat Swift.KeyPath<Object.FullEntity, ToOneRelationship<each O>>,
+    clear: Bool = false
+  ) -> Self
+  {
+    transform {
+      if clear { $0.prefetchingRelationshipKeyPathes = [] }
+      for relationship in repeat each relationship {
+        let relationship = Object.e[keyPath: relationship]
+        $0.prefetchingRelationshipKeyPathes?.append(relationship.name)
+      }
+    }
+  }
+  func prefetch<each O: DatabaseObject>(
+    _ relationship:
+      repeat Swift.KeyPath<Object.FullEntity, ToManyRelationship<each O>>,
+    clear: Bool = false
+  ) -> Self
+  {
+    transform {
+      if clear { $0.prefetchingRelationshipKeyPathes = [] }
+      for relationship in repeat each relationship {
+        let relationship = Object.e[keyPath: relationship]
+        $0.prefetchingRelationshipKeyPathes?.append(relationship.name)
+      }
+    }
+  }
+  func prefetch<each O: DatabaseObject>(
+    _ relationship:
+      repeat Swift.KeyPath<Object.FullEntity, CodeRelationship<each O>>,
+    clear: Bool = false
+  ) -> Self
+  {
+    transform {
+      if clear { $0.prefetchingRelationshipKeyPathes = [] }
+      for relationship in repeat each relationship {
+        let relationship = Object.e[keyPath: relationship]
+        $0.prefetchingRelationshipKeyPathes?.append(relationship.name)
+      }
+    }
   }
   #endif // compiler(>=6)
 }
