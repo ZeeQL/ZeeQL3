@@ -25,6 +25,8 @@
 public struct TypedFetchSpecification<Object: DatabaseObject>
               : DatabaseFetchSpecification
 {
+  // FIXME: Name, should be called "DynamicFetchSpecification" or something
+  
   public var _entity             : Entity? = nil
   public var _entityName         : String?
 
