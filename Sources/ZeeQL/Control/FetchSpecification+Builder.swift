@@ -5,69 +5,82 @@
 //  Created by Helge Heß on 04.12.24.
 //
 
-public extension DatabaseFetchSpecification {
+// MARK: - Fetch Specification Convenience
+
+public extension FetchSpecification { // Qualifier Convenience Methods
+
+  @inlinable
+  mutating func conjoin(qualifier: Qualifier) {
+    if let q = self.qualifier { self.qualifier = q.and(qualifier) }
+    else                      { self.qualifier = qualifier        }
+  }
+  @inlinable
+  mutating func disjoin(qualifier: Qualifier) {
+    if let q = self.qualifier { self.qualifier = q.or(qualifier) }
+    else                      { self.qualifier = qualifier       }
+  }
+  
+  @inlinable
+  mutating func setQualifier(_ format: String, _ args: String...) {
+    qualifier = qualifierWith(format: format, args)
+  }
+  @inlinable
+  mutating func conjoin(_ format: String, _ args: String...) {
+    guard let q = qualifierWith(format: format, args) else { return }
+    conjoin(qualifier: q)
+  }
+  @inlinable
+  mutating func disjoin(_ format: String, _ args: String...) {
+    guard let q = qualifierWith(format: format, args) else { return }
+    disjoin(qualifier: q)
+  }
+}
+
+public extension FetchSpecification {
   // This is a clone of the Control QueryBuilder, but with the Generic type
   // signature ...
   
   // MARK: - Qualifiers
   
   @inlinable
-  func `where`(_ q: Qualifier) -> Self {
-    var fs = self
-    fs.qualifier = q
-    return fs
-  }
+  func `where`(_ q: Qualifier) -> Self { transform { $0.qualifier = q } }
   
   @inlinable
   func and(_ q: Qualifier) -> Self {
-    var fs = self
-    fs.qualifier = ZeeQL.and(fs.qualifier, q)
-    return fs
+    transform { $0.qualifier = ZeeQL.and($0.qualifier, q) }
   }
   @inlinable
   func or(_ q: Qualifier) -> Self {
-    var fs = self
-    fs.qualifier = ZeeQL.or(fs.qualifier, q)
-    return fs
+    transform { $0.qualifier = ZeeQL.or($0.qualifier, q) }
   }
   
   @inlinable
   func `where`(_ q: String, _ args: Any?...) -> Self {
-    var fs = self
     let parser = QualifierParser(string: q, arguments: args)
-    fs.qualifier = parser.parseQualifier()
-    return fs
+    return transform { $0.qualifier = parser.parseQualifier() }
   }
   @inlinable
   func and(_ q: String, _ args: Any?...) -> Self {
-    var fs = self
     let parser = QualifierParser(string: q, arguments: args)
-    fs.qualifier = ZeeQL.and(fs.qualifier, parser.parseQualifier())
-    return fs
+    return transform {
+      $0.qualifier = ZeeQL.and($0.qualifier, parser.parseQualifier())
+    }
   }
   @inlinable
   func or(_ q: String, _ args: Any?...) -> Self {
-    var fs = self
     let parser = QualifierParser(string: q, arguments: args)
-    fs.qualifier = ZeeQL.or(fs.qualifier, parser.parseQualifier())
-    return fs
+    return transform {
+      $0.qualifier = ZeeQL.or($0.qualifier, parser.parseQualifier())
+    }
   }
   
   // MARK: - Limits
   
   @inlinable
-  func limit(_ value : Int) -> Self {
-    var fs = self
-    fs.fetchLimit = value
-    return fs
-  }
+  func limit(_ value : Int) -> Self { transform { $0.fetchLimit = value } }
   
   @inlinable
-  func offset(_ value : Int) -> Self {
-    var fs = self
-    fs.fetchOffset = value
-    return fs
-  }
+  func offset(_ value : Int) -> Self { transform { $0.fetchOffset = value } }
 
   
   // MARK: - Prefetches
@@ -75,9 +88,7 @@ public extension DatabaseFetchSpecification {
   /// Note: This overrides previous prefetches!
   @inlinable
   func prefetch(_ path: String, _ more: String...) -> Self {
-    var fs = self
-    fs.prefetchingRelationshipKeyPathes = [ path ] + more
-    return fs
+    transform { $0.prefetchingRelationshipKeyPathes = [ path ] + more }
   }
   /// Note: This overrides previous prefetches!
   @inlinable
@@ -86,9 +97,9 @@ public extension DatabaseFetchSpecification {
   {
     // TODO: in here we cannot build pathes yet. Like:
     //         `fs.prefetch(Person.e.company.addresses)`
-    var fs = self
-    fs.prefetchingRelationshipKeyPathes = [ path.name ] + more.map { $0.name }
-    return fs
+    transform {
+      $0.prefetchingRelationshipKeyPathes = [ path.name ] + more.map { $0.name }
+    }
   }
 
   
@@ -96,39 +107,24 @@ public extension DatabaseFetchSpecification {
   
   @inlinable
   func order(by: SortOrdering, _ e: SortOrdering...) -> Self {
-    var fs = self
-    if let old = fs.sortOrderings {
-      fs.sortOrderings = old + [ by ] + e
+    transform {
+      if let old = $0.sortOrderings { $0.sortOrderings = old + [ by ] + e }
+      else                          { $0.sortOrderings = [ by ] + e }
     }
-    else {
-      fs.sortOrderings = [ by ] + e
-    }
-    return fs
   }
   
   @inlinable
   func order(by: String, _ e: String...) -> Self {
-    var fs = self
-    
-    var ops = [ SortOrdering ]()
-    if let p = SortOrdering.parse(by) {
-      ops += p
-    }
-    for by in e {
-      if let p = SortOrdering.parse(by) {
-        ops += p
+    transform {
+      var ops = [ SortOrdering ]()
+      if let p = SortOrdering.parse(by) { ops += p }
+      for by in e {
+        if let p = SortOrdering.parse(by) { ops += p }
       }
-    }
 
-    guard !ops.isEmpty else { return self }
-    
-    if let old = fs.sortOrderings {
-      fs.sortOrderings = old + ops
+      if let old = $0.sortOrderings { $0.sortOrderings = old + ops }
+      else                          { $0.sortOrderings = ops }
     }
-    else {
-      fs.sortOrderings = ops
-    }
-    return fs
   }
 }
 
@@ -166,14 +162,14 @@ public extension DatabaseFetchSpecification
     using selector: SortOrdering.Selector = .CompareAscending
   ) -> Self
   {
-    var fs = self
-    for key in repeat each key {
-      let attribute = Object.e[keyPath: key]
-      let so = SortOrdering(key: AttributeKey(attribute), selector: selector)
-      if fs.sortOrderings == nil { fs.sortOrderings = [ so ] }
-      else { fs.sortOrderings?.append(so) }
+    transform {
+      for key in repeat each key {
+        let attribute = Object.e[keyPath: key]
+        let so = SortOrdering(key: AttributeKey(attribute), selector: selector)
+        if $0.sortOrderings == nil { $0.sortOrderings = [ so ] }
+        else { $0.sortOrderings?.append(so) }
+      }
     }
-    return fs
   }
   #else
   @inlinable

@@ -58,6 +58,13 @@ public let CustomQueryExpressionHintKey = "CustomQueryExpressionHintKey"
 
 extension FetchSpecification { // Default Imp
 
+  @inlinable
+  func transform(_ transform: (inout Self) throws -> Void) rethrows -> Self {
+    var fs = self
+    try transform(&fs)
+    return fs
+  }
+
   // MARK: - Hints
   
   public subscript(hint h: String) -> Any? {

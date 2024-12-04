@@ -30,6 +30,7 @@ public extension EntityType {
   
   // MARK: - Qualifiers
   
+  @_disfavoredOverload
   @inlinable
   static func `where`(_ q: Qualifier) -> FetchSpecification {
     // if we need no attributes
@@ -37,6 +38,8 @@ public extension EntityType {
     fs.qualifier = q
     return fs
   }
+  
+  @_disfavoredOverload
   @inlinable
   static func `where`(_ q: String, _ args: Any?...) -> FetchSpecification {
     var fs = ModelFetchSpecification(entity: Self.entity)
@@ -45,6 +48,7 @@ public extension EntityType {
     return fs
   }
 }
+
 public extension TypedEntityType where Self: DatabaseObject {
   // TBD: maybe rename, 'select' should run the actual select, right?
   
