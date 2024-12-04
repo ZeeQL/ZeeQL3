@@ -184,3 +184,59 @@ public extension DatabaseFetchSpecification
   }
   #endif // compiler(>=6)
 }
+
+
+public extension FetchSpecification {
+  
+  static func select<T: EntityType>(_ attributes: String..., from: T.Type)
+              -> FetchSpecification
+  {
+    var fs = ModelFetchSpecification(entity: from.entity)
+    fs.fetchAttributeNames = attributes.isEmpty ? nil : attributes
+    return fs
+  }
+
+  
+  // MARK: - Ordering
+  
+  func order(by    : Attribute...,
+             asc   : Attribute? = nil,
+             desc  : Attribute? = nil,
+             iasc  : Attribute? = nil,
+             idesc : Attribute? = nil)
+       -> FetchSpecification
+  {
+    var fs = self
+    
+    var ops = [ SortOrdering ]()
+    
+    for by in by {
+      let so = SortOrdering(key: AttributeKey(by), selector: .CompareAscending)
+      ops.append(so)
+    }
+    if let by = asc {
+      let so = SortOrdering(key: AttributeKey(by), selector: .CompareAscending)
+      ops.append(so)
+    }
+    if let by = desc {
+      let so = SortOrdering(key: AttributeKey(by), selector: .CompareDescending)
+      ops.append(so)
+    }
+    if let by = iasc {
+      let so = SortOrdering(key: AttributeKey(by),
+                            selector: .CompareCaseInsensitiveAscending)
+      ops.append(so)
+    }
+    if let by = idesc {
+      let so = SortOrdering(key: AttributeKey(by),
+                            selector: .CompareCaseInsensitiveDescending)
+      ops.append(so)
+    }
+    
+    guard !ops.isEmpty else { return self }
+    
+    if let old = fs.sortOrderings { fs.sortOrderings = old + ops }
+    else                          { fs.sortOrderings = ops       }
+    return fs
+  }
+}

@@ -156,7 +156,6 @@
 		E8263CC31E93C89200508276 /* CodeAttribute.swift in Sources */ = {isa = PBXBuildFile; fileRef = E889DE611E666C8D008F962F /* CodeAttribute.swift */; };
 		E8263CC41E93C89200508276 /* CodeValueAttribute.swift in Sources */ = {isa = PBXBuildFile; fileRef = E843135B1E6DB65700A59F8B /* CodeValueAttribute.swift */; };
 		E8263CC51E93C89200508276 /* CodeRelationship.swift in Sources */ = {isa = PBXBuildFile; fileRef = E889DE631E666C9A008F962F /* CodeRelationship.swift */; };
-		E8263CC61E93C89200508276 /* CodeFetchSpecification.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8BA82CE1E68397200F09D76 /* CodeFetchSpecification.swift */; };
 		E8263CC71E93C89200508276 /* AttributeKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = E86BF2581E68506600C8B22A /* AttributeKey.swift */; };
 		E8263CC81E93C89200508276 /* TypedFetchSpecification.swift in Sources */ = {isa = PBXBuildFile; fileRef = E84313631E6DBFC300A59F8B /* TypedFetchSpecification.swift */; };
 		E8263CC91E93C89200508276 /* SQLExpression.swift in Sources */ = {isa = PBXBuildFile; fileRef = E80B3FAA1E606D1700D6F0ED /* SQLExpression.swift */; };
@@ -293,7 +292,6 @@
 		E8ACA3842313E4A8000F6BEC /* CodeAttribute.swift in Sources */ = {isa = PBXBuildFile; fileRef = E889DE611E666C8D008F962F /* CodeAttribute.swift */; };
 		E8ACA3852313E4A8000F6BEC /* CodeValueAttribute.swift in Sources */ = {isa = PBXBuildFile; fileRef = E843135B1E6DB65700A59F8B /* CodeValueAttribute.swift */; };
 		E8ACA3862313E4A8000F6BEC /* CodeRelationship.swift in Sources */ = {isa = PBXBuildFile; fileRef = E889DE631E666C9A008F962F /* CodeRelationship.swift */; };
-		E8ACA3872313E4A8000F6BEC /* CodeFetchSpecification.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8BA82CE1E68397200F09D76 /* CodeFetchSpecification.swift */; };
 		E8ACA3882313E4A8000F6BEC /* MirrorHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8DA98351EC0F2C2009B0F0F /* MirrorHelpers.swift */; };
 		E8ACA3892313E4A8000F6BEC /* FancyModelMaker.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8D074271ECF200F005FD8AB /* FancyModelMaker.swift */; };
 		E8ACA38A2313E4A8000F6BEC /* ModelLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8B2497F1EE44A45008258B7 /* ModelLoader.swift */; };
@@ -324,7 +322,6 @@
 		E8B249831EE44A66008258B7 /* ModelLoaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8B249821EE44A66008258B7 /* ModelLoaderTests.swift */; };
 		E8B249841EE44A66008258B7 /* ModelLoaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8B249821EE44A66008258B7 /* ModelLoaderTests.swift */; };
 		E8B249861EE44AD9008258B7 /* Contacts.xcdatamodel in Sources */ = {isa = PBXBuildFile; fileRef = E8B249851EE44AD9008258B7 /* Contacts.xcdatamodel */; };
-		E8BA82CF1E68397200F09D76 /* CodeFetchSpecification.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8BA82CE1E68397200F09D76 /* CodeFetchSpecification.swift */; };
 		E8BA82D11E683B1500F09D76 /* EntityType.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8BA82D01E683B1500F09D76 /* EntityType.swift */; };
 		E8BF37FD202F2CBC0096064E /* CodableModelEntityDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8BF37FC202F2CBC0096064E /* CodableModelEntityDecoder.swift */; };
 		E8BF37FE202F2CBC0096064E /* CodableModelEntityDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8BF37FC202F2CBC0096064E /* CodableModelEntityDecoder.swift */; };
@@ -559,7 +556,6 @@
 		E8B2497F1EE44A45008258B7 /* ModelLoader.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = ModelLoader.swift; path = Sources/ZeeQL/Access/ModelLoader.swift; sourceTree = SOURCE_ROOT; };
 		E8B249821EE44A66008258B7 /* ModelLoaderTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ModelLoaderTests.swift; sourceTree = "<group>"; };
 		E8B249851EE44AD9008258B7 /* Contacts.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = Contacts.xcdatamodel; sourceTree = "<group>"; };
-		E8BA82CE1E68397200F09D76 /* CodeFetchSpecification.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = CodeFetchSpecification.swift; path = Sources/ZeeQL/Access/CodeFetchSpecification.swift; sourceTree = SOURCE_ROOT; };
 		E8BA82D01E683B1500F09D76 /* EntityType.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = EntityType.swift; path = Sources/ZeeQL/Control/EntityType.swift; sourceTree = SOURCE_ROOT; };
 		E8BF37FC202F2CBC0096064E /* CodableModelEntityDecoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodableModelEntityDecoder.swift; sourceTree = "<group>"; };
 		E8C7C85D1FF401EF0016A597 /* EntityPropertyReflectionContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntityPropertyReflectionContainer.swift; sourceTree = "<group>"; };
@@ -874,7 +870,6 @@
 				E889DE611E666C8D008F962F /* CodeAttribute.swift */,
 				E843135B1E6DB65700A59F8B /* CodeValueAttribute.swift */,
 				E889DE631E666C9A008F962F /* CodeRelationship.swift */,
-				E8BA82CE1E68397200F09D76 /* CodeFetchSpecification.swift */,
 				E8DA98351EC0F2C2009B0F0F /* MirrorHelpers.swift */,
 				E8D074271ECF200F005FD8AB /* FancyModelMaker.swift */,
 				E8B2497F1EE44A45008258B7 /* ModelLoader.swift */,
@@ -1301,7 +1296,6 @@
 				E8263CAE1E93C89200508276 /* ActiveDataSource.swift in Sources */,
 				E8263CB51E93C89200508276 /* AdaptorDataSource.swift in Sources */,
 				E8263CC01E93C89200508276 /* Model.swift in Sources */,
-				E8263CC61E93C89200508276 /* CodeFetchSpecification.swift in Sources */,
 				E8263C9E1E93C89200508276 /* QualifierParser.swift in Sources */,
 				E8263CAC1E93C89200508276 /* StoreKeyValueCoding.swift in Sources */,
 				E8263C9F1E93C89200508276 /* QualifierVariable.swift in Sources */,
@@ -1376,7 +1370,6 @@
 				E8ACA3482313E48B000F6BEC /* Pluralize.swift in Sources */,
 				E8ACA3542313E48F000F6BEC /* KeyValueQualifier.swift in Sources */,
 				E8ACA37E2313E4A8000F6BEC /* Join.swift in Sources */,
-				E8ACA3872313E4A8000F6BEC /* CodeFetchSpecification.swift in Sources */,
 				E8ACA3622313E498000F6BEC /* ActiveRecord.swift in Sources */,
 				E8ACA3472313E48B000F6BEC /* Logger.swift in Sources */,
 				E8ACA3692313E498000F6BEC /* AccessDataSource.swift in Sources */,
@@ -1481,7 +1474,6 @@
 				E8B249801EE44A45008258B7 /* ModelLoader.swift in Sources */,
 				E840F74F1FE2C05B009DBF18 /* CodableRelationship.swift in Sources */,
 				E80B3FAE1E606D1700D6F0ED /* AdaptorOperation.swift in Sources */,
-				E8BA82CF1E68397200F09D76 /* CodeFetchSpecification.swift in Sources */,
 				E81B62D71E65E3B500D43EFA /* SQLQualifier.swift in Sources */,
 				E80B3FC81E606D1E00D6F0ED /* GlobalID.swift in Sources */,
 				E80B3FC71E606D1E00D6F0ED /* FetchSpecification.swift in Sources */,
