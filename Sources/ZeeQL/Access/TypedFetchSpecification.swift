@@ -57,27 +57,41 @@ public struct TypedFetchSpecification<Object: DatabaseObject>
   public var requiresAllQualifierBindingVariables = false
   public var prefetchingRelationshipKeyPathes : [ String ]?
 
+  @inlinable
   public init(entityName    : String?           = nil,
               qualifier     : Qualifier?        = nil,
               sortOrderings : [ SortOrdering ]? = nil,
-              limit         : Int?              = nil)
+              limit         : Int?              = nil,
+              prefetch      : [ String ]?       = nil,
+              requiresAllQualifierBindingVariables: Bool = false)
   {
     self._entityName   = entityName
     self.qualifier     = qualifier
     self.sortOrderings = sortOrderings
     self.fetchLimit    = limit
+    self.prefetchingRelationshipKeyPathes = prefetch
+    self.requiresAllQualifierBindingVariables =
+      requiresAllQualifierBindingVariables
   }
+  
+  @inlinable
   public init(entity        : Entity,
               qualifier     : Qualifier?        = nil,
               sortOrderings : [ SortOrdering ]? = nil,
-              limit         : Int?              = nil)
+              limit         : Int?              = nil,
+              prefetch      : [ String ]?       = nil,
+              requiresAllQualifierBindingVariables: Bool = false)
   {
     self._entity       = entity
     self.qualifier     = qualifier
     self.sortOrderings = sortOrderings
     self.fetchLimit    = limit
+    self.prefetchingRelationshipKeyPathes = prefetch
+    self.requiresAllQualifierBindingVariables =
+      requiresAllQualifierBindingVariables
   }
   
+  /// Initialize w/ a qualifier string.
   public init(entity        : Entity,
               _ q           : String,
               sortOrderings : [ SortOrdering ]? = nil,

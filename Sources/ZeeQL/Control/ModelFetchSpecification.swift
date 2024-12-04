@@ -6,7 +6,13 @@
 //  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
 //
 
-public struct ModelFetchSpecification : FetchSpecification {
+public protocol ModelFetchSpecificationType: FetchSpecification {
+  
+  var entity      : Entity? { get set }
+  var _entityName : String? { get }
+}
+
+public struct ModelFetchSpecification : ModelFetchSpecificationType {
   // TODO: This is a little funky now because we refer to Entity. It should be
   //       a protocol.
   
@@ -110,7 +116,7 @@ public struct ModelFetchSpecification : FetchSpecification {
       fs.requiresAllQualifierBindingVariables
     prefetchingRelationshipKeyPathes = fs.prefetchingRelationshipKeyPathes
     
-    if let mfs = fs as? ModelFetchSpecification {
+    if let mfs = fs as? ModelFetchSpecificationType {
       _entityName = mfs._entityName
     }
   }
