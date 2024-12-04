@@ -1,8 +1,9 @@
 //
 //  FetchSpecification+Builder.swift
-//  ZeeQL3
+//  ZeeQL
 //
 //  Created by Helge Heß on 04.12.24.
+//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
 //
 
 // MARK: - Fetch Specification Convenience
