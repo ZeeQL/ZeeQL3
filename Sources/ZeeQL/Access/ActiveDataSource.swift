@@ -239,3 +239,26 @@ public extension Database {
     return ActiveDataSource<Object>(database: self)
   }
 }
+
+
+// MARK: - Query Runner
+
+public extension DatabaseFetchSpecification where Object: ActiveRecordType {
+  // hh(2024-12-04): This style probably doesn't make that much sense...
+  
+  /**
+   * Evaluate the active record fetch specifiction in a ``Database``.
+   *
+   * ```swift
+   * let _ = try Person.where("login like %@", "*he*")
+   *                   .limit(4)
+   *                   .fetch(in: db)
+   * ```
+   */
+  @inlinable
+  func fetch(in db: Database) throws -> [ Object ] {
+    let ds = ActiveDataSource<Object>(database: db)
+    ds.fetchSpecification = self
+    return try ds.fetchObjects()
+  }
+}

@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 17/02/17.
-//  Copyright © 2017-2019 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
 //
 
 /**
@@ -42,10 +42,28 @@ public protocol FetchSpecification : SmartDescription {
   func fetchSpecificiationWith(bindings: Any?) throws -> FetchSpecification?
 }
 
+public protocol AdaptorRecordFetchSpecification : FetchSpecification {
+  // Those can be raw or not.
+  
+  typealias Object = AdaptorRecord
+}
+
+public protocol DatabaseFetchSpecification<Object>: FetchSpecification {
+  
+  associatedtype Object : DatabaseObject
+}
+
 
 public let CustomQueryExpressionHintKey = "CustomQueryExpressionHintKey"
 
 extension FetchSpecification { // Default Imp
+
+  @inlinable
+  func transform(_ transform: (inout Self) throws -> Void) rethrows -> Self {
+    var fs = self
+    try transform(&fs)
+    return fs
+  }
 
   // MARK: - Hints
   
@@ -190,5 +208,4 @@ public extension FetchSpecification { // Counts
     countFS.fetchesRawRows = true
     return countFS
   }
-
 }

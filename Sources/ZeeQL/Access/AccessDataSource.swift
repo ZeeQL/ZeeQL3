@@ -148,6 +148,92 @@ public extension AccessDataSourceType {
   
   /**
    * This method takes the name of a fetch specification. It looks up the fetch
+   * spec in the ``Entity`` associated with the datasource and then binds the
+   * spec with the given key/value pairs.
+   *
+   * Example:
+   * ```swift
+   * try ds.fetchObjects(myFetchSpec, ["contactId": 12345]) { contact in
+   *   print("Contact:", contact)
+   * }
+   * ```
+   *
+   * This calls ``FetchSpecification/fetchSpecificiationWith(bindings:)-585ip``
+   * and passes in the given key/value pair (contactId=12345).
+   *
+   * Finally the fetch will be performed using
+   * ``_primaryFetchObjects``.
+   *
+   * - Parameters:
+   *   - fetchSpecification: The ``FetchSpecification`` to use.
+   *   - keysAndValues:      The key/value pairs to apply as bindings.
+   */
+  @inlinable
+  func fetchObjects(_ fetchSpecification: FetchSpecification,
+                    _ binds: [ String : Any ] = [:],
+                    yield: ( Object ) throws -> Void) throws
+  {
+    if !binds.isEmpty {
+      guard let fs = try fetchSpecification
+        .fetchSpecificiationWith(bindings: binds) else
+      {
+        throw AccessDataSourceError
+          .CouldNotResolveBindings(fetchSpecification: fetchSpecification,
+                                   bindings: binds)
+      }
+      try _primaryFetchObjects(fs) { try yield($0) }
+    }
+    else {
+      try _primaryFetchObjects(fetchSpecification) { try yield($0) }
+    }
+  }
+  
+  /**
+   * This method takes the name of a fetch specification. It looks up the fetch
+   * spec in the `Entity` associated with the datasource and then binds the
+   * spec with the given key/value pairs.
+   *
+   * Example:
+   * ```swift
+   * try ds.fetchObjects("myContacts", ["contactId": 12345]) { contact in
+   *   print("Contact:", contact)
+   * }
+   * ```
+   *
+   * This will lookup the `FetchSpecification` named "myContacts" in
+   * the `Entity` of the datasource. It then calls
+   * ``FetchSpecification/fetchSpecificiationWith(bindings:)-585ip``
+   * and passes in the given key/value pair (contactId=12345).
+   *
+   * Finally the fetch will be performed using
+   * ``_primaryFetchObjects``.
+   *
+   * - Parameters:
+   *   - fetchSpecificationName: The name of the fetch specification to use.
+   *   - keysAndValues: The key/value pairs to apply as bindings.
+   */
+  @inlinable
+  func fetchObjects(_ fetchSpecificationName: String,
+                    _ binds: [ String : Any ] = [:],
+                    yield: ( Object ) throws -> Void) throws
+  {
+    guard let findEntity = entity else {
+      // TBD: improve exception
+      log.error("did not find entity, cannot construct fetchspec:",
+                fetchSpecificationName)
+      throw AccessDataSourceError.MissingEntity
+    }
+     
+    guard let fs = findEntity[fetchSpecification: fetchSpecificationName] else {
+      throw AccessDataSourceError
+        .DidNotFindFetchSpecification(name: fetchSpecificationName,
+                                      entity: findEntity)
+    }
+    return try fetchObjects(fs, binds, yield: yield)
+  }
+  
+  /**
+   * This method takes the name of a fetch specification. It looks up the fetch
    * spec in the `Entity` associated with the datasource and then binds the
    * spec with the given key/value pairs.
    *
@@ -173,32 +259,11 @@ public extension AccessDataSourceType {
   func fetchObjects(_ fetchSpecificationName: String,
                     _ binds: [ String : Any ] = [:]) throws -> [ Object ]
   {
-    guard let findEntity = entity else {
-      // TBD: improve exception
-      log.error("did not find entity, cannot construct fetchspec");
-      throw AccessDataSourceError.MissingEntity
-    }
-     
-    guard let fs = findEntity[fetchSpecification: fetchSpecificationName] else {
-      throw AccessDataSourceError
-        .DidNotFindFetchSpecification(name: fetchSpecificationName,
-                                      entity: findEntity)
-    }
-     
     var results = [ Object ]()
-    if !binds.isEmpty {
-      guard let fs = try fs.fetchSpecificiationWith(bindings: binds) else {
-        throw AccessDataSourceError
-          .CouldNotResolveBindings(fetchSpecification: fs, bindings: binds)
-      }
-      try _primaryFetchObjects(fs) { results.append($0) }
-    }
-    else {
-      try _primaryFetchObjects(fs) { results.append($0) }
-    }
+    try fetchObjects(fetchSpecificationName, binds) { results.append($0) }
     return results
   }
-  
+
   /**
    * This method takes the name of a fetch specification. It looks up the fetch
    * spec in the `Entity` associated with the datasource and then binds the

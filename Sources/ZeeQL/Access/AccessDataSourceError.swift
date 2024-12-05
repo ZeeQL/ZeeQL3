@@ -24,5 +24,5 @@ public enum AccessDataSourceError: Swift.Error {
   
   case DidNotFindFetchSpecification(name: String, entity: Entity)
   case CouldNotResolveBindings(fetchSpecification: FetchSpecification,
-                               bindings: [ String : Any])
+                               bindings: Any)
 }

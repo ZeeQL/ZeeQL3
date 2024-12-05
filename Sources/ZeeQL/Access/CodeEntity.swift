@@ -186,7 +186,7 @@ open class CodeObjectEntity<T: CodeObjectType> : CodeEntityBase {
     if !fetchSpecifications.isEmpty {
       for ( fsName, fs ) in fetchSpecifications where fs.entity == nil {
         assert(fs.entityName == self.name)
-        if var fs = fs as? ModelFetchSpecification {
+        if var fs = fs as? ModelFetchSpecificationType {
           fs.entity = self
           fetchSpecifications[fsName] = fs
         }
@@ -208,8 +208,9 @@ fileprivate extension CodeEntityBase {
   private func processFetchSpecificationMirror(_ mirror: Mirror) {
     for ( propName, propValue ) in mirror.children {
       assert(propName != nil)
-      assert(propValue is ModelFetchSpecification)
-      guard let fs = propValue as? FetchSpecification, let name = propName else {
+      // Why?: assert(propValue is ModelFetchSpecificationType)
+      guard let fs = propValue as? FetchSpecification, let name = propName else
+      {
         continue
       }
       
