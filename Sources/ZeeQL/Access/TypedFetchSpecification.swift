@@ -42,9 +42,9 @@ public struct TypedFetchSpecification<Object: DatabaseObject>
     return nil
   }
   
-  public var fetchAttributeNames : [ String ]?
+  public var fetchAttributeNames = [ String ]()
   public var qualifier           : Qualifier?
-  public var sortOrderings       : [ SortOrdering ]?
+  public var sortOrderings       = [ SortOrdering ]()
   public var fetchLimit          : Int?
   public var fetchOffset         : Int?
   public var hints               = [ String : Any ]()
@@ -55,14 +55,14 @@ public struct TypedFetchSpecification<Object: DatabaseObject>
   public var fetchesRawRows      = false
   public var fetchesReadOnly     = false
   public var requiresAllQualifierBindingVariables = false
-  public var prefetchingRelationshipKeyPathes : [ String ]?
+  public var prefetchingRelationshipKeyPathes = [ String ]()
 
   @inlinable
-  public init(entityName    : String?           = nil,
-              qualifier     : Qualifier?        = nil,
-              sortOrderings : [ SortOrdering ]? = nil,
-              limit         : Int?              = nil,
-              prefetch      : [ String ]?       = nil,
+  public init(entityName    : String?          = nil,
+              qualifier     : Qualifier?       = nil,
+              sortOrderings : [ SortOrdering ] = [],
+              limit         : Int?             = nil,
+              prefetch      : [ String ]       = [],
               requiresAllQualifierBindingVariables: Bool = false)
   {
     self._entityName   = entityName
@@ -76,10 +76,10 @@ public struct TypedFetchSpecification<Object: DatabaseObject>
   
   @inlinable
   public init(entity        : Entity,
-              qualifier     : Qualifier?        = nil,
-              sortOrderings : [ SortOrdering ]? = nil,
-              limit         : Int?              = nil,
-              prefetch      : [ String ]?       = nil,
+              qualifier     : Qualifier?       = nil,
+              sortOrderings : [ SortOrdering ] = [],
+              limit         : Int?             = nil,
+              prefetch      : [ String ]       = [],
               requiresAllQualifierBindingVariables: Bool = false)
   {
     self._entity       = entity
@@ -94,9 +94,9 @@ public struct TypedFetchSpecification<Object: DatabaseObject>
   /// Initialize w/ a qualifier string.
   public init(entity        : Entity,
               _ q           : String,
-              sortOrderings : [ SortOrdering ]? = nil,
-              limit         : Int?              = nil,
-              prefetch      : [ String ]?       = nil)
+              sortOrderings : [ SortOrdering ] = [],
+              limit         : Int?             = nil,
+              prefetch      : [ String ]       = [])
   {
     self._entity       = entity
     self.qualifier     = qualifierWith(format: q)
@@ -105,4 +105,42 @@ public struct TypedFetchSpecification<Object: DatabaseObject>
     self.prefetchingRelationshipKeyPathes = prefetch
   }
   
+}
+
+extension TypedFetchSpecification: Equatable {
+  
+  public static func ==(lhs: Self, rhs: Self) -> Bool {
+    guard lhs.usesDistinct        == rhs.usesDistinct,
+          lhs.locksObjects        == rhs.locksObjects,
+          lhs.deep                == rhs.deep,
+          lhs.requiresAllQualifierBindingVariables ==
+            rhs.requiresAllQualifierBindingVariables,
+          lhs.prefetchingRelationshipKeyPathes ==
+            rhs.prefetchingRelationshipKeyPathes,
+          lhs.fetchesRawRows      == rhs.fetchesRawRows,
+          lhs.fetchesReadOnly     == rhs.fetchesReadOnly,
+          lhs.fetchAttributeNames == rhs.fetchAttributeNames,
+          lhs.sortOrderings       == rhs.sortOrderings,
+          lhs.fetchLimit          == rhs.fetchLimit,
+          lhs.fetchOffset         == rhs.fetchOffset else { return false }
+
+    if let lhs = lhs.qualifier { return lhs.isEqual(to: rhs.qualifier) }
+    else if rhs.qualifier != nil { return false }
+
+    guard lhs.entityName == rhs.entityName else { return false }
+    if let lhs = lhs.entity { return lhs.isEqual(to: rhs.entity) }
+    else if rhs.entity != nil { return false }
+    
+    if lhs.hints.count != rhs.hints.count { return false }
+    return eq(lhs.hints, rhs.hints)
+  }
+}
+extension TypedFetchSpecification: EquatableType {
+  
+  public func isEqual(to object: Any?) -> Bool {
+    // TBD: Would we want to allow comparison to ModelFS and such? That *might*
+    //      make sense?
+    guard let typed = object as? Self else { return false }
+    return self == typed
+  }
 }

@@ -19,22 +19,22 @@ public protocol FetchSpecification : SmartDescription {
   // TODO: This is a little funky now because we refer to Entity. It should be
   //       a protocol.
   
-  var entity              : Entity?           { get } // Access, really
-  var entityName          : String?           { get }
-  var fetchAttributeNames : [ String ]?       { get set }
-  var qualifier           : Qualifier?        { get set }
-  var sortOrderings       : [ SortOrdering ]? { get set }
-  var fetchLimit          : Int?              { get set }
-  var fetchOffset         : Int?              { get set }
+  var entity              : Entity?          { get } // Access, really
+  var entityName          : String?          { get }
+  var fetchAttributeNames : [ String ]       { get set }
+  var qualifier           : Qualifier?       { get set }
+  var sortOrderings       : [ SortOrdering ] { get set }
+  var fetchLimit          : Int?             { get set }
+  var fetchOffset         : Int?             { get set }
   
-  var usesDistinct        : Bool              { get set }
-  var locksObjects        : Bool              { get set }
-  var deep                : Bool              { get set }
-  var fetchesRawRows      : Bool              { get set }
-  var fetchesReadOnly     : Bool              { get set }
+  var usesDistinct        : Bool             { get set }
+  var locksObjects        : Bool             { get set }
+  var deep                : Bool             { get set }
+  var fetchesRawRows      : Bool             { get set }
+  var fetchesReadOnly     : Bool             { get set }
   
   var requiresAllQualifierBindingVariables : Bool { get set }
-  var prefetchingRelationshipKeyPathes     : [ String ]? { get set }
+  var prefetchingRelationshipKeyPathes     : [ String ] { get set }
 
   var hints               : [ String : Any ]  { get set }
   subscript(hint h: String) -> Any?           { get set }
@@ -120,7 +120,7 @@ extension FetchSpecification { // Default Imp
    *
    * The syntax for bind-pattern hints is '%(binding)s'.
    */
-  public func fetchSpecificiationWith(bindings: Any?) throws
+  public func fetchSpecificiationWithBindings(_ bindings: Any?) throws
               -> FetchSpecification?
   {
     var boundFS = self
@@ -134,6 +134,13 @@ extension FetchSpecification { // Default Imp
     }
     
     return boundFS
+  }
+  
+  @inlinable // TODO: deprecate
+  public func fetchSpecificiationWith(bindings: Any?) throws
+              -> FetchSpecification?
+  {
+    return try fetchSpecificiationWithBindings(bindings)
   }
 }
 
@@ -150,17 +157,15 @@ public extension FetchSpecification {
       ms += " '\(ename)'"
     }
     
-    if let fa = fetchAttributeNames, !fa.isEmpty {
-      ms += " attrs["
-      ms += fa.joined(separator: ",")
-      ms += "]"
+    if !fetchAttributeNames.isEmpty {
+      ms += " attrs[\(fetchAttributeNames.joined(separator: ","))]"
     }
     
     if let q = qualifier { ms += " \(q)" }
     
-    if let sos = sortOrderings, !sos.isEmpty {
+    if !sortOrderings.isEmpty {
       ms += " sort="
-      ms += sos.map({ "\($0)" }).joined(separator: ",")
+      ms += sortOrderings.map({ "\($0)" }).joined(separator: ",")
     }
     
     if let limit = fetchLimit {
@@ -175,9 +180,9 @@ public extension FetchSpecification {
       ms += " offset=\(offset)"
     }
     
-    if let prefetch = prefetchingRelationshipKeyPathes, !prefetch.isEmpty {
+    if !prefetchingRelationshipKeyPathes.isEmpty {
       ms += " prefetch["
-      ms += prefetch.joined(separator: ",")
+      ms += prefetchingRelationshipKeyPathes.joined(separator: ",")
       ms += "]"
     }
     
@@ -196,6 +201,7 @@ public extension FetchSpecification {
 
 public extension FetchSpecification { // Counts
   
+  @inlinable
   var fetchSpecificationForCount : FetchSpecification? {
     // TODO: this may not be necessary anymore, see _primaryFetchCount()
     if hints["CustomQueryExpressionHintKey"]            != nil { return nil }

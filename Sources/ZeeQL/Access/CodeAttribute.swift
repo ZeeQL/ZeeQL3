@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 01/03/2017.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
 //
 
 /**
@@ -17,6 +17,7 @@
 open class CodeAttribute<T: AttributeValue> : ModelAttribute {
   
   // Note: we remove the keyword
+  @inlinable
   public init(_ name       : String? = nil,
               column       : String? = nil,
               externalType : String? = nil,
@@ -40,16 +41,15 @@ open class CodeAttribute<T: AttributeValue> : ModelAttribute {
 
 public protocol SQLLikeType {}
 extension String   : SQLLikeType {}
-extension Optional : SQLLikeType {} // sigh: to support Optional<String>
-  // needs: conditional conformance, maybe Swift 4
+extension Optional : SQLLikeType where Wrapped: SQLLikeType {}
 
 public extension CodeAttribute where T : SQLLikeType {
   
+  @inlinable
   func like(_ pattern : String) -> KeyValueQualifier {
     let key = AttributeKey(self)
     return KeyValueQualifier(key, .Like, pattern)
-  }
-  
+  }  
 }
 
 

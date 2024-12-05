@@ -369,8 +369,8 @@ public extension AdaptorChannel { // MARK: - Operations
       attributes = attrs
     }
     else if let entity = e {
-      if let fs = fs, let an = fs.fetchAttributeNames {
-        attributes = entity.attributesWithNames(an)
+      if let fs = fs, !fs.fetchAttributeNames.isEmpty {
+        attributes = entity.attributesWithNames(fs.fetchAttributeNames)
       }
       else {
         attributes = entity.attributes

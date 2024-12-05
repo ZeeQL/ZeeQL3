@@ -96,13 +96,8 @@ public extension FetchSpecification {
   {
     transform {
       if clear { $0.prefetchingRelationshipKeyPathes = [] }
-      if $0.prefetchingRelationshipKeyPathes == nil {
-        $0.prefetchingRelationshipKeyPathes = [ path ]
-      }
-      else {
-        $0.prefetchingRelationshipKeyPathes?.append(path)
-        $0.prefetchingRelationshipKeyPathes?.append(contentsOf: more)
-      }
+      $0.prefetchingRelationshipKeyPathes.append(path)
+      $0.prefetchingRelationshipKeyPathes.append(contentsOf: more)
     }
   }
   @inlinable
@@ -114,14 +109,8 @@ public extension FetchSpecification {
     //         `fs.prefetch(Person.e.company.addresses)`
     transform {
       if clear { $0.prefetchingRelationshipKeyPathes = [] }
-      if $0.prefetchingRelationshipKeyPathes == nil {
-        $0.prefetchingRelationshipKeyPathes = [ path.name ]
-      }
-      else {
-        $0.prefetchingRelationshipKeyPathes?.append(path.name)
-        $0.prefetchingRelationshipKeyPathes?
-          .append(contentsOf: more.map(\.name))
-      }
+      $0.prefetchingRelationshipKeyPathes.append(path.name)
+      $0.prefetchingRelationshipKeyPathes.append(contentsOf: more.map(\.name))
     }
   }
 
@@ -131,23 +120,68 @@ public extension FetchSpecification {
   @inlinable
   func order(by: SortOrdering, _ e: SortOrdering...) -> Self {
     transform {
-      if let old = $0.sortOrderings { $0.sortOrderings = old + [ by ] + e }
-      else                          { $0.sortOrderings = [ by ] + e }
+      $0.sortOrderings.append(by)
+      $0.sortOrderings.append(contentsOf: e)
     }
   }
   
   @inlinable
   func order(by: String, _ e: String...) -> Self {
     transform {
-      var ops = [ SortOrdering ]()
-      if let p = SortOrdering.parse(by) { ops += p }
+      if let p = SortOrdering.parse(by) { $0.sortOrderings += p }
+      else { assertionFailure("Could not parse order string")}
       for by in e {
-        if let p = SortOrdering.parse(by) { ops += p }
+        if let p = SortOrdering.parse(by) {
+          $0.sortOrderings.append(contentsOf: p)
+        }
+        else { assertionFailure("Could not parse order string")}
       }
-
-      if let old = $0.sortOrderings { $0.sortOrderings = old + ops }
-      else                          { $0.sortOrderings = ops }
     }
+  }
+  @inlinable
+  func order(by    : Attribute...,
+             asc   : Attribute? = nil,
+             desc  : Attribute? = nil,
+             iasc  : Attribute? = nil,
+             idesc : Attribute? = nil)
+       -> Self
+  {
+    transform { fs in
+      for by in by {
+        let so = SortOrdering(key: AttributeKey(by), selector: .CompareAscending)
+        fs.sortOrderings.append(so)
+      }
+      if let by = asc {
+        let so = SortOrdering(key: AttributeKey(by), selector: .CompareAscending)
+        fs.sortOrderings.append(so)
+      }
+      if let by = desc {
+        let so = SortOrdering(key: AttributeKey(by), selector: .CompareDescending)
+        fs.sortOrderings.append(so)
+      }
+      if let by = iasc {
+        let so = SortOrdering(key: AttributeKey(by),
+                              selector: .CompareCaseInsensitiveAscending)
+        fs.sortOrderings.append(so)
+      }
+      if let by = idesc {
+        let so = SortOrdering(key: AttributeKey(by),
+                              selector: .CompareCaseInsensitiveDescending)
+        fs.sortOrderings.append(so)
+      }
+    }
+  }
+}
+
+extension FetchSpecification {
+  
+  @inlinable
+  static func select<T: EntityType>(_ attributes: String..., from: T.Type)
+              -> FetchSpecification // <= because we need the entity
+  {
+    var fs = ModelFetchSpecification(entity: from.entity)
+    fs.fetchAttributeNames = attributes
+    return fs
   }
 }
 
@@ -160,6 +194,8 @@ public extension DatabaseFetchSpecification
   
   // TODO: select w/ pack iteration
 
+  // MARK: - Qualifier
+  
   @inlinable
   func `where`<V>(_ key: Swift.KeyPath<Object.FullEntity, CodeAttribute<V>>,
                   _ operation: ComparisonOperation,
@@ -175,8 +211,29 @@ public extension DatabaseFetchSpecification
                   _ value: V) -> Self
     where V: AttributeValue
   {
-    `where`(key, .EqualTo, value)
+    return `where`(key, .EqualTo, value)
   }
+
+  @inlinable
+  func `where`<V>(_ key: Swift.KeyPath<Object.FullEntity, CodeAttribute<V?>>,
+                  _ operation: ComparisonOperation,
+                  _ value: V?) -> Self
+    where V: AttributeValue
+  {
+    let attribute = Object.e[keyPath: key]
+    return `where`(KeyValueQualifier(AttributeKey(attribute), operation, value))
+  }
+  
+  @inlinable
+  func `where`<V>(_ key: Swift.KeyPath<Object.FullEntity, CodeAttribute<V?>>,
+                  _ value: V?) -> Self
+    where V: AttributeValue
+  {
+    return `where`(key, .EqualTo, value)
+  }
+
+  
+  // MARK: - Ordering
 
   #if compiler(>=6)
   func order<each V: AttributeValue>(
@@ -188,8 +245,7 @@ public extension DatabaseFetchSpecification
       for key in repeat each key {
         let attribute = Object.e[keyPath: key]
         let so = SortOrdering(key: AttributeKey(attribute), selector: selector)
-        if $0.sortOrderings == nil { $0.sortOrderings = [ so ] }
-        else { $0.sortOrderings?.append(so) }
+        $0.sortOrderings.append(so)
       }
     }
   }
@@ -206,6 +262,9 @@ public extension DatabaseFetchSpecification
   }
   #endif // !compiler(>=6)
   
+  
+  // MARK: - Prefetch
+
   #if compiler(>=6)
   // TODO: can we do both toOne and toMany in one?
   // a KeyPath that has the parent class (CodeRelationship) doesn't work?
@@ -219,7 +278,7 @@ public extension DatabaseFetchSpecification
       if clear { $0.prefetchingRelationshipKeyPathes = [] }
       for relationship in repeat each relationship {
         let relationship = Object.e[keyPath: relationship]
-        $0.prefetchingRelationshipKeyPathes?.append(relationship.name)
+        $0.prefetchingRelationshipKeyPathes.append(relationship.name)
       }
     }
   }
@@ -233,7 +292,7 @@ public extension DatabaseFetchSpecification
       if clear { $0.prefetchingRelationshipKeyPathes = [] }
       for relationship in repeat each relationship {
         let relationship = Object.e[keyPath: relationship]
-        $0.prefetchingRelationshipKeyPathes?.append(relationship.name)
+        $0.prefetchingRelationshipKeyPathes.append(relationship.name)
       }
     }
   }
@@ -247,65 +306,9 @@ public extension DatabaseFetchSpecification
       if clear { $0.prefetchingRelationshipKeyPathes = [] }
       for relationship in repeat each relationship {
         let relationship = Object.e[keyPath: relationship]
-        $0.prefetchingRelationshipKeyPathes?.append(relationship.name)
+        $0.prefetchingRelationshipKeyPathes.append(relationship.name)
       }
     }
   }
   #endif // compiler(>=6)
-}
-
-
-public extension FetchSpecification {
-  
-  static func select<T: EntityType>(_ attributes: String..., from: T.Type)
-              -> FetchSpecification
-  {
-    var fs = ModelFetchSpecification(entity: from.entity)
-    fs.fetchAttributeNames = attributes.isEmpty ? nil : attributes
-    return fs
-  }
-
-  
-  // MARK: - Ordering
-  
-  func order(by    : Attribute...,
-             asc   : Attribute? = nil,
-             desc  : Attribute? = nil,
-             iasc  : Attribute? = nil,
-             idesc : Attribute? = nil)
-       -> FetchSpecification
-  {
-    var fs = self
-    
-    var ops = [ SortOrdering ]()
-    
-    for by in by {
-      let so = SortOrdering(key: AttributeKey(by), selector: .CompareAscending)
-      ops.append(so)
-    }
-    if let by = asc {
-      let so = SortOrdering(key: AttributeKey(by), selector: .CompareAscending)
-      ops.append(so)
-    }
-    if let by = desc {
-      let so = SortOrdering(key: AttributeKey(by), selector: .CompareDescending)
-      ops.append(so)
-    }
-    if let by = iasc {
-      let so = SortOrdering(key: AttributeKey(by),
-                            selector: .CompareCaseInsensitiveAscending)
-      ops.append(so)
-    }
-    if let by = idesc {
-      let so = SortOrdering(key: AttributeKey(by),
-                            selector: .CompareCaseInsensitiveDescending)
-      ops.append(so)
-    }
-    
-    guard !ops.isEmpty else { return self }
-    
-    if let old = fs.sortOrderings { fs.sortOrderings = old + ops }
-    else                          { fs.sortOrderings = ops       }
-    return fs
-  }
 }

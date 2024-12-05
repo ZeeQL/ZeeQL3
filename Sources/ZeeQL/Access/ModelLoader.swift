@@ -320,9 +320,8 @@ open class CoreDataModelLoader : ModelLoader {
     }
     else { limit = nil }
     
-    let sos   : [ SortOrdering ]? = nil
     var fs = ModelFetchSpecification(entity: entity, qualifier: q,
-                                     sortOrderings: sos, limit: limit)
+                                     sortOrderings: [], limit: limit)
     
     fs.usesDistinct = boolValue(attrs["returnDistinctResults"])
     
@@ -356,17 +355,11 @@ open class CoreDataModelLoader : ModelLoader {
     for xml in xml.childElementsWithName("ordering") {
       // `<ordering key="name" />` (multiple are possible!)
       guard let ordering = loadSortOrdering(from: xml) else { continue }
-      if fs.sortOrderings == nil { fs.sortOrderings = [] }
-      fs.sortOrderings?.append(ordering)
+      fs.sortOrderings.append(ordering)
     }
 
     if let v = attrs["attributes"]?.split(separator: ","), !v.isEmpty {
-      if fs.fetchAttributeNames == nil {
-        fs.fetchAttributeNames = v.map(String.init)
-      }
-      else {
-        fs.fetchAttributeNames?.append(contentsOf: v.map(String.init))
-      }
+      fs.fetchAttributeNames.append(contentsOf: v.map(String.init))
     }
     for xml in xml.childElementsWithName("attributes") {
       // <attributes>objectId,permissions</attributes>
@@ -374,12 +367,7 @@ open class CoreDataModelLoader : ModelLoader {
         assertionFailure("<attributes> tag w/o content?")
         continue
       }
-      if fs.fetchAttributeNames == nil {
-        fs.fetchAttributeNames = v.map(String.init)
-      }
-      else {
-        fs.fetchAttributeNames?.append(contentsOf: v.map(String.init))
-      }
+      fs.fetchAttributeNames.append(contentsOf: v.map(String.init))
     }
     if let xml = xml.firstChildElementWithName("qualifier") {
       // <qualifier>(principalId IN $authIds) AND (objectId IN $ids)</qualifier>

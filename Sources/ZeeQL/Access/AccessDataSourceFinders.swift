@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Heß on 22.08.19.
-//  Copyright © 2019 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2019-2024 ZeeZide GmbH. All rights reserved.
 //
 
 public extension AccessDataSource {
@@ -206,8 +206,8 @@ public extension AccessDataSource { // Finders
     
     var fs = try fetchSpecificationForFetch()
     fs.qualifier     = and(q, auxiliaryQualifier)
-    fs.sortOrderings = nil /* no sorting, makes DB faster */
-    fs.fetchLimit    = 1   /* we just want to find one record */
+    fs.sortOrderings = [] /* no sorting, makes DB faster */
+    fs.fetchLimit    = 1  /* we just want to find one record */
     return fs
   }
   

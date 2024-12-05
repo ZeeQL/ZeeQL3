@@ -26,9 +26,9 @@ public struct ModelFetchSpecification : ModelFetchSpecificationType {
     return nil
   }
   
-  public var fetchAttributeNames : [ String ]?
+  public var fetchAttributeNames = [ String ]()
   public var qualifier           : Qualifier?
-  public var sortOrderings       : [ SortOrdering ]?
+  public var sortOrderings       : [ SortOrdering ]
   public var fetchLimit          : Int?
   public var fetchOffset         : Int?
   public var hints               = [ String : Any ]()
@@ -39,15 +39,15 @@ public struct ModelFetchSpecification : ModelFetchSpecificationType {
   public var fetchesRawRows      = false
   public var fetchesReadOnly     = false
   public var requiresAllQualifierBindingVariables = false // TBD: why false?
-  public var prefetchingRelationshipKeyPathes : [ String ]?
+  public var prefetchingRelationshipKeyPathes : [ String ]
 
   @inlinable
-  public init(entityName    : String?           = nil,
-              qualifier     : Qualifier?        = nil,
-              sortOrderings : [ SortOrdering ]? = nil,
-              offset        : Int?              = nil,
-              limit         : Int?              = nil,
-              prefetch      : [ String ]?       = nil,
+  public init(entityName    : String?          = nil,
+              qualifier     : Qualifier?       = nil,
+              sortOrderings : [ SortOrdering ] = [],
+              offset        : Int?             = nil,
+              limit         : Int?             = nil,
+              prefetch      : [ String ]       = [],
               requiresAllQualifierBindingVariables: Bool = false)
   {
     self._entityName   = entityName
@@ -62,11 +62,11 @@ public struct ModelFetchSpecification : ModelFetchSpecificationType {
   
   @inlinable
   public init(entity        : Entity,
-              qualifier     : Qualifier?        = nil,
-              sortOrderings : [ SortOrdering ]? = nil,
-              offset        : Int?              = nil,
-              limit         : Int?              = nil,
-              prefetch      : [ String ]?       = nil,
+              qualifier     : Qualifier?       = nil,
+              sortOrderings : [ SortOrdering ] = [],
+              offset        : Int?             = nil,
+              limit         : Int?             = nil,
+              prefetch      : [ String ]       = [],
               requiresAllQualifierBindingVariables: Bool = false)
   {
     self.entity        = entity
@@ -82,10 +82,10 @@ public struct ModelFetchSpecification : ModelFetchSpecificationType {
   @inlinable
   public init(entity        : Entity,
               _ q           : String,
-              sortOrderings : [ SortOrdering ]? = nil,
-              offset        : Int?              = nil,
-              limit         : Int?              = nil,
-              prefetch      : [ String ]?       = nil,
+              sortOrderings : [ SortOrdering ] = [],
+              offset        : Int?             = nil,
+              limit         : Int?             = nil,
+              prefetch      : [ String ]       = [],
               requiresAllQualifierBindingVariables: Bool = false)
   {
     self.entity        = entity
