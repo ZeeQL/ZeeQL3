@@ -136,10 +136,31 @@ public extension TypedEntityType where FullEntity: CodeEntity<Self> {
   ) -> TypedFetchSpecification<Self>
     where V: AttributeValue
   {
+    return `where`(key, .EqualTo, value)
+  }
+  
+  @inlinable
+  static func `where`<V>(
+    _ key: Swift.KeyPath<FullEntity, CodeAttribute<V?>>,
+    _ operation: ComparisonOperation,
+    _ value: V?
+  ) -> TypedFetchSpecification<Self>
+    where V: AttributeValue
+  {
     // if we need no attributes
     var fs = TypedFetchSpecification<Self>(entity: Self.entity)
     let attribute = Self.e[keyPath: key]
-    fs.qualifier = KeyValueQualifier(AttributeKey(attribute), .EqualTo, value)
+    fs.qualifier = KeyValueQualifier(AttributeKey(attribute), operation, value)
     return fs
+  }
+  
+  @inlinable
+  static func `where`<V>(
+    _ key: Swift.KeyPath<FullEntity, CodeAttribute<V?>>,
+    _ value: V?
+  ) -> TypedFetchSpecification<Self>
+    where V: AttributeValue
+  {
+    return `where`(key, .EqualTo, value)
   }
 }

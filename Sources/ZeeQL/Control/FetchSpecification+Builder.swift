@@ -194,6 +194,8 @@ public extension DatabaseFetchSpecification
   
   // TODO: select w/ pack iteration
 
+  // MARK: - Qualifier
+  
   @inlinable
   func `where`<V>(_ key: Swift.KeyPath<Object.FullEntity, CodeAttribute<V>>,
                   _ operation: ComparisonOperation,
@@ -209,8 +211,29 @@ public extension DatabaseFetchSpecification
                   _ value: V) -> Self
     where V: AttributeValue
   {
-    `where`(key, .EqualTo, value)
+    return `where`(key, .EqualTo, value)
   }
+
+  @inlinable
+  func `where`<V>(_ key: Swift.KeyPath<Object.FullEntity, CodeAttribute<V?>>,
+                  _ operation: ComparisonOperation,
+                  _ value: V?) -> Self
+    where V: AttributeValue
+  {
+    let attribute = Object.e[keyPath: key]
+    return `where`(KeyValueQualifier(AttributeKey(attribute), operation, value))
+  }
+  
+  @inlinable
+  func `where`<V>(_ key: Swift.KeyPath<Object.FullEntity, CodeAttribute<V?>>,
+                  _ value: V?) -> Self
+    where V: AttributeValue
+  {
+    return `where`(key, .EqualTo, value)
+  }
+
+  
+  // MARK: - Ordering
 
   #if compiler(>=6)
   func order<each V: AttributeValue>(
@@ -239,6 +262,9 @@ public extension DatabaseFetchSpecification
   }
   #endif // !compiler(>=6)
   
+  
+  // MARK: - Prefetch
+
   #if compiler(>=6)
   // TODO: can we do both toOne and toMany in one?
   // a KeyPath that has the parent class (CodeRelationship) doesn't work?
