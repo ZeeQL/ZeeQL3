@@ -1186,9 +1186,7 @@ open class TypedDatabaseChannel<ObjectType> : DatabaseChannelBase,
     _ ec: ObjectTrackingContext? = nil
   ) throws
   {
-    guard let prefetchRelPathes = fs.prefetchingRelationshipKeyPathes,
-          !prefetchRelPathes.isEmpty else
-    {
+    guard !fs.prefetchingRelationshipKeyPathes.isEmpty else {
       /* simple case, no prefetches */
       return try primarySelectObjectsWithFetchSpecification(fs, ec)
     }
@@ -1273,7 +1271,8 @@ open class TypedDatabaseChannel<ObjectType> : DatabaseChannelBase,
     
     do {
       try fetchRelationships(fs.entity, entityName,
-                             prefetchRelPathes, baseObjects, ec)
+                             fs.prefetchingRelationshipKeyPathes,
+                             baseObjects, ec)
     }
     catch {
       cancelFetch()
@@ -1347,9 +1346,7 @@ open class DatabaseChannel : DatabaseChannelBase, IteratorProtocol {
                                                               = nil)
                 throws
   {
-    guard let prefetchRelPathes = fs.prefetchingRelationshipKeyPathes,
-          !prefetchRelPathes.isEmpty
-     else {
+    guard !fs.prefetchingRelationshipKeyPathes.isEmpty else {
       /* simple case, no prefetches */
       return try primarySelectObjectsWithFetchSpecification(fs, ec)
     }
@@ -1425,7 +1422,8 @@ open class DatabaseChannel : DatabaseChannelBase, IteratorProtocol {
     
     do {
       try fetchRelationships(fs.entity, entityName,
-                             prefetchRelPathes, baseObjects, ec)
+                             fs.prefetchingRelationshipKeyPathes,
+                             baseObjects, ec)
     }
     catch {
       cancelFetch()

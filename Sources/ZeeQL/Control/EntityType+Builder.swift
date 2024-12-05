@@ -9,11 +9,9 @@ public extension EntityType {
   // TBD: maybe rename, 'select' should run the actual select, right?
   
   @inlinable
-  static func select(_ attributes: String...)
-              -> FetchSpecification
-  {
+  static func select(_ attributes: String...) -> FetchSpecification {
     var fs = ModelFetchSpecification(entity: Self.entity)
-    fs.fetchAttributeNames = attributes.isEmpty ? nil : attributes
+    fs.fetchAttributeNames = attributes
     return fs
   }
   
@@ -57,7 +55,7 @@ public extension TypedEntityType where Self: DatabaseObject {
               -> TypedFetchSpecification<Self>
   {
     var fs = TypedFetchSpecification<Self>(entity: Self.entity)
-    fs.fetchAttributeNames = attributes.isEmpty ? nil : attributes
+    fs.fetchAttributeNames = attributes
     return fs
   }
   

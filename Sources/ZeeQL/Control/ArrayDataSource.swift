@@ -66,9 +66,9 @@ open class ArrayDataSource<Object: SwiftObject> : DataSource<Object>,
       }
       
       
-      if let sos = fs.sortOrderings, !sos.isEmpty {
+      if !fs.sortOrderings.isEmpty {
         // TODO: sort
-        log.warn("not applying sort orderings", self, sos)
+        log.warn("not applying sort orderings", self, fs.sortOrderings)
       }
       
       let count       = filtered.count

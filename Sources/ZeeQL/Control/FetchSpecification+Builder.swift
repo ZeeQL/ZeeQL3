@@ -96,13 +96,8 @@ public extension FetchSpecification {
   {
     transform {
       if clear { $0.prefetchingRelationshipKeyPathes = [] }
-      if $0.prefetchingRelationshipKeyPathes == nil {
-        $0.prefetchingRelationshipKeyPathes = [ path ]
-      }
-      else {
-        $0.prefetchingRelationshipKeyPathes?.append(path)
-        $0.prefetchingRelationshipKeyPathes?.append(contentsOf: more)
-      }
+      $0.prefetchingRelationshipKeyPathes.append(path)
+      $0.prefetchingRelationshipKeyPathes.append(contentsOf: more)
     }
   }
   @inlinable
@@ -114,14 +109,8 @@ public extension FetchSpecification {
     //         `fs.prefetch(Person.e.company.addresses)`
     transform {
       if clear { $0.prefetchingRelationshipKeyPathes = [] }
-      if $0.prefetchingRelationshipKeyPathes == nil {
-        $0.prefetchingRelationshipKeyPathes = [ path.name ]
-      }
-      else {
-        $0.prefetchingRelationshipKeyPathes?.append(path.name)
-        $0.prefetchingRelationshipKeyPathes?
-          .append(contentsOf: more.map(\.name))
-      }
+      $0.prefetchingRelationshipKeyPathes.append(path.name)
+      $0.prefetchingRelationshipKeyPathes.append(contentsOf: more.map(\.name))
     }
   }
 
@@ -131,22 +120,22 @@ public extension FetchSpecification {
   @inlinable
   func order(by: SortOrdering, _ e: SortOrdering...) -> Self {
     transform {
-      if let old = $0.sortOrderings { $0.sortOrderings = old + [ by ] + e }
-      else                          { $0.sortOrderings = [ by ] + e }
+      $0.sortOrderings.append(by)
+      $0.sortOrderings.append(contentsOf: e)
     }
   }
   
   @inlinable
   func order(by: String, _ e: String...) -> Self {
     transform {
-      var ops = [ SortOrdering ]()
-      if let p = SortOrdering.parse(by) { ops += p }
+      if let p = SortOrdering.parse(by) { $0.sortOrderings += p }
+      else { assertionFailure("Could not parse order string")}
       for by in e {
-        if let p = SortOrdering.parse(by) { ops += p }
+        if let p = SortOrdering.parse(by) {
+          $0.sortOrderings.append(contentsOf: p)
+        }
+        else { assertionFailure("Could not parse order string")}
       }
-
-      if let old = $0.sortOrderings { $0.sortOrderings = old + ops }
-      else                          { $0.sortOrderings = ops }
     }
   }
 }
@@ -188,8 +177,7 @@ public extension DatabaseFetchSpecification
       for key in repeat each key {
         let attribute = Object.e[keyPath: key]
         let so = SortOrdering(key: AttributeKey(attribute), selector: selector)
-        if $0.sortOrderings == nil { $0.sortOrderings = [ so ] }
-        else { $0.sortOrderings?.append(so) }
+        $0.sortOrderings.append(so)
       }
     }
   }
@@ -219,7 +207,7 @@ public extension DatabaseFetchSpecification
       if clear { $0.prefetchingRelationshipKeyPathes = [] }
       for relationship in repeat each relationship {
         let relationship = Object.e[keyPath: relationship]
-        $0.prefetchingRelationshipKeyPathes?.append(relationship.name)
+        $0.prefetchingRelationshipKeyPathes.append(relationship.name)
       }
     }
   }
@@ -233,7 +221,7 @@ public extension DatabaseFetchSpecification
       if clear { $0.prefetchingRelationshipKeyPathes = [] }
       for relationship in repeat each relationship {
         let relationship = Object.e[keyPath: relationship]
-        $0.prefetchingRelationshipKeyPathes?.append(relationship.name)
+        $0.prefetchingRelationshipKeyPathes.append(relationship.name)
       }
     }
   }
@@ -247,7 +235,7 @@ public extension DatabaseFetchSpecification
       if clear { $0.prefetchingRelationshipKeyPathes = [] }
       for relationship in repeat each relationship {
         let relationship = Object.e[keyPath: relationship]
-        $0.prefetchingRelationshipKeyPathes?.append(relationship.name)
+        $0.prefetchingRelationshipKeyPathes.append(relationship.name)
       }
     }
   }
@@ -257,17 +245,19 @@ public extension DatabaseFetchSpecification
 
 public extension FetchSpecification {
   
+  @inlinable
   static func select<T: EntityType>(_ attributes: String..., from: T.Type)
               -> FetchSpecification
   {
     var fs = ModelFetchSpecification(entity: from.entity)
-    fs.fetchAttributeNames = attributes.isEmpty ? nil : attributes
+    fs.fetchAttributeNames = attributes
     return fs
   }
 
   
   // MARK: - Ordering
   
+  @inlinable
   func order(by    : Attribute...,
              asc   : Attribute? = nil,
              desc  : Attribute? = nil,
@@ -277,35 +267,28 @@ public extension FetchSpecification {
   {
     var fs = self
     
-    var ops = [ SortOrdering ]()
-    
     for by in by {
       let so = SortOrdering(key: AttributeKey(by), selector: .CompareAscending)
-      ops.append(so)
+      fs.sortOrderings.append(so)
     }
     if let by = asc {
       let so = SortOrdering(key: AttributeKey(by), selector: .CompareAscending)
-      ops.append(so)
+      fs.sortOrderings.append(so)
     }
     if let by = desc {
       let so = SortOrdering(key: AttributeKey(by), selector: .CompareDescending)
-      ops.append(so)
+      fs.sortOrderings.append(so)
     }
     if let by = iasc {
       let so = SortOrdering(key: AttributeKey(by),
                             selector: .CompareCaseInsensitiveAscending)
-      ops.append(so)
+      fs.sortOrderings.append(so)
     }
     if let by = idesc {
       let so = SortOrdering(key: AttributeKey(by),
                             selector: .CompareCaseInsensitiveDescending)
-      ops.append(so)
+      fs.sortOrderings.append(so)
     }
-    
-    guard !ops.isEmpty else { return self }
-    
-    if let old = fs.sortOrderings { fs.sortOrderings = old + ops }
-    else                          { fs.sortOrderings = ops       }
     return fs
   }
 }

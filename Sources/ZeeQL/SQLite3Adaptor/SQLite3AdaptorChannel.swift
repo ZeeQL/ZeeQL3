@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 03/03/17.
-//  Copyright © 2017-2020 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
 //
 
 import struct Foundation.Data
@@ -286,7 +286,7 @@ open class SQLite3AdaptorChannel : AdaptorChannel {
       if refetchAll {
         let q  = qualifierToMatchAllValues(pkey)
         let fs = ModelFetchSpecification(entity: entity, qualifier: q,
-                                         sortOrderings: nil, limit: 2)
+                                         sortOrderings: [], limit: 2)
         var rec : AdaptorRecord? = nil
         try selectAttributes(entity.attributes, fs, lock: false, entity) {
           record in

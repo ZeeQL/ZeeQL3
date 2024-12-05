@@ -139,7 +139,7 @@ open class ActiveDataSource<Object: ActiveRecordType>: AccessDataSource<Object>,
     var cfs = fs
     cfs.fetchesReadOnly     = true
     cfs.fetchAttributeNames = pkeys
-    cfs.prefetchingRelationshipKeyPathes = nil
+    cfs.prefetchingRelationshipKeyPathes = []
     
     let pkeyAttrs = pkeys.compactMap { entity[attribute: $0] }
     assert(pkeyAttrs.count == pkeys.count, "could not lookup all pkeys!")
@@ -177,7 +177,7 @@ open class ActiveDataSource<Object: ActiveRecordType>: AccessDataSource<Object>,
       // The idea is that this preserves the WHERE part of the query, including
       // relationships.
       var cfs = fs
-      cfs.sortOrderings = nil // no need to sort
+      cfs.sortOrderings = [] // no need to sort
       
       // hm, well, OK.
       cfs.fetchLimit  = 1 // TBD: could use '2' to detect query issues
