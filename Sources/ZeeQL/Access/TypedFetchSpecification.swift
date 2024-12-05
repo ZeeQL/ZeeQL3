@@ -106,3 +106,41 @@ public struct TypedFetchSpecification<Object: DatabaseObject>
   }
   
 }
+
+extension TypedFetchSpecification: Equatable {
+  
+  public static func ==(lhs: Self, rhs: Self) -> Bool {
+    guard lhs.usesDistinct        == rhs.usesDistinct,
+          lhs.locksObjects        == rhs.locksObjects,
+          lhs.deep                == rhs.deep,
+          lhs.requiresAllQualifierBindingVariables ==
+            rhs.requiresAllQualifierBindingVariables,
+          lhs.prefetchingRelationshipKeyPathes ==
+            rhs.prefetchingRelationshipKeyPathes,
+          lhs.fetchesRawRows      == rhs.fetchesRawRows,
+          lhs.fetchesReadOnly     == rhs.fetchesReadOnly,
+          lhs.fetchAttributeNames == rhs.fetchAttributeNames,
+          lhs.sortOrderings       == rhs.sortOrderings,
+          lhs.fetchLimit          == rhs.fetchLimit,
+          lhs.fetchOffset         == rhs.fetchOffset else { return false }
+
+    if let lhs = lhs.qualifier { return lhs.isEqual(to: rhs.entity) }
+    else if rhs.qualifier != nil { return false }
+
+    guard lhs.entityName == rhs.entityName else { return false }
+    if let lhs = lhs.entity { return lhs.isEqual(to: rhs.entity) }
+    else if rhs.entity != nil { return false }
+    
+    if lhs.hints.count != rhs.hints.count { return false }
+    return eq(lhs.hints, rhs.hints)
+  }
+}
+extension TypedFetchSpecification: EquatableType {
+  
+  public func isEqual(to object: Any?) -> Bool {
+    // TBD: Would we want to allow comparison to ModelFS and such? That *might*
+    //      make sense?
+    guard let typed = object as? Self else { return false }
+    return self == typed
+  }
+}
