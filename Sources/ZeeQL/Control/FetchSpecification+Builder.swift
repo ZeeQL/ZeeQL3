@@ -138,6 +138,51 @@ public extension FetchSpecification {
       }
     }
   }
+  @inlinable
+  func order(by    : Attribute...,
+             asc   : Attribute? = nil,
+             desc  : Attribute? = nil,
+             iasc  : Attribute? = nil,
+             idesc : Attribute? = nil)
+       -> Self
+  {
+    transform { fs in
+      for by in by {
+        let so = SortOrdering(key: AttributeKey(by), selector: .CompareAscending)
+        fs.sortOrderings.append(so)
+      }
+      if let by = asc {
+        let so = SortOrdering(key: AttributeKey(by), selector: .CompareAscending)
+        fs.sortOrderings.append(so)
+      }
+      if let by = desc {
+        let so = SortOrdering(key: AttributeKey(by), selector: .CompareDescending)
+        fs.sortOrderings.append(so)
+      }
+      if let by = iasc {
+        let so = SortOrdering(key: AttributeKey(by),
+                              selector: .CompareCaseInsensitiveAscending)
+        fs.sortOrderings.append(so)
+      }
+      if let by = idesc {
+        let so = SortOrdering(key: AttributeKey(by),
+                              selector: .CompareCaseInsensitiveDescending)
+        fs.sortOrderings.append(so)
+      }
+    }
+  }
+}
+
+extension FetchSpecification {
+  
+  @inlinable
+  static func select<T: EntityType>(_ attributes: String..., from: T.Type)
+              -> FetchSpecification // <= because we need the entity
+  {
+    var fs = ModelFetchSpecification(entity: from.entity)
+    fs.fetchAttributeNames = attributes
+    return fs
+  }
 }
 
 
@@ -240,55 +285,4 @@ public extension DatabaseFetchSpecification
     }
   }
   #endif // compiler(>=6)
-}
-
-
-public extension FetchSpecification {
-  
-  @inlinable
-  static func select<T: EntityType>(_ attributes: String..., from: T.Type)
-              -> FetchSpecification
-  {
-    var fs = ModelFetchSpecification(entity: from.entity)
-    fs.fetchAttributeNames = attributes
-    return fs
-  }
-
-  
-  // MARK: - Ordering
-  
-  @inlinable
-  func order(by    : Attribute...,
-             asc   : Attribute? = nil,
-             desc  : Attribute? = nil,
-             iasc  : Attribute? = nil,
-             idesc : Attribute? = nil)
-       -> FetchSpecification
-  {
-    var fs = self
-    
-    for by in by {
-      let so = SortOrdering(key: AttributeKey(by), selector: .CompareAscending)
-      fs.sortOrderings.append(so)
-    }
-    if let by = asc {
-      let so = SortOrdering(key: AttributeKey(by), selector: .CompareAscending)
-      fs.sortOrderings.append(so)
-    }
-    if let by = desc {
-      let so = SortOrdering(key: AttributeKey(by), selector: .CompareDescending)
-      fs.sortOrderings.append(so)
-    }
-    if let by = iasc {
-      let so = SortOrdering(key: AttributeKey(by),
-                            selector: .CompareCaseInsensitiveAscending)
-      fs.sortOrderings.append(so)
-    }
-    if let by = idesc {
-      let so = SortOrdering(key: AttributeKey(by),
-                            selector: .CompareCaseInsensitiveDescending)
-      fs.sortOrderings.append(so)
-    }
-    return fs
-  }
 }
