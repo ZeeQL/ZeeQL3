@@ -124,7 +124,7 @@ extension TypedFetchSpecification: Equatable {
           lhs.fetchLimit          == rhs.fetchLimit,
           lhs.fetchOffset         == rhs.fetchOffset else { return false }
 
-    if let lhs = lhs.qualifier { return lhs.isEqual(to: rhs.entity) }
+    if let lhs = lhs.qualifier { return lhs.isEqual(to: rhs.qualifier) }
     else if rhs.qualifier != nil { return false }
 
     guard lhs.entityName == rhs.entityName else { return false }
