@@ -39,7 +39,7 @@ public protocol FetchSpecification : SmartDescription {
   var hints               : [ String : Any ]  { get set }
   subscript(hint h: String) -> Any?           { get set }
 
-  func fetchSpecificiationWith(bindings: Any?) throws -> FetchSpecification?
+  func resolvingBindings(_ bindings: Any?) throws -> FetchSpecification
 }
 
 public protocol AdaptorRecordFetchSpecification : FetchSpecification {
@@ -111,18 +111,18 @@ extension FetchSpecification { // Default Imp
   }
   
   /**
-   * Return a copy of the fetch specification which has the qualifier bindings
-   * resolved against the given argument. Plus all xyzBindPattern hints.
+   * Return a copy of the ``FetchSpecification`` which has the qualifier
+   * bindings resolved against the given argument. Plus all xyzBindPattern
+   * hints.
    * If the fetch spec has no bindings, the exisiting object is returned.
    *
-   * The syntax for bindings in string qualifiers is $binding (e.g.
-   * lastname = $lastname).
+   * The syntax for bindings in string qualifiers is `$binding` (e.g.
+   * `lastname = $lastname`).
    *
-   * The syntax for bind-pattern hints is '%(binding)s'.
+   * The syntax for bind-pattern hints is `%(binding)s` (note the trailing
+   * format specifier!).
    */
-  public func fetchSpecificiationWithBindings(_ bindings: Any?) throws
-              -> FetchSpecification?
-  {
+  public func resolvingBindings(_ bindings: Any?) throws -> FetchSpecification {
     var boundFS = self
     
     boundFS.hints = resolveHintBindPatternsWith(bindings: bindings)
@@ -134,13 +134,6 @@ extension FetchSpecification { // Default Imp
     }
     
     return boundFS
-  }
-  
-  @inlinable // TODO: deprecate
-  public func fetchSpecificiationWith(bindings: Any?) throws
-              -> FetchSpecification?
-  {
-    return try fetchSpecificiationWithBindings(bindings)
   }
 }
 

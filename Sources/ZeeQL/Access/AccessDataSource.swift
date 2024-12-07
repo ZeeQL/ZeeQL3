@@ -158,8 +158,8 @@ public extension AccessDataSourceType {
    * }
    * ```
    *
-   * This calls ``FetchSpecification/fetchSpecificiationWith(bindings:)-585ip``
-   * and passes in the given key/value pair (contactId=12345).
+   * This calls ``FetchSpecification/resolvingBindings(_:)`` and passes in the
+   * given key/value pair (contactId=12345).
    *
    * Finally the fetch will be performed using
    * ``_primaryFetchObjects``.
@@ -174,13 +174,7 @@ public extension AccessDataSourceType {
                     yield: ( Object ) throws -> Void) throws
   {
     if !binds.isEmpty {
-      guard let fs = try fetchSpecification
-        .fetchSpecificiationWith(bindings: binds) else
-      {
-        throw AccessDataSourceError
-          .CouldNotResolveBindings(fetchSpecification: fetchSpecification,
-                                   bindings: binds)
-      }
+      let fs = try fetchSpecification.resolvingBindings(binds)
       try _primaryFetchObjects(fs) { try yield($0) }
     }
     else {
@@ -202,8 +196,8 @@ public extension AccessDataSourceType {
    *
    * This will lookup the `FetchSpecification` named "myContacts" in
    * the `Entity` of the datasource. It then calls
-   * ``FetchSpecification/fetchSpecificiationWith(bindings:)-585ip``
-   * and passes in the given key/value pair (contactId=12345).
+   * ``FetchSpecification/resolvingBindings(_:)`` and passes in the given
+   * key/value pair (contactId=12345).
    *
    * Finally the fetch will be performed using
    * ``_primaryFetchObjects``.
@@ -351,15 +345,7 @@ public extension AccessDataSourceType {
     }
     
     /* apply bindings */
-    if let qb = qb {
-      guard let fs = try fs.fetchSpecificiationWith(bindings: qb) else {
-        throw AccessDataSourceError
-                .CannotConstructFetchSpecification(.bindingFailed)
-      }
-      return fs
-    }
-    
-    return fs
+    return try fs.resolvingBindings(qb)
   }
 
 }
