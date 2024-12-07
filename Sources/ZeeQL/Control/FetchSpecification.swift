@@ -80,22 +80,26 @@ extension FetchSpecification { // Default Imp
   /**
    * FIXME: document me. This seems to return values for all hints which end in
    * 'BindPattern'. The values are retrieved by applying the
-   * KeyValueStringFormatter with the given object.
+   * `KeyValueStringFormatter` with the given object.
    *
-   * This formatter does stuff like '%(lastname)s'.
+   * This formatter does stuff like `%(lastname)s`.
    *
    * Sample:
-   *
-   *     var fs = FetchSpecification()
-   *     fs[hint: "CustomQueryExpressionHintKeyBindPattern"] =
-   *                 "%%(tables)s WHERE id = %(id)s"
+   * ```swift
+   * var fs = FetchSpecification()
+   * fs[hint: "CustomQueryExpressionHintKeyBindPattern"] =
+   *             "%%(tables)s WHERE id = %(id)s"
+   * ```
    */
-  func resolveHintBindPatternsWith(bindings: Any?) -> [ String : Any ] {
-    guard !hints.isEmpty else { return [:] }
+  @usableFromInline
+  func resolveHintBindPatterns(with bindings: Any?) -> [ String : Any ]? {
+    guard !hints.isEmpty else { return nil }
     
+    var didBind = false
     var boundHints = hints
     for ( key, value ) in hints {
       guard key.hasSuffix("BindPattern") else { continue }
+      didBind = true
       
       let sValue = "\(value)" // Hm
       
@@ -107,7 +111,10 @@ extension FetchSpecification { // Default Imp
       boundHints.removeValue(forKey: key)
       boundHints[bKey] = fValue
     }
-    return boundHints
+    return didBind ? boundHints : nil
+  }
+  var hasUnresolvedBindPatterns: Bool {
+    hints.keys.contains(where: { $0.hasSuffix("BindPattern") })
   }
   
   /**
@@ -122,17 +129,19 @@ extension FetchSpecification { // Default Imp
    * The syntax for bind-pattern hints is `%(binding)s` (note the trailing
    * format specifier!).
    */
+  @inlinable
   public func resolvingBindings(_ bindings: Any?) throws -> FetchSpecification {
+    let newHints = resolveHintBindPatterns(with: bindings)
+    let hasUnresolved = qualifier?.hasUnresolvedBindings ?? false
+    if newHints == nil && !hasUnresolved { return self }
+    
     var boundFS = self
-    
-    boundFS.hints = resolveHintBindPatternsWith(bindings: bindings)
-    
-    if let q = qualifier {
+    if let newHints { boundFS.hints = newHints }
+    if hasUnresolved, let q = boundFS.qualifier {
       boundFS.qualifier =
         try q.qualifierWith(bindings: bindings,
                             requiresAll: requiresAllQualifierBindingVariables)
     }
-    
     return boundFS
   }
 }
