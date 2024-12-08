@@ -14,6 +14,7 @@
  */
 public struct AttributeKey : Key, Equatable {
 
+  @inlinable
   public var key : String { return attribute.name }
   
   public let entity    : Entity?
