@@ -14,7 +14,7 @@
  * Their primary feature over `ModelAttribute`s is that such are generic over
  * the value type.
  */
-open class CodeAttribute<T: AttributeValue> : ModelAttribute {
+open class CodeAttribute<T: AttributeValue> : ModelAttribute, TypedProperty {
   
   // Note: we remove the keyword
   @inlinable

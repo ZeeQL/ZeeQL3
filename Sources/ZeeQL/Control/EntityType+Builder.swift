@@ -113,53 +113,50 @@ public extension TypedEntityObject {
 public extension TypedEntityType where FullEntity: CodeEntity<Self> {
   
   // TODO: select w/ pack iteration
+  
+  // Maybe the `where` should work on typed keys!
 
   @inlinable
-  static func `where`<V>(
-    _ key: Swift.KeyPath<FullEntity, CodeAttribute<V>>,
-    _ operation: ComparisonOperation,
-    _ value: V
+  static func `where`<A: TypedProperty>(
+    _ key       : Swift.KeyPath<FullEntity, A>,
+    _ operation : ComparisonOperation,
+    _ value     : A.T
   ) -> TypedFetchSpecification<Self>
-    where V: AttributeValue
   {
     // if we need no attributes
     var fs = TypedFetchSpecification<Self>(entity: Self.entity)
-    let attribute = Self.e[keyPath: key]
-    fs.qualifier = KeyValueQualifier(AttributeKey(attribute), operation, value)
+    let property = Self.e[keyPath: key]
+    fs.qualifier = KeyValueQualifier(StringKey(property.name), operation, value)
     return fs
   }
   
   @inlinable
-  static func `where`<V>(
-    _ key: Swift.KeyPath<FullEntity, CodeAttribute<V>>,
-    _ value: V
-  ) -> TypedFetchSpecification<Self>
-    where V: AttributeValue
+  static func `where`<A>(_ key: Swift.KeyPath<FullEntity, A>,
+                         _ value: A.T) -> TypedFetchSpecification<Self>
+    where A: TypedProperty
   {
     return `where`(key, .EqualTo, value)
   }
   
   @inlinable
-  static func `where`<V>(
-    _ key: Swift.KeyPath<FullEntity, CodeAttribute<V?>>,
-    _ operation: ComparisonOperation,
-    _ value: V?
+  static func `where`<A>(
+    _ key       : Swift.KeyPath<FullEntity, A>,
+    _ operation : ComparisonOperation = .EqualTo,
+    _ value     : A.T
   ) -> TypedFetchSpecification<Self>
-    where V: AttributeValue
+    where A: TypedProperty, A.T: AnyOptional
   {
     // if we need no attributes
     var fs = TypedFetchSpecification<Self>(entity: Self.entity)
-    let attribute = Self.e[keyPath: key]
-    fs.qualifier = KeyValueQualifier(AttributeKey(attribute), operation, value)
+    let property = Self.e[keyPath: key]
+    fs.qualifier = KeyValueQualifier(StringKey(property.name), operation, value)
     return fs
   }
   
   @inlinable
-  static func `where`<V>(
-    _ key: Swift.KeyPath<FullEntity, CodeAttribute<V?>>,
-    _ value: V?
-  ) -> TypedFetchSpecification<Self>
-    where V: AttributeValue
+  static func `where`<A>(_ key: Swift.KeyPath<FullEntity, A>,
+                         _ value: A.T) -> TypedFetchSpecification<Self>
+    where A: TypedProperty, A.T: AnyOptional
   {
     return `where`(key, .EqualTo, value)
   }

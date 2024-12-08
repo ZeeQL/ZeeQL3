@@ -33,6 +33,10 @@ public protocol Key : Expression, ExpressionEvaluation, EquatableType,
   func append(_ key: Key) -> Key
 }
 
+public protocol TypedKey<T>: Key {
+  associatedtype T
+}
+
 public extension Key {
   
   // MARK: - value

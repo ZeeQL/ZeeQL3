@@ -418,12 +418,14 @@ open class ModelAttribute : Attribute, Equatable {
 
 public extension Attribute {
   
+  @inlinable
   func eq(_ attr: Attribute) -> KeyComparisonQualifier {
     let key      = AttributeKey(self)
     let otherKey = AttributeKey(attr)
     return KeyComparisonQualifier(key, .EqualTo, otherKey)
   }
   
+  @inlinable
   func eq(_ value : Any?) -> KeyValueQualifier {
     let key = AttributeKey(self)
     return KeyValueQualifier(key, .EqualTo, value)
@@ -431,7 +433,8 @@ public extension Attribute {
 }
 
 public extension Attribute {
-  
+
+  @inlinable
   func like(_ pattern : String) -> KeyValueQualifier {
     let key = AttributeKey(self)
     return KeyValueQualifier(key, .Like, pattern)

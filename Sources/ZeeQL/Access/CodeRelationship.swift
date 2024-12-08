@@ -192,8 +192,11 @@ open class CodeRelationshipBase<Target: SwiftObject>
 }
 
 open class CodeRelationship<Target: DatabaseObject>
-             : CodeRelationshipBase<Target>, CodeRelationshipType
+             : CodeRelationshipBase<Target>, CodeRelationshipType,
+               TypedProperty
 {
+  public typealias T = Target
+  
   public var codeEntity : Entity? = nil
   override open var entity : Entity {
     set {

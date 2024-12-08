@@ -244,7 +244,7 @@ public extension AccessDataSource { // Finders
    *
    * Example:
    * ```swift
-   * let a = personDataSource.find("firstCustomer")
+   * let a = personDataSource.find("firstCustomer") // fetchspec
    * ```
    * or:
    * ```swift
@@ -260,14 +260,7 @@ public extension AccessDataSource { // Finders
   func find(_ name: String, _ bindings: Any? = nil) throws -> Object? {
     guard let entity = entity else { return nil }
     guard var fs = entity[fetchSpecification: name] else { return nil }
-    
-    if let bindings = bindings {
-      guard let cfs = try fs.fetchSpecificiationWith(bindings: bindings) else {
-        return nil
-      }
-      fs = cfs
-    }
-    
+    fs = try fs.resolvingBindings(bindings)
     return try find(fs)
   }
   /**
