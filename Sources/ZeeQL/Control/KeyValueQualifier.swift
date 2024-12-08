@@ -18,19 +18,46 @@ public struct KeyValueQualifier : Qualifier, Equatable {
     self.value     = value
     self.operation = op
   }
+
   @inlinable
   public init(_ key: String, _ op: ComparisonOperation = .EqualTo,
               _ value: Any?)
   {
     self.init(StringKey(key), op, value)
   }
+  
+  @inlinable
+  public init<T>(_ key: Key, _ op: ComparisonOperation = .EqualTo, _ value: T)
+    where T: AnyOptional
+  {
+    self.keyExpr   = key
+    self.value     = value.value
+    self.operation = op
+  }
+  @inlinable
+  public init<T>(_ key: String, _ op: ComparisonOperation = .EqualTo,
+                 _ value: T)
+    where T: AnyOptional
+  {
+    self.init(StringKey(key), op, value)
+  }
+
   @inlinable
   public init(_ key: String, _ op: String, _ value: Any?) {
     self.init(StringKey(key), ComparisonOperation(string: op), value)
   }
   
+  
+  // MARK: - Properties
+  
   @inlinable
   public var key : String { return keyExpr.key }
+  
+  @inlinable
+  public var isEmpty : Bool { return false }
+  
+
+  // MARK: - Expressions
   
   @inlinable
   public var leftExpression  : Expression { return keyExpr }
@@ -39,13 +66,13 @@ public struct KeyValueQualifier : Qualifier, Equatable {
     return ConstantValue(value: value)
   }
   
+  
+  // MARK: - Variables
+  
   @inlinable
   public var variable : QualifierVariable? {
     return value as? QualifierVariable
   }
-  
-  @inlinable
-  public var isEmpty : Bool { return false }
   
   @inlinable
   public func addReferencedKeys(to set: inout Set<String>) {
