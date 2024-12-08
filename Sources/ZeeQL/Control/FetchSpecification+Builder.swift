@@ -195,39 +195,39 @@ public extension DatabaseFetchSpecification
   // TODO: select w/ pack iteration
 
   // MARK: - Qualifier
-  
+
+  // Maybe the `where` should work on typed keys!
+
   @inlinable
-  func `where`<V>(_ key: Swift.KeyPath<Object.FullEntity, CodeAttribute<V>>,
-                  _ operation: ComparisonOperation,
-                  _ value: V) -> Self
-    where V: AttributeValue
+  func `where`<A: TypedProperty>(_ key: Swift.KeyPath<Object.FullEntity, A>,
+                                 _ operation: ComparisonOperation,
+                                 _ value: A.T) -> Self
   {
-    let attribute = Object.e[keyPath: key]
-    return `where`(KeyValueQualifier(AttributeKey(attribute), operation, value))
+    let property = Object.e[keyPath: key]
+    return `where`(KeyValueQualifier(StringKey(property.name), operation,value))
   }
   
   @inlinable
-  func `where`<V>(_ key: Swift.KeyPath<Object.FullEntity, CodeAttribute<V>>,
-                  _ value: V) -> Self
-    where V: AttributeValue
+  func `where`<A: TypedProperty>(_ key: Swift.KeyPath<Object.FullEntity, A>,
+                                 _ value: A.T) -> Self
   {
     return `where`(key, .EqualTo, value)
   }
 
   @inlinable
-  func `where`<V>(_ key: Swift.KeyPath<Object.FullEntity, CodeAttribute<V?>>,
-                  _ operation: ComparisonOperation,
-                  _ value: V?) -> Self
-    where V: AttributeValue
+  func `where`<A: TypedProperty>(_ key: Swift.KeyPath<Object.FullEntity, A>,
+                                 _ operation: ComparisonOperation,
+                                 _ value: A.T) -> Self
+    where A: TypedProperty, A.T: AnyOptional
   {
-    let attribute = Object.e[keyPath: key]
-    return `where`(KeyValueQualifier(AttributeKey(attribute), operation, value))
+    let property = Object.e[keyPath: key]
+    return `where`(KeyValueQualifier(StringKey(property.name), operation,value))
   }
   
   @inlinable
-  func `where`<V>(_ key: Swift.KeyPath<Object.FullEntity, CodeAttribute<V?>>,
-                  _ value: V?) -> Self
-    where V: AttributeValue
+  func `where`<A: TypedProperty>(_ key: Swift.KeyPath<Object.FullEntity, A>,
+                                 _ value: A.T) -> Self
+    where A: TypedProperty, A.T: AnyOptional
   {
     return `where`(key, .EqualTo, value)
   }
@@ -236,8 +236,9 @@ public extension DatabaseFetchSpecification
   // MARK: - Ordering
 
   #if compiler(>=6)
-  func order<each V: AttributeValue>(
-    by key: repeat Swift.KeyPath<Object.FullEntity, CodeAttribute<each V>>,
+  @inlinable
+  func order<each A: Attribute>(
+    by key: repeat Swift.KeyPath<Object.FullEntity, each A>,
     using selector: SortOrdering.Selector = .CompareAscending
   ) -> Self
   {
@@ -266,11 +267,10 @@ public extension DatabaseFetchSpecification
   // MARK: - Prefetch
 
   #if compiler(>=6)
-  // TODO: can we do both toOne and toMany in one?
-  // a KeyPath that has the parent class (CodeRelationship) doesn't work?
-  func prefetch<each O: DatabaseObject>(
+  @inlinable
+  func prefetch<each O: CodeRelationshipType>(
     _ relationship:
-      repeat Swift.KeyPath<Object.FullEntity, ToOneRelationship<each O>>,
+      repeat Swift.KeyPath<Object.FullEntity, each O>,
     clear: Bool = false
   ) -> Self
   {
@@ -282,33 +282,6 @@ public extension DatabaseFetchSpecification
       }
     }
   }
-  func prefetch<each O: DatabaseObject>(
-    _ relationship:
-      repeat Swift.KeyPath<Object.FullEntity, ToManyRelationship<each O>>,
-    clear: Bool = false
-  ) -> Self
-  {
-    transform {
-      if clear { $0.prefetchingRelationshipKeyPathes = [] }
-      for relationship in repeat each relationship {
-        let relationship = Object.e[keyPath: relationship]
-        $0.prefetchingRelationshipKeyPathes.append(relationship.name)
-      }
-    }
-  }
-  func prefetch<each O: DatabaseObject>(
-    _ relationship:
-      repeat Swift.KeyPath<Object.FullEntity, CodeRelationship<each O>>,
-    clear: Bool = false
-  ) -> Self
-  {
-    transform {
-      if clear { $0.prefetchingRelationshipKeyPathes = [] }
-      for relationship in repeat each relationship {
-        let relationship = Object.e[keyPath: relationship]
-        $0.prefetchingRelationshipKeyPathes.append(relationship.name)
-      }
-    }
-  }
+
   #endif // compiler(>=6)
 }
