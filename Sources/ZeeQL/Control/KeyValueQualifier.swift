@@ -25,7 +25,7 @@ public struct KeyValueQualifier : Qualifier, Equatable {
     self.init(StringKey(key), op, value)
   }
   @inlinable
-  public init(_ key: String, _ op: String = "==", _ value: Any?) {
+  public init(_ key: String, _ op: String, _ value: Any?) {
     self.init(StringKey(key), ComparisonOperation(string: op), value)
   }
   
