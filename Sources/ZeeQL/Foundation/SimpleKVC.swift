@@ -3,7 +3,7 @@
 //  ZeeQL3
 //
 //  Created by Helge Heß on 6/1/16.
-//  Copyright © 2016-2021 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2016-2024 ZeeZide GmbH. All rights reserved.
 //
 
 import class Foundation.NSObject
@@ -19,8 +19,19 @@ public protocol MutableKeyValueCodingType : AnyObject {
   // Well, it could return 'self' with the updated struct?
   
   func takeValue(_ value : Any?, forKey k: String) throws
-  
+  func takeValues(_ values : [ String : Any? ]) throws
 }
+
+public extension MutableKeyValueCodingType {
+  
+  @inlinable
+  func takeValues(_ values : [ String : Any? ]) throws {
+    for ( key, value ) in values {
+      try takeValue(value, forKey: key)
+    }
+  }
+}
+
 public protocol KeyValueCodingTargetValue : AnyObject {
   // Again, only makes sense for classes? But we'd like to have structs.
   func setValue(_ value: Any?) throws
@@ -28,6 +39,7 @@ public protocol KeyValueCodingTargetValue : AnyObject {
 
 public extension KeyValueCodingType {
 
+  @inlinable
   func value(forKey k: String) -> Any? {
     return KeyValueCoding.defaultValue(forKey: k, inObject: self)
   }
@@ -37,6 +49,7 @@ public extension KeyValueCodingType {
 public extension KeyValueCodingType {
   // TODO: own protocol for that
   
+  @inlinable
   func values(forKeys keys: [String]) -> [ String : Any ] {
     var values = [ String : Any ]()
     values.reserveCapacity(keys.count)
@@ -59,12 +72,14 @@ public struct KeyValueCoding {
     case CannotTakeValueForKey(String)
   }
   
+  @inlinable
   public static func takeValue(_ v: Any?, forKeyPath p: String,
                                inObject o: Any?) throws
   {
     let path = p.split(separator: ".").map(String.init)
     try takeValue(v, forKeyPath: path, inObject: o)
   }
+  @inlinable
   public static func takeValue(_ v: Any?, forKeyPath p: [ String ],
                                inObject o: Any?) throws
   {
@@ -79,11 +94,13 @@ public struct KeyValueCoding {
     try takeValue(v, forKey: p[p.count - 1], inObject: t)
   }
 
+  @inlinable
   public static func value(forKeyPath p: String, inObject o: Any?) -> Any? {
     let path = p.split(separator: ".").map(String.init)
     return value(forKeyPath: path, inObject: o)
   }
   
+  @inlinable
   public static func value(forKeyPath p: [ String ], inObject o: Any?) -> Any? {
     var cursor = o
     for key in p {
@@ -93,6 +110,7 @@ public struct KeyValueCoding {
     return cursor
   }
 
+  @inlinable
   public static func takeValue(_ v: Any?, forKey k: String,
                                inObject o: Any?) throws
   {
@@ -114,6 +132,7 @@ public struct KeyValueCoding {
     }
   }
 
+  @inlinable
   public static func value(forKey k: String, inObject o: Any?) -> Any? {
     if let kvc = o as? KeyValueCodingType {
       return kvc.value(forKey: k)
@@ -121,6 +140,7 @@ public struct KeyValueCoding {
     return defaultValue(forKey: k, inObject: o)
   }
 
+  @inlinable
   public static func defaultValue(forKey k: String, inObject o: Any?) -> Any? {
     // Presumably this is really inefficient, but well :-)
     guard let object = o else { return nil }
@@ -158,6 +178,7 @@ public struct KeyValueCoding {
     return nil
   }
   
+  @inlinable
   public static func values(forKeys keys: [String], inObject o: Any?)
                      -> [ String : Any ]
   {
@@ -179,6 +200,7 @@ public struct KeyValueCoding {
 
 public extension KeyValueCoding {
   
+  @inlinable
   static func defaultValue(forKey k: String, inDictionary o: Any,
                            mirror: Mirror) -> Any?
   {
@@ -223,6 +245,7 @@ extension Dictionary: KeyValueCodingType /*, MutableKeyValueCodingType */ {
   // MutableKeyValueCodingType only really makes sense for classes, right?
   // Well, it could return 'self' with the updated struct?
 
+  @inlinable
   public mutating func takeValue(_ value : Any?, forKey key: String) throws {
     // TODO: support the Int.Type key values below
     guard let k = key as? Key else {
@@ -237,6 +260,7 @@ extension Dictionary: KeyValueCodingType /*, MutableKeyValueCodingType */ {
     self[k] = v
   }
   
+  @inlinable
   public func value(forKey k: String) -> Any? {
     if let k = k as? Key {
       guard let value : Value = self[k] else { return nil }
@@ -257,6 +281,7 @@ extension Dictionary: KeyValueCodingType /*, MutableKeyValueCodingType */ {
 extension Array : KeyValueCodingType {
   // KVC on an array is a map operation. Except for the special '@' functions.
   
+  @inlinable
   public func value(forKey k: String) -> Any? {
     // Element
     if k.hasPrefix("@") {
@@ -280,10 +305,12 @@ open class KeyValueCodingBox<T> : KeyValueCodingTargetValue {
   
   public final var value : T
   
-  init(_ value : T) {
+  @inlinable
+  public init(_ value : T) {
     self.value = value
   }
   
+  @inlinable
   public func setValue(_ value: Any?) throws {
     // TODO: more type coercion
     if let v = value as? T {
