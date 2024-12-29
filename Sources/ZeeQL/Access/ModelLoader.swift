@@ -698,6 +698,7 @@ open class CoreDataModelLoader : ModelLoader {
         attribute.valueType = String.self
       }
       else if lc.hasPrefix("int") { // funny, ?: doesn't work here
+        // Example: attributeType="Integer 64"
         if      attrType.hasSuffix("16") { attribute.valueType = Int16.self }
         else if attrType.hasSuffix("32") { attribute.valueType = Int32.self }
         else if attrType.hasSuffix("64") { attribute.valueType = Int64.self }
@@ -719,6 +720,43 @@ open class CoreDataModelLoader : ModelLoader {
       }
       else {
         log.warn("unsupported attr type in CoreData model: ", attrType)
+      }
+    }
+    
+
+    if let v = attrs["usesScalarValueType"] {
+      attribute.usesScalarValueType = boolValue(v)
+    }
+    if let v = attrs["defaultValueString"] {
+      assert(attribute.defaultValue == nil)
+      attribute.defaultValue = v
+    }
+    if let v = attrs["defaultDateTimeInterval"], let i = Double(v)
+    {
+      assert(attribute.defaultValue == nil)
+      attribute.defaultValue = Date(timeIntervalSinceReferenceDate: i)
+    }
+    if let v = attrs["minDateTimeInterval"], let i = Double(v) {
+      attribute.minDateTimeInterval = Date(timeIntervalSinceReferenceDate: i)
+    }
+    if let v = attrs["maxDateTimeInterval"], let i = Double(v) {
+      attribute.maxDateTimeInterval = Date(timeIntervalSinceReferenceDate: i)
+    }
+    
+    if boolValue(attrs["derived"]) {
+      attribute.derivationExpression = attrs["derivationExpression"]
+      assert(attribute.derivationExpression != nil)
+    }
+    else {
+      attribute.derivationExpression = nil
+    }
+    
+    if attribute.defaultValue == nil, let v = attrs["default"] {
+      if attribute.valueType == Date.self, let i = Double(v) {
+        attribute.defaultValue = Date(timeIntervalSinceReferenceDate: i)
+      }
+      else {
+        attribute.defaultValue = v
       }
     }
     
