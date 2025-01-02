@@ -14,6 +14,33 @@
 public class AdaptorOperation: Comparable, EquatableType, SmartDescription {
   // Note: an object because we also return values using this
   
+  @inlinable
+  public static func update(_ e: Entity, set: AdaptorRow, where q: Qualifier)
+                     -> Self
+  {
+    var me = AdaptorOperation(entity: e)
+    me.adaptorOperator = .update
+    me.changedValues   = set
+    me.qualifier       = q
+    return me
+  }
+  
+  @inlinable
+  public static func insert(_ values: AdaptorRow, into e: Entity) -> Self {
+    var me = AdaptorOperation(entity: e)
+    me.adaptorOperator = .insert
+    me.changedValues   = values
+    return me
+  }
+  
+  @inlinable
+  public static func delete(from e: Entity, where q: Qualifier) -> Self {
+    var me = AdaptorOperation(entity: e)
+    me.adaptorOperator = .delete
+    me.qualifier       = q
+    return me
+  }
+
   public enum Operator : Int { /* Note: sequence is relevant for comparison */
     case none   = 0
     case lock   = 1
@@ -123,5 +150,6 @@ public class AdaptorOperation: Comparable, EquatableType, SmartDescription {
 }
 
 #if swift(>=5.5)
+// AdaptorOperation itself can't be sent yet due to the closure.
 extension AdaptorOperation.Operator: Sendable {}
 #endif
