@@ -294,6 +294,18 @@ public extension AdaptorChannel {
     return affectedRows
   }
   
+  // MARK: - Adaptor Operations
+  
+  @inlinable
+  func performAdaptorOperations(_ ops : [ AdaptorOperation ]) throws {
+    var ops = ops
+    try performAdaptorOperations(&ops)
+  }
+  @inlinable
+  func performAdaptorOperation(_ op  : AdaptorOperation) throws {
+    var op = op
+    try performAdaptorOperation(&op)
+  }
 }
 
 /**
