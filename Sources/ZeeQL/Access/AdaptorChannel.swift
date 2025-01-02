@@ -29,7 +29,7 @@ public protocol AdaptorChannel : AdaptorQueryType, ModelNameMapper {
   func begin()    throws
   func commit()   throws
   func rollback() throws
-  var isTransactionInProgress : Bool { get }
+  var  isTransactionInProgress : Bool { get }
 
   
   // MARK: - Reflection
@@ -45,8 +45,8 @@ public protocol AdaptorChannel : AdaptorQueryType, ModelNameMapper {
   
   // MARK: - Adaptor Operations
   
-  func performAdaptorOperations(_ ops : [ AdaptorOperation ]) throws
-  func performAdaptorOperation (_ op  : AdaptorOperation)     throws
+  func performAdaptorOperations(_ ops : inout [ AdaptorOperation ]) throws
+  func performAdaptorOperation (_ op  : inout AdaptorOperation)     throws
   
   
   // MARK: - Operations
@@ -184,7 +184,7 @@ public extension AdaptorChannel {
    * - parameters:
    *   - ops: the array of AdaptorOperation's to be performed
    */
-  func performAdaptorOperations(_ ops: [ AdaptorOperation ]) throws {
+  func performAdaptorOperations(_ ops: inout [ AdaptorOperation ]) throws {
     // TBD: we should probably open a transaction if count > 1? Or is this the
     //      responsibility of the user?
     
@@ -202,8 +202,8 @@ public extension AdaptorChannel {
     if didOpenTx { try begin() }
     
     do {
-      for op in ops {
-        try performAdaptorOperation(op)
+      for idx in ops.indices {
+        try performAdaptorOperation(&ops[idx])
       }
     }
     catch {
@@ -222,8 +222,8 @@ public extension AdaptorChannel {
    *   - op: the ``AdaptorOperation`` to be performed
    */
   @inlinable
-  func performAdaptorOperation(_ op: AdaptorOperation) throws {
-    let affectedRows = try performAdaptorOperationN(op)
+  func performAdaptorOperation(_ op: inout AdaptorOperation) throws {
+    let affectedRows = try performAdaptorOperationN(&op)
     guard affectedRows == 1 else {
       throw AdaptorChannelError.OperationDidNotAffectOne
     }
@@ -241,7 +241,7 @@ public extension AdaptorChannel {
    * - Parameters:
    *   - op: the ``AdaptorOperation`` to be performed
    */
-  func performAdaptorOperationN(_ op: AdaptorOperation) throws -> Int {
+  func performAdaptorOperationN(_ op: inout AdaptorOperation) throws -> Int {
     // TBD: we might want to move evaluation to this method and make
     // updateValuesInRows..() etc create AdaptorOperation's. This might
     // easen the creation of non-SQL adaptors.

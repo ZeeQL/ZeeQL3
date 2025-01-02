@@ -861,14 +861,19 @@ open class DatabaseChannelBase {
     
     /* turn db ops into adaptor ops */
     
-    let aops = try adaptorOperationsForDatabaseOperations(ops)
+    var aops = try adaptorOperationsForDatabaseOperations(ops)
     guard !aops.isEmpty else { return } /* nothing to do */
     
     /* perform adaptor ops */
     
     var didOpenChannel = false
-    if adaptorChannel == nil {
+    let adaptorChannel : AdaptorChannel
+    if let c = self.adaptorChannel {
+      adaptorChannel = c
+    }
+    else {
       adaptorChannel = try acquireChannel()
+      self.adaptorChannel = adaptorChannel
       didOpenChannel = true
     }
     defer {
@@ -879,7 +884,7 @@ open class DatabaseChannelBase {
     
     // Transactions: The `AdaptorChannel` opens a transaction if there is more
     // than one operation. Also: the `Database` embeds it into a TX too.
-    try adaptorChannel!.performAdaptorOperations(aops)
+    try adaptorChannel.performAdaptorOperations(&aops)
     
     
     // OK, the database operations have been successful. Now we need to handle
@@ -971,7 +976,7 @@ open class DatabaseChannelBase {
 
     for op in ops {
       let entity = op.entity
-      let aop    = AdaptorOperation(entity: entity)
+      var aop    = AdaptorOperation(entity: entity)
       
       var dbop = op.databaseOperator
       if case .none = op.databaseOperator {

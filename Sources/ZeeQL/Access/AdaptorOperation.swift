@@ -11,7 +11,7 @@
  * an INSERT. The object keeps all the relevant information to calculate the
  * SQL for the operation.
  */
-public class AdaptorOperation: Comparable, EquatableType, SmartDescription {
+public struct AdaptorOperation: Comparable, EquatableType, SmartDescription {
   // Note: an object because we also return values using this
   
   @inlinable
@@ -61,7 +61,7 @@ public class AdaptorOperation: Comparable, EquatableType, SmartDescription {
   public var resultRow       : AdaptorRow?
   
   /// Run when the operation did complete
-  open   var completionBlock : (() -> ())?
+  public var completionBlock : (() -> ())?
   
   @inlinable
   public init(entity: Entity) {
@@ -122,7 +122,7 @@ public class AdaptorOperation: Comparable, EquatableType, SmartDescription {
     
     if bq == q { return self } // no change
     
-    let ao = AdaptorOperation(self) // copy
+    var ao = AdaptorOperation(self) // copy
     ao.qualifier = bq
     return ao
   }
