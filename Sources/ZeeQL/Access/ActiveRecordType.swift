@@ -34,9 +34,9 @@ public protocol ActiveRecordType : DatabaseObject,
 }
 
 public extension ActiveRecordType {
-  var globalID: GlobalID? {
-    return entity.globalIDForRow(self)
-  }
+  
+  @inlinable
+  var globalID: GlobalID? { return entity.globalIDForRow(self) }
 }
 
 public protocol DatabaseBoundObject {

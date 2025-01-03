@@ -83,6 +83,11 @@ public extension FetchSpecification {
   @inlinable
   func offset(_ value : Int) -> Self { transform { $0.fetchOffset = value } }
 
+  @inlinable
+  func distinct(_ usesDistinct: Bool = true) -> Self {
+    transform { $0.usesDistinct = usesDistinct }
+  }
+
   
   // MARK: - Prefetches
 
@@ -283,5 +288,19 @@ public extension DatabaseFetchSpecification
     }
   }
 
+  @inlinable
+  func select<each A: Attribute>(
+    _ attribute: repeat Swift.KeyPath<Object.FullEntity, each A>,
+    clear: Bool = false
+  ) -> Self
+  {
+    transform {
+      if clear { $0.fetchAttributeNames = [] }
+      for attributePath in repeat each attribute {
+        let attribute = Object.e[keyPath: attributePath]
+        $0.fetchAttributeNames.append(attribute.name)
+      }
+    }
+  }
   #endif // compiler(>=6)
 }

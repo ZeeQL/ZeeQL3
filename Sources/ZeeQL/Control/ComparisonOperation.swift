@@ -15,7 +15,10 @@ public enum ComparisonOperation: Equatable {
   case Unknown(String)
   
   case EqualTo, NotEqualTo, GreaterThan, GreaterThanOrEqual
-  case LessThan, LessThanOrEqual, Contains
+  case LessThan, LessThanOrEqual
+  
+  // An `IN` query, e.g. `id IN %@`, where the %@ resolves to a collection.
+  case Contains
   
   /**
    * Compare the left hand side against a pattern. The `*` is used as the

@@ -6,6 +6,8 @@
 //  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
 //
 
+import Foundation
+
 /**
  * Usually represents a column in a database table.
  *
@@ -17,59 +19,97 @@
  * name3 columns.
  *
  * Model example:
- *
- *     <attribute columnNameLike="name*" />
+ * ```xml
+ * <attribute columnNameLike="name*" />
+ * ```
  *
  * ## Write Formats
  *
  * 'Write formats' are very useful to lower- or uppercase a value which is
- * you want to search case-insensitive later on. Eg:
+ * you want to search case-insensitive later on. for example:
+ * ```xml
+ * writeformat="LOWER(TRIM(%P))"
+ * ```
  *
- *     writeformat="LOWER(TRIM(%P))"
- *
- * This should be done at write time because if you use LOWER in a WHERE
+ * This should be done at write time because if you use `LOWER` in a `WHERE`
  * condition the database might not be able to use the index!
- * (well, at least in PostgreSQL you can put an index on the LOWER
+ * (well, at least in PostgreSQL you can put an index on the `LOWER`
  *  transformation, so it _can_ use an index)
  */
 public protocol Attribute : Property, SQLValue, ExpressionEvaluation,
                             SmartDescription
-{  
-  var name            : String  { get }
-  var columnName      : String? { get }
-  var externalType    : String? { get }
-  var allowsNull      : Bool?   { get }
-  var isAutoIncrement : Bool?   { get }
-  var width           : Int?    { get }
-  var precision       : Int?    { get }
+{
+  // TBD: `ModelAttribute` and its subclasses are the sole implementers, right?
+  //      This one is "readonly" though.
+  
+  var name            : String               { get }
+  var columnName      : String?              { get }
+  var externalType    : String?              { get }
+  var allowsNull      : Bool?                { get }
+  var isAutoIncrement : Bool?                { get }
+  var width           : Int?                 { get }
+  var precision       : Int?                 { get }
 
   var valueType       : AttributeValue.Type? { get }
+  var defaultValue    : Any?                 { get }
 
+  var patternType     : AttributePatternType { get }
+
+  // MySQL (PG 8.2 has comments on column, but no column privileges?)
+  var comment         : String?              { get }
+  var collation       : String?              { get }
+  var privileges      : [ String ]?          { get }
+  
   // formatting (used by SQLExpression)
-  var readFormat      : String? { get }
-  var writeFormat     : String? { get }
+  var readFormat      : String?              { get }
+  var writeFormat     : String?              { get }
 
-  var isPattern       : Bool    { get }
+  var isPattern       : Bool                 { get }
+
+  var userData        : [ String : Any ]     { get }
+  
+  /// A persistent ID used to track renaming when doing model-to-model
+  /// migrations. Used in Core Data.
+  var elementID       : String?              { get }
+  
+  /// CoreData (e.g. for `Date` attributes)
+  var usesScalarValueType  : Bool?           { get }
+  /// CoreData: Minimum timestamp for Date, if set
+  var minDateTimeInterval  : Date?           { get }
+  /// CoreData: Maximum timestamp for Date, if set
+  var maxDateTimeInterval  : Date?           { get }
+  /// CoreData: If it is a derived attribute this contains the expression.
+  var derivationExpression : String?         { get }
 }
 
 public extension Attribute { // default imp
   // Note: dupe those in classes to avoid surprises!
   
-  var columnName      : String? { return nil }
-  var externalType    : String? { return nil }
-  var allowsNull      : Bool?   { return nil }
-  var isAutoIncrement : Bool?   { return nil }
-  var width           : Int?    { return nil }
-  var precision       : Int?    { return nil }
+  var columnName           : String?              { return nil   }
+  var externalType         : String?              { return nil   }
+  var allowsNull           : Bool?                { return nil   }
+  var isAutoIncrement      : Bool?                { return nil   }
+  var width                : Int?                 { return nil   }
+  var precision            : Int?                 { return nil   }
   
-  var valueType       : AttributeValue.Type? { return nil }
+  var patternType          : AttributePatternType { return .none }
   
-  // formatting (used by SQLExpression)
-  var readFormat      : String? { return nil }
-  var writeFormat     : String? { return nil }
+  var valueType            : AttributeValue.Type? { return nil   }
+  var defaultValue         : Any?                 { return nil   }
+
+  var comment              : String?              { return nil   }
+  var collation            : String?              { return nil   }
+  var privileges           : [ String ]?          { return nil   }
   
-  var isPattern       : Bool    { return false }
+  var readFormat           : String?              { return nil   }
+  var writeFormat          : String?              { return nil   }
   
+  var isPattern            : Bool                 { return false }
+  var usesScalarValueType  : Bool?                { return nil   }
+  var minDateTimeInterval  : Date?                { return nil   }
+  var maxDateTimeInterval  : Date?                { return nil   }
+  var derivationExpression : String?              { return nil   }
+
   // MARK: - Property
   
   var relationshipPath : String? { // for flattened properties
@@ -78,12 +118,14 @@ public extension Attribute { // default imp
   
   // MARK: - SQLValue
   
+  @inlinable
   func valueFor(SQLExpression context: SQLExpression) -> String {
     return context.sqlStringFor(schemaObjectName: columnName ?? name)
   }
   
   // MARK: - ExpressionEvaluation
   
+  @inlinable
   func valueFor(object: Any?) -> Any? {
     return KeyValueCoding.value(forKeyPath: name, inObject: object)
   }
@@ -115,6 +157,7 @@ public extension Attribute { // default imp
 
 public extension Attribute { // default imp
   
+  @inlinable
   func isEqual(to object: Any?) -> Bool {
     guard let other = object as? Attribute else { return false }
     return other.isEqual(to: self)
@@ -133,6 +176,19 @@ public extension Attribute { // default imp
     guard readFormat      == other.readFormat      else { return false }
     guard writeFormat     == other.writeFormat     else { return false }
     guard isPattern       == other.isPattern       else { return false }
+    guard patternType     == other.patternType     else { return false }
+
+    guard elementID           == other.elementID           else { return false }
+    guard usesScalarValueType == other.usesScalarValueType else { return false }
+    guard minDateTimeInterval == other.minDateTimeInterval else { return false }
+    guard maxDateTimeInterval == other.maxDateTimeInterval else { return false }
+    guard derivationExpression == other.derivationExpression else {
+      return false
+    }
+    
+    guard ZeeQL.eq(defaultValue, other.defaultValue) else { return false }
+
+    // TBD: userData
     return true
   }
   
@@ -146,6 +202,15 @@ extension Attribute {
   var columnNameOrName : String { return columnName ?? name }
 }
 
+/// Pattern types.
+public enum AttributePatternType: String, Sendable {
+  case none       = ""
+  /// The columnName is a pattern
+  case columnName = "columnName"
+  /// The attribute should be skipped in the entity.
+  case skip       = "skip"
+}
+
 
 /**
  * An ``Attribute`` description which stores the info as regular variables.
@@ -154,6 +219,8 @@ extension Attribute {
  * database.
  */
 open class ModelAttribute : Attribute, Equatable {
+  // TBD: Would be good to make this a struct, but it is currently subclassed
+  //      for the Code based models. Maybe they could just wrap it?
 
   public final var name            : String
   public final var columnName      : String?
@@ -175,22 +242,23 @@ open class ModelAttribute : Attribute, Equatable {
   public final var readFormat      : String?
   public final var writeFormat     : String?
   
-  /// Pattern types.
-  public enum PatternType: String, Sendable {
-    case none       = ""
-    /// The columnName is a pattern
-    case columnName = "columnName"
-    /// The attribute should be skipped in the entity.
-    case skip       = "skip"
-  }
-  public final var patternType : PatternType = .none
+  public final var patternType     = AttributePatternType.none
 
   public final var userData        = [ String : Any ]()
   
   /// A persistent ID used to track renaming when doing model-to-model
-  /// migrations.
+  /// migrations. Used in Core Data.
   public final var elementID       : String?
   
+  /// CoreData (e.g. for `Date` attributes)
+  public final var usesScalarValueType     : Bool?
+  /// CoreData: Minimum timestamp for Date, if set
+  public final var minDateTimeInterval     : Date?
+  /// CoreData: Maximum timestamp for Date, if set
+  public final var maxDateTimeInterval     : Date?
+  /// CoreData: If it is a derived attribute this contains the expression.
+  public final var derivationExpression    : String?
+
   public init(name         : String,
               column       : String? = nil,
               externalType : String? = nil,
@@ -217,16 +285,18 @@ open class ModelAttribute : Attribute, Equatable {
     self.writeFormat     = attr.writeFormat
     self.valueType       = attr.valueType
     
-    if let ma = attr as? ModelAttribute {
-      self.defaultValue = ma.defaultValue
-      self.comment      = ma.comment
-      self.collation    = ma.collation
-      self.privileges   = ma.privileges
-      self.patternType  = ma.patternType
-      
-      self.userData     = ma.userData
-      self.elementID    = ma.elementID
-    }
+    self.defaultValue         = attr.defaultValue
+    self.comment              = attr.comment
+    self.collation            = attr.collation
+    self.privileges           = attr.privileges
+    self.patternType          = attr.patternType
+    
+    self.userData             = attr.userData
+    self.elementID            = attr.elementID
+    self.usesScalarValueType  = attr.usesScalarValueType
+    self.minDateTimeInterval  = attr.minDateTimeInterval
+    self.maxDateTimeInterval  = attr.maxDateTimeInterval
+    self.derivationExpression = attr.derivationExpression
   }
   
   

@@ -36,7 +36,8 @@ public protocol Entity: AnyObject, EquatableType, SmartDescription {
   var attributes               : [ Attribute    ]    { get }
   var relationships            : [ Relationship ]    { get }
   var primaryKeyAttributeNames : [ String       ]?   { get }
-  
+    // TBD: ^^^ should those be non-optional? (hh 2024-12-21)
+
   /**
    * Returns the names of class property attributes and relationships. Those are
    * attributes which are exposed as a part of the database object.
