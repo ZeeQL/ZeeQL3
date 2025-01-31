@@ -380,7 +380,7 @@ public extension Adaptor {
     #if DEBUG
     for entity in entities {
       for relship in entity.relationships {
-        assert(relship.isConnected)
+        assert(relship.isConnected, "Relship not connected: \(relship)")
         assert(relship.destinationEntity != nil)
       }
     }
