@@ -201,8 +201,19 @@ public extension DatabaseFetchSpecification
 
   // MARK: - Qualifier
 
-  // Maybe the `where` should work on typed keys!
-
+  /**
+   * Add a non-optional key/value qualifier for a property.
+   *
+   * Example usage:
+   * ```swift
+   * let objects = try oc.fetch(OGoPerson.where(\.isLocked, .NotEqualTo, true)
+   * ```
+   *
+   * - Parameters:
+   *   - key:       The keypath to the property in the entity, e.g. `\.name`.
+   *   - operation: The comparison operation to use, e.g. `.EqualTo`.
+   *   - value:     The value to compare against.
+   */
   @inlinable
   func `where`<A: TypedProperty>(_ key: Swift.KeyPath<Object.FullEntity, A>,
                                  _ operation: ComparisonOperation,
@@ -211,7 +222,19 @@ public extension DatabaseFetchSpecification
     let property = Object.e[keyPath: key]
     return `where`(KeyValueQualifier(StringKey(property.name), operation,value))
   }
-  
+
+  /**
+   * Add a non-optional key/value qualifier for a property.
+   *
+   * Example usage:
+   * ```swift
+   * let objects = try oc.fetch(OGoPerson.where(\.isLocked, true)
+   * ```
+   *
+   * - Parameters:
+   *   - key:   The keypath to the property in the entity, e.g. `\.name`.
+   *   - value: The value to compare against.
+   */
   @inlinable
   func `where`<A: TypedProperty>(_ key: Swift.KeyPath<Object.FullEntity, A>,
                                  _ value: A.T) -> Self
@@ -219,6 +242,19 @@ public extension DatabaseFetchSpecification
     return `where`(key, .EqualTo, value)
   }
 
+  /**
+   * Add a optional key/value qualifier for a property.
+   *
+   * Example usage:
+   * ```swift
+   * let objects = try oc.fetch(OGoPerson.where(\.isLocked, .NotEqualTo, true)
+   * ```
+   *
+   * - Parameters:
+   *   - key:       The keypath to the property in the entity, e.g. `\.name`.
+   *   - operation: The comparison operation to use, e.g. `.EqualTo`.
+   *   - value:     The value to compare against.
+   */
   @inlinable
   func `where`<A: TypedProperty>(_ key: Swift.KeyPath<Object.FullEntity, A>,
                                  _ operation: ComparisonOperation,
@@ -229,12 +265,100 @@ public extension DatabaseFetchSpecification
     return `where`(KeyValueQualifier(StringKey(property.name), operation,value))
   }
   
+  /**
+   * Add an optional key/value qualifier for a property.
+   *
+   * Example usage:
+   * ```swift
+   * let objects = try oc.fetch(OGoPerson.where(\.isLocked, true)
+   * ```
+   *
+   * - Parameters:
+   *   - key:   The keypath to the property in the entity, e.g. `\.name`.
+   *   - value: The value to compare against.
+   */
   @inlinable
   func `where`<A: TypedProperty>(_ key: Swift.KeyPath<Object.FullEntity, A>,
                                  _ value: A.T) -> Self
     where A: TypedProperty, A.T: AnyOptional
   {
     return `where`(key, .EqualTo, value)
+  }
+  
+  // Non-optional w/ operation.
+  @inlinable
+  func and<A: TypedProperty>(_ key: Swift.KeyPath<Object.FullEntity, A>,
+                             _ operation: ComparisonOperation,
+                             _ value: A.T) -> Self
+  {
+    let property = Object.e[keyPath: key]
+    return and(KeyValueQualifier(StringKey(property.name), operation,value))
+  }
+
+  // Non-optional w/o operation.
+  @inlinable
+  func and<A: TypedProperty>(_ key: Swift.KeyPath<Object.FullEntity, A>,
+                             _ value: A.T) -> Self
+  {
+    return and(key, .EqualTo, value)
+  }
+
+  // Optional value variant
+  @inlinable
+  func and<A: TypedProperty>(_ key: Swift.KeyPath<Object.FullEntity, A>,
+                             _ operation: ComparisonOperation,
+                             _ value: A.T) -> Self
+    where A: TypedProperty, A.T: AnyOptional
+  {
+    let property = Object.e[keyPath: key]
+    return and(KeyValueQualifier(StringKey(property.name), operation,value))
+  }
+  
+  // Optional value variant w/o operation
+  @inlinable
+  func and<A: TypedProperty>(_ key: Swift.KeyPath<Object.FullEntity, A>,
+                             _ value: A.T) -> Self
+    where A: TypedProperty, A.T: AnyOptional
+  {
+    return and(key, .EqualTo, value)
+  }
+  
+  // Non-optional w/ operation.
+  @inlinable
+  func or<A: TypedProperty>(_ key: Swift.KeyPath<Object.FullEntity, A>,
+                            _ operation: ComparisonOperation,
+                            _ value: A.T) -> Self
+  {
+    let property = Object.e[keyPath: key]
+    return or(KeyValueQualifier(StringKey(property.name), operation,value))
+  }
+
+  // Non-optional w/o operation.
+  @inlinable
+  func or<A: TypedProperty>(_ key: Swift.KeyPath<Object.FullEntity, A>,
+                            _ value: A.T) -> Self
+  {
+    return or(key, .EqualTo, value)
+  }
+
+  // Optional value variant
+  @inlinable
+  func or<A: TypedProperty>(_ key: Swift.KeyPath<Object.FullEntity, A>,
+                            _ operation: ComparisonOperation,
+                            _ value: A.T) -> Self
+    where A: TypedProperty, A.T: AnyOptional
+  {
+    let property = Object.e[keyPath: key]
+    return or(KeyValueQualifier(StringKey(property.name), operation,value))
+  }
+  
+  // Optional value variant w/o operation
+  @inlinable
+  func or<A: TypedProperty>(_ key: Swift.KeyPath<Object.FullEntity, A>,
+                            _ value: A.T) -> Self
+    where A: TypedProperty, A.T: AnyOptional
+  {
+    return or(key, .EqualTo, value)
   }
 
   
