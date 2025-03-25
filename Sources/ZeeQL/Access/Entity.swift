@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 18/02/2017.
-//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2025 ZeeZide GmbH. All rights reserved.
 //
 
 /**
