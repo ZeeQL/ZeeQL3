@@ -405,7 +405,7 @@ public extension Entity {
   }
   
   @inlinable
-  func isEqual(to other: Entity) -> Bool {
+  func isEqual(to other: Self) -> Bool {
     if other === self { return true  }
     guard name                  == other.name         else { return false }
     guard externalName          == other.externalName else { return false }
@@ -453,7 +453,7 @@ public extension Entity {
   }
   
   @inlinable
-  static func ==(lhs: Entity, rhs: Entity) -> Bool {
+  static func ==(lhs: Self, rhs: Self) -> Bool {
     return lhs.isEqual(to: rhs)
   }
 }

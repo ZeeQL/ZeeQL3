@@ -126,7 +126,7 @@ public extension Relationship { // extra methods
     return other.isEqual(to: self)
   }
   
-  func isEqual(to other: Relationship) -> Bool {
+  func isEqual(to other: Self) -> Bool {
     if other === self { return true  }
     guard name              ==  other.name              else { return false }
     guard isToMany          ==  other.isToMany          else { return false }
@@ -145,7 +145,7 @@ public extension Relationship { // extra methods
     return true
   }
   
-  static func ==(lhs: Relationship, rhs: Relationship) -> Bool {
+  static func ==(lhs: Self, rhs: Self) -> Bool {
     return lhs.isEqual(to: rhs)
   }
 }
