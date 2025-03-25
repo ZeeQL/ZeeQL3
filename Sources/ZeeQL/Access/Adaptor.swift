@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 21/02/2017.
-//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2025 ZeeZide GmbH. All rights reserved.
 //
 
 import struct Foundation.URL
@@ -105,12 +105,12 @@ public extension Adaptor {
     return other.isEqual(to: self)
   }
   @inlinable
-  func isEqual(to other: Adaptor) -> Bool {
+  func isEqual(to other: Self) -> Bool {
     return self === other
   }
   
   @inlinable
-  static func ==(lhs: Adaptor, rhs: Adaptor) -> Bool {
+  static func ==(lhs: Self, rhs: Self) -> Bool {
     return lhs.isEqual(to: rhs)
   }
 }

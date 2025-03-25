@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 18/02/2017.
-//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2025 ZeeZide GmbH. All rights reserved.
 //
 
 /**
@@ -405,7 +405,7 @@ public extension Entity {
   }
   
   @inlinable
-  func isEqual(to other: Entity) -> Bool {
+  func isEqual(to other: Self) -> Bool {
     if other === self { return true  }
     guard name                  == other.name         else { return false }
     guard externalName          == other.externalName else { return false }
@@ -453,7 +453,7 @@ public extension Entity {
   }
   
   @inlinable
-  static func ==(lhs: Entity, rhs: Entity) -> Bool {
+  static func ==(lhs: Self, rhs: Self) -> Bool {
     return lhs.isEqual(to: rhs)
   }
 }

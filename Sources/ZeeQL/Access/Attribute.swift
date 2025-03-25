@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 18/02/2017.
-//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2025 ZeeZide GmbH. All rights reserved.
 //
 
 import Foundation
@@ -163,20 +163,20 @@ public extension Attribute { // default imp
     return other.isEqual(to: self)
   }
   
-  func isEqual(to other: Attribute) -> Bool {
+  func isEqual(to other: Self) -> Bool {
     if other === self { return true  }
-    guard name            == other.name            else { return false }
-    guard columnName      == other.columnName      else { return false }
-    guard externalType    == other.externalType    else { return false }
-    guard allowsNull      == other.allowsNull      else { return false }
-    guard isAutoIncrement == other.isAutoIncrement else { return false }
-    guard width           == other.width           else { return false }
-    guard precision       == other.precision       else { return false }
-    guard valueType       == other.valueType       else { return false }
-    guard readFormat      == other.readFormat      else { return false }
-    guard writeFormat     == other.writeFormat     else { return false }
-    guard isPattern       == other.isPattern       else { return false }
-    guard patternType     == other.patternType     else { return false }
+    guard name                == other.name                else { return false }
+    guard columnName          == other.columnName          else { return false }
+    guard externalType        == other.externalType        else { return false }
+    guard allowsNull          == other.allowsNull          else { return false }
+    guard isAutoIncrement     == other.isAutoIncrement     else { return false }
+    guard width               == other.width               else { return false }
+    guard precision           == other.precision           else { return false }
+    guard valueType           == other.valueType           else { return false }
+    guard readFormat          == other.readFormat          else { return false }
+    guard writeFormat         == other.writeFormat         else { return false }
+    guard isPattern           == other.isPattern           else { return false }
+    guard patternType         == other.patternType         else { return false }
 
     guard elementID           == other.elementID           else { return false }
     guard usesScalarValueType == other.usesScalarValueType else { return false }
@@ -192,7 +192,8 @@ public extension Attribute { // default imp
     return true
   }
   
-  static func ==(lhs: Attribute, rhs: Attribute) -> Bool {
+  @inlinable
+  static func ==(lhs: Self, rhs: Self) -> Bool {
     return lhs.isEqual(to: rhs)
   }
 }
