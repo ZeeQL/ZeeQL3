@@ -899,7 +899,7 @@ open class DatabaseChannelBase {
           if let tc = objectContext {
             tc.forget(object: op.object)
           }
-          if let ar = op.object as? ActiveRecord {
+          if let ar = op.object as? ActiveRecordBase {
             // TODO: remove primary key
             ar.isNew    = true
             ar.snapshot = nil
@@ -911,7 +911,7 @@ open class DatabaseChannelBase {
               op.object.takeStoredValue(value, forKey: key)
             }
           }
-          if let ar = op.object as? ActiveRecord {
+          if let ar = op.object as? ActiveRecordBase {
             ar.isNew = false
           }
           
@@ -929,7 +929,7 @@ open class DatabaseChannelBase {
             makeSnapshot(attributes: entity.attributes.map { $0.name },
                          object: op.object)
           
-          if let ar = op.object as? ActiveRecord {
+          if let ar = op.object as? ActiveRecordType {
             ar.snapshot = snapshot
           }
           
@@ -945,7 +945,7 @@ open class DatabaseChannelBase {
           // Note: We could do updates on partials, doesn't have to be a full
           //       object!
           if let snapshot = op.dbSnapshot {
-            if let ar = op.object as? ActiveRecord {
+            if let ar = op.object as? ActiveRecordType {
               ar.snapshot = snapshot
               assert(!ar.isNew)
             }
