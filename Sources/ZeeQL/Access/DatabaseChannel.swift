@@ -139,6 +139,9 @@ open class DatabaseChannel : DatabaseChannelBase, IteratorProtocol {
     guard let entityName = fs.entityName else {
       throw Error.MissingEntity(nil)
     }
+
+    // This recurses in the generic variant, different to the
+    // TypedDatabaseChannel.
     do {
       try fetchRelationships(fs.entity, entityName,
                              fs.prefetchingRelationshipKeyPathes,

@@ -160,17 +160,23 @@ open class TypedDatabaseChannel<ObjectType> : DatabaseChannelBase,
     /* Then we fetch relationships for the 'baseObjects' we just fetched. */
     
     guard let entityName = fs.entityName else {
+      assertionFailure("FetchSpecification misses entityName \(fs)")
       throw Error.MissingEntity(nil)
     }
-      // TBD
-    
+
+    // This CANNOT recurse in a TypedFetchSpecification, because the
+    // Typed one will try to assign it to its `ObjectType`, which will be
+    // wrong for relationship targets (unless those are the same).
+    let genericChannel = DatabaseChannel(database: database)
+    genericChannel.adaptorChannel = adaptorChannel // run in same TX!
     do {
-      try fetchRelationships(fs.entity, entityName,
-                             fs.prefetchingRelationshipKeyPathes,
-                             baseObjects, ec)
+      try genericChannel
+        .fetchRelationships(fs.entity, entityName,
+                            fs.prefetchingRelationshipKeyPathes,
+                            baseObjects, ec)
     }
     catch {
-      cancelFetch()
+      genericChannel.cancelFetch()
       throw error
     }
     
