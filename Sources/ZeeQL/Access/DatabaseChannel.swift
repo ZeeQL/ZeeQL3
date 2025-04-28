@@ -88,21 +88,30 @@ open class DatabaseChannel : DatabaseChannelBase, IteratorProtocol {
     
     /* open TX */
     
-    try begin()
+    var didBeginTX = false
+    do {
+      if !isInTransaction {
+        try begin()
+        didBeginTX = true
+      }
+    }
+    catch { throw error }
     defer {
       do {
         /* Note: We do not commit because we just fetched stuff and commits
          *       increase the likeliness that something fails. So: rollback in
          *       both ways.
          */
-        try rollback()
+        if didBeginTX {
+          try rollback()
+        }
       }
       catch {
         // TBD: hm
-        globalZeeQLLogger.warn("rollback failed!", error)
+        globalZeeQLLogger.warn("could not rollback transaction:", error)
       }
     }
-    
+
     var baseObjects = [ ObjectType ]()
 
     /* First we fetch all primary objects and collect them in an Array */
@@ -127,12 +136,9 @@ open class DatabaseChannel : DatabaseChannelBase, IteratorProtocol {
     
     /* Then we fetch relationships for the 'baseObjects' we just fetched. */
     
-    guard let entityName = fs.entityName
-     else {
+    guard let entityName = fs.entityName else {
       throw Error.MissingEntity(nil)
-     }
-      // TBD
-    
+    }
     do {
       try fetchRelationships(fs.entity, entityName,
                              fs.prefetchingRelationshipKeyPathes,
