@@ -1325,6 +1325,7 @@ open class TypedDatabaseChannel<ObjectType> : DatabaseChannelBase,
         "Could not map fetched object of type \(type(of: object)) " +
         "to \(ObjectType.self)"
       )
+      return nil
     }
     return typed
   }
