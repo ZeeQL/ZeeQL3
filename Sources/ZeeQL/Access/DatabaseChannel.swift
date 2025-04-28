@@ -513,6 +513,7 @@ open class DatabaseChannelBase {
       /* The relName is never a path, its a level-1 key. the value in
        * leveledPrefetches contains 'subpathes'.
        */
+      assert(!relName.contains("."))
       do {
         try fetchRelationship(entity, relName, baseObjects, values, helper, ec)
       }
@@ -580,9 +581,15 @@ open class DatabaseChannelBase {
     }
     
     /* Note: we filter out non-1-join relationships in the levelXYZ() method */
-    guard let rel = entity[relationship: relName]
-     else { throw Error.MissingRelationship(entity, relName)}
-    guard let join = rel.joins.first else { return } // just skip, no joins
+    guard let rel = entity[relationship: relName] else {
+      throw Error.MissingRelationship(entity, relName)
+    }
+    guard let join = rel.joins.first else {
+      // just skip, no joins
+      assertionFailure(
+        "Relationship w/o joins? \(entity.name) \(type(of: rel)) \(rel)")
+      return
+    }
     
     /* extract values of source object list for IN query on target */
 
@@ -657,7 +664,9 @@ open class DatabaseChannelBase {
     
     while let relObject = fetchObject() {
       /* targetName is the target attribute in the join */
-      guard let rv = relObject.value(forKey: targetName) else { continue }
+      guard let rv = relObject.value(forKey: targetName) else {
+        continue
+      }
 
       guard let v = hackValueHolder(rv) else {
         continue
@@ -1176,15 +1185,17 @@ open class TypedDatabaseChannel<ObjectType> : DatabaseChannelBase,
   /**
    * This method prepares the channel for a fetch and initiates the fetch. Once
    * called, the channel has various instance variables configured and the
-   * results can be retrieved using fetchObject() or fetchRow().
+   * results can be retrieved using ``DatabaseChannelBase/fetchObject()``
+   * or ``DatabaseChannelBase/fetchRow()``.
    *
    * This is the primary method for fetches and has additional handling for
    * prefetched relationships.
    * 
    * - Parameters:
-   *   - fs: The FetchSpecification which outlines how objects are being
+   *   - fs: The ``FetchSpecification`` which outlines how objects are being
    *         fetched.
-   *   - ec: TODO
+   *   - ec: The ``ObjectTrackingContext`` that is used to register objects
+   *         under their global ID.
    */
   override public func selectObjectsWithFetchSpecification(
     _ fs: FetchSpecification,
@@ -1260,16 +1271,27 @@ open class TypedDatabaseChannel<ObjectType> : DatabaseChannelBase,
       baseObjects.reserveCapacity(recordCount)
     }
     
-    while let o = fetchObject() as? ObjectType {
-      baseObjects.append(o)
+    while let object = fetchObject() {
+      if let typed = object as? ObjectType {
+        baseObjects.append(typed)
+      }
+      else {
+        globalZeeQLLogger.error(
+          "Could not map fetched object of type \(type(of: object))",
+          "to type of typed datasource \(ObjectType.self)!"
+        )
+        assertionFailure(
+          "Could not map fetched object of type \(type(of: object)) " +
+          "to \(ObjectType.self)"
+        )
+      }
       // TBD: already extract something?
     }
     cancelFetch()
     
     /* Then we fetch relationships for the 'baseObjects' we just fetched. */
     
-    guard let entityName = fs.entityName
-     else {
+    guard let entityName = fs.entityName else {
       throw Error.MissingEntity(nil)
     }
       // TBD
@@ -1293,7 +1315,18 @@ open class TypedDatabaseChannel<ObjectType> : DatabaseChannelBase,
   
   public func next() -> ObjectType? {
     // `fetchObject` can be called recursively on other entities. This one not.
-    return fetchObject() as? ObjectType
+    guard let object = fetchObject() else { return nil } // end
+    guard let typed = object as? ObjectType else {
+      globalZeeQLLogger.error(
+        "Could not map fetched object of type \(type(of: object))",
+        "to type of typed datasource \(ObjectType.self)!"
+      )
+      assertionFailure(
+        "Could not map fetched object of type \(type(of: object)) " +
+        "to \(ObjectType.self)"
+      )
+    }
+    return typed
   }
   
 }
@@ -1452,12 +1485,34 @@ open class DatabaseChannel : DatabaseChannelBase, IteratorProtocol {
 
 // MARK: - Helper
 
+/**
+ * This helper class manages prefetches of relationships.
+ *
+ * For example if you fetch account objects, that have a relationship to
+ * their person, which in turn has a relationship to the person's emails and
+ * addresses.
+ * A prefetch might look like:
+ * ```swift
+ * OGoAccount()
+ *   .prefetch("person.emails", "person.addresses")
+ * ```
+ *
+ * The helper does a fetch for ONE level, e.g. `person` in this case.
+ */
 class DatabaseChannelFetchHelper {
   // TODO: fix abuse of GlobalID, workaround for Hashable-limitations
+  // ^^ hh: what?
   
+  /// The contains the database objects we want to fetch relationships for.
   let baseObjects             : [ DatabaseObject ]
+  
+  /// This is a map from the join key in the base objects, e.g. `id` to the
+  /// the global ID's of those objects.
   var sourceKeyToValues       = [ String : [ GlobalID ] ]()
-  var sourceKeyToValueObjects = [ String : [ GlobalID : [DatabaseObject] ] ]()
+  
+  /// This is a map from the join key in the base objects, e.g. `id` to the
+  /// the actual ``DatabaseObject``'s.
+  var sourceKeyToValueObjects = [ String : [ GlobalID : [ DatabaseObject ] ] ]()
   
   init(baseObjects: [ DatabaseObject ]) {
     self.baseObjects = baseObjects
