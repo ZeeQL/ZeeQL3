@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 06/03/17.
-//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2025 ZeeZide GmbH. All rights reserved.
 //
 
 #if canImport(Foundation)
@@ -66,7 +66,7 @@ open class CodeValueAttribute<T: AttributeValue>
 }
 
 // convenience accessors
-public extension ActiveRecord {
+public extension ActiveRecordBase {
   // It used to be this, but if we invoke a function we can do more neat
   // stuff, like assign default values, cache, and select proper types:
   //

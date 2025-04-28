@@ -88,6 +88,7 @@ open class DataSource<Object: SwiftObject>: DataSourceType {
  */
 public protocol SwiftObject: AnyObject {
   // is there a standard protocol for this? `AnyObject` also does @objc ...
+  // hh(2025-04-03): I think AnyObject doesn't imply `@objc` anymore.
 }
 
 public extension DataSourceType {
