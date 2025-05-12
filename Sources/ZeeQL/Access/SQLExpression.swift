@@ -170,26 +170,25 @@ open class SQLExpression: SmartDescription {
    * SQL.
    *
    * The result is stored in the 'self.statement' ivar.
-   * 
-   * @param _row - the keys/values to INSERT
+   *
+   * - Parameters:
+   *   - row: The keys/values to INSERT
    */
-  open func prepareInsertExpressionWithRow(_ row: [ String : Any? ]) {
+  open func prepareInsertExpressionWithRow(_ row: AdaptorRow) {
     // TODO: add method to insert multiple rows
     
     // Note: we need the entity for the table name ...
-    guard let entity = entity else { return }
+    guard let entity = entity else {
+      assertionFailure("SQLExpression is missing entity for row-INSERT")
+      return
+    }
     
     useAliases = false
     
     /* fields and values */
     
-    for key in row.keys {
-      guard let attr = entity[attribute: key] ?? entity[columnName: key] else {
-        globalZeeQLLogger.log("did not find attribute", key, "of", row,
-                              "in", entity)
-        continue
-      }
-      if let value = row[key] {
+    for ( attr, value ) in row.attributesAndValues(in: entity) {
+      if let value = value {
         addInsertListAttribute(attr, value: value)
       }
       else {
@@ -275,9 +274,8 @@ open class SQLExpression: SmartDescription {
     /* Note: needs to be done _before_ the whereClause, so that the ordering of
      *       the bindings is correct.
      */
-    for key in row.keys {
-      guard let attr = entity[attribute: key] else { continue }
-      if let value = row[key] {
+    for ( attr, value ) in row.attributesAndValues(in: entity) {
+      if let value = value {
         addUpdateListAttribute(attr, value: value)
       }
       else {
@@ -2482,5 +2480,23 @@ fileprivate extension String {
   var lastRelPath : String {
     guard let r = range(of: ".", options: .backwards) else { return "" }
     return String(self[self.startIndex..<r.lowerBound])
+  }
+}
+
+fileprivate extension AdaptorRow {
+  
+  func attributesAndValues(in entity: Entity)
+       -> [ ( attribute: Attribute, value: Any? ) ]
+  {
+    var result = [ ( attribute: Attribute, value: Any? ) ] ()
+    for ( key, value ) in self {
+      guard let attr = entity[attribute: key] ?? entity[columnName: key] else {
+        globalZeeQLLogger.log("did not find attribute", key, "of", self,
+                              "in", entity)
+        continue
+      }
+      result.append(( attr, value ))
+    }
+    return result
   }
 }
