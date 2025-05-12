@@ -2483,19 +2483,64 @@ fileprivate extension String {
   }
 }
 
+/// Whether, when generating SQL for AdaptorRow's, the Entity order of
+/// attributes should be maintained.
+/// W/o this, the order of columns in generated SQL will be arbitrary as
+/// Swift dictionaries do not have a stable order (intentionally).
+fileprivate let maintainAttributeOrderingInRows = true
+
 fileprivate extension AdaptorRow {
   
   func attributesAndValues(in entity: Entity)
        -> [ ( attribute: Attribute, value: Any? ) ]
   {
+    // Adaptor
+    let logger = globalZeeQLLogger
     var result = [ ( attribute: Attribute, value: Any? ) ] ()
-    for ( key, value ) in self {
-      guard let attr = entity[attribute: key] ?? entity[columnName: key] else {
-        globalZeeQLLogger.log("did not find attribute", key, "of", self,
-                              "in", entity)
-        continue
+    
+    // This may not be actually slower in practice, because the attribute
+    // subscript also just scans the array for the key?!
+    if maintainAttributeOrderingInRows {
+      var pendingKeys = Set(self.keys)
+      var columns = [ ( attribute: Attribute, value: Any? ) ]()
+      for attribute in entity.attributes {
+        if let value = self[attribute.name] { // still an `Any?`!
+          result.append( ( attribute, value ))
+          pendingKeys.remove(attribute.name)
+        }
+        else if let column = attribute.columnName, column != attribute.name,
+                let value = self[column] // still an `Any?`!
+        {
+          columns.append( ( attribute, value ) )
+        }
+        // else: Attribute not in set, we don't add a nil for it!
       }
-      result.append(( attr, value ))
+      
+      // process column references
+      if !pendingKeys.isEmpty && !columns.isEmpty {
+        for ( attribute, value ) in columns {
+          assert(attribute.columnName != nil)
+          guard let column = attribute.columnName else { continue }
+          guard pendingKeys.contains(column) else { continue } // extra colmap
+          result.append( ( attribute, value ) )
+          pendingKeys.remove(column)
+        }
+      }
+
+      if !pendingKeys.isEmpty {
+        logger.log("did not find attributes for",
+                   pendingKeys.sorted().joined(separator: ","),
+                   "of", self, "in", entity)
+      }
+    }
+    else {
+      for ( key, value ) in self {
+        guard let attr = entity[attribute: key] ?? entity[columnName: key] else {
+          logger.log("did not find attribute", key, "of", self, "in", entity)
+          continue
+        }
+        result.append(( attr, value ))
+      }
     }
     return result
   }
