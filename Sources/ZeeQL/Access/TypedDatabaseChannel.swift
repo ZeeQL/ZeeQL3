@@ -8,7 +8,7 @@
 
 
 open class TypedDatabaseChannel<ObjectType> : DatabaseChannelBase,
-                                              IteratorProtocol
+                                              IteratorProtocol, Sequence
   where ObjectType: DatabaseObject
 {
   
