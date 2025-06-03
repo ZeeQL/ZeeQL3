@@ -170,26 +170,25 @@ open class SQLExpression: SmartDescription {
    * SQL.
    *
    * The result is stored in the 'self.statement' ivar.
-   * 
-   * @param _row - the keys/values to INSERT
+   *
+   * - Parameters:
+   *   - row: The keys/values to INSERT
    */
-  open func prepareInsertExpressionWithRow(_ row: [ String : Any? ]) {
+  open func prepareInsertExpressionWithRow(_ row: AdaptorRow) {
     // TODO: add method to insert multiple rows
     
     // Note: we need the entity for the table name ...
-    guard let entity = entity else { return }
+    guard let entity = entity else {
+      assertionFailure("SQLExpression is missing entity for row-INSERT")
+      return
+    }
     
     useAliases = false
     
     /* fields and values */
     
-    for key in row.keys {
-      guard let attr = entity[attribute: key] ?? entity[columnName: key] else {
-        globalZeeQLLogger.log("did not find attribute", key, "of", row,
-                              "in", entity)
-        continue
-      }
-      if let value = row[key] {
+    for ( attr, value ) in row.attributesAndValues(in: entity) {
+      if let value = value {
         addInsertListAttribute(attr, value: value)
       }
       else {
@@ -275,9 +274,8 @@ open class SQLExpression: SmartDescription {
     /* Note: needs to be done _before_ the whereClause, so that the ordering of
      *       the bindings is correct.
      */
-    for key in row.keys {
-      guard let attr = entity[attribute: key] else { continue }
-      if let value = row[key] {
+    for ( attr, value ) in row.attributesAndValues(in: entity) {
+      if let value = value {
         addUpdateListAttribute(attr, value: value)
       }
       else {
@@ -2482,5 +2480,68 @@ fileprivate extension String {
   var lastRelPath : String {
     guard let r = range(of: ".", options: .backwards) else { return "" }
     return String(self[self.startIndex..<r.lowerBound])
+  }
+}
+
+/// Whether, when generating SQL for AdaptorRow's, the Entity order of
+/// attributes should be maintained.
+/// W/o this, the order of columns in generated SQL will be arbitrary as
+/// Swift dictionaries do not have a stable order (intentionally).
+fileprivate let maintainAttributeOrderingInRows = true
+
+fileprivate extension AdaptorRow {
+  
+  func attributesAndValues(in entity: Entity)
+       -> [ ( attribute: Attribute, value: Any? ) ]
+  {
+    // Adaptor
+    let logger = globalZeeQLLogger
+    var result = [ ( attribute: Attribute, value: Any? ) ] ()
+    
+    // This may not be actually slower in practice, because the attribute
+    // subscript also just scans the array for the key?!
+    if maintainAttributeOrderingInRows {
+      var pendingKeys = Set(self.keys)
+      var columns = [ ( attribute: Attribute, value: Any? ) ]()
+      for attribute in entity.attributes {
+        if let value = self[attribute.name] { // still an `Any?`!
+          result.append( ( attribute, value ))
+          pendingKeys.remove(attribute.name)
+        }
+        else if let column = attribute.columnName, column != attribute.name,
+                let value = self[column] // still an `Any?`!
+        {
+          columns.append( ( attribute, value ) )
+        }
+        // else: Attribute not in set, we don't add a nil for it!
+      }
+      
+      // process column references
+      if !pendingKeys.isEmpty && !columns.isEmpty {
+        for ( attribute, value ) in columns {
+          assert(attribute.columnName != nil)
+          guard let column = attribute.columnName else { continue }
+          guard pendingKeys.contains(column) else { continue } // extra colmap
+          result.append( ( attribute, value ) )
+          pendingKeys.remove(column)
+        }
+      }
+
+      if !pendingKeys.isEmpty {
+        logger.log("did not find attributes for",
+                   pendingKeys.sorted().joined(separator: ","),
+                   "of", self, "in", entity)
+      }
+    }
+    else {
+      for ( key, value ) in self {
+        guard let attr = entity[attribute: key] ?? entity[columnName: key] else {
+          logger.log("did not find attribute", key, "of", self, "in", entity)
+          continue
+        }
+        result.append(( attr, value ))
+      }
+    }
+    return result
   }
 }

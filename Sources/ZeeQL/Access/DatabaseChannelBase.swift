@@ -152,7 +152,7 @@ open class DatabaseChannelBase {
   }
   
   
-  // MARK: - Fecth Specification
+  // MARK: - Fetch Specification
 
   /**
    * Creates a map where the keys are level-1 relationship names and the values
@@ -161,16 +161,16 @@ open class DatabaseChannelBase {
    * will get processed).
    *
    * Pathes:
-   *
-   *     toCompany.toProject
-   *     toCompany.toEmployment
-   *     toProject
-   *
+   * ```
+   * toCompany.toProject
+   * toCompany.toEmployment
+   * toProject
+   * ```
    * Will result in:
-   *
-   *     [ "toCompany" = [ "toProject", "toEmployment" ],
-   *       "toProject" = [] ]
-   *
+   * ```
+   * [ "toCompany" = [ "toProject", "toEmployment" ],
+   *   "toProject" = [] ]
+   * ```
    * Note that the keys are never flattened relationships.
    */
   func levelPrefetchSpecificiation(_ entity: Entity, _ pathes: [ String ])
@@ -267,14 +267,14 @@ open class DatabaseChannelBase {
    * level-1 flattened relationships.
    * 
    * Example:
-   *
-   *     customers.address
-   *     phone.number
-   *
+   * ```
+   * customers.address
+   * phone.number
+   * ```
    * where customers is a flattened but phone is not, will return:
-   *
-   *     customers
-   * 
+   * ```
+   * customers
+   * ```
    */
   func flattenedRelationships(_ entity: Entity, _ pathes: [ String ])
        -> [ String ]
@@ -287,12 +287,7 @@ open class DatabaseChannelBase {
       /* split off first part of relationship */
       
       var relname : String
-      #if swift(>=5.0)
-        let dotidx  = path.firstIndex(of: ".")
-      #else
-        let dotidx  = path.index(of: ".")
-      #endif
-      if let dotidx = dotidx {
+      if let dotidx = path.firstIndex(of: ".") {
         relname = String(path[path.startIndex..<dotidx])
       }
       else { relname = path } // no dot
@@ -314,11 +309,12 @@ open class DatabaseChannelBase {
 
   /**
    * Cleans the name of the relationship from parameters, eg the name contain
-   * repeaters like '*' (eg parent* => repeat relationship 'parent' until no
+   * repeaters like '*' (e.g. `parent*` => repeat relationship 'parent' until no
    * objects are found anymore).
    *
-   * - parameter name: name of the relationship, eg 'employments' or 'parent*'
-   * - returns: cleaned relationship name, eg 'employments' or 'parent'
+   * - Parameters:
+   *   - name:  Name of the relationship, e.g. 'employments' or 'parent*'
+   * - Returns: cleaned relationship name, e.g. 'employments' or 'parent'
    */
   func relationshipNameWithoutParameters(_ name: String) -> String {
     /* cut off '*' (relationship fetch repeaters like parent*) */
@@ -332,7 +328,7 @@ open class DatabaseChannelBase {
   
   func selectListForFetchSpecification(_ entity: Entity?,
                                        _ fs: FetchSpecification?)
-    -> [ Attribute ]?
+       -> [ Attribute ]?
   {
     if let fetchKeys = fs?.fetchAttributeNames {
       // TBD: generate Attrs for fetchKeys
@@ -348,7 +344,7 @@ open class DatabaseChannelBase {
    * Whether or not a fetch is in progress (a select was done and objects can
    * be retrieved using a sequence of fetchObject() calls).
    *
-   * - returns: true if objects can be fetched, false if no fetch is in progress
+   * - Returns: true if objects can be fetched, false if no fetch is in progress
    */
   public var isFetchInProgress : Bool { return records != nil }
   
@@ -877,9 +873,10 @@ open class DatabaseChannelBase {
     
     /* perform adaptor ops */
     
-    var didOpenChannel = false
+    let didOpenChannel : Bool
     let adaptorChannel : AdaptorChannel
     if let c = self.adaptorChannel {
+      didOpenChannel = false
       adaptorChannel = c
     }
     else {
@@ -888,9 +885,7 @@ open class DatabaseChannelBase {
       didOpenChannel = true
     }
     defer {
-      if didOpenChannel {
-        releaseChannel()
-      }
+      if didOpenChannel { releaseChannel() }
     }
     
     // Transactions: The `AdaptorChannel` opens a transaction if there is more

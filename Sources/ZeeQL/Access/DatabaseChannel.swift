@@ -9,7 +9,7 @@
 /**
  * A ``DatabaseChannelBase`` that returns type erased ``DatabaseObject``'s.
  */
-open class DatabaseChannel : DatabaseChannelBase, IteratorProtocol {
+open class DatabaseChannel : DatabaseChannelBase, IteratorProtocol, Sequence {
   // NOTE: This is (almost) an EXACT copy of the TypedDatabaseChannel due to 
   //       Swift:
   // Using some protocol as a concrete type conforming to another protocol is
