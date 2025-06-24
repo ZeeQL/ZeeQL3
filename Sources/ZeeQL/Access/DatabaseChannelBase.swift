@@ -33,6 +33,8 @@ open class DatabaseChannelBase {
     case MissingAttributeUsedForLocking(Attribute)
     case RefetchReturnedNoRow
     
+    case UnsupportedDatabaseOperator(DatabaseOperation.Operator)
+    
     case TODO
   }
   
@@ -855,14 +857,15 @@ open class DatabaseChannelBase {
   // MARK: - Operations
   
   /**
-   * The method converts the database operations into a set of adaptor
-   * operations which are then performed using the associated
-   * AdaptorChannel.
+   * The method converts the database operations into a set of
+   * ``AdaptorOperation``'s,
+   * which are then performed using the associated ``AdaptorChannel``.
    */
   public func performDatabaseOperations(_ ops: [ DatabaseOperation ]) throws {
     guard !ops.isEmpty else { return } /* nothing to do */
     
     defer {
+      // This will call the completion handlers!
       for op in ops { op.didPerformAdaptorOperations() }
     }
     
@@ -964,14 +967,15 @@ open class DatabaseChannelBase {
   }
   
   /**
-   * This method creates the necessary AdaptorOperation's for the given
-   * DatabaseOperation's and attaches them to the respective database-op
+   * This method creates the necessary ``AdaptorOperation``'s for the given
+   * ``DatabaseOperation``'s and attaches them to the respective database-op
    * objects.
    *
    * Side effects: the AdOps are added to the DB ops.
-   * 
-   * - parameter ops: array of DatabaseOperation's
-   * - returns:       array of AdaptorOperation's
+   *
+   * - Parameters:
+   *   - ops:   array of ``DatabaseOperation``'s
+   * - Returns: array of ``AdaptorOperation``'s
    */
   func adaptorOperationsForDatabaseOperations(_ ops: [ DatabaseOperation ])
          throws -> [ AdaptorOperation ]
@@ -981,152 +985,8 @@ open class DatabaseChannelBase {
     var aops = [ AdaptorOperation ]()
 
     for op in ops {
-      let entity = op.entity
-      var aop    = AdaptorOperation(entity: entity)
-      
-      var dbop = op.databaseOperator
-      if case .none = op.databaseOperator {
-        if let ar = op.object as? ActiveRecordType {
-          if ar.isNew { op.databaseOperator = .insert }
-          else        { op.databaseOperator = .update }
-          dbop = op.databaseOperator
-        }
-      }
-      
-      if case .none = dbop {
-        log.warn("got no operator in db-op:", op)
-      }
-      aop.adaptorOperator = dbop
-      
-      switch dbop {
-        case .delete:
-          // TODO: add attrs used for locking
-          let pq : Qualifier?
-          if let snapshot = op.dbSnapshot {
-            // The snapshot represents the last known database state. Which is
-            // what we want here.
-            pq = entity.qualifierForPrimaryKey(snapshot)
-          }
-          else {
-            pq = entity.qualifierForPrimaryKey(op.object)
-          }
-          guard pq != nil else {
-            log.error("could not calculate primary key qualifier for op:", op)
-            throw Error.CouldNotBuildPrimaryKeyQualifier
-          }
-          aop.qualifier = pq
-        
-        case .insert:
-          let props  = entity.classPropertyNames
-                    ?? entity.attributes.map { $0.name }
-          let values = KeyValueCoding.values(forKeys: props,
-                                             inObject: op.object)
-          aop.changedValues = values
-          op.newRow         = values // TBD: don't
-          
-          // TBD: Not sure whether completionBlocks are the best way to 
-          //      communicate up, maybe make this more formal.
-          aop.completionBlock = { [weak op] in // op retains its aop's
-            guard let op = op else { return }
-            
-            if let rr = aop.resultRow {
-              for ( key, value ) in rr {
-                op.newRow![key] = value
-              }
-            }
-          }
-          
-        case .update:
-          let snapshot = op.dbSnapshot
-          var pq : Qualifier?
-
-          /* calculate qualifier */
-          
-          if let snapshot = snapshot {
-            // The snapshot represents the last known database state. Which is
-            // what we want here.
-            pq = entity.qualifierForPrimaryKey(snapshot)
-          }
-          else {
-            pq = entity.qualifierForPrimaryKey(op.object)
-          }
-          guard pq != nil else {
-            log.error("could not calculate primary key qualifier for op:", op)
-            throw Error.CouldNotBuildPrimaryKeyQualifier
-          }
-          
-          if let lockAttrs = entity.attributesUsedForLocking,
-             !lockAttrs.isEmpty, let snapshot = snapshot
-          {
-            var qualifiers = [ Qualifier ]()
-            qualifiers.reserveCapacity(lockAttrs.count + 1)
-            if let pq = pq { qualifiers.append(pq) }
-            
-            for attr in lockAttrs {
-              if let value = snapshot[attr.name] { // value is still an `Any?`!
-                let q = KeyValueQualifier(attr.name, .EqualTo, value)
-                qualifiers.append(q)
-              }
-              else {
-                throw Error.MissingAttributeUsedForLocking(attr)
-              }
-            }
-            
-            pq = CompoundQualifier(qualifiers: qualifiers, op: .And)
-          }
-          
-          aop.qualifier = pq
-
-          /* calculate changed values */
-          
-          let values : Snapshot
-          if let snapshot = snapshot {
-            values = op.object.changesFromSnapshot(snapshot)
-          }
-          else {
-            // no snapshot, need to update all
-            let props  = entity.classPropertyNames
-                      ?? entity.attributes.map { $0.name }
-            values = KeyValueCoding.values(forKeys: props, inObject: op.object)
-          }
-          #if false
-            // Could work on any KVC object:
-            if let dbo = op.object as? DatabaseObject { /*.. code above ..*/ }
-            else {
-              // update all, no change tracking
-              values = KeyValueCoding.values(forKeys: props, inObject: op.object)
-              // TODO: changes might include non-class props (like assocs)
-            }
-          #endif
-          
-          guard !values.isEmpty else {
-            // did not change, no need to update
-            continue
-          }
-
-          aop.changedValues = values
-          
-          /* Note: we need to copy the snapshot because we might ignore it in
-           *       case the dbop fails.
-           */
-          if let snapshot = snapshot {
-            var newSnap = snapshot
-            for ( key, value ) in values {
-              newSnap[key] = value
-            }
-            op.dbSnapshot = newSnap
-          }
-          else {
-            op.dbSnapshot = values
-          }
-        
-        default:
-          log.warn("unsupported database operation:", dbop)
-          continue
-      }
-      
+      guard let aop = try op.primaryAdaptorOperation() else { continue }
       aops.append(aop)
-      
       op.addAdaptorOperation(aop) // TBD: do we really need this?
     }
     return aops
