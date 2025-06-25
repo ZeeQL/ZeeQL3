@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 26/02/2017.
-//  Copyright © 2017-2020 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2025 ZeeZide GmbH. All rights reserved.
 //
 
 /**
@@ -15,13 +15,13 @@
  * object and then use that to perform queries against a specific table.
  *
  * Example:
- *
- *     let entity = adaptor.model?[entity: "Person"]
- *     let db = Database(adaptor)
- *     let ds = ActiveDataSource<ActiveRecord>(database: db, entity: entity)
- *     let donald =
- *           ds.findByMatchingAll("lastname", "Duck", "firstname", "Donald")
- *
+ * ```swift
+ * let entity = adaptor.model?[entity: "Person"]
+ * let db = Database(adaptor)
+ * let ds = ActiveDataSource<ActiveRecord>(database: db, entity: entity)
+ * let donald =
+ *       ds.findByMatchingAll("lastname", "Duck", "firstname", "Donald")
+ * ```
  */
 open class Database : EquatableType, Equatable, SmartDescription {
   
@@ -37,8 +37,6 @@ open class Database : EquatableType, Equatable, SmartDescription {
   
   @inlinable
   public var model : Model? { return adaptor.model }
-  
-  // TODO
   
   @inlinable
   public subscript(entity n: String) -> Entity? {

@@ -225,6 +225,7 @@ public extension AdaptorChannel {
   func performAdaptorOperation(_ op: inout AdaptorOperation) throws {
     let affectedRows = try performAdaptorOperationN(&op)
     guard affectedRows == 1 else {
+      // TBD: Why would we actually care?!
       throw AdaptorChannelError.OperationDidNotAffectOne
     }
   }
@@ -237,6 +238,9 @@ public extension AdaptorChannel {
    * This method is different to ``performAdaptorOperation(_:)-5j8fn`` [w/o 'N']
    * because it returns the count of affected objects (eg how many rows got
    * deleted or updated).
+   *
+   * The operation is passed in as inout, because the completionBlock will be
+   * run and needs to be reset.
    *
    * - Parameters:
    *   - op: the ``AdaptorOperation`` to be performed
