@@ -131,7 +131,7 @@ extension FetchSpecification { // Default Imp
    */
   @inlinable
   public func resolvingBindings(_ bindings: Any?) throws -> FetchSpecification {
-    let newHints = resolveHintBindPatterns(with: bindings)
+    let newHints      = resolveHintBindPatterns(with: bindings)
     let hasUnresolved = qualifier?.hasUnresolvedBindings ?? false
     if newHints == nil && !hasUnresolved { return self }
     

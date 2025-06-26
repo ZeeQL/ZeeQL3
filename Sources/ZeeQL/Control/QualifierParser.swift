@@ -497,13 +497,15 @@ open class QualifierParser {
   }
  
   /**
-   * parse something like this:
-   *
-   *   SQL[select abc WHERE date_id = $dateId]
+   * Parse something like this:
+   * ```
+   * SQL[select abc WHERE date_id = $dateId]
+   * ```
    *
    * into:
-   *
-   *   "select abc WHERE date_id ="
+   * ```
+   * "select abc WHERE date_id ="
+   * ```
    *
    * Note that the SQL strings are converted into RawSQLValue objects so
    * that they do not get quoted as SQL strings during SQL generation.
@@ -522,7 +524,7 @@ open class QualifierParser {
       }
       else if string[pidx] == "$" {
         if !sql.isEmpty {
-          parts.append(.RawSQLValue(sql))
+          parts.append(.rawValue(sql))
           sql.removeAll() /* reset char buffer */
         }
         
@@ -532,7 +534,7 @@ open class QualifierParser {
           /* will get bumped by next loop iteration */
         
         if let varName = varName {
-          parts.append(.QualifierVariable(varName))
+          parts.append(.variable(varName))
         }
         else {
           addError("could not parse SQL qualifier variable?!")
@@ -545,9 +547,7 @@ open class QualifierParser {
       
       pidx = string.index(after: pidx)
     }
-    if !sql.isEmpty {
-      parts.append(.RawSQLValue(sql))
-    }
+    if !sql.isEmpty { parts.append(.rawValue(sql)) }
     
     return SQLQualifier(parts: parts)
   }

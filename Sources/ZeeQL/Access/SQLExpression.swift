@@ -1791,7 +1791,7 @@ open class SQLExpression: SmartDescription {
     var sb = ""
     for part in parts {
       switch part {
-        case .RawSQLValue(let value):
+        case .rawValue(let value):
           let rv = RawSQLValue(value)
           // TBD: Whats correct here? Should we escape parts or not? For now we
           //      assume that values are just that and need to be escaped. Which
@@ -1802,7 +1802,7 @@ open class SQLExpression: SmartDescription {
             sb += s
           }
         
-        case .QualifierVariable(let name):
+        case .variable(let name):
           log.error("SQL qualifier contains a variable: \(part) \(name)")
       }
     }
