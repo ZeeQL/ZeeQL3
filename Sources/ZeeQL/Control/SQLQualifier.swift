@@ -30,29 +30,62 @@
  * - `AND\n  object_acl.action = 'allowed'\n"
  *   "AND\n  object_acl.object_id = BASE.company_id )`
  */
-public struct SQLQualifier : Qualifier, Hashable {
+public struct SQLQualifier : Qualifier, Equatable {
   // TBD: maybe rename to 'RawQualifier'?
-  
+
+  public struct UnsupportedRawValueValue: Swift.Error {
+    @inlinable
+    public init() {}
+  }
+
   /**
    * One part of the qualifier
    */
-  public enum Part: Hashable {
-    // TODO: lowercase cases for modern Swift
+  public enum Part: Equatable {
+    
+    public enum RawValueReplacement: Equatable {
+      // Improve this, quite limited for now
+      case int(Int)
+      case double(Double)
+      case string(String)
+      case intArray([ Int ])
+      case stringArray([ String ])
+      
+      @inlinable
+      public init?(_ value: Any) {
+        switch value {
+          case let v as String                 : self = .string(v)
+          case let v as Int                    : self = .int(v)
+          case let v as any BinaryInteger      : self = .int(Int(v))
+          case let v as Double                 : self = .double(v)
+          case let v as Float                  : self = .double(Double(v))
+          case let v as any Collection<Int>    : self = .intArray(Array(v))
+          case let v as any Collection<String> : self = .stringArray(Array(v))
+          case let v as any StringProtocol     : self = .string(String(v))
+          default: return nil
+        }
+      }
+    }
     
     case rawValue(String)
     case variable(String)
+    case value(RawValueReplacement?)
     
     @inlinable
     public static func ==(lhs: Part, rhs: Part) -> Bool {
       switch ( lhs, rhs ) {
-        case ( rawValue(let a), rawValue(let b) ):
-          return a == b
-        
-        case ( variable(let a), variable(let b) ):
-          return a == b
-        
+        case ( rawValue(let a), rawValue(let b) ): return a == b
+        case ( variable(let a), variable(let b) ): return a == b
+        case ( value   (let a), value   (let b) ): return a == b
         default: return false
       }
+    }
+    
+    @inlinable
+    public static func RawSQLValue(_ s: String) -> Part { .rawValue(s) }
+    @inlinable
+    public static func QualifierVariable(_ key: String) -> Part {
+      .variable(key)
     }
   }
   
@@ -63,6 +96,10 @@ public struct SQLQualifier : Qualifier, Hashable {
     // TODO: Compact? (i.e. merge `RawSQLValue` parts). Should be done by the
     //       parser, I suppose.
     self.parts = parts
+    assert(!parts.contains {
+      if case .rawValue(let v) = $0 { return v == "authIds" }
+      else { return false }
+    })
   }
 
   // MARK: - Bindings
@@ -70,8 +107,9 @@ public struct SQLQualifier : Qualifier, Hashable {
   @inlinable
   public func addBindingKeys(to set: inout Set<String>) {
     for part in parts {
-      if case .variable(let key) = part {
-        set.insert(key)
+      switch part {
+        case .value, .rawValue: break
+        case .variable(let key): set.insert(key)
       }
     }
   }
@@ -79,7 +117,10 @@ public struct SQLQualifier : Qualifier, Hashable {
   @inlinable
   public var hasUnresolvedBindings : Bool {
     for part in parts {
-      if case .variable = part { return true }
+      switch part {
+        case .value, .rawValue: break
+        case .variable: return true
+      }
     }
     return false
   }
@@ -89,11 +130,13 @@ public struct SQLQualifier : Qualifier, Hashable {
               -> Qualifier?
   {
     guard hasUnresolvedBindings else { return self }
-    
-    var sql = ""
+
+    var newParts = [ Part ](); newParts.reserveCapacity(parts.count)
     for part in parts {
       switch part {
-        case .rawValue(let s): sql += s
+        case .rawValue(let s): newParts.append(.rawValue(s))
+        case .value(let value): newParts.append(.value(value))
+          
         case .variable(let key):
           guard let vv = KeyValueCoding
             .value(forKeyPath: key, inObject: bindings) else
@@ -101,15 +144,28 @@ public struct SQLQualifier : Qualifier, Hashable {
             if requiresAll { throw QualifierBindingNotFound(binding: key) }
             return nil
           }
-          
-          // OK, this may need to interact w/ SQLExpression, or preserve the
-          // value in here?
-          
-          let s = "\(vv)" // hm, hm :-)
-          sql += s
+          if let opt = vv as? any AnyOptional {
+            if let vv = opt.value {
+              guard let rawValue = Part.RawValueReplacement(vv) else {
+                assertionFailure("Unsupported raw value type")
+                throw UnsupportedRawValueValue()
+              }
+              newParts.append(.value(rawValue))
+            }
+            else {
+              newParts.append(.value(nil))
+            }
+          }
+          else {
+            guard let rawValue = Part.RawValueReplacement(vv) else {
+              assertionFailure("Unsupported raw value type")
+              throw UnsupportedRawValueValue()
+            }
+            newParts.append(.value(rawValue))
+          }
       }
     }
-    return SQLQualifier(parts: [ .rawValue(sql) ])
+    return SQLQualifier(parts: newParts)
   }
   
   
@@ -140,8 +196,10 @@ public struct SQLQualifier : Qualifier, Hashable {
     ms += "SQL["
     for part in parts {
       switch part {
-        case .rawValue(let s): ms += s
-        case .variable(let k): ms += "$\(k)"
+        case .rawValue(let s)        : ms += s
+        case .variable(let k)        : ms += "$\(k)"
+        case .value   (.some(let v)) : ms += "\(v)"
+        case .value   (.none)        : ms += "NULL"
       }
     }
     ms += "]"
@@ -151,4 +209,5 @@ public struct SQLQualifier : Qualifier, Hashable {
 #if swift(>=5.5)
 extension SQLQualifier      : Sendable {}
 extension SQLQualifier.Part : Sendable {}
+extension SQLQualifier.Part.RawValueReplacement : Sendable {}
 #endif

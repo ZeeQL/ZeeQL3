@@ -1221,7 +1221,13 @@ open class SQLExpression: SmartDescription {
     if let v = v as? Bool        { return self.sqlStringFor(bool:   v) }
     if let v = v as? Date        { return self.formatDateValue(v)      }
     if let v = v as? RawSQLValue { return v.value }
-    
+    if let v = v as? any BinaryInteger {
+      return self.sqlStringFor(number: Int(v))
+    }
+    if let v = v as? any StringProtocol {
+      return self.formatStringValue(String(v))
+    }
+
     /* process lists */
     
     if let list = v as? [ Int ] {
@@ -1792,16 +1798,24 @@ open class SQLExpression: SmartDescription {
     for part in parts {
       switch part {
         case .rawValue(let value):
+          assert(value != "authIds")
           let rv = RawSQLValue(value)
-          // TBD: Whats correct here? Should we escape parts or not? For now we
-          //      assume that values are just that and need to be escaped. Which
-          //      implies that bindings cannot contain dynamic SQL.
-          // Note that 'raw' sections of the qualifier will be RawSQLValue
-          // objects.
-          if let s = formatValue(rv) {
-            sb += s
+          if let s = formatValue(rv) { sb += s }
+          
+        case .value(.none):
+          if let s = formatValue(nil) { sb += s }
+        case .value(.some(let v)):
+          // FIXME: Improve the whole mechanism
+          switch v {
+            case .int   (let v): sb += self.sqlStringFor(number: v)
+            case .double(let v): sb += self.sqlStringFor(number: v)
+            case .string(let v): sb += self.formatStringValue(v)
+            case .intArray(let v):
+              if let s = formatValue(v) { sb += s }
+            case .stringArray(let v):
+              if let s = formatValue(v) { sb += s }
           }
-        
+
         case .variable(let name):
           log.error("SQL qualifier contains a variable: \(part) \(name)")
       }
