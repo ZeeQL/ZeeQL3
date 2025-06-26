@@ -116,6 +116,22 @@ public extension TypedEntityType where FullEntity: CodeEntity<Self> {
   
   // Maybe the `where` should work on typed keys!
 
+  /**
+   * Qualify a property using a value.
+   *
+   * Example:
+   * ```swift
+   * let objects = try oc.fetch(OGoCompany
+   *   .where(\.type, .EqualTo, "group")
+   * )
+   * ```
+   *
+   * - Parameters:
+   *   - key:       A keypath to a ``TypedProperty`` (e.g. `\.startDate`)
+   *   - operation: The ZeeQL `ComparisonOperation` to apply.
+   *   - value:     A value of the same type (e.g. a `Date`)
+   * - Returns:     The `TypedFetchSpecification` representing the query.
+   */
   @inlinable
   static func `where`<A: TypedProperty>(
     _ key       : Swift.KeyPath<FullEntity, A>,
@@ -130,6 +146,19 @@ public extension TypedEntityType where FullEntity: CodeEntity<Self> {
     return fs
   }
   
+  /**
+   * Qualify a non-optional property being equal to another.
+   *
+   * Example:
+   * ```swift
+   * let objects = try oc.fetch(OGoCompany.where(\.type, "group"))
+   * ```
+   *
+   * - Parameters:
+   *   - key:   A keypath to a ``TypedProperty`` (e.g. `\.startDate`)
+   *   - value: A value of the same type (e.g. a `Date`)
+   * - Returns: The `TypedFetchSpecification` representing the query.
+   */
   @inlinable
   static func `where`<A>(_ key: Swift.KeyPath<FullEntity, A>,
                          _ value: A.T) -> TypedFetchSpecification<Self>
@@ -137,7 +166,47 @@ public extension TypedEntityType where FullEntity: CodeEntity<Self> {
   {
     return `where`(key, .EqualTo, value)
   }
-  
+
+  /**
+   * Qualify a non-optional property being in a set of values.
+   *
+   * Example:
+   * ```swift
+   * let objects = try oc.fetch(OGoCompany.where(\.type, [ "group", "case" ]))
+   * ```
+   *
+   * - Parameters:
+   *   - key:   A keypath to a ``TypedProperty`` (e.g. `\.startDate`)
+   *   - value: A collection value of the same type (e.g. a `Date`)
+   * - Returns: The `TypedFetchSpecification` representing the query.
+   */
+  @inlinable
+  static func `where`<A, C>(_ key: Swift.KeyPath<FullEntity, A>,
+                         in value: C) -> TypedFetchSpecification<Self>
+    where A: TypedProperty, C: Collection, C.Element == A.T
+  {
+    var fs = TypedFetchSpecification<Self>(entity: Self.entity)
+    let property = Self.e[keyPath: key]
+    fs.qualifier = KeyValueQualifier(StringKey(property.name), .Contains, value)
+    return fs
+  }
+
+  /**
+   * Qualify an optional property using a value.
+   *
+   * Example:
+   * ```swift
+   * let objects = try oc.fetch(OGoCompany
+   *   .where(\.type, .EqualTo, "group")
+   * )
+   * ```
+   *
+   * - Parameters:
+   *   - key:       A keypath to a ``TypedProperty`` (e.g. `\.startDate`)
+   *   - operation: The ZeeQL `ComparisonOperation` to apply.
+   *   - value:     A value of the same type (e.g. a `Date`)
+   * - Returns:     The `TypedFetchSpecification` representing the query.
+   */
   @inlinable
   static func `where`<A>(
     _ key       : Swift.KeyPath<FullEntity, A>,
@@ -153,11 +222,50 @@ public extension TypedEntityType where FullEntity: CodeEntity<Self> {
     return fs
   }
   
+  /**
+   * Qualify an optional property being equal to another.
+   *
+   * Example:
+   * ```swift
+   * let objects = try oc.fetch(OGoCompany
+   *   .where(\.type, "group")
+   * )
+   * ```
+   *
+   * - Parameters:
+   *   - key:   A keypath to a ``TypedProperty`` (e.g. `\.startDate`)
+   *   - value: A value of the same type (e.g. a `Date`)
+   * - Returns: The `TypedFetchSpecification` representing the query.
+   */
   @inlinable
   static func `where`<A>(_ key: Swift.KeyPath<FullEntity, A>,
                          _ value: A.T) -> TypedFetchSpecification<Self>
     where A: TypedProperty, A.T: AnyOptional
   {
     return `where`(key, .EqualTo, value)
+  }
+  
+  /**
+   * Qualify an optional property being in a set of values.
+   *
+   * Example:
+   * ```swift
+   * let objects = try oc.fetch(OGoCompany.where(\.type, [ "group", "case" ]))
+   * ```
+   *
+   * - Parameters:
+   *   - key:   A keypath to a ``TypedProperty`` (e.g. `\.startDate`)
+   *   - value: A collection value of the same type (e.g. a `Date`)
+   * - Returns: The `TypedFetchSpecification` representing the query.
+   */
+  @inlinable
+  static func `where`<A, C>(_ key: Swift.KeyPath<FullEntity, A>,
+                         in value: C) -> TypedFetchSpecification<Self>
+    where A: TypedProperty, A.T: AnyOptional, C: Collection, C.Element == A.T
+  {
+    var fs = TypedFetchSpecification<Self>(entity: Self.entity)
+    let property = Self.e[keyPath: key]
+    fs.qualifier = KeyValueQualifier(StringKey(property.name), .Contains, value)
+    return fs
   }
 }
