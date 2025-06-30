@@ -169,6 +169,7 @@ open class TypedDatabaseChannel<ObjectType> : DatabaseChannelBase,
     // wrong for relationship targets (unless those are the same).
     let genericChannel = DatabaseChannel(database: database)
     genericChannel.adaptorChannel = adaptorChannel // run in same TX!
+    defer { genericChannel.adaptorChannel = nil } // make sure to clear this!
     do {
       try genericChannel
         .fetchRelationships(fs.entity, entityName,
