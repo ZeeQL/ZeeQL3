@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 15/02/2017.
-//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2025 ZeeZide GmbH. All rights reserved.
 //
 
 /**
@@ -84,6 +84,9 @@ public struct StringKey : Key, Equatable {
     return lhs.key == rhs.key
   }
 }
+#if swift(>=5.5)
+extension StringKey : Sendable {}
+#endif
 
 public struct KeyPath : Key, Equatable {
   

@@ -35,6 +35,11 @@ import Foundation
  * condition the database might not be able to use the index!
  * (well, at least in PostgreSQL you can put an index on the `LOWER`
  *  transformation, so it _can_ use an index)
+ *
+ * Implementors:
+ * - ``ModelAttribute``
+ * - ``CodeAttribute``
+ * - ``CodeValueAttribute``
  */
 public protocol Attribute : Property, SQLValue, ExpressionEvaluation,
                             SmartDescription

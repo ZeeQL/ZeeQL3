@@ -3,16 +3,18 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 01/03/2017.
-//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2025 ZeeZide GmbH. All rights reserved.
 //
 
 /**
- * CodeAttribute objects are used to describe properties of Entity objects
+ * CodeAttribute objects are used to describe properties of ``Entity`` objects
  * (which then become columns in the database) from within Swift source code
  * (opposed to doing this in an XML file or fetching it from the database).
  *
- * Their primary feature over `ModelAttribute`s is that such are generic over
+ * Their primary feature over ``ModelAttribute``s is that such are generic over
  * the value type.
+ *
+ * See also: ``CodeValueAttribute``
  */
 open class CodeAttribute<T: AttributeValue> : ModelAttribute, TypedProperty {
   
