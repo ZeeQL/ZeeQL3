@@ -144,3 +144,35 @@ extension TypedFetchSpecification: EquatableType {
     return self == typed
   }
 }
+
+extension TypedFetchSpecification {
+  
+  /**
+   * Return a copy of the ``TypedFetchSpecification`` which has the qualifier
+   * bindings resolved against the given argument. Plus all xyzBindPattern
+   * hints.
+   * If the fetch spec has no bindings, the exisiting object is returned.
+   *
+   * The syntax for bindings in string qualifiers is `$binding` (e.g.
+   * `lastname = $lastname`).
+   *
+   * The syntax for bind-pattern hints is `%(binding)s` (note the trailing
+   * format specifier!).
+   */
+  @inlinable
+  public func resolvingBindings(_ bindings: Any?) throws -> Self {
+    let newHints      = resolveHintBindPatterns(with: bindings)
+    let hasUnresolved = qualifier?.hasUnresolvedBindings ?? false
+    if newHints == nil && !hasUnresolved { return self }
+    
+    var boundFS = self
+    if let newHints { boundFS.hints = newHints }
+    if hasUnresolved, let q = boundFS.qualifier {
+      boundFS.qualifier =
+        try q.qualifierWith(bindings: bindings,
+                            requiresAll: requiresAllQualifierBindingVariables)
+    }
+    return boundFS
+  }
+
+}
