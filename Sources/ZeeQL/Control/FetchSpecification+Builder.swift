@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Heß on 04.12.24.
-//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2025 ZeeZide GmbH. All rights reserved.
 //
 
 // MARK: - Fetch Specification Convenience
@@ -57,19 +57,19 @@ public extension FetchSpecification {
   
   @inlinable
   func `where`(_ q: String, _ args: Any?...) -> Self {
-    let parser = QualifierParser(string: q, arguments: args)
+    var parser = QualifierParser(string: q, arguments: args)
     return transform { $0.qualifier = parser.parseQualifier() }
   }
   @inlinable
   func and(_ q: String, _ args: Any?...) -> Self {
-    let parser = QualifierParser(string: q, arguments: args)
+    var parser = QualifierParser(string: q, arguments: args)
     return transform {
       $0.qualifier = ZeeQL.and($0.qualifier, parser.parseQualifier())
     }
   }
   @inlinable
   func or(_ q: String, _ args: Any?...) -> Self {
-    let parser = QualifierParser(string: q, arguments: args)
+    var parser = QualifierParser(string: q, arguments: args)
     return transform {
       $0.qualifier = ZeeQL.or($0.qualifier, parser.parseQualifier())
     }
@@ -153,25 +153,25 @@ public extension FetchSpecification {
   {
     transform { fs in
       for by in by {
-        let so = SortOrdering(key: AttributeKey(by), selector: .CompareAscending)
+        let so = SortOrdering(key: AttributeKey(by), selector: .ascending)
         fs.sortOrderings.append(so)
       }
       if let by = asc {
-        let so = SortOrdering(key: AttributeKey(by), selector: .CompareAscending)
+        let so = SortOrdering(key: AttributeKey(by), selector: .ascending)
         fs.sortOrderings.append(so)
       }
       if let by = desc {
-        let so = SortOrdering(key: AttributeKey(by), selector: .CompareDescending)
+        let so = SortOrdering(key: AttributeKey(by), selector: .descending)
         fs.sortOrderings.append(so)
       }
       if let by = iasc {
         let so = SortOrdering(key: AttributeKey(by),
-                              selector: .CompareCaseInsensitiveAscending)
+                              selector: .caseInsensitiveAscending)
         fs.sortOrderings.append(so)
       }
       if let by = idesc {
         let so = SortOrdering(key: AttributeKey(by),
-                              selector: .CompareCaseInsensitiveDescending)
+                              selector: .caseInsensitiveDescending)
         fs.sortOrderings.append(so)
       }
     }
@@ -365,13 +365,30 @@ public extension DatabaseFetchSpecification
   // MARK: - Ordering
 
   #if compiler(>=6)
+  /**
+   * Add or set a ``SortOrdering`` on the fetch specification.
+   *
+   * Example:
+   * ```
+   * let persons = try oc.fetch(OGoPerson.self, \.default) {
+   *   $0.order(by: \.id)
+   * }
+   * ```
+   *
+   * - Parameters:
+   *   - key:      A `KeyPath` (or multiple) leading from the ``Object``'s
+   *               ``Entity`` to the ``Attribute`` definition (e.g. `\.age`)
+   *   - selector:
+   */
   @inlinable
   func order<each A: Attribute>(
     by key: repeat Swift.KeyPath<Object.FullEntity, each A>,
-    using selector: SortOrdering.Selector = .CompareAscending
+    using selector: SortOrdering.Selector = .ascending,
+    clear: Bool = false
   ) -> Self
   {
     transform {
+      if clear { $0.sortOrderings.removeAll(keepingCapacity: true) }
       for key in repeat each key {
         let attribute = Object.e[keyPath: key]
         let so = SortOrdering(key: AttributeKey(attribute), selector: selector)

@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 28/02/17.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2025 ZeeZide GmbH. All rights reserved.
 //
 
 public struct BooleanQualifier : Qualifier, QualifierEvaluation, Equatable {
@@ -64,3 +64,7 @@ public struct BooleanQualifier : Qualifier, QualifierEvaluation, Equatable {
     ms += value ? "*true*" : "*false"
   }
 }
+
+#if swift(>=5.5)
+extension BooleanQualifier : Sendable {}
+#endif

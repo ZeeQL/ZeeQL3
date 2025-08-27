@@ -3,14 +3,16 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 16/02/2017.
-//  Copyright © 2017-2019 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2025 ZeeZide GmbH. All rights reserved.
 //
 
 // public extension Qualifier {}
 //   no static methods on protocols
   
+@inlinable
 public func qualifierWith(format: String, _ args: Any?...) -> Qualifier? {
-  let parser = QualifierParser(string: format, arguments: args)
+  // FIXME: function name is outdated style-wise
+  var parser = QualifierParser(string: format, arguments: args)
   return parser.parseQualifier()
 }
 
@@ -21,8 +23,9 @@ public func qualifierWith(format: String, _ args: Any?...) -> Qualifier? {
  * 
  * ### KeyValueQualifier
  * Example:
- *
- *     lastname like 'h*'
+ * ```
+ * lastname like 'h*'
+ * ```
  *
  * ### Comparison Operations
  *
@@ -50,31 +53,34 @@ public func qualifierWith(format: String, _ args: Any?...) -> Qualifier? {
  *
  * Bindings are used to fill values into the qualifier at a later time. Each
  * binding has a name which can be used multiple times in a single qualifier.
- * The binding is represented as a QualifierVariable object once it got
+ * The binding is represented as a ``QualifierVariable`` object once it got
  * parsed.
  *
  * Example:
- *
- *     lastname = $lastname AND firstname = $firstname
+ * ```
+ * lastname = $lastname AND firstname = $firstname
+ * ```
  *
  * Matching code:
- *
+ * ```swift
  *    var q = Qualifier.parse("lastname = $lastname AND firstname = $firstname")
  *    q = q.qualifierWith(bindings: self)
- *
+ * ```
  * The q.qualifierWith(bindings:) method will ask 'self' for the
  * 'lastname' and 'firstname' keys using KVC.
  * 
  * ### Patterns
  *
  * You can embed patterns in a qualifier format, eg:
- *
- *     lastname like %@
+ * ```
+ * lastname LIKE %@
+ * ```
  *
  * The pattern is resolved during format parsing, in the above case the
- * matching Java code would look like:
- *
- *     let q = Qualifier.parse("lastname like %@", "Duck");
+ * matching Swift code would look like:
+ * ```swift
+ * let q = Qualifier.parse("lastname LIKE %@", "Duck");
+ * ```
  *
  * (usually the argument will be some instance variable, eg one which is filled
  *  from a search field).
@@ -83,35 +89,36 @@ public func qualifierWith(format: String, _ args: Any?...) -> Qualifier? {
  * Usually bindings are more convenient to map to control elements (because
  * the bindings dictionary can be filled conveniently using KVC).
  *
- * - %@ - use given value as-is
- * - %s - convert value to String
- * - %i / %d - convert value to Integer
- * - %f - convert value to Double
- * - %K - a key, this will result in a KeyComparisonQualifier
- * - %% - to escape %
+ * - `%@` - use given value as-is
+ * - `%s` - convert value to String
+ * - `%i` / %d - convert value to Integer
+ * - `%f` - convert value to Double
+ * - `%K` - a key, this will result in a ``KeyComparisonQualifier``
+ * - `%%` - to escape %
  *
  * 
  * #### True/False Qualifiers
  * Those are sometimes useful in rules, they always match or fail:
  *
- *     *true*
- *     *false*
+ * - `*true*`
+ * - `*false*`
  *
  * ### SQL Qualifiers
  *
  * To embed SQL in your qualifiers, you can use the `SQL[]`
- * construct, eg:
- * 
- *     lastname = 'Duck' AND SQL[ EXISTS (SELECT 1 FROM permissions) ]
+ * construct, e.g.:
+ * ```
+ * lastname = 'Duck' AND SQL[ EXISTS (SELECT 1 FROM permissions) ]
+ * ```
  *
  * A SQL qualifier can even include bindings. The qualifier is represented as
- * a SQLQualifier object at runtime, which in turn is a sequence of 'parts'.
- * Those parts are either QualifierVariable's or RawSQLValue's (those are
- * output as-is by SQLExpression).
+ * a ``SQLQualifier`` object at runtime, which in turn is a sequence of 'parts'.
+ * Those parts are either ``QualifierVariable``'s or ``RawSQLValue``'s (those
+ * are output as-is by ``SQLExpression``).
  */
-open class QualifierParser {
+public struct QualifierParser {
 
-  open var log : ZeeQLLogger = globalZeeQLLogger
+  public let log : ZeeQLLogger = globalZeeQLLogger
   
   /* input */
   let string          : String
@@ -132,14 +139,21 @@ open class QualifierParser {
   
   /* main entry */
 
-  public func parseQualifier() -> Qualifier? {
+  @inlinable
+  public static func parse(_ format: String, _ args: Any?...) -> Qualifier? {
+    var parser = Self(string: format, arguments: args)
+    return parser.parseQualifier()
+  }
+
+
+  public mutating func parseQualifier() -> Qualifier? {
     guard skipSpaces() else { return nil } // EOF
     return parseCompoundQualifier()
   }
   
   /* parsing */
 
-  func parseOneQualifier() -> Qualifier? {
+  mutating func parseOneQualifier() -> Qualifier? {
     guard skipSpaces() else { return nil } // EOF
     
     /* sub-qualifiers in parenthesis */
@@ -158,7 +172,7 @@ open class QualifierParser {
     return parseKeyBasedQualifier()
   }
   
-  func nextNonNullStringArgument(_ _pat: String) -> String? {
+  mutating func nextNonNullStringArgument(_ _pat: String) -> String? {
     guard currentArgument < args.count else {
       addError("more format patterns than arguments")
       return nil
@@ -188,7 +202,7 @@ open class QualifierParser {
     }
   }
   
-  func parseKeyBasedQualifier() -> Qualifier? {
+  mutating func parseKeyBasedQualifier() -> Qualifier? {
     // TODO: we need to improve and consolidate the argument handling, but hey,
     //       it works ;-)
     //       Maybe we want to move it to the identifier parsing?
@@ -389,7 +403,7 @@ open class QualifierParser {
     return KeyComparisonQualifier(id, operation, rhs)
   }
   
-  func parseNotQualifier() -> Qualifier? {
+  mutating func parseNotQualifier() -> Qualifier? {
     guard consumeIfMatch(TOK_NOT) else { return nil }
     
     guard skipSpaces() else {
@@ -401,7 +415,7 @@ open class QualifierParser {
     return q.not
   }
   
-  func parseCompoundQualifierInParenthesis() -> Qualifier? {
+  mutating func parseCompoundQualifierInParenthesis() -> Qualifier? {
     guard consumeIfMatch("(") else { return nil } /* not in parenthesis */
     
     guard skipSpaces() else {
@@ -437,7 +451,7 @@ open class QualifierParser {
     }
   }
   
-  func parseCompoundQualifier() -> Qualifier? {
+  mutating func parseCompoundQualifier() -> Qualifier? {
     var qualifiers = [ Qualifier ]()
     var lastCompoundOperator : String? = nil
     
@@ -510,7 +524,7 @@ open class QualifierParser {
    * Note that the SQL strings are converted into RawSQLValue objects so
    * that they do not get quoted as SQL strings during SQL generation.
    */
-  func parseRawSQLQualifier() -> Qualifier? {
+  mutating func parseRawSQLQualifier() -> Qualifier? {
     guard consumeIfMatch(TOK_SQL) else { return nil }
     
     var parts = Array<SQLQualifier.Part>()
@@ -559,7 +573,7 @@ open class QualifierParser {
    * @param _onlyBreakOnSpace - read ID until a space is encountered
    * @return String containing the ID or  if not could be found
    */
-  func parseIdentifier(onlyBreakOnSpace: Bool) -> String? {
+  mutating func parseIdentifier(onlyBreakOnSpace: Bool) -> String? {
     guard idx < string.endIndex else { return nil } // EOF
     
     guard !_isDigit(string[idx]) else { return nil }
@@ -593,7 +607,7 @@ open class QualifierParser {
   /**
    * Parses qualifier operations. If none matches, parseIdentifier is called.
    */
-  func parseOperation() -> String? {
+  mutating func parseOperation() -> String? {
     guard canLA(2) else { return nil }
     
     if string[idx] == "=" {
@@ -648,7 +662,7 @@ open class QualifierParser {
     return parseIdentifier(onlyBreakOnSpace: true)
   }
  
-  func matchConstant() -> Bool {
+  mutating func matchConstant() -> Bool {
     guard idx < string.endIndex else { return false }
     
     if string[idx] == "(" {
@@ -671,7 +685,7 @@ open class QualifierParser {
     return false
   }
  
-  func matchCast() -> Bool {
+  mutating func matchCast() -> Bool {
     guard canLA(2) else { return false } /* at least (a) */
     
     if (string[idx] == "(") {
@@ -682,7 +696,7 @@ open class QualifierParser {
     return false
   }
  
-  func parseCast() -> String? {
+  mutating func parseCast() -> String? {
     guard canLA(2)           else { return nil } /* at least (a) */
     guard string[idx] == "(" else { return nil }
     
@@ -723,7 +737,7 @@ open class QualifierParser {
    *
    * But the casts are not resolved yet ...
    */
-  func _parseConstant(allowCast: Bool) -> Constant? { // TODO
+  mutating func _parseConstant(allowCast: Bool) -> Constant? { // TODO
     let castClass = allowCast ? parseCast() : nil
     let v : Constant?
     
@@ -793,12 +807,12 @@ open class QualifierParser {
     }
   }
   
-  func parseConstant(allowCast: Bool) -> Any? {
+  mutating func parseConstant(allowCast: Bool) -> Any? {
     guard let c = _parseConstant(allowCast: allowCast) else { return nil }
     return c.asAny
   }
  
-  func parseQuotedString() -> String? {
+  mutating func parseQuotedString() -> String? {
     let quoteChar = string[idx]
     
     /* a quoted string */
@@ -844,7 +858,7 @@ open class QualifierParser {
     case Int(Int)
     case Double(Double)
   }
-  func parseNumber() -> Number? { // TODO: not just int
+  mutating func parseNumber() -> Number? { // TODO: not just int
     guard idx < string.endIndex else { return nil } // EOF
     guard _isDigit(string[idx]) || string[idx] == "-" else { return nil }
     
@@ -882,19 +896,19 @@ open class QualifierParser {
  
   /* core parsing */
   
-  final func _isDigit(_ c: Character) -> Bool {
+  func _isDigit(_ c: Character) -> Bool {
     switch c {
       case "0", "1", "2", "3", "4", "5", "6", "7", "8", "9": return true
       default: return false
     }
   }
-  final func _isSpace(_ c: Character) -> Bool {
+  func _isSpace(_ c: Character) -> Bool {
     switch c {
       case " ", "\t", "\n", "\r": return true
       default: return false
     }
   }
-  final func _isIdBreakChar(_ c: Character) -> Bool {
+  func _isIdBreakChar(_ c: Character) -> Bool {
     switch c {
       case " ", "\t", "\n", "\r", "<", ">", "=", "*", "/", "+",
            "-", "(", ")", "]", "!": /* eg NSFileName!="index.html" */
@@ -904,7 +918,7 @@ open class QualifierParser {
     }
   }
 
-  final func skipSpaces() -> Bool {
+  mutating func skipSpaces() -> Bool {
     while idx < string.endIndex {
       if !_isSpace(string[idx]) {
         return true;
@@ -915,12 +929,12 @@ open class QualifierParser {
     return idx < string.endIndex
   }
   
-  final func la(_ i : Int) -> Character? {
+  func la(_ i : Int) -> Character? {
     guard canLA(i) else { return nil }
     return string[string.index(idx, offsetBy: i)]
   }
   
-  final func match(_ tok: [ Character ]) -> Bool {
+  func match(_ tok: [ Character ]) -> Bool {
     guard canLA(tok.count) else { return false }
     
     var midx = idx
@@ -944,19 +958,19 @@ open class QualifierParser {
     return string[idx] == c
   }
   
-  func consumeIfMatch(_ tok: [ Character ]) -> Bool {
+  mutating func consumeIfMatch(_ tok: [ Character ]) -> Bool {
     guard match(tok) else { return false }
     idx = string.index(idx, offsetBy: tok.count)
     return true
   }
   
-  func consumeIfMatch(_ c: Character) -> Bool {
+  mutating func consumeIfMatch(_ c: Character) -> Bool {
     guard match(c) else { return false }
     idx = string.index(after: idx);
     return true
   }
   
-  final func canLA(_ count : Int) -> Bool {
+  func canLA(_ count : Int) -> Bool {
     return string.canLA(count, startIndex: idx)
   }
 

@@ -11,15 +11,16 @@ import Foundation
 #endif
 
 /**
- * CodeValueAttribute objects are used to describe properties of Entity objects
- * (which then become columns in the database) from within Swift source code
- * (opposed to doing this in an XML file or fetching it from the database).
+ * CodeValueAttribute objects are used to describe properties of ``Entity``
+ * objects (which then become columns in the database) from within Swift source
+ * code (opposed to doing this in an XML file or fetching it from the database).
  *
  * CodeValueAttribute's box the storage of the model property. For example:
- *
- *     class Address : ActiveRecord, CodeObjectType {
- *       let street = Value.String()
- *     }
+ * ```swift
+ * class Address : ActiveRecord, CodeObjectType {
+ *   let street = Value.String()
+ * }
+ * ```
  *
  * Advantages:
  * - with the boxing we can make them `KeyValueCodingTargetValue`, that is:
@@ -31,7 +32,7 @@ import Foundation
  *
  * Summary: I think for simple stuff this may be good enough to have DRY, but
  *          a real setup should probably define the Entity using the regular
- *          `CodeEntity`.
+ *          ``CodeEntity``.
  */
 open class CodeValueAttribute<T: AttributeValue>
              : KeyValueCodingBox<T>, AnnotatedAttributeValue

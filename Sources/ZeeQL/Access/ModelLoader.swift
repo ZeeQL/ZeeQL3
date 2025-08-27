@@ -3,7 +3,7 @@
 //  ZeeQL3
 //
 //  Created by Helge Hess on 04/06/17.
-//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2025 ZeeZide GmbH. All rights reserved.
 //
 
 import struct Foundation.URL
@@ -372,7 +372,7 @@ open class CoreDataModelLoader : ModelLoader {
     if let xml = xml.firstChildElementWithName("qualifier") {
       // <qualifier>(principalId IN $authIds) AND (objectId IN $ids)</qualifier>
       if let v = xml.textContent, !v.isEmpty {
-        if let q = QualifierParser(string: v).parseQualifier() {
+        if let q = QualifierParser.parse(v) {
           fs.qualifier = q
         }
         else {
@@ -477,7 +477,7 @@ open class CoreDataModelLoader : ModelLoader {
     if let v = attrs["schema"], !v.isEmpty { entity.schemaName = v } // Go
     if boolValue(attrs["readonly"]) { entity.isReadOnly = true } // Go
     if let v = attrs["restrictingQualifier"] { // Go
-      entity.restrictingQualifier = QualifierParser(string: v).parseQualifier()
+      entity.restrictingQualifier = QualifierParser.parse(v)
     }
 
     var idAttribute : Attribute? = nil
@@ -608,10 +608,10 @@ open class CoreDataModelLoader : ModelLoader {
     let orderString = attrs["order"] ?? attrs["op"] ?? attrs["operation"]
     let order = orderString.map { SortOrdering.Selector(rawValue: $0) }
     if let key = attrs["key"], !key.isEmpty {
-      return SortOrdering(key: key, selector: order ?? .CompareAscending)
+      return SortOrdering(key: key, selector: order ?? .ascending)
     }
     else if let key = xml.textContent, !key.isEmpty {
-      return SortOrdering(key: key, selector: order ?? .CompareAscending)
+      return SortOrdering(key: key, selector: order ?? .ascending)
     }
     else {
       log.warn("<ordering> element w/o a key:", xml)

@@ -3,9 +3,13 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 15/02/2017.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2025 ZeeZide GmbH. All rights reserved.
 //
 
+/**
+ * An ``Expression`` that expresses a condition, usually as part of a SQL
+ * `WHERE` statement.
+ */
 public protocol Qualifier : Expression, EquatableType, SmartDescription {
   // TBD: A protocol because there are multiple different, and extendable versions
   //      of this. You cannot add new qualifiers to an enum. 
@@ -30,13 +34,17 @@ public protocol Qualifier : Expression, EquatableType, SmartDescription {
 
 public extension Qualifier { // default imp
 
+  @inlinable
   func isEqual(to object: Any?) -> Bool { return false }
   
+  @inlinable
   var isEmpty : Bool { return false }
   
+  @inlinable
   func qualifierWith(bindings: Any?, requiresAll: Bool) throws -> Qualifier? {
     return self
   }
+  @inlinable
   func qualifierWith(bindings: Any?) throws -> Qualifier? {
     return try qualifierWith(bindings: bindings, requiresAll: false)
   }
@@ -44,6 +52,7 @@ public extension Qualifier { // default imp
   
   // MARK: - String Representation
   
+  @inlinable
   var stringRepresentation : String {
     var ms = ""
     appendToStringRepresentation(&ms)
@@ -76,6 +85,7 @@ public extension Qualifier { // default imp
 }
 
 // TODO: can we add Equatable to Qualifier or does it make it generic?
+@inlinable
 public func ==(lhs: Qualifier, rhs: Qualifier) -> Bool {
   return lhs.isEqual(to: rhs)
 }
