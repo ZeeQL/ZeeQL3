@@ -3,26 +3,30 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 24/02/17.
-//  Copyright © 2017-2021 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2025 ZeeZide GmbH. All rights reserved.
 //
 
 import Foundation
 
 /**
- * Sample formats:
+ * A Foundation `Formatter` subclass that can format a KVC compatible object
+ * using a given pattern.
  *
- *     "%(firstname)s %(lastname)s"
+ * Sample format (when the input is a KVC compatible object):
+ * ```
+ * "%(firstname)s %(lastname)s"
+ * ```
  *
  * Usage:
- *
- *     let s = KeyValueStringFormatter.format(
-                 "%(firstname)s %(lastname)s", person)
- *     print(s)
- *
- * Inefficient, crappy implementation, but worx ;-)
+ * ```swift
+ * let s = KeyValueStringFormatter
+ *           .format("%(firstname)s %(lastname)s", person)
+ * print(s)
+ * ```
  */
 final class KeyValueStringFormatter : Formatter {
-  
+  // Inefficient, crappy implementation, but worx ;-)
+
   let format      : String
   let requiresAll : Bool
   

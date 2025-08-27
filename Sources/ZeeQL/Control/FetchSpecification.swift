@@ -84,6 +84,19 @@ extension FetchSpecification { // Default Imp
    *
    * This formatter does stuff like `%(lastname)s`.
    *
+   * This is used in the OGo schema for things like this:
+   * ```xml
+   * <sql pattern="true">
+   *   %%(select)s BASE.name, BASE.number, BASE.owner_id FROM
+   *     %%(tables)s, project_company_assignment A
+   *   WHERE (NOT (is_fake = 1) OR is_fake IS NULL) AND
+   *     %%(qualifier)s AND
+   *     (BASE.project_id = A.project_id AND A.company_id = %(loginId)s)
+   * </sql>
+   * ```
+   * Notice the `%(loginId)s`, which will put the value of the "loginId" binding
+   * into the raw SQL, e.g. `A.company_id = 10000`.
+   *
    * Sample:
    * ```swift
    * var fs = FetchSpecification()
