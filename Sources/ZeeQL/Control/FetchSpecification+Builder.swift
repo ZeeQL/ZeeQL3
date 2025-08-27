@@ -365,13 +365,30 @@ public extension DatabaseFetchSpecification
   // MARK: - Ordering
 
   #if compiler(>=6)
+  /**
+   * Add or set a ``SortOrdering`` on the fetch specification.
+   *
+   * Example:
+   * ```
+   * let persons = try oc.fetch(OGoPerson.self, \.default) {
+   *   $0.order(by: \.id)
+   * }
+   * ```
+   *
+   * - Parameters:
+   *   - key:      A `KeyPath` (or multiple) leading from the ``Object``'s
+   *               ``Entity`` to the ``Attribute`` definition (e.g. `\.age`)
+   *   - selector:
+   */
   @inlinable
   func order<each A: Attribute>(
     by key: repeat Swift.KeyPath<Object.FullEntity, each A>,
-    using selector: SortOrdering.Selector = .CompareAscending
+    using selector: SortOrdering.Selector = .CompareAscending,
+    clear: Bool = false
   ) -> Self
   {
     transform {
+      if clear { $0.sortOrderings.removeAll(keepingCapacity: true) }
       for key in repeat each key {
         let attribute = Object.e[keyPath: key]
         let so = SortOrdering(key: AttributeKey(attribute), selector: selector)
