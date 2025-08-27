@@ -2140,8 +2140,9 @@ open class SQLExpression: SmartDescription {
   /**
    * Calls sqlStringForJoinedQualifiers with the " AND " operator.
    * 
-   * - parameter qs: qualifiers to conjoin
-   * - returns:      SQL representation of the qualifiers
+   * - Parameters:
+   *   - qs:    Qualifiers to conjoin
+   * - Returns: SQL representation of the qualifiers
    */
   public func sqlStringForConjoinedQualifiers(_ qs: [ Qualifier ]) -> String? {
     return self.sqlStringForJoinedQualifiers(qs, " AND ")
@@ -2149,23 +2150,27 @@ open class SQLExpression: SmartDescription {
   /**
    * Calls sqlStringForJoinedQualifiers with the " OR " operator.
    * 
-   * - parameter qs: qualifiers to disjoin
-   * - returns:      SQL representation of the qualifiers
+   * - Parameters:
+   *   - qs:    Qualifiers to disjoin
+   * - Returns: SQL representation of the qualifiers
    */
   public func sqlStringForDisjoinedQualifiers(_ qs: [ Qualifier ]) -> String? {
     return self.sqlStringForJoinedQualifiers(qs, " OR ")
   }
   
   /**
-   * Converts the shell patterns used in Qualifiers into SQL % patterns.
+   * Converts the shell patterns used in Qualifiers into SQL `%` patterns.
    * Example:
+   * ```
+   * name LIKE '?ello*World*'
+   * name LIKE '_ello%World%'
+   * ```
    *
-   *     name LIKE '?ello*World*'
-   *     name LIKE '_ello%World%'
-   * 
-   * - parameter _pattern: shell based pattern
-   * - returns:            SQL pattern
+   * - Parameters:
+   *   - _pattern: Shell based pattern
+   * - Returns:    SQL pattern
    */
+  @inlinable
   public func sqlPatternFromShellPattern(_ _pattern: String) -> String {
     // hm, should we escape as %%?
 
