@@ -596,11 +596,14 @@ open class SQLExpression: SmartDescription {
     }
     
     if let ob = _orderBy {
-      bindings["orderby"]    = " ORDER BY \(ob)"
+      let s = " ORDER BY \(ob)"
+      bindings["orderby"]    = s
+      bindings["orderBy"]    = s
       bindings["andOrderBy"] = ", \(ob)"
     }
     else {
       bindings["orderby"]    = ""
+      bindings["orderBy"]    = ""
       bindings["andOrderBy"] = ""
     }
     
