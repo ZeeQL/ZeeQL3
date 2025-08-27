@@ -3,13 +3,13 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 15/02/2017.
-//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2025 ZeeZide GmbH. All rights reserved.
 //
 
 /**
  * Represents a sort ordering of a key.
  *
- * Note: Be careful with using CompareCaseInsensitiveXYZ against SQL
+ * Note: Be careful with using .caseInsensitiveXYZ against SQL
  *       databases! Some databases cannot use an index for a query if the
  *       WHERE contains UPPER(lastname) like stuff.
  *       Instead you might want to use an Attribute 'writeformat' to
@@ -20,33 +20,49 @@ public struct SortOrdering : Expression, Equatable, EquatableType,
 {
   
   public enum Selector: RawRepresentable, Equatable {
-    // TODO: lowercase cases
 
-    case CompareAscending
-    case CompareDescending
-    case CompareCaseInsensitiveAscending
-    case CompareCaseInsensitiveDescending
-    case Other(String)
-    
+    case ascending
+    case descending
+    case caseInsensitiveAscending
+    case caseInsensitiveDescending
+    case other(String)
+
+    // backwards compat
+    @available(*, deprecated, message: "Use `.ascending` instead.")
+    public static let CompareAscending  = Selector.ascending
+    @available(*, deprecated, message: "Use `.descending` instead.")
+    public static let CompareDescending = Selector.descending
+    @available(*, deprecated,
+                message: "Use `.caseInsensitiveAscending` instead.")
+    public static let CompareCaseInsensitiveAscending =
+                        Selector.caseInsensitiveAscending
+    @available(*, deprecated,
+                message: "Use `.caseInsensitiveDescending` instead.")
+    public static let CompareCaseInsensitiveDescending =
+                        Selector.caseInsensitiveDescending
+    @available(*, deprecated, message: "Use `.other(value)` instead.")
+    @inlinable
+    public static func Other(_ value: String) -> Selector { .other(value) }
+
     @inlinable
     public init(rawValue: String) {
       switch rawValue.uppercased() {
-        case "ASC"                : self = .CompareAscending
-        case "DESC"               : self = .CompareDescending
-        case "CASE ASC",  "IASC"  : self = .CompareCaseInsensitiveAscending
-        case "CASE DESC", "IDESC" : self = .CompareCaseInsensitiveDescending
-        default: self = .Other(rawValue)
+        case "ASC"                : self = .ascending
+        case "DESC"               : self = .descending
+        case "CASE ASC",  "IASC"  : self = .caseInsensitiveAscending
+        case "CASE DESC", "IDESC" : self = .caseInsensitiveDescending
+        default                   : self = .other(rawValue)
       }
     }
     
     @inlinable
     public var rawValue : String {
       switch self {
-        case .CompareAscending:                 return "ASC"
-        case .CompareDescending:                return "DESC"
-        case .CompareCaseInsensitiveAscending:  return "IASC"
-        case .CompareCaseInsensitiveDescending: return "IDESC"
-        case .Other(let op):                    return op
+        case .ascending:                 return "ASC"
+        case .descending:                return "DESC"
+        case .caseInsensitiveAscending:  return "IASC"
+        case .caseInsensitiveDescending: return "IDESC"
+        case .other(let op):             return op
       }
     }
     @inlinable
@@ -55,13 +71,13 @@ public struct SortOrdering : Expression, Equatable, EquatableType,
     @inlinable
     public static func ==(lhs: Selector, rhs: Selector) -> Bool {
       switch ( lhs, rhs ) {
-        case ( .CompareAscending,  .CompareAscending  ):  return true
-        case ( .CompareDescending, .CompareDescending ): return true
-        case ( .CompareCaseInsensitiveAscending,
-               .CompareCaseInsensitiveAscending  ): return true
-        case ( .CompareCaseInsensitiveDescending,
-               .CompareCaseInsensitiveDescending ): return true
-        case ( .Other(let lhsV), .Other(let rhsV) ): return lhsV == rhsV
+        case ( .ascending,  .ascending  ):  return true
+        case ( .descending, .descending ): return true
+        case ( .caseInsensitiveAscending,
+               .caseInsensitiveAscending  ): return true
+        case ( .caseInsensitiveDescending,
+               .caseInsensitiveDescending ): return true
+        case ( .other(let lhsV), .other(let rhsV) ): return lhsV == rhsV
         default: return false
       }
     }
@@ -121,11 +137,13 @@ public extension SortOrdering {
   
   /**
    * Parse orderings from a simple string syntax, e.g.:
+   * ```
+   * name,-balance
+   * ```
    *
-   *     name,-balance
-   *
-   * @param text - the text to parse
-   * @return an array of sort orderings
+   * - Parameters:
+   *   - text:  The string to parse
+   * - Returns: An array of ``SortOrdering``'s, or nil
    */
   static func parse(_ text: String) -> [ SortOrdering ]? {
     guard !text.isEmpty else { return nil }
@@ -144,11 +162,11 @@ public extension SortOrdering {
         let key =
           trimmedPart[trimmedPart.index(after: idx)..<trimmedPart.endIndex]
         
-        let op : Selector = (c0 == "-") ? .CompareDescending : .CompareAscending
+        let op : Selector = (c0 == "-") ? .descending : .ascending
         so = SortOrdering(key: String(key), selector: op)
       }
       else {
-        so = SortOrdering(key: trimmedPart, selector: .CompareAscending)
+        so = SortOrdering(key: trimmedPart, selector: .ascending)
       }
       
       orderings.append(so)

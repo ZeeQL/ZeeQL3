@@ -3,7 +3,7 @@
 //  ZeeQL3
 //
 //  Created by Helge Hess on 04/06/17.
-//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2025 ZeeZide GmbH. All rights reserved.
 //
 
 import struct Foundation.URL
@@ -608,10 +608,10 @@ open class CoreDataModelLoader : ModelLoader {
     let orderString = attrs["order"] ?? attrs["op"] ?? attrs["operation"]
     let order = orderString.map { SortOrdering.Selector(rawValue: $0) }
     if let key = attrs["key"], !key.isEmpty {
-      return SortOrdering(key: key, selector: order ?? .CompareAscending)
+      return SortOrdering(key: key, selector: order ?? .ascending)
     }
     else if let key = xml.textContent, !key.isEmpty {
-      return SortOrdering(key: key, selector: order ?? .CompareAscending)
+      return SortOrdering(key: key, selector: order ?? .ascending)
     }
     else {
       log.warn("<ordering> element w/o a key:", xml)

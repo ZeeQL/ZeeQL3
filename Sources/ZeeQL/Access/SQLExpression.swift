@@ -771,19 +771,19 @@ open class SQLExpression: SmartDescription {
       s = ordering.key
     }
     
-    if sel == SortOrdering.Selector.CompareCaseInsensitiveAscending ||
-       sel == SortOrdering.Selector.CompareCaseInsensitiveDescending
+    if sel == SortOrdering.Selector.caseInsensitiveAscending ||
+       sel == SortOrdering.Selector.caseInsensitiveDescending
     {
       s = formatSQLString(s, "UPPER(%P)")
     }
     
-    if (sel == SortOrdering.Selector.CompareCaseInsensitiveAscending ||
-        sel == SortOrdering.Selector.CompareAscending)
+    if (sel == SortOrdering.Selector.caseInsensitiveAscending ||
+        sel == SortOrdering.Selector.ascending)
     {
       s += " ASC"
     }
-    else if sel == SortOrdering.Selector.CompareCaseInsensitiveDescending ||
-            sel == SortOrdering.Selector.CompareDescending
+    else if sel == SortOrdering.Selector.caseInsensitiveDescending ||
+            sel == SortOrdering.Selector.descending
     {
       s += " DESC"
     }
@@ -1355,7 +1355,7 @@ open class SQLExpression: SmartDescription {
    * 
    * - Parameters:
    *   - attr:   Attribute whose value should be added
-   * - Returns:        whether or not binds ('?' patterns) should be used
+   * - Returns:  whether or not binds ('?' patterns) should be used
    */
   func mustUseBindVariable(for attribute: Attribute) -> Bool {
     return false

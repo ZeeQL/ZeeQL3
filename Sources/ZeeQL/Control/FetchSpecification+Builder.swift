@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Heß on 04.12.24.
-//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2025 ZeeZide GmbH. All rights reserved.
 //
 
 // MARK: - Fetch Specification Convenience
@@ -153,25 +153,25 @@ public extension FetchSpecification {
   {
     transform { fs in
       for by in by {
-        let so = SortOrdering(key: AttributeKey(by), selector: .CompareAscending)
+        let so = SortOrdering(key: AttributeKey(by), selector: .ascending)
         fs.sortOrderings.append(so)
       }
       if let by = asc {
-        let so = SortOrdering(key: AttributeKey(by), selector: .CompareAscending)
+        let so = SortOrdering(key: AttributeKey(by), selector: .ascending)
         fs.sortOrderings.append(so)
       }
       if let by = desc {
-        let so = SortOrdering(key: AttributeKey(by), selector: .CompareDescending)
+        let so = SortOrdering(key: AttributeKey(by), selector: .descending)
         fs.sortOrderings.append(so)
       }
       if let by = iasc {
         let so = SortOrdering(key: AttributeKey(by),
-                              selector: .CompareCaseInsensitiveAscending)
+                              selector: .caseInsensitiveAscending)
         fs.sortOrderings.append(so)
       }
       if let by = idesc {
         let so = SortOrdering(key: AttributeKey(by),
-                              selector: .CompareCaseInsensitiveDescending)
+                              selector: .caseInsensitiveDescending)
         fs.sortOrderings.append(so)
       }
     }
@@ -383,7 +383,7 @@ public extension DatabaseFetchSpecification
   @inlinable
   func order<each A: Attribute>(
     by key: repeat Swift.KeyPath<Object.FullEntity, each A>,
-    using selector: SortOrdering.Selector = .CompareAscending,
+    using selector: SortOrdering.Selector = .ascending,
     clear: Bool = false
   ) -> Self
   {
