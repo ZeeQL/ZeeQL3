@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 16/02/2017.
-//  Copyright © 2017-2019 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2025 ZeeZide GmbH. All rights reserved.
 //
 
 // public extension Qualifier {}
@@ -21,8 +21,9 @@ public func qualifierWith(format: String, _ args: Any?...) -> Qualifier? {
  * 
  * ### KeyValueQualifier
  * Example:
- *
- *     lastname like 'h*'
+ * ```
+ * lastname like 'h*'
+ * ```
  *
  * ### Comparison Operations
  *
@@ -50,31 +51,34 @@ public func qualifierWith(format: String, _ args: Any?...) -> Qualifier? {
  *
  * Bindings are used to fill values into the qualifier at a later time. Each
  * binding has a name which can be used multiple times in a single qualifier.
- * The binding is represented as a QualifierVariable object once it got
+ * The binding is represented as a ``QualifierVariable`` object once it got
  * parsed.
  *
  * Example:
- *
- *     lastname = $lastname AND firstname = $firstname
+ * ```
+ * lastname = $lastname AND firstname = $firstname
+ * ```
  *
  * Matching code:
- *
+ * ```swift
  *    var q = Qualifier.parse("lastname = $lastname AND firstname = $firstname")
  *    q = q.qualifierWith(bindings: self)
- *
+ * ```
  * The q.qualifierWith(bindings:) method will ask 'self' for the
  * 'lastname' and 'firstname' keys using KVC.
  * 
  * ### Patterns
  *
  * You can embed patterns in a qualifier format, eg:
- *
- *     lastname like %@
+ * ```
+ * lastname LIKE %@
+ * ```
  *
  * The pattern is resolved during format parsing, in the above case the
- * matching Java code would look like:
- *
- *     let q = Qualifier.parse("lastname like %@", "Duck");
+ * matching Swift code would look like:
+ * ```swift
+ * let q = Qualifier.parse("lastname LIKE %@", "Duck");
+ * ```
  *
  * (usually the argument will be some instance variable, eg one which is filled
  *  from a search field).
@@ -83,31 +87,32 @@ public func qualifierWith(format: String, _ args: Any?...) -> Qualifier? {
  * Usually bindings are more convenient to map to control elements (because
  * the bindings dictionary can be filled conveniently using KVC).
  *
- * - %@ - use given value as-is
- * - %s - convert value to String
- * - %i / %d - convert value to Integer
- * - %f - convert value to Double
- * - %K - a key, this will result in a KeyComparisonQualifier
- * - %% - to escape %
+ * - `%@` - use given value as-is
+ * - `%s` - convert value to String
+ * - `%i` / %d - convert value to Integer
+ * - `%f` - convert value to Double
+ * - `%K` - a key, this will result in a ``KeyComparisonQualifier``
+ * - `%%` - to escape %
  *
  * 
  * #### True/False Qualifiers
  * Those are sometimes useful in rules, they always match or fail:
  *
- *     *true*
- *     *false*
+ * - `*true*`
+ * - `*false*`
  *
  * ### SQL Qualifiers
  *
  * To embed SQL in your qualifiers, you can use the `SQL[]`
- * construct, eg:
- * 
- *     lastname = 'Duck' AND SQL[ EXISTS (SELECT 1 FROM permissions) ]
+ * construct, e.g.:
+ * ```
+ * lastname = 'Duck' AND SQL[ EXISTS (SELECT 1 FROM permissions) ]
+ * ```
  *
  * A SQL qualifier can even include bindings. The qualifier is represented as
- * a SQLQualifier object at runtime, which in turn is a sequence of 'parts'.
- * Those parts are either QualifierVariable's or RawSQLValue's (those are
- * output as-is by SQLExpression).
+ * a ``SQLQualifier`` object at runtime, which in turn is a sequence of 'parts'.
+ * Those parts are either ``QualifierVariable``'s or ``RawSQLValue``'s (those
+ * are output as-is by ``SQLExpression``).
  */
 open class QualifierParser {
 

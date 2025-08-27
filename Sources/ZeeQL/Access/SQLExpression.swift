@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Heß on 18.02.17.
-//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2025 ZeeZide GmbH. All rights reserved.
 //
 
 import struct Foundation.Date
@@ -13,21 +13,22 @@ import struct Foundation.Date
  * qualifiers and records (but it also works for 'raw' values if the entity is
  * missing).
  *
- * For example this class maps Qualifier's to their SQL representation. This
+ * For example this class maps ``Qualifier``'s to their SQL representation. This
  * requires proper quoting of values and mapping of attribute names to columns
  * names.
  *
- * The final generation (prepare...) is triggered by the AdaptorChannel when
- * it is asked to perform an adaptor operation. It turns the AdaptorOperation
- * into a straight method call (eg selectAttributes) which in turn uses the
- * SQLExpressionFactory to create and prepare an expression.
+ * The final generation (prepare...) is triggered by the ``AdaptorChannel`` when
+ * it is asked to perform an adaptor operation.
+ * It turns the ``AdaptorOperation`` into a straight method call (e.g.
+ * ``AdaptorChannel/selectAttributes(_:_:lock:_:result:)``) which in turn uses
+ * the ``SQLExpressionFactory`` to create and prepare an expression.
  *
  * ## Raw SQL Patterns
  *
- * If the 'CustomQueryExpressionHintKey' is set, the value of this key is
- * processed as a keyvalue-format pattern to produce the SQL. SQLExpression
- * will still prepare and provide the parts of the SQL (eg qualifiers, sorts)
- * but the assembly will be done using the SQL pattern.
+ * If the ``SQLExpression/CustomQueryExpressionHintKey`` is set, the value of
+ * this key is processed as a keyvalue-format pattern to produce the SQL.
+ * ``SQLExpression`` will still prepare and provide the parts of the SQL (e.g.
+ * qualifiers, sorts), but the assembly will be done using the SQL pattern.
  *
  * Example:
  * ```sql
@@ -56,20 +57,23 @@ import struct Foundation.Date
  * | andOrderBy   | eg mod_date DESC (nothing w/o orderings)
  * ```
  *
- * Note: parts which involve bind variables (eg andQualifier) can only be used
- *       ONCE! This is because the bindings are generated only once, but the
- *       '?' in the SQL are generated multiple times. Hence the
+ * Note: parts which involve bind variables (e.g. `andQualifier`) can only be
+ *       used *ONCE*! This is because the bindings are generated only once, but
+ *       the `?` in the SQL are generated multiple times. Hence the
  *       PreparedStatement will report that not all '?' bindings are set!
  *       (TBD: fix me, make generation dynamic)
  *
  *
  * ## How it works
  *
- * The main methods are the four prepare.. methods,
- * prepareSelectExpressionWithAttributes(), prepareUpdateExpressionWith.. etc.
- * Those methods are usually called by the SQLExpressionFactory, which first
- * allocates the SQLExpression subclass (as provided by the specific database
- * adaptor) and calls the prepare... method.
+ * The main methods are the four prepare.. methods:
+ * - ``prepareSelectExpressionWithAttributes(_:_:_:)``
+ * - ``prepareUpdateExpressionWithRow(_:_:)``
+ * - ``prepareInsertExpressionWithRow(_:)``
+ * - ``prepareDeleteExpressionFor(qualifier:)``
+ * Those methods are usually called by the ``SQLExpressionFactory``, which first
+ * allocates the ``SQLExpression`` subclass (as provided by the specific
+ * database adaptor subclass) and calls the prepare... method.
  */
 open class SQLExpression: SmartDescription {
   // TODO(Swift): Maybe mark stuff as throws and throw generation errors.
@@ -93,16 +97,16 @@ open class SQLExpression: SmartDescription {
    * Contains the list of bindings which got created during SQL construction. A
    * bind dictionary contains such keys:
    *
-   * - BindVariableAttributeKey   - the Attribute object
-   * - BindVariablePlaceHolderKey - the placeholder used in the SQL (eg '?')
-   * - BindVariableNameKey        - the name which is bound
+   * - `BindVariableAttributeKey`   - the Attribute object
+   * - `BindVariablePlaceHolderKey` - the placeholder used in the SQL (eg '?')
+   * - `BindVariableNameKey`        - the name which is bound
    *
    * @return a List of bind records.
    */
   public struct BindVariable {
     public var attribute   : Attribute? = nil
-    public var placeholder : String = "?"
-    public var name        : String = ""
+    public var placeholder = "?"
+    public var name        = ""
     public var value       : Any?   = nil
     
     public init() {}
@@ -1349,8 +1353,9 @@ open class SQLExpression: SmartDescription {
    *
    * The default implementation returns false.
    * 
-   * - parameter attr: Attribute whose value should be added
-   * - returns:        whether or not binds ('?' patterns) should be used
+   * - Parameters:
+   *   - attr:   Attribute whose value should be added
+   * - Returns:        whether or not binds ('?' patterns) should be used
    */
   func mustUseBindVariable(for attribute: Attribute) -> Bool {
     return false

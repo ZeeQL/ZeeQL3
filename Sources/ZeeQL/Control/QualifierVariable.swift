@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 16/02/2017.
-//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2025 ZeeZide GmbH. All rights reserved.
 //
 
 public struct QualifierVariable: Hashable {
@@ -15,6 +15,8 @@ public struct QualifierVariable: Hashable {
 }
 
 extension QualifierVariable : CustomStringConvertible {
+  
+  @inlinable
   public var description : String {
     return "<QualifierVariable: \(key)>"
   }

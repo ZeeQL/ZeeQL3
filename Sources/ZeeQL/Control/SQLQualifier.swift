@@ -24,11 +24,13 @@
  *   ]
  * </qualifier>
  * ```
- * Notice the `SQL` pattern. This SQLQualifier becomes an array of those values:
+ * Notice the `SQL` pattern. This ``SQLQualifier`` becomes an array of those
+ * values:
  * - `EXISTS ( SELECT 1 FROM object_acl WHERE\n  object_acl.auth_id::int IN `
- * - QualifierVariable(authIds)
- * - `AND\n  object_acl.action = 'allowed'\n"
- *   "AND\n  object_acl.object_id = BASE.company_id )`
+ *    (raw)
+ * - ``QualifierVariable``(authIds)
+ * - `AND\n  object_acl.action = 'allowed'\n"             (raw)
+ *   "AND\n  object_acl.object_id = BASE.company_id )`    (raw)
  */
 public struct SQLQualifier : Qualifier, Equatable {
   // TBD: maybe rename to 'RawQualifier'?
@@ -39,7 +41,7 @@ public struct SQLQualifier : Qualifier, Equatable {
   }
 
   /**
-   * One part of the qualifier
+   * One part of the qualifier.
    */
   public enum Part: Equatable {
     
@@ -67,6 +69,7 @@ public struct SQLQualifier : Qualifier, Equatable {
       }
     }
     
+    /// A raw SQL string part, like `EXISTS ( SELECT 1 FROM object_acl WHERE`
     case rawValue(String)
     case variable(String)
     case value(RawValueReplacement?)
