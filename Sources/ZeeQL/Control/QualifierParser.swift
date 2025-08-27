@@ -9,8 +9,10 @@
 // public extension Qualifier {}
 //   no static methods on protocols
   
+@inlinable
 public func qualifierWith(format: String, _ args: Any?...) -> Qualifier? {
-  let parser = QualifierParser(string: format, arguments: args)
+  // FIXME: function name is outdated style-wise
+  var parser = QualifierParser(string: format, arguments: args)
   return parser.parseQualifier()
 }
 
@@ -114,9 +116,9 @@ public func qualifierWith(format: String, _ args: Any?...) -> Qualifier? {
  * Those parts are either ``QualifierVariable``'s or ``RawSQLValue``'s (those
  * are output as-is by ``SQLExpression``).
  */
-open class QualifierParser {
+public struct QualifierParser {
 
-  open var log : ZeeQLLogger = globalZeeQLLogger
+  public let log : ZeeQLLogger = globalZeeQLLogger
   
   /* input */
   let string          : String
@@ -137,14 +139,21 @@ open class QualifierParser {
   
   /* main entry */
 
-  public func parseQualifier() -> Qualifier? {
+  @inlinable
+  public static func parse(_ format: String, _ args: Any?...) -> Qualifier? {
+    var parser = Self(string: format, arguments: args)
+    return parser.parseQualifier()
+  }
+
+
+  public mutating func parseQualifier() -> Qualifier? {
     guard skipSpaces() else { return nil } // EOF
     return parseCompoundQualifier()
   }
   
   /* parsing */
 
-  func parseOneQualifier() -> Qualifier? {
+  mutating func parseOneQualifier() -> Qualifier? {
     guard skipSpaces() else { return nil } // EOF
     
     /* sub-qualifiers in parenthesis */
@@ -163,7 +172,7 @@ open class QualifierParser {
     return parseKeyBasedQualifier()
   }
   
-  func nextNonNullStringArgument(_ _pat: String) -> String? {
+  mutating func nextNonNullStringArgument(_ _pat: String) -> String? {
     guard currentArgument < args.count else {
       addError("more format patterns than arguments")
       return nil
@@ -193,7 +202,7 @@ open class QualifierParser {
     }
   }
   
-  func parseKeyBasedQualifier() -> Qualifier? {
+  mutating func parseKeyBasedQualifier() -> Qualifier? {
     // TODO: we need to improve and consolidate the argument handling, but hey,
     //       it works ;-)
     //       Maybe we want to move it to the identifier parsing?
@@ -394,7 +403,7 @@ open class QualifierParser {
     return KeyComparisonQualifier(id, operation, rhs)
   }
   
-  func parseNotQualifier() -> Qualifier? {
+  mutating func parseNotQualifier() -> Qualifier? {
     guard consumeIfMatch(TOK_NOT) else { return nil }
     
     guard skipSpaces() else {
@@ -406,7 +415,7 @@ open class QualifierParser {
     return q.not
   }
   
-  func parseCompoundQualifierInParenthesis() -> Qualifier? {
+  mutating func parseCompoundQualifierInParenthesis() -> Qualifier? {
     guard consumeIfMatch("(") else { return nil } /* not in parenthesis */
     
     guard skipSpaces() else {
@@ -442,7 +451,7 @@ open class QualifierParser {
     }
   }
   
-  func parseCompoundQualifier() -> Qualifier? {
+  mutating func parseCompoundQualifier() -> Qualifier? {
     var qualifiers = [ Qualifier ]()
     var lastCompoundOperator : String? = nil
     
@@ -515,7 +524,7 @@ open class QualifierParser {
    * Note that the SQL strings are converted into RawSQLValue objects so
    * that they do not get quoted as SQL strings during SQL generation.
    */
-  func parseRawSQLQualifier() -> Qualifier? {
+  mutating func parseRawSQLQualifier() -> Qualifier? {
     guard consumeIfMatch(TOK_SQL) else { return nil }
     
     var parts = Array<SQLQualifier.Part>()
@@ -564,7 +573,7 @@ open class QualifierParser {
    * @param _onlyBreakOnSpace - read ID until a space is encountered
    * @return String containing the ID or  if not could be found
    */
-  func parseIdentifier(onlyBreakOnSpace: Bool) -> String? {
+  mutating func parseIdentifier(onlyBreakOnSpace: Bool) -> String? {
     guard idx < string.endIndex else { return nil } // EOF
     
     guard !_isDigit(string[idx]) else { return nil }
@@ -598,7 +607,7 @@ open class QualifierParser {
   /**
    * Parses qualifier operations. If none matches, parseIdentifier is called.
    */
-  func parseOperation() -> String? {
+  mutating func parseOperation() -> String? {
     guard canLA(2) else { return nil }
     
     if string[idx] == "=" {
@@ -653,7 +662,7 @@ open class QualifierParser {
     return parseIdentifier(onlyBreakOnSpace: true)
   }
  
-  func matchConstant() -> Bool {
+  mutating func matchConstant() -> Bool {
     guard idx < string.endIndex else { return false }
     
     if string[idx] == "(" {
@@ -676,7 +685,7 @@ open class QualifierParser {
     return false
   }
  
-  func matchCast() -> Bool {
+  mutating func matchCast() -> Bool {
     guard canLA(2) else { return false } /* at least (a) */
     
     if (string[idx] == "(") {
@@ -687,7 +696,7 @@ open class QualifierParser {
     return false
   }
  
-  func parseCast() -> String? {
+  mutating func parseCast() -> String? {
     guard canLA(2)           else { return nil } /* at least (a) */
     guard string[idx] == "(" else { return nil }
     
@@ -728,7 +737,7 @@ open class QualifierParser {
    *
    * But the casts are not resolved yet ...
    */
-  func _parseConstant(allowCast: Bool) -> Constant? { // TODO
+  mutating func _parseConstant(allowCast: Bool) -> Constant? { // TODO
     let castClass = allowCast ? parseCast() : nil
     let v : Constant?
     
@@ -798,12 +807,12 @@ open class QualifierParser {
     }
   }
   
-  func parseConstant(allowCast: Bool) -> Any? {
+  mutating func parseConstant(allowCast: Bool) -> Any? {
     guard let c = _parseConstant(allowCast: allowCast) else { return nil }
     return c.asAny
   }
  
-  func parseQuotedString() -> String? {
+  mutating func parseQuotedString() -> String? {
     let quoteChar = string[idx]
     
     /* a quoted string */
@@ -849,7 +858,7 @@ open class QualifierParser {
     case Int(Int)
     case Double(Double)
   }
-  func parseNumber() -> Number? { // TODO: not just int
+  mutating func parseNumber() -> Number? { // TODO: not just int
     guard idx < string.endIndex else { return nil } // EOF
     guard _isDigit(string[idx]) || string[idx] == "-" else { return nil }
     
@@ -887,19 +896,19 @@ open class QualifierParser {
  
   /* core parsing */
   
-  final func _isDigit(_ c: Character) -> Bool {
+  func _isDigit(_ c: Character) -> Bool {
     switch c {
       case "0", "1", "2", "3", "4", "5", "6", "7", "8", "9": return true
       default: return false
     }
   }
-  final func _isSpace(_ c: Character) -> Bool {
+  func _isSpace(_ c: Character) -> Bool {
     switch c {
       case " ", "\t", "\n", "\r": return true
       default: return false
     }
   }
-  final func _isIdBreakChar(_ c: Character) -> Bool {
+  func _isIdBreakChar(_ c: Character) -> Bool {
     switch c {
       case " ", "\t", "\n", "\r", "<", ">", "=", "*", "/", "+",
            "-", "(", ")", "]", "!": /* eg NSFileName!="index.html" */
@@ -909,7 +918,7 @@ open class QualifierParser {
     }
   }
 
-  final func skipSpaces() -> Bool {
+  mutating func skipSpaces() -> Bool {
     while idx < string.endIndex {
       if !_isSpace(string[idx]) {
         return true;
@@ -920,12 +929,12 @@ open class QualifierParser {
     return idx < string.endIndex
   }
   
-  final func la(_ i : Int) -> Character? {
+  func la(_ i : Int) -> Character? {
     guard canLA(i) else { return nil }
     return string[string.index(idx, offsetBy: i)]
   }
   
-  final func match(_ tok: [ Character ]) -> Bool {
+  func match(_ tok: [ Character ]) -> Bool {
     guard canLA(tok.count) else { return false }
     
     var midx = idx
@@ -949,19 +958,19 @@ open class QualifierParser {
     return string[idx] == c
   }
   
-  func consumeIfMatch(_ tok: [ Character ]) -> Bool {
+  mutating func consumeIfMatch(_ tok: [ Character ]) -> Bool {
     guard match(tok) else { return false }
     idx = string.index(idx, offsetBy: tok.count)
     return true
   }
   
-  func consumeIfMatch(_ c: Character) -> Bool {
+  mutating func consumeIfMatch(_ c: Character) -> Bool {
     guard match(c) else { return false }
     idx = string.index(after: idx);
     return true
   }
   
-  final func canLA(_ count : Int) -> Bool {
+  func canLA(_ count : Int) -> Bool {
     return string.canLA(count, startIndex: idx)
   }
 

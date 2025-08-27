@@ -41,7 +41,7 @@ public extension EntityType {
   @inlinable
   static func `where`(_ q: String, _ args: Any?...) -> FetchSpecification {
     var fs = ModelFetchSpecification(entity: Self.entity)
-    let parser = QualifierParser(string: q, arguments: args)
+    var parser = QualifierParser(string: q, arguments: args)
     fs.qualifier = parser.parseQualifier()
     return fs
   }
@@ -84,7 +84,7 @@ public extension TypedEntityType where Self: DatabaseObject {
               -> TypedFetchSpecification<Self>
   {
     var fs = TypedFetchSpecification<Self>(entity: Self.entity)
-    let parser = QualifierParser(string: q, arguments: args)
+    var parser = QualifierParser(string: q, arguments: args)
     fs.qualifier = parser.parseQualifier()
     return fs
   }
@@ -101,7 +101,7 @@ public extension TypedEntityObject {
     -> TypedFetchSpecification<Self>
   {
     var fs = TypedFetchSpecification<Self>()
-    let parser = QualifierParser(string: q, arguments: args)
+    var parser = QualifierParser(string: q, arguments: args)
     fs.qualifier = parser.parseQualifier()
     return fs
   }

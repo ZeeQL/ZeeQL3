@@ -57,19 +57,19 @@ public extension FetchSpecification {
   
   @inlinable
   func `where`(_ q: String, _ args: Any?...) -> Self {
-    let parser = QualifierParser(string: q, arguments: args)
+    var parser = QualifierParser(string: q, arguments: args)
     return transform { $0.qualifier = parser.parseQualifier() }
   }
   @inlinable
   func and(_ q: String, _ args: Any?...) -> Self {
-    let parser = QualifierParser(string: q, arguments: args)
+    var parser = QualifierParser(string: q, arguments: args)
     return transform {
       $0.qualifier = ZeeQL.and($0.qualifier, parser.parseQualifier())
     }
   }
   @inlinable
   func or(_ q: String, _ args: Any?...) -> Self {
-    let parser = QualifierParser(string: q, arguments: args)
+    var parser = QualifierParser(string: q, arguments: args)
     return transform {
       $0.qualifier = ZeeQL.or($0.qualifier, parser.parseQualifier())
     }

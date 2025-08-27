@@ -231,7 +231,7 @@ class QualifierParserTests: XCTestCase {
   }
   
   func parse(_ fmt: String) -> Qualifier? {
-    let parser = QualifierParser(string: fmt)
+    var parser = QualifierParser(string: fmt)
     let q = parser.parseQualifier()
     // TODO: check for errors
     return q

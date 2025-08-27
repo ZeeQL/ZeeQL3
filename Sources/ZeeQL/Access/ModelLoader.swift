@@ -372,7 +372,7 @@ open class CoreDataModelLoader : ModelLoader {
     if let xml = xml.firstChildElementWithName("qualifier") {
       // <qualifier>(principalId IN $authIds) AND (objectId IN $ids)</qualifier>
       if let v = xml.textContent, !v.isEmpty {
-        if let q = QualifierParser(string: v).parseQualifier() {
+        if let q = QualifierParser.parse(v) {
           fs.qualifier = q
         }
         else {
@@ -477,7 +477,7 @@ open class CoreDataModelLoader : ModelLoader {
     if let v = attrs["schema"], !v.isEmpty { entity.schemaName = v } // Go
     if boolValue(attrs["readonly"]) { entity.isReadOnly = true } // Go
     if let v = attrs["restrictingQualifier"] { // Go
-      entity.restrictingQualifier = QualifierParser(string: v).parseQualifier()
+      entity.restrictingQualifier = QualifierParser.parse(v)
     }
 
     var idAttribute : Attribute? = nil
