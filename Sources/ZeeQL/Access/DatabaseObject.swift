@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 26/02/2017.
-//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2025 ZeeZide GmbH. All rights reserved.
 //
 
 /**
@@ -82,6 +82,9 @@ public extension DatabaseObject { // default imp
 
 public extension SnapshotObject { // default imp
   
+  // Careful: The snapshot has to cover ALL values, including nil values!
+  // Otherwise it can't revert back properly or calculate changes!
+  
   /* snapshot management */
   
   @discardableResult
@@ -122,6 +125,36 @@ public extension SnapshotObject { // default imp
     return changes
   }
   
+  /**
+   * Returns whether the object has changes since the last snapshot was taken
+   * (since the last fetch).
+   */
+  func hasChangesFromSnapshot(_ snap: Snapshot) -> Bool {
+    if debugChanges { globalZeeQLLogger.log("snapshot:", snap) }
+    for ( key, snapValue ) in snap {
+      let value = self.value(forKey: key)
+      let eqv   = value as EquatableType
+      
+      if debugChanges {
+        globalZeeQLLogger.log("  value \(key):", value, type(of:value),
+                              snapValue, type(of: snapValue))
+      }
+      
+      if eqv.isEqual(to: snapValue) { // still the same
+        continue
+      }
+      if debugChanges {
+        globalZeeQLLogger.log("  not equal", eqv, "vs", snapValue)
+      }
+      
+      if debugChanges { globalZeeQLLogger.log("  change \(key):", value) }
+      return true
+    }
+    
+    if debugChanges { globalZeeQLLogger.log("no changes.") }
+    return false
+  }
+
   func reapplyChangesFromDictionary(_ snap: AdaptorRecord) {
     for ( key, snapValue ) in snap {
       takeStoredValue(snapValue, forKey: key) // TBD

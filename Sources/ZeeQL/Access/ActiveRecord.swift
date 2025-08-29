@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 26/02/2017.
-//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2025 ZeeZide GmbH. All rights reserved.
 //
 
 /**
@@ -19,6 +19,7 @@ open class ActiveRecordBase : ActiveRecordType, SmartDescription {
   // Note: ActiveRecordBase is just here so that we can #ifdef Combine and
   //       Swift 5 features below.
   
+  @inlinable
   open class var database : Database? {
     return nil
   }
@@ -113,12 +114,11 @@ open class ActiveRecordBase : ActiveRecordType, SmartDescription {
    * The actual changes can be calculated using the `changesFromSnapshot`
    * function.
    */
+  @inlinable
   public var hasChanges : Bool {
     if isNew                           { return true  }
     guard let snapshot = snapshot else { return false }
-    
-    // TODO:
-    return !changesFromSnapshot(snapshot).isEmpty
+    return hasChangesFromSnapshot(snapshot)
   }
   
 
