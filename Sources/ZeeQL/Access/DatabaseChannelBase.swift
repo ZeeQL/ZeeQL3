@@ -828,6 +828,8 @@ open class DatabaseChannelBase {
       
       let snapshot  = makeSnapshot(attributes: row.schema.attributeNames,
                                    object: dbo)
+      assert(snapshot.count == row.schema.attributeNames.count,
+             "The snapshot MUST cover all values!")
       
       /* record snapshot */
       
@@ -843,12 +845,15 @@ open class DatabaseChannelBase {
   
   func makeSnapshot(attributes: [String], object: DatabaseObject) -> Snapshot {
     var snapshot = Snapshot()
+    snapshot.reserveCapacity(attributes.count)
     for attributeName in attributes {
       if let v = object.storedValue(forKey: attributeName) {
         snapshot[attributeName] = v
       }
-      else { // TBD
-        snapshot[attributeName] = nil
+      else { // yes, the snapshot MUST have a value even for NULL values!
+        // Note: `snapshot[name] = nil` remove the value from the dict, explicit
+        //       updateValue is required.
+        snapshot.updateValue(nil, forKey: attributeName)
       }
     }
     return snapshot
