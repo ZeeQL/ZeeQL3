@@ -66,7 +66,6 @@
 		E80B3FCF1E606D1E00D6F0ED /* SortOrdering.swift in Sources */ = {isa = PBXBuildFile; fileRef = E80B3FC31E606D1E00D6F0ED /* SortOrdering.swift */; };
 		E80B3FD31E606D4800D6F0ED /* EquatableType.swift in Sources */ = {isa = PBXBuildFile; fileRef = E80B3FD01E606D4800D6F0ED /* EquatableType.swift */; };
 		E80B3FD41E606D4800D6F0ED /* SimpleKVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = E80B3FD11E606D4800D6F0ED /* SimpleKVC.swift */; };
-		E80B3FD51E606D4800D6F0ED /* TimeRange.swift in Sources */ = {isa = PBXBuildFile; fileRef = E80B3FD21E606D4800D6F0ED /* TimeRange.swift */; };
 		E80E83131EA637D400FC1866 /* ArrayDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = E80E83121EA637D400FC1866 /* ArrayDataSource.swift */; };
 		E8190837231050D900BC854E /* AccessDataSourceError.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8A20F12230EE5A700AEE53E /* AccessDataSourceError.swift */; };
 		E81AA9FF1E64EACB001B9B3E /* SmartDescription.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81AA9FE1E64EACB001B9B3E /* SmartDescription.swift */; };
@@ -109,7 +108,6 @@
 		E8263C901E93C82D00508276 /* SQLite3OGoAdaptorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8263C631E93B35F00508276 /* SQLite3OGoAdaptorTests.swift */; };
 		E8263C911E93C89200508276 /* EquatableType.swift in Sources */ = {isa = PBXBuildFile; fileRef = E80B3FD01E606D4800D6F0ED /* EquatableType.swift */; };
 		E8263C921E93C89200508276 /* SimpleKVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = E80B3FD11E606D4800D6F0ED /* SimpleKVC.swift */; };
-		E8263C931E93C89200508276 /* TimeRange.swift in Sources */ = {isa = PBXBuildFile; fileRef = E80B3FD21E606D4800D6F0ED /* TimeRange.swift */; };
 		E8263C941E93C89200508276 /* KeyValueStringFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8687C981E606E8A00D62ABF /* KeyValueStringFormatter.swift */; };
 		E8263C951E93C89200508276 /* SmartDescription.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81AA9FE1E64EACB001B9B3E /* SmartDescription.swift */; };
 		E8263C961E93C89200508276 /* FetchSpecification.swift in Sources */ = {isa = PBXBuildFile; fileRef = E80B3FBB1E606D1E00D6F0ED /* FetchSpecification.swift */; };
@@ -214,6 +212,9 @@
 		E889DE621E666C8D008F962F /* CodeAttribute.swift in Sources */ = {isa = PBXBuildFile; fileRef = E889DE611E666C8D008F962F /* CodeAttribute.swift */; };
 		E889DE641E666C9A008F962F /* CodeRelationship.swift in Sources */ = {isa = PBXBuildFile; fileRef = E889DE631E666C9A008F962F /* CodeRelationship.swift */; };
 		E890E7391ECA543800DE4BC9 /* DatabaseOperation.swift in Sources */ = {isa = PBXBuildFile; fileRef = E890E7381ECA543800DE4BC9 /* DatabaseOperation.swift */; };
+		E8920D982E648B4000301F78 /* OpenDateInterval.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8920D972E648B4000301F78 /* OpenDateInterval.swift */; };
+		E8920D992E648B4000301F78 /* OpenDateInterval.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8920D972E648B4000301F78 /* OpenDateInterval.swift */; };
+		E8920D9A2E648B4000301F78 /* OpenDateInterval.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8920D972E648B4000301F78 /* OpenDateInterval.swift */; };
 		E892D1B12D01063B003489FC /* EntityType+Builder.swift in Sources */ = {isa = PBXBuildFile; fileRef = E892D1B02D01063B003489FC /* EntityType+Builder.swift */; };
 		E892D1B22D01063B003489FC /* EntityType+Builder.swift in Sources */ = {isa = PBXBuildFile; fileRef = E892D1B02D01063B003489FC /* EntityType+Builder.swift */; };
 		E892D1B32D01063B003489FC /* EntityType+Builder.swift in Sources */ = {isa = PBXBuildFile; fileRef = E892D1B02D01063B003489FC /* EntityType+Builder.swift */; };
@@ -240,7 +241,6 @@
 		E8ACA275231166FA000F6BEC /* ComparisonOperation.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8ACA272231166BE000F6BEC /* ComparisonOperation.swift */; };
 		E8ACA3422313E48B000F6BEC /* EquatableType.swift in Sources */ = {isa = PBXBuildFile; fileRef = E80B3FD01E606D4800D6F0ED /* EquatableType.swift */; };
 		E8ACA3432313E48B000F6BEC /* SimpleKVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = E80B3FD11E606D4800D6F0ED /* SimpleKVC.swift */; };
-		E8ACA3442313E48B000F6BEC /* TimeRange.swift in Sources */ = {isa = PBXBuildFile; fileRef = E80B3FD21E606D4800D6F0ED /* TimeRange.swift */; };
 		E8ACA3452313E48B000F6BEC /* KeyValueStringFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8687C981E606E8A00D62ABF /* KeyValueStringFormatter.swift */; };
 		E8ACA3462313E48B000F6BEC /* SmartDescription.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81AA9FE1E64EACB001B9B3E /* SmartDescription.swift */; };
 		E8ACA3472313E48B000F6BEC /* Logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8EB9E5C1EA1117100C6DA54 /* Logger.swift */; };
@@ -485,7 +485,6 @@
 		E80B3FC31E606D1E00D6F0ED /* SortOrdering.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SortOrdering.swift; path = Sources/ZeeQL/Control/SortOrdering.swift; sourceTree = SOURCE_ROOT; };
 		E80B3FD01E606D4800D6F0ED /* EquatableType.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = EquatableType.swift; path = Sources/ZeeQL/Foundation/EquatableType.swift; sourceTree = SOURCE_ROOT; };
 		E80B3FD11E606D4800D6F0ED /* SimpleKVC.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SimpleKVC.swift; path = Sources/ZeeQL/Foundation/SimpleKVC.swift; sourceTree = SOURCE_ROOT; };
-		E80B3FD21E606D4800D6F0ED /* TimeRange.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = TimeRange.swift; path = Sources/ZeeQL/Foundation/TimeRange.swift; sourceTree = SOURCE_ROOT; };
 		E80E83121EA637D400FC1866 /* ArrayDataSource.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = ArrayDataSource.swift; path = Sources/ZeeQL/Control/ArrayDataSource.swift; sourceTree = SOURCE_ROOT; };
 		E81AA9FE1E64EACB001B9B3E /* SmartDescription.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SmartDescription.swift; path = Sources/ZeeQL/Foundation/SmartDescription.swift; sourceTree = SOURCE_ROOT; };
 		E81B62CB1E65DA0D00D43EFA /* CodeEntityModelTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CodeEntityModelTests.swift; sourceTree = "<group>"; };
@@ -550,6 +549,7 @@
 		E889DE611E666C8D008F962F /* CodeAttribute.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = CodeAttribute.swift; path = Sources/ZeeQL/Access/CodeAttribute.swift; sourceTree = SOURCE_ROOT; };
 		E889DE631E666C9A008F962F /* CodeRelationship.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = CodeRelationship.swift; path = Sources/ZeeQL/Access/CodeRelationship.swift; sourceTree = SOURCE_ROOT; };
 		E890E7381ECA543800DE4BC9 /* DatabaseOperation.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = DatabaseOperation.swift; path = Sources/ZeeQL/Access/DatabaseOperation.swift; sourceTree = SOURCE_ROOT; };
+		E8920D972E648B4000301F78 /* OpenDateInterval.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenDateInterval.swift; sourceTree = "<group>"; };
 		E892D1B02D01063B003489FC /* EntityType+Builder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "EntityType+Builder.swift"; path = "Sources/ZeeQL/Control/EntityType+Builder.swift"; sourceTree = SOURCE_ROOT; };
 		E892D1B42D010656003489FC /* FetchSpecification+Builder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FetchSpecification+Builder.swift"; sourceTree = "<group>"; };
 		E892F96B232BBB7100E0B494 /* AttributeValue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AttributeValue.swift; sourceTree = "<group>"; };
@@ -860,7 +860,7 @@
 				E82295792D05F38700F4DD57 /* AnyOptional.swift */,
 				E80B3FD01E606D4800D6F0ED /* EquatableType.swift */,
 				E80B3FD11E606D4800D6F0ED /* SimpleKVC.swift */,
-				E80B3FD21E606D4800D6F0ED /* TimeRange.swift */,
+				E8920D972E648B4000301F78 /* OpenDateInterval.swift */,
 				E8687C981E606E8A00D62ABF /* KeyValueStringFormatter.swift */,
 				E81AA9FE1E64EACB001B9B3E /* SmartDescription.swift */,
 				E8EB9E5C1EA1117100C6DA54 /* Logger.swift */,
@@ -1234,7 +1234,6 @@
 				E892F96D232BBB7100E0B494 /* AttributeValue.swift in Sources */,
 				E8263CA51E93C89200508276 /* NotQualifier.swift in Sources */,
 				E8263CBB1E93C89200508276 /* Entity.swift in Sources */,
-				E8263C931E93C89200508276 /* TimeRange.swift in Sources */,
 				E8A834F71ECDA82300CCDD82 /* DatabaseOperation.swift in Sources */,
 				E8263C9D1E93C89200508276 /* QualifierEvaluation.swift in Sources */,
 				E83F579C2DBFA731008A1437 /* DatabaseChannelFetchHelper.swift in Sources */,
@@ -1301,6 +1300,7 @@
 				E8263CCE1E93C89200508276 /* SQLite3Expression.swift in Sources */,
 				E8263CB61E93C89200508276 /* Adaptor.swift in Sources */,
 				E8263C921E93C89200508276 /* SimpleKVC.swift in Sources */,
+				E8920D9A2E648B4000301F78 /* OpenDateInterval.swift in Sources */,
 				E8263CA81E93C89200508276 /* GlobalID.swift in Sources */,
 				E8263CBD1E93C89200508276 /* Attribute.swift in Sources */,
 				E8263CC31E93C89200508276 /* CodeAttribute.swift in Sources */,
@@ -1390,7 +1390,6 @@
 				E8ACA3922313E4B2000F6BEC /* AdaptorRecordDecoder.swift in Sources */,
 				E8ACA3822313E4A8000F6BEC /* TypedFetchSpecification.swift in Sources */,
 				E8ACA35C2313E493000F6BEC /* GlobalID.swift in Sources */,
-				E8ACA3442313E48B000F6BEC /* TimeRange.swift in Sources */,
 				E8ACA35D2313E493000F6BEC /* ObjectStore.swift in Sources */,
 				E8ACA38A2313E4A8000F6BEC /* ModelLoader.swift in Sources */,
 				E8ACA3482313E48B000F6BEC /* Pluralize.swift in Sources */,
@@ -1436,6 +1435,7 @@
 				E8ACA3902313E4B2000F6BEC /* CodableModelPostProcessor.swift in Sources */,
 				E8ACA34C2313E48F000F6BEC /* ComparisonOperation.swift in Sources */,
 				E8ACA34B2313E48F000F6BEC /* SortOrdering.swift in Sources */,
+				E8920D982E648B4000301F78 /* OpenDateInterval.swift in Sources */,
 				E8ACA39E2313E4C1000F6BEC /* SQLite3Expression.swift in Sources */,
 				E8ACA3992313E4B7000F6BEC /* SQLForeignKey.swift in Sources */,
 				E892D1B62D010656003489FC /* FetchSpecification+Builder.swift in Sources */,
@@ -1521,7 +1521,6 @@
 				E80B3FCB1E606D1E00D6F0ED /* Qualifier.swift in Sources */,
 				E840F7521FE2C117009DBF18 /* CodableModelDecoder.swift in Sources */,
 				E80285461EE6CBAE00F25AD7 /* SchemaSynchronizationFactory.swift in Sources */,
-				E80B3FD51E606D4800D6F0ED /* TimeRange.swift in Sources */,
 				E843135C1E6DB65700A59F8B /* CodeValueAttribute.swift in Sources */,
 				E828519F2031DECB00535895 /* CodableModel.swift in Sources */,
 				E8ACA274231166F7000F6BEC /* ComparisonOperation.swift in Sources */,
@@ -1544,6 +1543,7 @@
 				E89FCAD01E68EAE500ED9216 /* ObjectTrackingContext.swift in Sources */,
 				E80B3FAF1E606D1700D6F0ED /* AdaptorRecord.swift in Sources */,
 				E8DA98301EC0F08E009B0F0F /* AdaptorRecordSchema.swift in Sources */,
+				E8920D992E648B4000301F78 /* OpenDateInterval.swift in Sources */,
 				E81B62D51E65E39A00D43EFA /* BooleanQualifier.swift in Sources */,
 				E80B3FCA1E606D1E00D6F0ED /* ObjectStore.swift in Sources */,
 				E892D1B52D010656003489FC /* FetchSpecification+Builder.swift in Sources */,
