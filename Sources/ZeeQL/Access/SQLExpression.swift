@@ -7,6 +7,7 @@
 //
 
 import struct Foundation.Date
+import struct Foundation.DateInterval
 
 /**
  * This class is used to generate adaptor specific SQL. Usually for mapped
@@ -1944,8 +1945,12 @@ open class SQLExpression: SmartDescription {
           return sb
         }
       }
+      
+      // Coalesce
+      if      let n = v as? DateInterval { v = OpenDateInterval(n) }
+      else if let n = v as? Range<Date>  { v = OpenDateInterval(n) }
 
-      if let range = v as? TimeRange {
+      if let range = v as? OpenDateInterval {
         // TBD: range query ..
         // eg: birthday IN 2008-09-10 00:00 - 2008-09-11 00:00
         // => birthday >= $start AND birthDay < $end
@@ -1957,14 +1962,14 @@ open class SQLExpression: SmartDescription {
         else {
           let date : Date?
           
-          if let fromDate = range.fromDate {
+          if let fromDate = range.start {
             sb += " "
             sb += self.sqlStringForSelector(.GreaterThanOrEqual,
                                             fromDate, false /* no null */)
             sb += " "
             sb += sqlStringForValue(fromDate, k) ?? "ERROR"
             
-            if let toDate = range.toDate {
+            if let toDate = range.end {
               sb += " AND "
               sb += sqlCol
               date = toDate
@@ -1974,7 +1979,7 @@ open class SQLExpression: SmartDescription {
             }
           }
           else {
-            date = range.toDate
+            date = range.end
           }
           
           if let date = date {
@@ -1995,13 +2000,16 @@ open class SQLExpression: SmartDescription {
       return sb
     }
     
-    if let range = v as? TimeRange {
+    // Coalesce
+    if      let n = v as? DateInterval { v = OpenDateInterval(n) }
+    else if let n = v as? Range<Date>  { v = OpenDateInterval(n) }
+    if let range = v as? OpenDateInterval {
       if opsel == .GreaterThan {
         if range.isEmpty { /* empty range, always greater */
           sb.removeAll()
           sb += sqlTrueExpression
         }
-        else if let date = range.toDate {
+        else if let date = range.end {
           /* to dates are exclusive, hence check for >= */
           sb += " "
           sb += self.sqlStringForSelector(.GreaterThanOrEqual,
@@ -2019,7 +2027,7 @@ open class SQLExpression: SmartDescription {
           sb.removeAll()
           sb += self.sqlTrueExpression
         }
-        else if let date = range.fromDate {
+        else if let date = range.start {
           /* from dates are inclusive, hence check for < */
           sb += " "
           sb += op
