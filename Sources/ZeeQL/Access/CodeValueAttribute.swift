@@ -165,7 +165,3 @@ public extension ActiveRecordBase {
 public protocol AnnotatedAttributeValue {
   var attribute : Attribute { get }
 }
-
-public enum CodeValueAttributeError : Swift.Error { // cannot nest in generic
-  case CannotSetValue(AttributeValue.Type, Attribute, Any?)
-}
