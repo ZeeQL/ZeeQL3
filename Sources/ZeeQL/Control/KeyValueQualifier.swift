@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 28/02/17.
-//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2025 ZeeZide GmbH. All rights reserved.
 //
 
 public struct KeyValueQualifier : Qualifier, Equatable {
@@ -13,21 +13,21 @@ public struct KeyValueQualifier : Qualifier, Equatable {
   public let operation : ComparisonOperation
 
   @inlinable
-  public init(_ key: Key, _ op: ComparisonOperation = .EqualTo, _ value: Any?) {
+  public init(_ key: Key, _ op: ComparisonOperation = .equalTo, _ value: Any?) {
     self.keyExpr   = key
     self.value     = value
     self.operation = op
   }
 
   @inlinable
-  public init(_ key: String, _ op: ComparisonOperation = .EqualTo,
+  public init(_ key: String, _ op: ComparisonOperation = .equalTo,
               _ value: Any?)
   {
     self.init(StringKey(key), op, value)
   }
   
   @inlinable
-  public init<T>(_ key: Key, _ op: ComparisonOperation = .EqualTo, _ value: T)
+  public init<T>(_ key: Key, _ op: ComparisonOperation = .equalTo, _ value: T)
     where T: AnyOptional
   {
     self.keyExpr   = key
@@ -35,7 +35,7 @@ public struct KeyValueQualifier : Qualifier, Equatable {
     self.operation = op
   }
   @inlinable
-  public init<T>(_ key: String, _ op: ComparisonOperation = .EqualTo,
+  public init<T>(_ key: String, _ op: ComparisonOperation = .equalTo,
                  _ value: T)
     where T: AnyOptional
   {
@@ -162,8 +162,8 @@ public struct KeyValueQualifier : Qualifier, Equatable {
     ms += keyExpr.key
     
     switch ( value, operation ) {
-      case ( nil, .EqualTo ):    ms += " IS NULL";     return
-      case ( nil, .NotEqualTo ): ms += " IS NOT NULL"; return
+      case ( nil, .equalTo ):    ms += " IS NULL";     return
+      case ( nil, .notEqualTo ): ms += " IS NOT NULL"; return
       default: break
     }
     

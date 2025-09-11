@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 28/02/17.
-//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2025 ZeeZide GmbH. All rights reserved.
 //
 
 public struct KeyComparisonQualifier : Qualifier, Equatable {
@@ -13,7 +13,7 @@ public struct KeyComparisonQualifier : Qualifier, Equatable {
   public let operation    : ComparisonOperation
 
   @inlinable
-  public init(_ left: Key, _ op: ComparisonOperation = .EqualTo, _ right: Key) {
+  public init(_ left: Key, _ op: ComparisonOperation = .equalTo, _ right: Key) {
     self.leftKeyExpr  = left
     self.rightKeyExpr = right
     self.operation    = op

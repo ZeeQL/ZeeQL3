@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Heß on 22.08.19.
-//  Copyright © 2019-2024 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2019-2025 ZeeZide GmbH. All rights reserved.
 //
 
 public extension AccessDataSource {
@@ -51,7 +51,7 @@ public extension AccessDataSource {
     var fs = try fetchSpecificationForFetch()
     
     // override qualifier, but merge in AUX
-    let q  = KeyValueQualifier(StringKey(name), .Contains, values)
+    let q  = KeyValueQualifier(StringKey(name), .in, values)
     fs.qualifier = and(q, auxiliaryQualifier)
     try _primaryFetchObjects(fs, yield: cb)
   }
@@ -190,13 +190,13 @@ public extension AccessDataSource { // Finders
     let q : Qualifier
     if pkeys.count == 1 {
       let key = findEntity.keyForAttributeWith(name: pkeys[0])
-      q = KeyValueQualifier(key, .EqualTo, primaryKeyValues[0])
+      q = KeyValueQualifier(key, .equalTo, primaryKeyValues[0])
     }
     else {
       var qualifiers = [ Qualifier ]()
       for i in 0..<pkeys.count {
         let key = findEntity.keyForAttributeWith(name: pkeys[i])
-        let q = KeyValueQualifier(key, .EqualTo, primaryKeyValues[i])
+        let q = KeyValueQualifier(key, .equalTo, primaryKeyValues[i])
         qualifiers.append(q)
       }
       q = CompoundQualifier(qualifiers: qualifiers, op: .And)

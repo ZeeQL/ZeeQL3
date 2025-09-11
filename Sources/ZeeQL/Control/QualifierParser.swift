@@ -223,7 +223,7 @@ public struct QualifierParser {
       /* ok, it was just the ID. We treat this as a boolean kvqualifier,
        * eg: "isArchived"
        */
-      return KeyValueQualifier(id, .EqualTo, true)
+      return KeyValueQualifier(id, .equalTo, true)
     }
     
     /* check whether the qualifier is closed, that is, whether we are bool */
@@ -233,7 +233,7 @@ public struct QualifierParser {
        * eg: "isArchived AND code > 10"
        *     "(code > 10 AND isArchived) AND is New"
        */
-      return KeyValueQualifier(id, .EqualTo, true)
+      return KeyValueQualifier(id, .equalTo, true)
     }
     
     /* OK, now we check for operations */
@@ -243,7 +243,7 @@ public struct QualifierParser {
       /* ok, it was just the ID and some spaces, no operation. We treat this as
        * a boolean kvqualifier, eg: "isArchived  "
        */
-      return KeyValueQualifier(id, .EqualTo, true)
+      return KeyValueQualifier(id, .equalTo, true)
     }
     
     /* process formats */
@@ -263,12 +263,12 @@ public struct QualifierParser {
         if consumeIfMatch(TOK_NOT) {
           if skipSpaces() {
             if consumeIfMatch(TOK_NULL) {
-              return KeyValueQualifier(id, .NotEqualTo, nil)
+              return KeyValueQualifier(id, .notEqualTo, nil)
             }
           }
         }
         else if consumeIfMatch(TOK_NULL) {
-          return KeyValueQualifier(id, .EqualTo, nil)
+          return KeyValueQualifier(id, .equalTo, nil)
         }
       }
       
@@ -334,7 +334,7 @@ public struct QualifierParser {
             return KeyValueQualifier(id, operation, "\(arg)") // hm
           }
           else {
-            return KeyValueQualifier(id, .EqualTo, nil)
+            return KeyValueQualifier(id, .equalTo, nil)
           }
         
         case "d", "i":
@@ -345,7 +345,7 @@ public struct QualifierParser {
             return KeyValueQualifier(id, operation, Int("\(arg)")) // hm
           }
           else {
-            return KeyValueQualifier(id, .EqualTo, nil)
+            return KeyValueQualifier(id, .equalTo, nil)
           }
         
         case "f":
@@ -359,7 +359,7 @@ public struct QualifierParser {
             return KeyValueQualifier(id, operation, Double("\(arg)")) // hm
           }
           else {
-            return KeyValueQualifier(id, .EqualTo, nil)
+            return KeyValueQualifier(id, .equalTo, nil)
           }
         
         case "K":

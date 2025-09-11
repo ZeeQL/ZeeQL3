@@ -498,13 +498,13 @@ public extension Attribute {
   func eq(_ attr: Attribute) -> KeyComparisonQualifier {
     let key      = AttributeKey(self)
     let otherKey = AttributeKey(attr)
-    return KeyComparisonQualifier(key, .EqualTo, otherKey)
+    return KeyComparisonQualifier(key, .equalTo, otherKey)
   }
   
   @inlinable
   func eq(_ value : Any?) -> KeyValueQualifier {
     let key = AttributeKey(self)
-    return KeyValueQualifier(key, .EqualTo, value)
+    return KeyValueQualifier(key, .equalTo, value)
   }
 }
 
@@ -513,7 +513,7 @@ public extension Attribute {
   @inlinable
   func like(_ pattern : String) -> KeyValueQualifier {
     let key = AttributeKey(self)
-    return KeyValueQualifier(key, .Like, pattern)
+    return KeyValueQualifier(key, .like, pattern)
   }
   
 }
