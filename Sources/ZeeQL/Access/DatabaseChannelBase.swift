@@ -633,7 +633,7 @@ open class DatabaseChannelBase {
     
     // This does things like:
     // `companyId in [ 1, 2, 3, 4 ]`
-    let joinQualifier = KeyValueQualifier(targetName, .Contains, srcValues)
+    let joinQualifier = KeyValueQualifier(targetName, .in, srcValues)
     
     guard let destEntity = rel.destinationEntity else {
       // TODO: what error

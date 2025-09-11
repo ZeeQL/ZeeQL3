@@ -164,7 +164,7 @@ public extension TypedEntityType where FullEntity: CodeEntity<Self> {
                          _ value: A.T) -> TypedFetchSpecification<Self>
     where A: TypedProperty
   {
-    return `where`(key, .EqualTo, value)
+    return `where`(key, .equalTo, value)
   }
 
   /**
@@ -182,12 +182,12 @@ public extension TypedEntityType where FullEntity: CodeEntity<Self> {
    */
   @inlinable
   static func `where`<A, C>(_ key: Swift.KeyPath<FullEntity, A>,
-                         in value: C) -> TypedFetchSpecification<Self>
+                            in value: C) -> TypedFetchSpecification<Self>
     where A: TypedProperty, C: Collection, C.Element == A.T
   {
     var fs = TypedFetchSpecification<Self>(entity: Self.entity)
     let property = Self.e[keyPath: key]
-    fs.qualifier = KeyValueQualifier(StringKey(property.name), .Contains, value)
+    fs.qualifier = KeyValueQualifier(StringKey(property.name), .in, value)
     return fs
   }
 
@@ -210,7 +210,7 @@ public extension TypedEntityType where FullEntity: CodeEntity<Self> {
   @inlinable
   static func `where`<A>(
     _ key       : Swift.KeyPath<FullEntity, A>,
-    _ operation : ComparisonOperation = .EqualTo,
+    _ operation : ComparisonOperation = .equalTo,
     _ value     : A.T
   ) -> TypedFetchSpecification<Self>
     where A: TypedProperty, A.T: AnyOptional
@@ -242,7 +242,7 @@ public extension TypedEntityType where FullEntity: CodeEntity<Self> {
                          _ value: A.T) -> TypedFetchSpecification<Self>
     where A: TypedProperty, A.T: AnyOptional
   {
-    return `where`(key, .EqualTo, value)
+    return `where`(key, .equalTo, value)
   }
   
   /**
@@ -265,7 +265,7 @@ public extension TypedEntityType where FullEntity: CodeEntity<Self> {
   {
     var fs = TypedFetchSpecification<Self>(entity: Self.entity)
     let property = Self.e[keyPath: key]
-    fs.qualifier = KeyValueQualifier(StringKey(property.name), .Contains, value)
+    fs.qualifier = KeyValueQualifier(StringKey(property.name), .in, value)
     return fs
   }
 }

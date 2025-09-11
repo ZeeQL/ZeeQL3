@@ -50,7 +50,7 @@ public extension CodeAttribute where T : SQLLikeType {
   @inlinable
   func like(_ pattern : String) -> KeyValueQualifier {
     let key = AttributeKey(self)
-    return KeyValueQualifier(key, .Like, pattern)
+    return KeyValueQualifier(key, .like, pattern)
   }  
 }
 

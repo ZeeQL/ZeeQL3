@@ -181,13 +181,13 @@ public extension Entity { // default imp
      else { return BooleanQualifier.falseQualifier }
     
     if kglobalID.keyCount == 1 {
-      return KeyValueQualifier(pkeys[0], .EqualTo, kglobalID[0])
+      return KeyValueQualifier(pkeys[0], .equalTo, kglobalID[0])
     }
     
     var qualifiers = [ Qualifier ]()
     qualifiers.reserveCapacity(kglobalID.keyCount)
     for i in 0..<kglobalID.keyCount {
-      qualifiers.append(KeyValueQualifier(pkeys[i], .EqualTo, kglobalID[i]))
+      qualifiers.append(KeyValueQualifier(pkeys[i], .equalTo, kglobalID[i]))
     }
     return CompoundQualifier(qualifiers: qualifiers, op: .And)
   }

@@ -239,7 +239,7 @@ public extension DatabaseFetchSpecification
   func `where`<A: TypedProperty>(_ key: Swift.KeyPath<Object.FullEntity, A>,
                                  _ value: A.T) -> Self
   {
-    return `where`(key, .EqualTo, value)
+    return `where`(key, .equalTo, value)
   }
 
   /**
@@ -282,7 +282,7 @@ public extension DatabaseFetchSpecification
                                  _ value: A.T) -> Self
     where A: TypedProperty, A.T: AnyOptional
   {
-    return `where`(key, .EqualTo, value)
+    return `where`(key, .equalTo, value)
   }
   
   // Non-optional w/ operation.
@@ -300,7 +300,7 @@ public extension DatabaseFetchSpecification
   func and<A: TypedProperty>(_ key: Swift.KeyPath<Object.FullEntity, A>,
                              _ value: A.T) -> Self
   {
-    return and(key, .EqualTo, value)
+    return and(key, .equalTo, value)
   }
 
   // Optional value variant
@@ -320,7 +320,7 @@ public extension DatabaseFetchSpecification
                              _ value: A.T) -> Self
     where A: TypedProperty, A.T: AnyOptional
   {
-    return and(key, .EqualTo, value)
+    return and(key, .equalTo, value)
   }
   
   // Non-optional w/ operation.
@@ -338,7 +338,7 @@ public extension DatabaseFetchSpecification
   func or<A: TypedProperty>(_ key: Swift.KeyPath<Object.FullEntity, A>,
                             _ value: A.T) -> Self
   {
-    return or(key, .EqualTo, value)
+    return or(key, .equalTo, value)
   }
 
   // Optional value variant
@@ -358,7 +358,7 @@ public extension DatabaseFetchSpecification
                             _ value: A.T) -> Self
     where A: TypedProperty, A.T: AnyOptional
   {
-    return or(key, .EqualTo, value)
+    return or(key, .equalTo, value)
   }
 
   

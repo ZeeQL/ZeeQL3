@@ -1693,13 +1693,13 @@ open class SQLExpression: SmartDescription {
   // MARK: - qualifiers
   
   /**
-   * Returns the SQL operator for the given ComparisonOperation.
-   * 
-   * - parameters:
-   *   - op:        the ComparisonOperation, eg .EqualTo or .Like
-   *   - value:     the value to be compared (only tested for null)
+   * Returns the SQL operator for the given ``ComparisonOperation``.
+   *
+   * - Parameters:
+   *   - op:        the ``ComparisonOperation``, e.g. .equalTo or .like
+   *   - value:     the value to be compared (only tested for nil)
    *   - allowNull: whether to use "IS NULL" like special ops
-   * - returns: the String representing the operation, or null if none was found
+   * - Returns: the String representing the operation, or null if none was found
    */
   open func sqlStringForSelector(_ op : ComparisonOperation,
                                  _ value: Any?, _ allowNull: Bool) -> String
@@ -1708,20 +1708,20 @@ open class SQLExpression: SmartDescription {
     // TODO: fix equal to for that case!
     let useNullVariant = value == nil && allowNull
     switch op {
-      case .EqualTo:             return !useNullVariant ? "=" : "IS"
-      case .NotEqualTo:          return !useNullVariant ? "<>" : "IS NOT"
-      case .GreaterThan:         return ">"
-      case .GreaterThanOrEqual:  return ">="
-      case .LessThan:            return "<"
-      case .LessThanOrEqual:     return "<="
-      case .Contains:            return "IN"
-      case .Like, .SQLLike:      return "LIKE"
+      case .equalTo:             return !useNullVariant ? "=" : "IS"
+      case .notEqualTo:          return !useNullVariant ? "<>" : "IS NOT"
+      case .greaterThan:         return ">"
+      case .greaterThanOrEqual:  return ">="
+      case .lessThan:            return "<"
+      case .lessThanOrEqual:     return "<="
+      case .in:                  return "IN"
+      case .like, .SQLLike:      return "LIKE"
       
-      case .CaseInsensitiveLike, .SQLCaseInsensitiveLike:
+      case .caseInsensitiveLike, .SQLCaseInsensitiveLike:
         if let ilike = sqlStringForCaseInsensitiveLike { return ilike }
         return "LIKE"
       
-      case .Unknown(let op):
+      case .other(let op):
         log.error("could not determine SQL operation for operator:", op)
         return op
     }
@@ -1836,8 +1836,8 @@ open class SQLExpression: SmartDescription {
    * This method generates the SQL for the given qualifier and then negates it,
    * but embedded it in a "NOT ( Q )". Should work across all databases.
    * 
-   * - parameter q: base qualifier, to be negated
-   * - returns: the SQL string or null if no SQL was generated for the qualifier
+   * - Parameter q: base qualifier, to be negated
+   * - Returns: the SQL string or null if no SQL was generated for the qualifier
    */
   public func sqlStringForNegatedQualifier(_ q: Qualifier) -> String? {
     guard let qs = sqlStringForQualifier(q), !qs.isEmpty else { return nil }
@@ -1850,7 +1850,7 @@ open class SQLExpression: SmartDescription {
   open func shouldCoalesceEmptyString(_ q: KeyValueQualifier) -> Bool {
     // TBD: Do we have attribute info? (i.e. is the column nullable in the
     //      first place)
-    return q.operation == .Like || q.operation == .CaseInsensitiveLike
+    return q.operation == .like || q.operation == .caseInsensitiveLike
   }
   
   /**
@@ -1964,7 +1964,7 @@ open class SQLExpression: SmartDescription {
           
           if let fromDate = range.start {
             sb += " "
-            sb += self.sqlStringForSelector(.GreaterThanOrEqual,
+            sb += self.sqlStringForSelector(.greaterThanOrEqual,
                                             fromDate, false /* no null */)
             sb += " "
             sb += sqlStringForValue(fromDate, k) ?? "ERROR"
@@ -1984,7 +1984,7 @@ open class SQLExpression: SmartDescription {
           
           if let date = date {
             sb += " "
-            sb += sqlStringForSelector(.LessThan, date, false /* nonull */)
+            sb += sqlStringForSelector(.lessThan, date, false /* nonull */)
             sb += " "
             sb += sqlStringForValue(date, k) ?? "ERROR"
           }
@@ -2004,7 +2004,7 @@ open class SQLExpression: SmartDescription {
     if      let n = v as? DateInterval { v = OpenDateInterval(n) }
     else if let n = v as? Range<Date>  { v = OpenDateInterval(n) }
     if let range = v as? OpenDateInterval {
-      if opsel == .GreaterThan {
+      if opsel == .greaterThan {
         if range.isEmpty { /* empty range, always greater */
           sb.removeAll()
           sb += sqlTrueExpression
@@ -2012,7 +2012,7 @@ open class SQLExpression: SmartDescription {
         else if let date = range.end {
           /* to dates are exclusive, hence check for >= */
           sb += " "
-          sb += self.sqlStringForSelector(.GreaterThanOrEqual,
+          sb += self.sqlStringForSelector(.greaterThanOrEqual,
                                           date, false /* no null */)
           sb += " "
           sb += self.sqlStringForValue(date, k) ?? "ERROR"
@@ -2022,7 +2022,7 @@ open class SQLExpression: SmartDescription {
           sb += self.sqlFalseExpression
         }
       }
-      else if opsel == .LessThan {
+      else if opsel == .lessThan {
         if range.isEmpty { /* empty range, always smaller */
           sb.removeAll()
           sb += self.sqlTrueExpression
@@ -2054,7 +2054,7 @@ open class SQLExpression: SmartDescription {
     
     /* a regular value */
     if let vv = v {
-      if opsel == .Like ||  opsel == .CaseInsensitiveLike {
+      if opsel == .like ||  opsel == .caseInsensitiveLike {
         // TODO: unless the DB supports a specific case-search LIKE, we need
         //       to perform an upper
         v = self.sqlPatternFromShellPattern(String(describing: vv))

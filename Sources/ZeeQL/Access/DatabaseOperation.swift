@@ -161,7 +161,7 @@ open class DatabaseOperation : SmartDescription {
           
           for attr in lockAttrs {
             if let value = snapshot[attr.name] { // value is still an `Any?`!
-              let q = KeyValueQualifier(attr.name, .EqualTo, value)
+              let q = KeyValueQualifier(attr.name, .equalTo, value)
               qualifiers.append(q)
             }
             else {

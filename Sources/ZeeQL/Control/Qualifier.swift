@@ -161,7 +161,7 @@ public extension Collection where Element == KeyValueQualifier {
     var extra = [ Qualifier ]()
     
     for kvq in self {
-      if kvq.operation != .EqualTo {
+      if kvq.operation != .equalTo {
         extra.append(kvq)
         continue
       }
@@ -174,10 +174,10 @@ public extension Collection where Element == KeyValueQualifier {
     for ( key, values ) in keyToValues {
       if values.isEmpty { continue }
       if values.count == 1 {
-        extra.append(KeyValueQualifier(key, .EqualTo, values.first!))
+        extra.append(KeyValueQualifier(key, .equalTo, values.first!))
       }
       else {
-        extra.append(KeyValueQualifier(key, .Contains, values))
+        extra.append(KeyValueQualifier(key, .in, values))
       }
     }
     
@@ -202,7 +202,7 @@ public extension Collection where Element == KeyValueQualifier {
  * - returns: a Qualifier for the given record, or null if the record was empty
  */
 public func qualifierToMatchAllValues(_ values: [ String : Any? ]?,
-                                      _ op: ComparisonOperation = .EqualTo)
+                                      _ op: ComparisonOperation = .equalTo)
             -> Qualifier?
 {
   guard let values = values, !values.isEmpty else { return nil }
@@ -227,7 +227,7 @@ public func qualifierToMatchAllValues(_ values: [ String : Any? ]?,
  * - returns: an Qualifier for the given record, or null if the record was empty
  */
 public func qualifierToMatchAnyValue(_ values: [ String : Any? ]?,
-                                     _ op: ComparisonOperation = .EqualTo)
+                                     _ op: ComparisonOperation = .equalTo)
             -> Qualifier?
 {
   guard let values = values, !values.isEmpty else { return nil }
