@@ -218,6 +218,7 @@ extension Bool : EquatableType, ComparableType {
   }
 }
 
+#if canImport(Foundation)
 import struct Foundation.UUID
 import struct Foundation.URL
 import struct Foundation.Decimal
@@ -344,6 +345,7 @@ extension Decimal : EquatableType, ComparableType {
     }
   }
 }
+#endif // canImport(Foundation)
 
 
 // MARK: - Optional Implementation
@@ -448,6 +450,16 @@ extension Optional : ComparableType {
   
 }
 
+extension Range: EquatableType where Bound : EquatableType {
+  // TODO: add containment?
+  
+  @inlinable
+  public func isEqual(to object: Any?) -> Bool {
+    guard let other = object as? Self else { return false }
+    return self == other
+  }
+}
+
 // MARK: - Containment
 
 public extension Collection where Element : EquatableType {
@@ -465,7 +477,6 @@ extension Range : ContainsComparisonType where Element : EquatableType {}
   extension Slice : ContainsComparisonType where Base.Element : EquatableType {}
 #endif
 
-#if swift(>=5)
 public extension StringProtocol {
 
   @inlinable
@@ -523,62 +534,3 @@ public extension StringProtocol {
 
 extension String    : ContainsComparisonType, LikeComparisonType {}
 extension Substring : ContainsComparisonType, LikeComparisonType {}
-
-#else // Swift 4.2
-
-public extension String {
-
-  func contains(other object: Any?) -> Bool {
-    switch object {
-      case .none: return false
-      case .some(let v as String):    return contains(v)
-      case .some(let v as Substring): return contains(String(v))
-      default:
-        return false
-    }
-  }
-  
-  func isLike(other object: Any?, caseInsensitive ci: Bool) -> Bool {
-    guard let other = object else { return false } // String not like nil
-    if !ci {
-      switch other {
-        case let other as String:    return self.likePatternMatch(other)
-        case let other as Substring: return self.likePatternMatch(String(other))
-        default: return false
-      }
-    }
-    else {
-      switch other {
-        case let other as String:
-          return lowercased().likePatternMatch(other.lowercased())
-        case let other as Substring:
-          return lowercased().likePatternMatch(String(other.lowercased()))
-        default: return false
-      }
-    }
-  }
-  
-  /// A simple (and incomplete) * pattern matcher.
-  /// Can only do prefix/suffix/contains
-  func likePatternMatch<P: StringProtocol>(_ pattern: P) -> Bool {
-    guard pattern.contains("*") else { return self == pattern }
-    let starPrefix = pattern.hasPrefix("*")
-    let starSuffix = pattern.hasSuffix("*")
-    if !starPrefix && !starSuffix { return self == pattern }
-    if starPrefix {
-      let v1 = pattern.dropFirst()
-      return starSuffix ? contains(String(v1.dropLast())) : hasSuffix(v1)
-    }
-    else if starSuffix {
-      return hasPrefix(pattern.dropLast())
-    }
-    else { // stupid fallback ignoring inner stars
-      return self == pattern
-    }
-  }
-}
-
-extension String : ContainsComparisonType, LikeComparisonType {}
-// Not for Substring in 4.2
-
-#endif // Swift 4.2
