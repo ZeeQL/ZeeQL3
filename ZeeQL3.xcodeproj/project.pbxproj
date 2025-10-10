@@ -553,7 +553,6 @@
 		E892D1B02D01063B003489FC /* EntityType+Builder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "EntityType+Builder.swift"; path = "Sources/ZeeQL/Control/EntityType+Builder.swift"; sourceTree = SOURCE_ROOT; };
 		E892D1B42D010656003489FC /* FetchSpecification+Builder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FetchSpecification+Builder.swift"; sourceTree = "<group>"; };
 		E892F96B232BBB7100E0B494 /* AttributeValue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AttributeValue.swift; sourceTree = "<group>"; };
-		E894B0C722FB40B900AB16BB /* Package@swift-5.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Package@swift-5.swift"; sourceTree = "<group>"; };
 		E89BDB641EC9ED330007619C /* SQLite3ActiveRecordTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SQLite3ActiveRecordTests.swift; path = ZeeQLTests/SQLite3ActiveRecordTests.swift; sourceTree = "<group>"; };
 		E89BDB671EC9F3A80007619C /* contacts.sqlite3 */ = {isa = PBXFileReference; lastKnownFileType = file; path = contacts.sqlite3; sourceTree = "<group>"; };
 		E89D64A91E95372200F55CA1 /* SwiftShared.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = SwiftShared.xcconfig; path = xcconfig/SwiftShared.xcconfig; sourceTree = "<group>"; };
@@ -786,7 +785,6 @@
 			children = (
 				E8CF06451E645B68008E5847 /* README.md */,
 				E89D64AA1E953A3500F55CA1 /* Package.swift */,
-				E894B0C722FB40B900AB16BB /* Package@swift-5.swift */,
 				E8EB94C41E5F31E70058D8D1 /* Sources */,
 				E8263C411E93AE2100508276 /* SQLite3Adaptor */,
 				E8D279671E55059800453BBE /* Tests */,
