@@ -738,7 +738,7 @@ open class DatabaseChannelBase {
   /**
    * This is the primary method to retrieve an object after a select().
    *
-   * - returns: null if there are no more objects, or the fetched object/record
+   * - returns: nil if there are no more objects, or the fetched object/record.
    */
   public func fetchObject() -> DatabaseObject? {
     /* use iterator if the objects are already fetched in total */

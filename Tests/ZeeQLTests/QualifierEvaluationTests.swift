@@ -3,7 +3,7 @@
 //  ZeeQLTests
 //
 //  Created by Helge Heß on 24.08.19.
-//  Copyright © 2019 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2019-2025 ZeeZide GmbH. All rights reserved.
 //
 
 import XCTest
@@ -145,10 +145,10 @@ class QualifierEvaluationTests: XCTestCase {
   
   func testCombiningOr() {
     let qualifiers = [
-      KeyValueQualifier("a", .EqualTo, 10),
-      KeyValueQualifier("a", .EqualTo, 10),
-      KeyValueQualifier("a", .EqualTo, 11),
-      KeyValueQualifier("b", .EqualTo, "hello")
+      KeyValueQualifier("a", .equalTo, 10),
+      KeyValueQualifier("a", .equalTo, 10),
+      KeyValueQualifier("a", .equalTo, 11),
+      KeyValueQualifier("b", .equalTo, "hello")
     ]
     let q = qualifiers.compactingOr()
     XCTAssert(q is CompoundQualifier)
@@ -163,17 +163,17 @@ class QualifierEvaluationTests: XCTestCase {
     guard let fk = first  as? KeyValueQualifier,
           let sk = second as? KeyValueQualifier else { return }
     
-    assert(fk.operation == .Contains || sk.operation == .Contains)
-    assert(fk.operation == .EqualTo  || sk.operation == .EqualTo)
-    let aQual = fk.operation == .Contains ? fk : sk
-    let bQual = fk.operation == .EqualTo  ? fk : sk
+    assert(fk.operation == .in || sk.operation == .in)
+    assert(fk.operation == .equalTo  || sk.operation == .equalTo)
+    let aQual = fk.operation == .in      ? fk : sk
+    let bQual = fk.operation == .equalTo ? fk : sk
 
     XCTAssertEqual(bQual.key, "b")
-    XCTAssertEqual(bQual.operation, .EqualTo)
+    XCTAssertEqual(bQual.operation, .equalTo)
     XCTAssertEqual(bQual.value as? String, "hello")
     
     XCTAssertEqual(aQual.key, "a")
-    XCTAssertEqual(aQual.operation, .Contains)
+    XCTAssertEqual(aQual.operation, .in)
     XCTAssertEqual(aQual.value as? [ Int ], [ 10, 10, 11 ])
   }
 }

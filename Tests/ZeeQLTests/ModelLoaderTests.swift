@@ -3,7 +3,7 @@
 //  ZeeQL3
 //
 //  Created by Helge Hess on 04/06/17.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2025 ZeeZide GmbH. All rights reserved.
 //
 
 import XCTest
@@ -110,7 +110,7 @@ class ModelLoaderTests: XCTestCase {
       if let kvq = fs.qualifier as? KeyValueQualifier {
         XCTAssertEqual(kvq.key, "lastName")
         XCTAssertEqual(kvq.value as? String, "Duck*")
-        XCTAssertEqual(kvq.operation, .Like)
+        XCTAssertEqual(kvq.operation, .like)
       }
     }
   }
@@ -182,7 +182,7 @@ class ModelLoaderTests: XCTestCase {
       if let kvq = fs.qualifier as? KeyValueQualifier {
         XCTAssertEqual(kvq.key, "lastName")
         XCTAssertEqual(kvq.value as? String, "Duck*")
-        XCTAssertEqual(kvq.operation, .Like)
+        XCTAssertEqual(kvq.operation, .like)
       }
     }
   }
