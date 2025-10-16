@@ -6,6 +6,10 @@
 //  Copyright © 2017-2025 ZeeZide GmbH. All rights reserved.
 //
 
+public enum TypedDatabaseChannelError: Swift.Error {
+  // TODO: improve errors, consolidate
+  case fetchedIncorrectObjectType
+}
 
 open class TypedDatabaseChannel<ObjectType> : DatabaseChannelBase,
                                               IteratorProtocol, Sequence
@@ -37,12 +41,14 @@ open class TypedDatabaseChannel<ObjectType> : DatabaseChannelBase,
     return ObjectType.self
   }
 
-  func fetchObject<O>() -> O? {
+  public func fetchTypedObject() throws -> ObjectType? {
     guard let o = super.fetchObject() else { return nil }
-    guard let to = o as? O else {
-      // throw something
+    guard let to = o as? ObjectType else {
+      // throw something.
+      // => This is not throwing because fetchRow in the parent is not throwing,
+      //    because it already fetches all rows in the select phase.
       log.warn("fetchObject returned an unexpected type:", o, type(of: o))
-      return nil
+      throw TypedDatabaseChannelError.fetchedIncorrectObjectType
     }
     return to
   }
