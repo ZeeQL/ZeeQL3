@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 16/02/17.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2025 ZeeZide GmbH. All rights reserved.
 //
 
 import XCTest
@@ -108,7 +108,7 @@ class QualifierParserTests: XCTestCase {
     XCTAssert(q! is KeyValueQualifier, "did not parse a key/value qualifier")
     guard let kvq = q as? KeyValueQualifier else { return }
     
-    XCTAssertEqual(kvq.operation, .EqualTo)
+    XCTAssertEqual(kvq.operation, .equalTo)
     XCTAssert(kvq.value is Bool)
     guard let bv = kvq.value as? Bool else { return }
     XCTAssertEqual(bv, true)
@@ -209,7 +209,7 @@ class QualifierParserTests: XCTestCase {
     XCTAssert(q! is KeyValueQualifier, "did not parse a key/value qualifier")
     guard let kvq = q as? KeyValueQualifier else { return }
     
-    XCTAssertEqual(kvq.operation, .EqualTo)
+    XCTAssertEqual(kvq.operation, .equalTo)
     XCTAssert(kvq.value is Bool)
     guard let bv = kvq.value as? Bool else { return }
     XCTAssertEqual(bv, true)

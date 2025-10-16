@@ -3,7 +3,7 @@
 //  ZeeQL3
 //
 //  Created by Helge Hess on 16/05/17.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2025 ZeeZide GmbH. All rights reserved.
 //
 
 import XCTest
@@ -26,10 +26,10 @@ class ModelTests: XCTestCase {
     
     let key = entity.primaryKeyForRow(person)
     XCTAssertNotNil(key)
-    XCTAssertEqual(key!.count, 1)
-    XCTAssertEqual(key!.keys.first!, "id")
-    XCTAssertTrue(key!.values.first! is Int)
-    XCTAssertEqual(key!.values.first! as! Int, 1000)
+    XCTAssertEqual(key?.count, 1)
+    XCTAssertEqual(key?.keys.first, "id")
+    XCTAssertTrue(key?.values.first is Int)
+    XCTAssertEqual(key?.values.first as? Int, 1000)
   }
 
   func testPrimaryKeyQualifier() throws {
@@ -41,9 +41,9 @@ class ModelTests: XCTestCase {
     
     XCTAssertNotNil(q)
     XCTAssert(q is KeyValueQualifier)
-    let kvq = q as! KeyValueQualifier
+    let kvq = try XCTUnwrap(q as? KeyValueQualifier)
     XCTAssertEqual(kvq.key, "id")
-    XCTAssertEqual(kvq.operation, .EqualTo)
+    XCTAssertEqual(kvq.operation, .equalTo)
     XCTAssertEqual(kvq.value as? Int, 1000)
   }
   
@@ -62,7 +62,7 @@ class ModelTests: XCTestCase {
     XCTAssert(q is KeyValueQualifier)
     let kvq = q as! KeyValueQualifier
     XCTAssertEqual(kvq.key, "id")
-    XCTAssertEqual(kvq.operation, .EqualTo)
+    XCTAssertEqual(kvq.operation, .equalTo)
     XCTAssertEqual(kvq.value as? Int, 1000)
   }
   
