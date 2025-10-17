@@ -42,12 +42,12 @@ open class DatabaseChannelBase {
   public let database       : Database
   public var adaptorChannel : AdaptorChannel?
   
-  var currentEntity    : Entity? = nil
-  var currentClass     : DatabaseObject.Type? = nil
-  var isLocking        = false
-  var fetchesRawRows   = false
-  var makesNoSnapshots = false
-  var refreshObjects   = false
+  public var currentEntity    : Entity? = nil
+  public var currentClass     : DatabaseObject.Type? = nil
+  public var isLocking        = false
+  public var fetchesRawRows   = false
+  public var makesNoSnapshots = false
+  public var refreshObjects   = false
   
   var objectContext : ObjectTrackingContext? = nil
   
@@ -58,7 +58,11 @@ open class DatabaseChannelBase {
     self.database = database
   }
   deinit {
-    releaseChannel()
+    assert(adaptorChannel == nil, "Pending adaptor channel?")
+    if let ac = adaptorChannel {
+      adaptorChannel = nil
+      database.adaptor.releaseChannel(ac)
+    }
   }
   
   
@@ -75,22 +79,19 @@ open class DatabaseChannelBase {
    *
    * Be sure to always commit or rollback the transaction!
    */
-  @usableFromInline
-  func begin() throws {
+  @available(*, deprecated, message: "Use withTransaction() instead")
+  open func begin() throws {
     guard !isInTransaction else { throw Error.TransactionInProgress }
     
     if adaptorChannel == nil {
-      do {
-        adaptorChannel = try acquireChannel()
-      }
-      catch {
-        throw Error.CouldNotAcquireChannel(error)
-      }
+      do { adaptorChannel = try acquireChannel() }
+      catch { throw Error.CouldNotAcquireChannel(error) }
     }
     assert(adaptorChannel != nil,
            "got no adaptor channel, but no error thrown?")
-    guard let ac = adaptorChannel
-     else { throw Error.CouldNotAcquireChannel(nil) }
+    guard let ac = adaptorChannel else {
+      throw Error.CouldNotAcquireChannel(nil)
+    }
     
     do {
       try ac.begin()
@@ -101,8 +102,8 @@ open class DatabaseChannelBase {
     }
   }
   
-  @usableFromInline
-  func commitOrRollback(doRollback: Bool = false) throws {
+  @available(*, deprecated, message: "Use withTransaction() instead")
+  open func commitOrRollback(doRollback: Bool = false) throws {
     guard let ac = adaptorChannel else { return } // noop
       // not considered an error, nothing happened
   
@@ -121,12 +122,13 @@ open class DatabaseChannelBase {
     
     releaseChannel()
   }
-  
+
   /**
    * Commits a database transaction. This also releases the associated adaptor
    * channel back to the connection pool.
    */
   @inlinable
+  @available(*, deprecated, message: "Use withTransaction() instead")
   open func commit() throws {
     try commitOrRollback(doRollback: false)
   }
@@ -136,17 +138,66 @@ open class DatabaseChannelBase {
    * adaptor channel back to the connection pool.
    */
   @inlinable
-  func rollback() throws {
+  @available(*, deprecated, message: "Use withTransaction() instead")
+  open func rollback() throws {
     try commitOrRollback(doRollback: true)
+  }
+
+  open func withTransaction<R>(rollbackWhenDone: Bool = false,
+                               _ code: ( AdaptorChannel ) throws -> R)
+    throws -> R
+  {
+    try withChannel { adaptorChannel in
+      
+      if isInTransaction { // Transaction managed by someone else
+        return try code(adaptorChannel)
+      }
+
+      try adaptorChannel.begin()
+      do {
+        let result = try code(adaptorChannel)
+        
+        do {
+          if rollbackWhenDone {
+            try adaptorChannel.rollback()
+          }
+          else {
+            try adaptorChannel.commit()
+          }
+        }
+        catch {
+          if !rollbackWhenDone { // commit failed
+            // tx should be cancelled, no rollback required, but lets do it
+            // anyways.
+            try? adaptorChannel.rollback()
+          }
+          throw Error.CouldNotFinishTX(error)
+        }
+        
+        return result
+      }
+      catch {
+        do {
+          try adaptorChannel.rollback()
+          throw error // properly rolled back after error in code
+        }
+        catch { // Could not rollback
+          globalZeeQLLogger.warn("could not rollback transaction:", error)
+          throw Error.CouldNotFinishTX(error) // TBD: separate error?
+        }
+      }
+    }
   }
   
   
   // MARK: - Adaptor Channel
   
-  func acquireChannel() throws -> AdaptorChannel {
+  //@available(*, deprecated, message: "Use withChannel() instead")
+  public func acquireChannel() throws -> AdaptorChannel {
     return try database.adaptor.openChannelFromPool()
   }
-  func releaseChannel() {
+  //@available(*, deprecated, message: "Use withChannel() instead")
+  public func releaseChannel() {
     guard let ac = adaptorChannel else { return }
     adaptorChannel = nil
     
@@ -156,190 +207,7 @@ open class DatabaseChannelBase {
   
   // MARK: - Fetch Specification
 
-  /**
-   * Creates a map where the keys are level-1 relationship names and the values
-   * are subpathes. The method also resolves flattened relationships (this is,
-   * if a relationship is a flattened one, the keypath of the relationship
-   * will get processed).
-   *
-   * Pathes:
-   * ```
-   * toCompany.toProject
-   * toCompany.toEmployment
-   * toProject
-   * ```
-   * Will result in:
-   * ```
-   * [ "toCompany" = [ "toProject", "toEmployment" ],
-   *   "toProject" = [] ]
-   * ```
-   * Note that the keys are never flattened relationships.
-   */
-  func levelPrefetchSpecificiation(_ entity: Entity, _ pathes: [ String ])
-       -> [ String : [ String ] ]
-  {
-    // TODO: should this throw?
-    guard !pathes.isEmpty else { return [:] }
-    
-    var level = [ String : [ String ] ]()
 
-    for originalPath in pathes {
-      var path = originalPath
-      
-      /* split off first part of relationship */
-      
-      var relname : String
-      #if swift(>=5.0)
-        var dotidx  = path.firstIndex(of: ".")
-      #else
-        var dotidx  = path.index(of: ".")
-      #endif
-      if let dotidx = dotidx {
-        relname = String(path[path.startIndex..<dotidx])
-      }
-      else { relname = path } // no dot
-      
-      /* lookup relationship */
-      
-      guard var rel = entity[relationship: relname] else {
-        // TBD: throw? ignore? what?
-        log.error("did not find specified prefetch relationship '\(path)' " +
-                  "in entity: '\(entity.name)'")
-        continue
-      }
-      
-      /* process flattened relationships */
-      
-      if rel.isFlattened {
-        // dupe, same thing again
-        path   = rel.relationshipPath ?? ""
-        #if swift(>=5.0)
-          dotidx = path.firstIndex(of: ".")
-        #else
-          dotidx = path.index(of: ".")
-        #endif
-        if let dotidx = dotidx {
-          relname = String(path[path.startIndex..<dotidx])
-        }
-        else { relname = path } // no dot
-        
-        /* lookup relationship */
-        
-        guard let frel = entity[relationship: relname] else {
-          // TBD: throw? ignore? what?
-          log.error("did not find specified first relationship '\(path)' " +
-                    "of flattened prefetch: \(path) " +
-                    "in entity: '\(entity.name)'")
-          continue
-        }
-        rel = frel
-      }
-      
-      /* process relationship */
-      
-      if rel.joins.isEmpty {
-        log.error("prefetch relationship has no joins, ignoring: \(rel)")
-        continue
-      }
-      if rel.joins.count > 1 {
-        log.error("prefetch relationship has multiple joins (unsupported), " +
-                  "ignoring: \(rel)")
-        continue
-      }
-      
-      /* add relation names to map */
-      
-      var sublevels = level[relname] ?? []
-      
-      if let dotidx = dotidx {
-        let idx = path.index(after: dotidx)
-        sublevels.append(String(path[idx..<path.endIndex]))
-        level[relname] = sublevels
-      }
-      else if level[relname] == nil {
-        level[relname] = []
-      }
-    }
-    
-    return level
-  }
-
-  /**
-   * Given a list of relationship pathes this method extracts the set of
-   * level-1 flattened relationships.
-   * 
-   * Example:
-   * ```
-   * customers.address
-   * phone.number
-   * ```
-   * where customers is a flattened but phone is not, will return:
-   * ```
-   * customers
-   * ```
-   */
-  func flattenedRelationships(_ entity: Entity, _ pathes: [ String ])
-       -> [ String ]
-  {
-    // TODO: should this throw?
-    guard !pathes.isEmpty else { return [] }
-    
-    var flattened = [ String ]()
-    for path in pathes {
-      /* split off first part of relationship */
-      
-      var relname : String
-      if let dotidx = path.firstIndex(of: ".") {
-        relname = String(path[path.startIndex..<dotidx])
-      }
-      else { relname = path } // no dot
-      
-      /* split off fetch parameters (recursive fetches like parent*) */
-      
-      relname = relationshipNameWithoutParameters(relname)
-        
-      /* lookup relationship */
-      
-      guard let rel = entity[relationship: relname], rel.isFlattened
-       else { continue }
-      
-      flattened.append(relname) // TBD: do we need the name with parameters?
-    }
-    
-    return flattened
-  }
-
-  /**
-   * Cleans the name of the relationship from parameters, eg the name contain
-   * repeaters like '*' (e.g. `parent*` => repeat relationship 'parent' until no
-   * objects are found anymore).
-   *
-   * - Parameters:
-   *   - name:  Name of the relationship, e.g. 'employments' or 'parent*'
-   * - Returns: cleaned relationship name, e.g. 'employments' or 'parent'
-   */
-  func relationshipNameWithoutParameters(_ name: String) -> String {
-    /* cut off '*' (relationship fetch repeaters like parent*) */
-    if name.hasSuffix("*") {
-      let endIdx = name.index(before: name.endIndex)
-      return String(name[name.startIndex..<endIdx])
-    }
-    return name
-  }
-  
-  
-  func selectListForFetchSpecification(_ entity: Entity?,
-                                       _ fs: FetchSpecification?)
-       -> [ Attribute ]?
-  {
-    if let fetchKeys = fs?.fetchAttributeNames {
-      // TBD: generate Attrs for fetchKeys
-      return entity?.attributesWithNames(fetchKeys)
-    }
-    return entity?.attributes
-  }
-  
-  
   // MARK: - Fetching
   
   /**
@@ -348,6 +216,7 @@ open class DatabaseChannelBase {
    *
    * - Returns: true if objects can be fetched, false if no fetch is in progress
    */
+  @inlinable
   public var isFetchInProgress : Bool { return records != nil }
   
   /**
@@ -355,7 +224,7 @@ open class DatabaseChannelBase {
    * is automatically called when fetchRow() returns no object and should
    * always be called if a fetch is stopped before all objects got retrieved.
    */
-  func cancelFetch() {
+  open func cancelFetch() {
     /* Note: do not release the adaptor channel in here! */
     objectContext  = nil // TBD: TODO: this does not record fetched assocs?
     records        = nil
@@ -366,6 +235,31 @@ open class DatabaseChannelBase {
     currentClass   = nil
   }
   
+  open func withChannel<R>(_ code: ( AdaptorChannel ) throws -> R) throws -> R {
+    var didOpenChannel = false
+    if adaptorChannel == nil {
+      do {
+        adaptorChannel = try database.adaptor.openChannelFromPool()
+        didOpenChannel = true
+      }
+      catch { throw Error.CouldNotAcquireChannel(error) }
+    }
+    assert(adaptorChannel != nil,
+           "got no adaptor channel, but no error thrown?")
+    guard let ac = adaptorChannel else {
+      throw Error.CouldNotAcquireChannel(nil)
+    }
+    
+    defer {
+      if didOpenChannel {
+        database.adaptor.releaseChannel(ac)
+        adaptorChannel = nil
+      }
+    }
+    
+    return try code(ac)
+  }
+    
   /**
    * This method prepares the channel for a fetch and initiates the fetch. Once
    * called, the channel has various instance variables configured and the
@@ -379,10 +273,8 @@ open class DatabaseChannelBase {
    *         fetched.
    *   - ec: The ``ObjectTrackingContext`` for the fetch (optional).
    */
-  func primarySelectObjectsWithFetchSpecification(_ fs: FetchSpecification,
-                                                  _ ec: ObjectTrackingContext?
-                                                          = nil)
-       throws
+  open func primarySelectObjectsWithFetchSpecification
+    (_ fs: FetchSpecification, _ ec: ObjectTrackingContext? = nil) throws
   {
     /* tear down */
     cancelFetch()
@@ -427,41 +319,25 @@ open class DatabaseChannelBase {
     
     /* open channel if necessary */
     
-    var didOpenChannel = false
-    if adaptorChannel == nil {
-      do {
-        adaptorChannel = try acquireChannel()
-        didOpenChannel = true
+    try withChannel { ac in /* perform simple fetch */
+      var results = [ AdaptorRecord ]()
+      
+      /* Note: custom queries are detected by the adaptor */
+      try ac.selectAttributes(
+        nil, // selectList, /* was null to let the channel do the work, why? */
+        fs, lock: isLocking, currentEntity
+      ) {
+        results.append($0)
       }
-      catch { throw Error.CouldNotAcquireChannel(error) }
+      
+      // TODO: improve this and replace the iterator?
+      recordCount = results.count
+      records     = results.makeIterator()
     }
-    assert(adaptorChannel != nil,
-           "got no adaptor channel, but no error thrown?")
-    guard let ac = adaptorChannel
-     else { throw Error.CouldNotAcquireChannel(nil) }
-    
-    defer { if didOpenChannel { releaseChannel() } }
-    
-    
-    /* perform fetch */
-    
-    var results = [ AdaptorRecord ]()
-    
-    /* Note: custom queries are detected by the adaptor */
-    try ac.selectAttributes(
-      nil, // selectList, /* was null to let the channel do the work, why? */
-      fs, lock: isLocking, currentEntity
-    ) {
-      results.append($0)
-    }
-    
-    // TODO: improve this and replace the iterator?
-    recordCount = results.count
-    records     = results.makeIterator()
   }
   
-  func selectObjectsWithFetchSpecification(_ fs: FetchSpecification,
-                                           _ ec: ObjectTrackingContext? = nil)
+  open func selectObjectsWithFetchSpecification
+    (_ fs: FetchSpecification, _ ec: ObjectTrackingContext? = nil)
        throws
   {
     // This is the subclass responsibility
@@ -498,7 +374,7 @@ open class DatabaseChannelBase {
     /* process relationships (key is a level1 name, value are the subpaths) */
 
     let leveledPrefetches =
-          levelPrefetchSpecificiation(entity, prefetchRelPathes)
+      levelPrefetchSpecificiation(entity, prefetchRelPathes, log: log)
 
     /*
      * Maps/caches Lists of values for a given attribute in the base result.
@@ -843,7 +719,9 @@ open class DatabaseChannelBase {
     return dbo
   }
   
-  func makeSnapshot(attributes: [String], object: DatabaseObject) -> Snapshot {
+  open func makeSnapshot(attributes: [String], object: DatabaseObject)
+            -> Snapshot
+  {
     var snapshot = Snapshot()
     snapshot.reserveCapacity(attributes.count)
     for attributeName in attributes {
@@ -866,7 +744,7 @@ open class DatabaseChannelBase {
    * ``AdaptorOperation``'s,
    * which are then performed using the associated ``AdaptorChannel``.
    */
-  public func performDatabaseOperations(_ ops: [ DatabaseOperation ]) throws {
+  open func performDatabaseOperations(_ ops: [ DatabaseOperation ]) throws {
     guard !ops.isEmpty else { return } /* nothing to do */
     
     defer {
@@ -881,92 +759,80 @@ open class DatabaseChannelBase {
     
     /* perform adaptor ops */
     
-    let didOpenChannel : Bool
-    let adaptorChannel : AdaptorChannel
-    if let c = self.adaptorChannel {
-      didOpenChannel = false
-      adaptorChannel = c
-    }
-    else {
-      adaptorChannel = try acquireChannel()
-      self.adaptorChannel = adaptorChannel
-      didOpenChannel = true
-    }
-    defer {
-      if didOpenChannel { releaseChannel() }
-    }
-    
-    // Transactions: The `AdaptorChannel` opens a transaction if there is more
-    // than one operation. Also: the `Database` embeds it into a TX too.
-    try adaptorChannel.performAdaptorOperations(&aops)
-    
-    
-    // OK, the database operations have been successful. Now we need to handle
-    // the side effects.
-    
-    for op in ops {
-      let entity = op.entity
-      let dbop   = op.databaseOperator
+    try withChannel { adaptorChannel in
       
-      switch dbop {
-        case .delete:
-          if let tc = objectContext {
-            tc.forget(object: op.object)
-          }
-          if let ar = op.object as? ActiveRecordBase {
-            // TODO: remove primary key
-            ar.isNew    = true
-            ar.snapshot = nil
-          }
+      // Transactions: The `AdaptorChannel` opens a transaction if there is more
+      // than one operation. Also: the `Database` embeds it into a TX too.
+      try adaptorChannel.performAdaptorOperations(&aops)
+      
+      
+      // OK, the database operations have been successful. Now we need to handle
+      // the side effects.
+      
+      for op in ops {
+        let entity = op.entity
+        let dbop   = op.databaseOperator
         
-        case .insert:
-          if let rr = op.newRow {
-            for ( key, value ) in rr {
-              op.object.takeStoredValue(value, forKey: key)
+        switch dbop {
+          case .delete:
+            if let tc = objectContext {
+              tc.forget(object: op.object)
             }
-          }
-          if let ar = op.object as? ActiveRecordBase {
-            ar.isNew = false
-          }
-          
-          // yes! *not* awakeFromInsertion, which is called when an object
-          // is added to an editing context, i.e. is NOT yet saved to the DB.
-          op.object.awakeFromFetch(database)
-          
-          /* Why don't we just reuse the row? Because applying the row on the object
-           * might have changed or coerced values which would be incorrectly
-           * reported as changes later on.
-           *
-           * We make the snapshot after the awake for the same reasons.
-           */
-          let snapshot =
-            makeSnapshot(attributes: entity.attributes.map { $0.name },
-                         object: op.object)
-          
-          if let ar = op.object as? ActiveRecordType {
-            ar.snapshot = snapshot
-          }
-          
-          if let tc = objectContext {
-            if let gid = entity.globalIDForRow(snapshot) {
-              // TODO: unregister a potential temporary gid!
-              tc.record(object: op.object, with: gid)
+            if let ar = op.object as? ActiveRecordBase {
+              // TODO: remove primary key
+              ar.isNew    = true
+              ar.snapshot = nil
             }
-          }
-        
-        case .update:
-          // TBD: do we need to make an explicit snapshot like above?
-          // Note: We could do updates on partials, doesn't have to be a full
-          //       object!
-          if let snapshot = op.dbSnapshot {
+          
+          case .insert:
+            if let rr = op.newRow {
+              for ( key, value ) in rr {
+                op.object.takeStoredValue(value, forKey: key)
+              }
+            }
+            if let ar = op.object as? ActiveRecordBase {
+              ar.isNew = false
+            }
+            
+            // yes! *not* awakeFromInsertion, which is called when an object
+            // is added to an editing context, i.e. is NOT yet saved to the DB.
+            op.object.awakeFromFetch(database)
+            
+            /* Why don't we just reuse the row? Because applying the row on the object
+             * might have changed or coerced values which would be incorrectly
+             * reported as changes later on.
+             *
+             * We make the snapshot after the awake for the same reasons.
+             */
+            let snapshot =
+              makeSnapshot(attributes: entity.attributes.map { $0.name },
+                           object: op.object)
+            
             if let ar = op.object as? ActiveRecordType {
               ar.snapshot = snapshot
-              assert(!ar.isNew)
             }
-          }
-        
-        default:
-          break
+            
+            if let tc = objectContext {
+              if let gid = entity.globalIDForRow(snapshot) {
+                // TODO: unregister a potential temporary gid!
+                tc.record(object: op.object, with: gid)
+              }
+            }
+          
+          case .update:
+            // TBD: do we need to make an explicit snapshot like above?
+            // Note: We could do updates on partials, doesn't have to be a full
+            //       object!
+            if let snapshot = op.dbSnapshot {
+              if let ar = op.object as? ActiveRecordType {
+                ar.snapshot = snapshot
+                assert(!ar.isNew)
+              }
+            }
+          
+          default:
+            break
+        }
       }
     }
   }
@@ -996,4 +862,191 @@ open class DatabaseChannelBase {
     }
     return aops
   }
+}
+
+
+// MARK: - Helper Functions
+
+/**
+ * Creates a map where the keys are level-1 relationship names and the values
+ * are subpathes. The method also resolves flattened relationships (this is,
+ * if a relationship is a flattened one, the keypath of the relationship
+ * will get processed).
+ *
+ * Pathes:
+ * ```
+ * toCompany.toProject
+ * toCompany.toEmployment
+ * toProject
+ * ```
+ * Will result in:
+ * ```
+ * [ "toCompany" = [ "toProject", "toEmployment" ],
+ *   "toProject" = [] ]
+ * ```
+ * Note that the keys are never flattened relationships.
+ */
+private func levelPrefetchSpecificiation(_ entity: Entity, _ pathes: [ String ],
+                                         log: ZeeQLLogger)
+             -> [ String : [ String ] ]
+{
+  // TODO: should this throw?
+  guard !pathes.isEmpty else { return [:] }
+  
+  var level = [ String : [ String ] ]()
+
+  for originalPath in pathes {
+    var path = originalPath
+    
+    /* split off first part of relationship */
+    
+    var relname : String
+    #if swift(>=5.0)
+      var dotidx  = path.firstIndex(of: ".")
+    #else
+      var dotidx  = path.index(of: ".")
+    #endif
+    if let dotidx = dotidx {
+      relname = String(path[path.startIndex..<dotidx])
+    }
+    else { relname = path } // no dot
+    
+    /* lookup relationship */
+    
+    guard var rel = entity[relationship: relname] else {
+      // TBD: throw? ignore? what?
+      log.error("did not find specified prefetch relationship '\(path)' " +
+                "in entity: '\(entity.name)'")
+      continue
+    }
+    
+    /* process flattened relationships */
+    
+    if rel.isFlattened {
+      // dupe, same thing again
+      path   = rel.relationshipPath ?? ""
+      #if swift(>=5.0)
+        dotidx = path.firstIndex(of: ".")
+      #else
+        dotidx = path.index(of: ".")
+      #endif
+      if let dotidx = dotidx {
+        relname = String(path[path.startIndex..<dotidx])
+      }
+      else { relname = path } // no dot
+      
+      /* lookup relationship */
+      
+      guard let frel = entity[relationship: relname] else {
+        // TBD: throw? ignore? what?
+        log.error("did not find specified first relationship '\(path)' " +
+                  "of flattened prefetch: \(path) " +
+                  "in entity: '\(entity.name)'")
+        continue
+      }
+      rel = frel
+    }
+    
+    /* process relationship */
+    
+    if rel.joins.isEmpty {
+      log.error("prefetch relationship has no joins, ignoring: \(rel)")
+      continue
+    }
+    if rel.joins.count > 1 {
+      log.error("prefetch relationship has multiple joins (unsupported), " +
+                "ignoring: \(rel)")
+      continue
+    }
+    
+    /* add relation names to map */
+    
+    var sublevels = level[relname] ?? []
+    
+    if let dotidx = dotidx {
+      let idx = path.index(after: dotidx)
+      sublevels.append(String(path[idx..<path.endIndex]))
+      level[relname] = sublevels
+    }
+    else if level[relname] == nil {
+      level[relname] = []
+    }
+  }
+  
+  return level
+}
+
+/**
+ * Given a list of relationship pathes this method extracts the set of
+ * level-1 flattened relationships.
+ *
+ * Example:
+ * ```
+ * customers.address
+ * phone.number
+ * ```
+ * where customers is a flattened but phone is not, will return:
+ * ```
+ * customers
+ * ```
+ */
+private func flattenedRelationships(_ entity: Entity, _ pathes: [ String ])
+             -> [ String ]
+{
+  // TODO: should this throw?
+  guard !pathes.isEmpty else { return [] }
+  
+  var flattened = [ String ]()
+  for path in pathes {
+    /* split off first part of relationship */
+    
+    var relname : String
+    if let dotidx = path.firstIndex(of: ".") {
+      relname = String(path[path.startIndex..<dotidx])
+    }
+    else { relname = path } // no dot
+    
+    /* split off fetch parameters (recursive fetches like parent*) */
+    
+    relname = relationshipNameWithoutParameters(relname)
+      
+    /* lookup relationship */
+    
+    guard let rel = entity[relationship: relname], rel.isFlattened
+     else { continue }
+    
+    flattened.append(relname) // TBD: do we need the name with parameters?
+  }
+  
+  return flattened
+}
+
+/**
+ * Cleans the name of the relationship from parameters, eg the name contain
+ * repeaters like '*' (e.g. `parent*` => repeat relationship 'parent' until no
+ * objects are found anymore).
+ *
+ * - Parameters:
+ *   - name:  Name of the relationship, e.g. 'employments' or 'parent*'
+ * - Returns: cleaned relationship name, e.g. 'employments' or 'parent'
+ */
+private func relationshipNameWithoutParameters(_ name: String) -> String {
+  /* cut off '*' (relationship fetch repeaters like parent*) */
+  if name.hasSuffix("*") {
+    let endIdx = name.index(before: name.endIndex)
+    return String(name[name.startIndex..<endIdx])
+  }
+  return name
+}
+
+
+private func selectListForFetchSpecification(_ entity: Entity?,
+                                             _ fs: FetchSpecification?)
+             -> [ Attribute ]?
+{
+  if let fetchKeys = fs?.fetchAttributeNames {
+    // TBD: generate Attrs for fetchKeys
+    return entity?.attributesWithNames(fetchKeys)
+  }
+  return entity?.attributes
 }

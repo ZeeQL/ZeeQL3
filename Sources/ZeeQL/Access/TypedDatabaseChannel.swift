@@ -31,7 +31,7 @@ open class TypedDatabaseChannel<ObjectType> : DatabaseChannelBase,
   override public var isFetchInProgress : Bool {
     return super.isFetchInProgress || objects != nil
   }
-  override func cancelFetch() {
+  override open func cancelFetch() {
     super.cancelFetch()
     objects = nil
   }
@@ -71,7 +71,7 @@ open class TypedDatabaseChannel<ObjectType> : DatabaseChannelBase,
    *   - ec: The ``ObjectTrackingContext`` that is used to register objects
    *         under their global ID.
    */
-  override public func selectObjectsWithFetchSpecification(
+  override open func selectObjectsWithFetchSpecification(
     _ fs: FetchSpecification,
     _ ec: ObjectTrackingContext? = nil
   ) throws
@@ -86,109 +86,69 @@ open class TypedDatabaseChannel<ObjectType> : DatabaseChannelBase,
      * transaction.
      */
     
-    /* open channel if necessary */
-    
-    var didOpenChannel = false
-    if adaptorChannel == nil {
-      do {
-        adaptorChannel = try acquireChannel()
-        didOpenChannel = true
-      }
-      catch { throw Error.CouldNotAcquireChannel(error)}
-    }
-    assert(adaptorChannel != nil,
-           "got no adaptor channel, but no error thrown?")
-    guard adaptorChannel != nil else { throw Error.CouldNotAcquireChannel(nil) }
-    
-    defer { if didOpenChannel { releaseChannel() } }
+    try withTransaction { adaptorChannel in
+      
+      var baseObjects = [ ObjectType ]()
 
-    
-    /* open TX */
-    
-    var didBeginTX = false
-    do {
-      if !isInTransaction {
-        try begin()
-        didBeginTX = true
-      }
-    }
-    catch { throw error }
-    defer {
+      /* First we fetch all primary objects and collect them in an Array */
+
       do {
-        /* Note: We do not commit because we just fetched stuff and commits
-         *       increase the likeliness that something fails. So: rollback in
-         *       both ways.
-         */
-        if didBeginTX {
-          try rollback()
-        }
+        try primarySelectObjectsWithFetchSpecification(fs, ec)
       }
       catch {
-        // TBD: hm
-        globalZeeQLLogger.warn("could not rollback transaction:", error)
+        cancelFetch()
+        throw error
       }
-    }
-    
-    var baseObjects = [ ObjectType ]()
-
-    /* First we fetch all primary objects and collect them in an Array */
-
-    do {
-      try primarySelectObjectsWithFetchSpecification(fs, ec)
-    }
-    catch {
+      
+      if recordCount > 0 {
+        baseObjects.reserveCapacity(recordCount)
+      }
+      
+      while let object = fetchObject() {
+        if let typed = object as? ObjectType {
+          baseObjects.append(typed)
+        }
+        else {
+          globalZeeQLLogger.error(
+            "Could not map fetched object of type \(type(of: object))",
+            "to type of typed datasource \(ObjectType.self)!"
+          )
+          assertionFailure(
+            "Could not map fetched object of type \(type(of: object)) " +
+            "to \(ObjectType.self)"
+          )
+        }
+        // TBD: already extract something?
+      }
       cancelFetch()
-      throw error
-    }
-    
-    if recordCount > 0 {
-      baseObjects.reserveCapacity(recordCount)
-    }
-    
-    while let object = fetchObject() {
-      if let typed = object as? ObjectType {
-        baseObjects.append(typed)
+      
+      /* Then we fetch relationships for the 'baseObjects' we just fetched. */
+      
+      guard let entityName = fs.entityName else {
+        assertionFailure("FetchSpecification misses entityName \(fs)")
+        throw Error.MissingEntity(nil)
       }
-      else {
-        globalZeeQLLogger.error(
-          "Could not map fetched object of type \(type(of: object))",
-          "to type of typed datasource \(ObjectType.self)!"
-        )
-        assertionFailure(
-          "Could not map fetched object of type \(type(of: object)) " +
-          "to \(ObjectType.self)"
-        )
-      }
-      // TBD: already extract something?
-    }
-    cancelFetch()
-    
-    /* Then we fetch relationships for the 'baseObjects' we just fetched. */
-    
-    guard let entityName = fs.entityName else {
-      assertionFailure("FetchSpecification misses entityName \(fs)")
-      throw Error.MissingEntity(nil)
-    }
 
-    // This CANNOT recurse in a TypedFetchSpecification, because the
-    // Typed one will try to assign it to its `ObjectType`, which will be
-    // wrong for relationship targets (unless those are the same).
-    let genericChannel = DatabaseChannel(database: database)
-    genericChannel.adaptorChannel = adaptorChannel // run in same TX!
-    defer { genericChannel.adaptorChannel = nil } // make sure to clear this!
-    do {
-      try genericChannel
-        .fetchRelationships(fs.entity, entityName,
-                            fs.prefetchingRelationshipKeyPathes,
-                            baseObjects, ec)
+      // This CANNOT recurse in a TypedFetchSpecification, because the
+      // Typed one will try to assign it to its `ObjectType`, which will be
+      // wrong for relationship targets (unless those are the same).
+      let genericChannel = DatabaseChannel(database: database)
+      genericChannel.adaptorChannel = adaptorChannel // run in same TX!
+      defer { genericChannel.adaptorChannel = nil } // make sure to clear this!
+      do {
+        try genericChannel
+          .fetchRelationships(fs.entity, entityName,
+                              fs.prefetchingRelationshipKeyPathes,
+                              baseObjects, ec)
+      }
+      catch {
+        genericChannel.cancelFetch()
+        throw error
+      }
+      
+      /* set the result */
+      objects = baseObjects.makeIterator()
     }
-    catch {
-      genericChannel.cancelFetch()
-      throw error
-    }
-    
-    /* set the result */
-    objects = baseObjects.makeIterator()
   }
   
   
