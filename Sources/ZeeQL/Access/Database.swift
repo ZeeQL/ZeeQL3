@@ -87,15 +87,8 @@ open class Database : EquatableType, Equatable, SmartDescription {
     guard !ops.isEmpty else { return } /* nothing to do */
     
     let channel = DatabaseChannel(database: self)
-    try channel.begin()
-    
-    do {
-      try channel.performDatabaseOperations(ops)
-      try channel.commit()
-    }
-    catch {
-      try? channel.rollback() // yes, ignore follow-up errors
-      throw error
+    try channel.withTransaction { _ in
+      try channel.performDatabaseOperations(ops) // this doesn't run in a TX!
     }
   }
   

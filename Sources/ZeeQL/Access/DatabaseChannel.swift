@@ -33,7 +33,7 @@ open class DatabaseChannel : DatabaseChannelBase, IteratorProtocol, Sequence {
   override public var isFetchInProgress : Bool {
     return super.isFetchInProgress || objects != nil
   }
-  override func cancelFetch() {
+  override open func cancelFetch() {
     super.cancelFetch()
     objects = nil
   }
@@ -59,7 +59,7 @@ open class DatabaseChannel : DatabaseChannelBase, IteratorProtocol, Sequence {
                 throws
   {
     guard !fs.prefetchingRelationshipKeyPathes.isEmpty else {
-      /* simple case, no prefetches */
+      /* simple case, no prefetches, doesn't open transaction! */
       return try primarySelectObjectsWithFetchSpecification(fs, ec)
     }
     
@@ -68,91 +68,51 @@ open class DatabaseChannel : DatabaseChannelBase, IteratorProtocol, Sequence {
      * transaction.
      */
     
-    /* open channel if necessary */
-    
-    var didOpenChannel = false
-    if adaptorChannel == nil {
-      do {
-        adaptorChannel = try acquireChannel()
-        didOpenChannel = true
-      }
-      catch { throw Error.CouldNotAcquireChannel(error)}
-    }
-    assert(adaptorChannel != nil,
-           "got no adaptor channel, but no error thrown?")
-    guard adaptorChannel != nil else { throw Error.CouldNotAcquireChannel(nil) }
-    
-    defer { if didOpenChannel { releaseChannel() } }
+    try withTransaction { adaptorChannel in
 
-    
-    /* open TX */
-    
-    var didBeginTX = false
-    do {
-      if !isInTransaction {
-        try begin()
-        didBeginTX = true
-      }
-    }
-    catch { throw error }
-    defer {
+      var baseObjects = [ ObjectType ]()
+
+      /* First we fetch all primary objects and collect them in an Array */
+
       do {
-        /* Note: We do not commit because we just fetched stuff and commits
-         *       increase the likeliness that something fails. So: rollback in
-         *       both ways.
-         */
-        if didBeginTX {
-          try rollback()
-        }
+        try primarySelectObjectsWithFetchSpecification(fs, ec)
       }
       catch {
-        // TBD: hm
-        globalZeeQLLogger.warn("could not rollback transaction:", error)
+        cancelFetch()
+        throw error
       }
-    }
-
-    var baseObjects = [ ObjectType ]()
-
-    /* First we fetch all primary objects and collect them in an Array */
-
-    do {
-      try primarySelectObjectsWithFetchSpecification(fs, ec)
-    }
-    catch {
+      
+      if recordCount > 0 {
+        baseObjects.reserveCapacity(recordCount)
+      }
+      
+      while let o = fetchObject() {
+        baseObjects.append(o)
+        // TBD: already extract something?
+      }
       cancelFetch()
-      throw error
-    }
-    
-    if recordCount > 0 {
-      baseObjects.reserveCapacity(recordCount)
-    }
-    
-    while let o = fetchObject() {
-      baseObjects.append(o)
-      // TBD: already extract something?
-    }
-    cancelFetch()
-    
-    /* Then we fetch relationships for the 'baseObjects' we just fetched. */
-    
-    guard let entityName = fs.entityName else {
-      throw Error.MissingEntity(nil)
-    }
+      
+      /* Then we fetch relationships for the 'baseObjects' we just fetched. */
+      
+      guard let entityName = fs.entityName else {
+        throw Error.MissingEntity(nil)
+      }
 
-    // This recurses in the generic variant, different to the
-    // TypedDatabaseChannel.
-    do {
-      try fetchRelationships(fs.entity, entityName,
-                             fs.prefetchingRelationshipKeyPathes,
-                             baseObjects, ec)
+      // This recurses in the generic variant, different to the
+      // TypedDatabaseChannel.
+      do {
+        try fetchRelationships(fs.entity, entityName,
+                               fs.prefetchingRelationshipKeyPathes,
+                               baseObjects, ec)
+      }
+      catch {
+        cancelFetch()
+        throw error
+      }
+      
+      /* set the result */
+      objects = baseObjects.makeIterator()
     }
-    catch {
-      cancelFetch()
-      throw error
-    }
-    
-    /* set the result */
-    objects = baseObjects.makeIterator()
   }
   
   
