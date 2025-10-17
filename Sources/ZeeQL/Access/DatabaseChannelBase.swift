@@ -156,190 +156,7 @@ open class DatabaseChannelBase {
   
   // MARK: - Fetch Specification
 
-  /**
-   * Creates a map where the keys are level-1 relationship names and the values
-   * are subpathes. The method also resolves flattened relationships (this is,
-   * if a relationship is a flattened one, the keypath of the relationship
-   * will get processed).
-   *
-   * Pathes:
-   * ```
-   * toCompany.toProject
-   * toCompany.toEmployment
-   * toProject
-   * ```
-   * Will result in:
-   * ```
-   * [ "toCompany" = [ "toProject", "toEmployment" ],
-   *   "toProject" = [] ]
-   * ```
-   * Note that the keys are never flattened relationships.
-   */
-  func levelPrefetchSpecificiation(_ entity: Entity, _ pathes: [ String ])
-       -> [ String : [ String ] ]
-  {
-    // TODO: should this throw?
-    guard !pathes.isEmpty else { return [:] }
-    
-    var level = [ String : [ String ] ]()
 
-    for originalPath in pathes {
-      var path = originalPath
-      
-      /* split off first part of relationship */
-      
-      var relname : String
-      #if swift(>=5.0)
-        var dotidx  = path.firstIndex(of: ".")
-      #else
-        var dotidx  = path.index(of: ".")
-      #endif
-      if let dotidx = dotidx {
-        relname = String(path[path.startIndex..<dotidx])
-      }
-      else { relname = path } // no dot
-      
-      /* lookup relationship */
-      
-      guard var rel = entity[relationship: relname] else {
-        // TBD: throw? ignore? what?
-        log.error("did not find specified prefetch relationship '\(path)' " +
-                  "in entity: '\(entity.name)'")
-        continue
-      }
-      
-      /* process flattened relationships */
-      
-      if rel.isFlattened {
-        // dupe, same thing again
-        path   = rel.relationshipPath ?? ""
-        #if swift(>=5.0)
-          dotidx = path.firstIndex(of: ".")
-        #else
-          dotidx = path.index(of: ".")
-        #endif
-        if let dotidx = dotidx {
-          relname = String(path[path.startIndex..<dotidx])
-        }
-        else { relname = path } // no dot
-        
-        /* lookup relationship */
-        
-        guard let frel = entity[relationship: relname] else {
-          // TBD: throw? ignore? what?
-          log.error("did not find specified first relationship '\(path)' " +
-                    "of flattened prefetch: \(path) " +
-                    "in entity: '\(entity.name)'")
-          continue
-        }
-        rel = frel
-      }
-      
-      /* process relationship */
-      
-      if rel.joins.isEmpty {
-        log.error("prefetch relationship has no joins, ignoring: \(rel)")
-        continue
-      }
-      if rel.joins.count > 1 {
-        log.error("prefetch relationship has multiple joins (unsupported), " +
-                  "ignoring: \(rel)")
-        continue
-      }
-      
-      /* add relation names to map */
-      
-      var sublevels = level[relname] ?? []
-      
-      if let dotidx = dotidx {
-        let idx = path.index(after: dotidx)
-        sublevels.append(String(path[idx..<path.endIndex]))
-        level[relname] = sublevels
-      }
-      else if level[relname] == nil {
-        level[relname] = []
-      }
-    }
-    
-    return level
-  }
-
-  /**
-   * Given a list of relationship pathes this method extracts the set of
-   * level-1 flattened relationships.
-   * 
-   * Example:
-   * ```
-   * customers.address
-   * phone.number
-   * ```
-   * where customers is a flattened but phone is not, will return:
-   * ```
-   * customers
-   * ```
-   */
-  func flattenedRelationships(_ entity: Entity, _ pathes: [ String ])
-       -> [ String ]
-  {
-    // TODO: should this throw?
-    guard !pathes.isEmpty else { return [] }
-    
-    var flattened = [ String ]()
-    for path in pathes {
-      /* split off first part of relationship */
-      
-      var relname : String
-      if let dotidx = path.firstIndex(of: ".") {
-        relname = String(path[path.startIndex..<dotidx])
-      }
-      else { relname = path } // no dot
-      
-      /* split off fetch parameters (recursive fetches like parent*) */
-      
-      relname = relationshipNameWithoutParameters(relname)
-        
-      /* lookup relationship */
-      
-      guard let rel = entity[relationship: relname], rel.isFlattened
-       else { continue }
-      
-      flattened.append(relname) // TBD: do we need the name with parameters?
-    }
-    
-    return flattened
-  }
-
-  /**
-   * Cleans the name of the relationship from parameters, eg the name contain
-   * repeaters like '*' (e.g. `parent*` => repeat relationship 'parent' until no
-   * objects are found anymore).
-   *
-   * - Parameters:
-   *   - name:  Name of the relationship, e.g. 'employments' or 'parent*'
-   * - Returns: cleaned relationship name, e.g. 'employments' or 'parent'
-   */
-  func relationshipNameWithoutParameters(_ name: String) -> String {
-    /* cut off '*' (relationship fetch repeaters like parent*) */
-    if name.hasSuffix("*") {
-      let endIdx = name.index(before: name.endIndex)
-      return String(name[name.startIndex..<endIdx])
-    }
-    return name
-  }
-  
-  
-  func selectListForFetchSpecification(_ entity: Entity?,
-                                       _ fs: FetchSpecification?)
-       -> [ Attribute ]?
-  {
-    if let fetchKeys = fs?.fetchAttributeNames {
-      // TBD: generate Attrs for fetchKeys
-      return entity?.attributesWithNames(fetchKeys)
-    }
-    return entity?.attributes
-  }
-  
-  
   // MARK: - Fetching
   
   /**
@@ -498,7 +315,7 @@ open class DatabaseChannelBase {
     /* process relationships (key is a level1 name, value are the subpaths) */
 
     let leveledPrefetches =
-          levelPrefetchSpecificiation(entity, prefetchRelPathes)
+      levelPrefetchSpecificiation(entity, prefetchRelPathes, log: log)
 
     /*
      * Maps/caches Lists of values for a given attribute in the base result.
@@ -996,4 +813,191 @@ open class DatabaseChannelBase {
     }
     return aops
   }
+}
+
+
+// MARK: - Helper Functions
+
+/**
+ * Creates a map where the keys are level-1 relationship names and the values
+ * are subpathes. The method also resolves flattened relationships (this is,
+ * if a relationship is a flattened one, the keypath of the relationship
+ * will get processed).
+ *
+ * Pathes:
+ * ```
+ * toCompany.toProject
+ * toCompany.toEmployment
+ * toProject
+ * ```
+ * Will result in:
+ * ```
+ * [ "toCompany" = [ "toProject", "toEmployment" ],
+ *   "toProject" = [] ]
+ * ```
+ * Note that the keys are never flattened relationships.
+ */
+private func levelPrefetchSpecificiation(_ entity: Entity, _ pathes: [ String ],
+                                         log: ZeeQLLogger)
+             -> [ String : [ String ] ]
+{
+  // TODO: should this throw?
+  guard !pathes.isEmpty else { return [:] }
+  
+  var level = [ String : [ String ] ]()
+
+  for originalPath in pathes {
+    var path = originalPath
+    
+    /* split off first part of relationship */
+    
+    var relname : String
+    #if swift(>=5.0)
+      var dotidx  = path.firstIndex(of: ".")
+    #else
+      var dotidx  = path.index(of: ".")
+    #endif
+    if let dotidx = dotidx {
+      relname = String(path[path.startIndex..<dotidx])
+    }
+    else { relname = path } // no dot
+    
+    /* lookup relationship */
+    
+    guard var rel = entity[relationship: relname] else {
+      // TBD: throw? ignore? what?
+      log.error("did not find specified prefetch relationship '\(path)' " +
+                "in entity: '\(entity.name)'")
+      continue
+    }
+    
+    /* process flattened relationships */
+    
+    if rel.isFlattened {
+      // dupe, same thing again
+      path   = rel.relationshipPath ?? ""
+      #if swift(>=5.0)
+        dotidx = path.firstIndex(of: ".")
+      #else
+        dotidx = path.index(of: ".")
+      #endif
+      if let dotidx = dotidx {
+        relname = String(path[path.startIndex..<dotidx])
+      }
+      else { relname = path } // no dot
+      
+      /* lookup relationship */
+      
+      guard let frel = entity[relationship: relname] else {
+        // TBD: throw? ignore? what?
+        log.error("did not find specified first relationship '\(path)' " +
+                  "of flattened prefetch: \(path) " +
+                  "in entity: '\(entity.name)'")
+        continue
+      }
+      rel = frel
+    }
+    
+    /* process relationship */
+    
+    if rel.joins.isEmpty {
+      log.error("prefetch relationship has no joins, ignoring: \(rel)")
+      continue
+    }
+    if rel.joins.count > 1 {
+      log.error("prefetch relationship has multiple joins (unsupported), " +
+                "ignoring: \(rel)")
+      continue
+    }
+    
+    /* add relation names to map */
+    
+    var sublevels = level[relname] ?? []
+    
+    if let dotidx = dotidx {
+      let idx = path.index(after: dotidx)
+      sublevels.append(String(path[idx..<path.endIndex]))
+      level[relname] = sublevels
+    }
+    else if level[relname] == nil {
+      level[relname] = []
+    }
+  }
+  
+  return level
+}
+
+/**
+ * Given a list of relationship pathes this method extracts the set of
+ * level-1 flattened relationships.
+ *
+ * Example:
+ * ```
+ * customers.address
+ * phone.number
+ * ```
+ * where customers is a flattened but phone is not, will return:
+ * ```
+ * customers
+ * ```
+ */
+private func flattenedRelationships(_ entity: Entity, _ pathes: [ String ])
+             -> [ String ]
+{
+  // TODO: should this throw?
+  guard !pathes.isEmpty else { return [] }
+  
+  var flattened = [ String ]()
+  for path in pathes {
+    /* split off first part of relationship */
+    
+    var relname : String
+    if let dotidx = path.firstIndex(of: ".") {
+      relname = String(path[path.startIndex..<dotidx])
+    }
+    else { relname = path } // no dot
+    
+    /* split off fetch parameters (recursive fetches like parent*) */
+    
+    relname = relationshipNameWithoutParameters(relname)
+      
+    /* lookup relationship */
+    
+    guard let rel = entity[relationship: relname], rel.isFlattened
+     else { continue }
+    
+    flattened.append(relname) // TBD: do we need the name with parameters?
+  }
+  
+  return flattened
+}
+
+/**
+ * Cleans the name of the relationship from parameters, eg the name contain
+ * repeaters like '*' (e.g. `parent*` => repeat relationship 'parent' until no
+ * objects are found anymore).
+ *
+ * - Parameters:
+ *   - name:  Name of the relationship, e.g. 'employments' or 'parent*'
+ * - Returns: cleaned relationship name, e.g. 'employments' or 'parent'
+ */
+private func relationshipNameWithoutParameters(_ name: String) -> String {
+  /* cut off '*' (relationship fetch repeaters like parent*) */
+  if name.hasSuffix("*") {
+    let endIdx = name.index(before: name.endIndex)
+    return String(name[name.startIndex..<endIdx])
+  }
+  return name
+}
+
+
+private func selectListForFetchSpecification(_ entity: Entity?,
+                                             _ fs: FetchSpecification?)
+             -> [ Attribute ]?
+{
+  if let fetchKeys = fs?.fetchAttributeNames {
+    // TBD: generate Attrs for fetchKeys
+    return entity?.attributesWithNames(fetchKeys)
+  }
+  return entity?.attributes
 }
