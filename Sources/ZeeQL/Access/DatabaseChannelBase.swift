@@ -460,8 +460,8 @@ open class DatabaseChannelBase {
     records     = results.makeIterator()
   }
   
-  func selectObjectsWithFetchSpecification(_ fs: FetchSpecification,
-                                           _ ec: ObjectTrackingContext? = nil)
+  open func selectObjectsWithFetchSpecification
+    (_ fs: FetchSpecification, _ ec: ObjectTrackingContext? = nil)
        throws
   {
     // This is the subclass responsibility

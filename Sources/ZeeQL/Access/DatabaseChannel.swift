@@ -54,9 +54,8 @@ open class DatabaseChannel : DatabaseChannelBase, IteratorProtocol, Sequence {
    *         fetched.
    *   - ec: TODO
    */
-  override func selectObjectsWithFetchSpecification(_ fs: FetchSpecification,
-                                                    _ ec: ObjectTrackingContext?
-                                                              = nil)
+  override open func selectObjectsWithFetchSpecification
+    (_ fs: FetchSpecification, _ ec: ObjectTrackingContext? = nil)
                 throws
   {
     guard !fs.prefetchingRelationshipKeyPathes.isEmpty else {

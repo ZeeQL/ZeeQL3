@@ -30,46 +30,6 @@ open class DatabaseContext : ObjectStore, SmartDescription {
   
   
   // MARK: - Fetching Objects
-
-  /**
-   * Fetch a set of objects using an untyped ``FetchSpecification``.
-   *
-   * The results are still typed based on the yield closure that is passed in.
-   *
-   * - Parameters:
-   *   - fetchSpecification: The description of what to fetch.
-   *   - trackingContext:    The ``ObjectTrackingContext`` where fetched objects
-   *                         are uniqued against.
-   *   - yield:              A closure that receives all fetched objects.
-   */
-  @inlinable
-  open func fetchObjectsWithFetchSpecification<O>(
-    _  fetchSpecification : FetchSpecification,
-    in    trackingContext : ObjectTrackingContext,
-    _               yield : ( O ) throws -> Void
-  ) throws
-    where O: DatabaseObject
-  {
-    if fetchSpecification.requiresAllQualifierBindingVariables {
-      if let keys = fetchSpecification.qualifier?.bindingKeys, !keys.isEmpty {
-        throw DatabaseContextError
-          .fetchSpecificationHasUnresolvedBindings(fetchSpecification)
-      }
-    }
-    
-    let ch = TypedDatabaseChannel<O>(database: database)
-    try ch
-      .selectObjectsWithFetchSpecification(fetchSpecification, trackingContext)
-    
-    // Hm, this is a little weird, this should throw on mismatch?
-    while let o = ch.fetchObject() {
-      assert(o is O)
-      guard let typed = o as? O else {
-        throw TypedDatabaseChannelError.fetchedIncorrectObjectType
-      }
-      try yield(typed)
-    }
-  }
   
   /**
    * Fetch a set of objects using an untyped ``FetchSpecification``.
@@ -91,33 +51,32 @@ open class DatabaseContext : ObjectStore, SmartDescription {
   ) throws
     where O: DatabaseObject
   {
-    try fetchObjectsWithFetchSpecification(fetchSpecification,
-                                           in: trackingContext,
-                                           yield)
+    if fetchSpecification.requiresAllQualifierBindingVariables {
+      if let keys = fetchSpecification.qualifier?.bindingKeys, !keys.isEmpty {
+        throw DatabaseContextError
+          .fetchSpecificationHasUnresolvedBindings(fetchSpecification)
+      }
+    }
+    
+    let ch = try createDatabaseChannel(for: O.self)
+    try ch
+      .selectObjectsWithFetchSpecification(fetchSpecification, trackingContext)
+    
+    while let o = ch.fetchObject() {
+      assert(o is O)
+      guard let typed = o as? O else {
+        throw TypedDatabaseChannelError.fetchedIncorrectObjectType
+      }
+      try yield(typed)
+    }
   }
-
-  /**
-   * Fetch a set of objects using an typed ``TypedFetchSpecification``. This is
-   * a helper wrapper that allows deriving the type of the results from the
-   * fetch specification.
-   *
-   * - Parameters:
-   *   - fetchSpecification: The description of what to fetch.
-   *   - trackingContext:    The ``ObjectTrackingContext`` where fetched objects
-   *                         are uniqued against.
-   *   - yield:              A closure that receives all fetched objects.
-   */
+  
   @inlinable
-  open func objectsWithFetchSpecification<O>(
-    fetchSpecification    : TypedFetchSpecification<O>,
-    in    trackingContext : ObjectTrackingContext,
-    _               yield : ( O ) throws -> Void
-  ) throws
+  open func createDatabaseChannel<O>(for type: O.Type = O.self)
+    throws -> DatabaseChannelBase
     where O: DatabaseObject
   {
-    try fetchObjectsWithFetchSpecification(fetchSpecification,
-                                           in: trackingContext,
-                                           yield)
+    return TypedDatabaseChannel<O>(database: database)
   }
 
   
@@ -138,5 +97,45 @@ open class DatabaseContext : ObjectStore, SmartDescription {
   
   open func appendToDescription(_ ms: inout String) {
     ms += " \(database)"
+  }
+}
+
+public extension DatabaseContext {
+  
+  /**
+   * Fetch a set of objects using an typed ``TypedFetchSpecification``. This is
+   * a helper wrapper that allows deriving the type of the results from the
+   * fetch specification.
+   *
+   * - Parameters:
+   *   - fetchSpecification: The description of what to fetch.
+   *   - trackingContext:    The ``ObjectTrackingContext`` where fetched objects
+   *                         are uniqued against.
+   *   - yield:              A closure that receives all fetched objects.
+   */
+  @inlinable
+  func objectsWithFetchSpecification<O>(
+    fetchSpecification    : TypedFetchSpecification<O>,
+    in    trackingContext : ObjectTrackingContext,
+    _               yield : ( O ) throws -> Void
+  ) throws
+    where O: DatabaseObject
+  {
+
+    // Helper to type erase the fetchSpecification and jump into the main
+    // method.
+    func fetchObjectsWithFetchSpecification(
+      _  fetchSpecification : FetchSpecification,
+      in    trackingContext : ObjectTrackingContext,
+      _               yield : ( O ) throws -> Void
+    ) throws
+      where O: DatabaseObject
+    {
+      try self.objectsWithFetchSpecification(fetchSpecification,
+                                             in: trackingContext, yield)
+    }
+    try fetchObjectsWithFetchSpecification(fetchSpecification,
+                                           in: trackingContext,
+                                           yield)
   }
 }
