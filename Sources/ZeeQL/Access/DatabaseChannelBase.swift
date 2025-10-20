@@ -6,6 +6,26 @@
 //  Copyright © 2017-2025 ZeeZide GmbH. All rights reserved.
 //
 
+public enum DatabaseChannelError : Swift.Error {
+  case transactionInProgress
+  case couldNotAcquireChannel(Swift.Error?)
+  case couldNotBeginTX       (Swift.Error?)
+  case couldNotFinishTX      (Swift.Error?)
+  
+  case missingEntity(String?)
+  case missingRelationship(Entity, String)
+  case incompleteJoin(Join)
+  
+  case couldNotBuildPrimaryKeyQualifier
+  case missingAttributeUsedForLocking(Attribute)
+  case refetchReturnedNoRow
+  
+  case unsupportedDatabaseOperator(DatabaseOperation.Operator)
+  
+  case invalidClassUsage
+}
+
+
 /**
  * A database channels wraps around an ``AdaptorChannel`` and produces
  * ``DatabaseObject``'s for them, and registers those objects w/ the
@@ -19,25 +39,6 @@
  */
 open class DatabaseChannelBase {
   
-  public enum Error : Swift.Error {
-    case TransactionInProgress
-    case CouldNotAcquireChannel(Swift.Error?)
-    case CouldNotBeginTX       (Swift.Error?)
-    case CouldNotFinishTX      (Swift.Error?)
-    
-    case MissingEntity(String?)
-    case MissingRelationship(Entity, String)
-    case IncompleteJoin(Join)
-    
-    case CouldNotBuildPrimaryKeyQualifier
-    case MissingAttributeUsedForLocking(Attribute)
-    case RefetchReturnedNoRow
-    
-    case UnsupportedDatabaseOperator(DatabaseOperation.Operator)
-    
-    case TODO
-  }
-  
   open   var log            : ZeeQLLogger { return database.log }
   public let database       : Database
   public var adaptorChannel : AdaptorChannel?
@@ -46,6 +47,8 @@ open class DatabaseChannelBase {
   public var currentClass     : DatabaseObject.Type? = nil
   public var isLocking        = false
   public var fetchesRawRows   = false
+  
+  // True if either the entity or the fetch spec are read-only.
   public var makesNoSnapshots = false
   public var refreshObjects   = false
   
@@ -81,24 +84,26 @@ open class DatabaseChannelBase {
    */
   @available(*, deprecated, message: "Use withTransaction() instead")
   open func begin() throws {
-    guard !isInTransaction else { throw Error.TransactionInProgress }
+    guard !isInTransaction else {
+      throw DatabaseChannelError.transactionInProgress
+    }
     
     if adaptorChannel == nil {
       do { adaptorChannel = try acquireChannel() }
-      catch { throw Error.CouldNotAcquireChannel(error) }
+      catch { throw DatabaseChannelError.couldNotAcquireChannel(error) }
     }
     assert(adaptorChannel != nil,
            "got no adaptor channel, but no error thrown?")
     guard let ac = adaptorChannel else {
-      throw Error.CouldNotAcquireChannel(nil)
+      throw DatabaseChannelError.couldNotAcquireChannel(nil)
     }
     
     do {
       try ac.begin()
+      releaseChannel() // only release if good
     }
     catch {
-      releaseChannel()
-      throw Error.CouldNotBeginTX(error)
+      throw DatabaseChannelError.couldNotBeginTX(error)
     }
   }
   
@@ -114,10 +119,10 @@ open class DatabaseChannelBase {
       else {
         try ac.commit()
       }
+      releaseChannel() // only release if everything was fine
     }
     catch {
-      releaseChannel()
-      throw Error.CouldNotFinishTX(error)
+      throw DatabaseChannelError.couldNotFinishTX(error)
     }
     
     releaseChannel()
@@ -171,7 +176,7 @@ open class DatabaseChannelBase {
             // anyways.
             try? adaptorChannel.rollback()
           }
-          throw Error.CouldNotFinishTX(error)
+          throw DatabaseChannelError.couldNotFinishTX(error)
         }
         
         return result
@@ -183,7 +188,8 @@ open class DatabaseChannelBase {
         }
         catch { // Could not rollback
           globalZeeQLLogger.warn("could not rollback transaction:", error)
-          throw Error.CouldNotFinishTX(error) // TBD: separate error?
+          throw DatabaseChannelError.couldNotFinishTX(error)
+            // TBD: separate error?
         }
       }
     }
@@ -242,12 +248,12 @@ open class DatabaseChannelBase {
         adaptorChannel = try database.adaptor.openChannelFromPool()
         didOpenChannel = true
       }
-      catch { throw Error.CouldNotAcquireChannel(error) }
+      catch { throw DatabaseChannelError.couldNotAcquireChannel(error) }
     }
     assert(adaptorChannel != nil,
            "got no adaptor channel, but no error thrown?")
     guard let ac = adaptorChannel else {
-      throw Error.CouldNotAcquireChannel(nil)
+      throw DatabaseChannelError.couldNotAcquireChannel(nil)
     }
     
     defer {
@@ -293,7 +299,7 @@ open class DatabaseChannelBase {
       currentEntity = database[entity: entityName]
     }
     guard currentEntity != nil || fetchesRawRows else {
-      throw Error.MissingEntity(fs.entityName)
+      throw DatabaseChannelError.missingEntity(fs.entityName)
     }
     
     #if false // unused?!
@@ -343,7 +349,7 @@ open class DatabaseChannelBase {
     // This is the subclass responsibility
     assertionFailure(
       "DCB subclass did not override `selectObjectsWithFetchSpecification`")
-    throw Error.TODO
+    throw DatabaseChannelError.invalidClassUsage
   }
 
   /**
@@ -367,7 +373,7 @@ open class DatabaseChannelBase {
     /* entity */
 
     guard let entity = entity ?? database[entity: entityName] else {
-      throw Error.MissingEntity(entityName)
+      throw DatabaseChannelError.missingEntity(entityName)
     }
 
 
@@ -458,7 +464,7 @@ open class DatabaseChannelBase {
     
     /* Note: we filter out non-1-join relationships in the levelXYZ() method */
     guard let rel = entity[relationship: relName] else {
-      throw Error.MissingRelationship(entity, relName)
+      throw DatabaseChannelError.missingRelationship(entity, relName)
     }
     guard let join = rel.joins.first else {
       // just skip, no joins
@@ -470,7 +476,7 @@ open class DatabaseChannelBase {
     /* extract values of source object list for IN query on target */
 
     guard let srcName = join.source?.name ?? join.sourceName else {
-      throw Error.IncompleteJoin(join)
+      throw DatabaseChannelError.incompleteJoin(join)
     }
     
     let srcValues = helper.getSourceValues(srcName)
