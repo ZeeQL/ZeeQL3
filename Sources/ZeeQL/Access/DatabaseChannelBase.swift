@@ -50,7 +50,8 @@ open class DatabaseChannelBase {
   
   // True if either the entity or the fetch spec are read-only.
   public var makesNoSnapshots = false
-  public var refreshObjects   = false
+  
+  public var refreshObjects   = true
   
   var objectContext : ObjectTrackingContext? = nil
   
@@ -289,6 +290,7 @@ open class DatabaseChannelBase {
 
     isLocking          = fs.locksObjects
     fetchesRawRows     = fs.fetchesRawRows
+    refreshObjects     = fs.refreshesRefetchedObjects
     self.objectContext = ec
     
     // TODO (2025-04-28: todo what? :-) )
@@ -651,10 +653,19 @@ open class DatabaseChannelBase {
     
     let gid = currentEntity?.globalIDForRow(row)
     
-    if !refreshObjects, let tc = objectContext, let gid = gid {
-      // TBD: we could ask some delegate whether we should refresh
-      if let oldEO = tc.objectFor(globalID: gid) as? DatabaseObject {
+    // TBD: we could ask some delegate whether we should refresh
+    if let tc = objectContext, let gid = gid,
+       let oldEO = tc.objectFor(globalID: gid) as? DatabaseObject
+    {
+      if !refreshObjects { // explicitly do not refresh existing, is the default
         return oldEO /* was already fetched/registered */
+      }
+      // TODO: This would ask the editing context whether it has changes, but
+      //       in ZeeQL we currently store the snap in the AR.
+      if let snapshot = (oldEO as? ActiveRecordType)?.snapshot {
+        if oldEO.hasChangesFromSnapshot(snapshot) { // do NOT overwrite changes
+          return oldEO
+        }
       }
     }
     // TBD: we might still want to *reuse* the object (might have additional

@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 17/02/17.
-//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2025 ZeeZide GmbH. All rights reserved.
 //
 
 /**
@@ -32,8 +32,15 @@ public protocol FetchSpecification : SmartDescription {
   var deep                : Bool             { get set }
   var fetchesRawRows      : Bool             { get set }
   var fetchesReadOnly     : Bool             { get set }
+
+  /**
+   * Controls whether existing and UNCHANGED objects are updated with fetched
+   * rows.
+   * If false (default), new data is discarded!
+   */
+  var refreshesRefetchedObjects            : Bool       { get set }
   
-  var requiresAllQualifierBindingVariables : Bool { get set }
+  var requiresAllQualifierBindingVariables : Bool       { get set }
   var prefetchingRelationshipKeyPathes     : [ String ] { get set }
 
   var hints               : [ String : Any ]  { get set }
@@ -80,7 +87,7 @@ extension FetchSpecification { // Default Imp
   /**
    * FIXME: document me. This seems to return values for all hints which end in
    * 'BindPattern'. The values are retrieved by applying the
-   * `KeyValueStringFormatter` with the given object.
+   * ``KeyValueStringFormatter`` with the given object.
    *
    * This formatter does stuff like `%(lastname)s`.
    *
