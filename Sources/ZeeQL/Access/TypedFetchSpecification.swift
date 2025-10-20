@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 06/03/17.
-//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2025 ZeeZide GmbH. All rights reserved.
 //
 
 // TODO: this is not done yet
@@ -42,20 +42,21 @@ public struct TypedFetchSpecification<Object: DatabaseObject>
     return nil
   }
   
-  public var fetchAttributeNames = [ String ]()
-  public var qualifier           : Qualifier?
-  public var sortOrderings       = [ SortOrdering ]()
-  public var fetchLimit          : Int?
-  public var fetchOffset         : Int?
-  public var hints               = [ String : Any ]()
+  public var fetchAttributeNames                  = [ String ]()
+  public var qualifier                            : Qualifier?
+  public var sortOrderings                        = [ SortOrdering ]()
+  public var fetchLimit                           : Int?
+  public var fetchOffset                          : Int?
+  public var hints                                = [ String : Any ]()
   
-  public var usesDistinct        = false
-  public var locksObjects        = false
-  public var deep                = false
-  public var fetchesRawRows      = false
-  public var fetchesReadOnly     = false
+  public var usesDistinct                         = false
+  public var locksObjects                         = false
+  public var deep                                 = false
+  public var fetchesRawRows                       = false
+  public var fetchesReadOnly                      = false
+  public var refreshesRefetchedObjects            = false
   public var requiresAllQualifierBindingVariables = false
-  public var prefetchingRelationshipKeyPathes = [ String ]()
+  public var prefetchingRelationshipKeyPathes     = [ String ]()
 
   @inlinable
   public init(entityName    : String?          = nil,

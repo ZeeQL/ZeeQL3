@@ -95,7 +95,7 @@ open class DatabaseChannel : DatabaseChannelBase, IteratorProtocol, Sequence {
       /* Then we fetch relationships for the 'baseObjects' we just fetched. */
       
       guard let entityName = fs.entityName else {
-        throw Error.MissingEntity(nil)
+        throw DatabaseChannelError.missingEntity(nil)
       }
 
       // This recurses in the generic variant, different to the

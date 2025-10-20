@@ -109,7 +109,7 @@ open class DatabaseOperation : SmartDescription {
         }
         guard pq != nil else {
           log.error("could not calculate primary key qualifier for op:", self)
-          throw DatabaseChannelBase.Error.CouldNotBuildPrimaryKeyQualifier
+          throw DatabaseChannelError.couldNotBuildPrimaryKeyQualifier
         }
         aop.qualifier = pq
       
@@ -149,7 +149,7 @@ open class DatabaseOperation : SmartDescription {
         }
         guard pq != nil else {
           log.error("could not calculate primary key qualifier for op:", self)
-          throw DatabaseChannelBase.Error.CouldNotBuildPrimaryKeyQualifier
+          throw DatabaseChannelError.couldNotBuildPrimaryKeyQualifier
         }
         
         if let lockAttrs = entity.attributesUsedForLocking,
@@ -165,8 +165,7 @@ open class DatabaseOperation : SmartDescription {
               qualifiers.append(q)
             }
             else {
-              throw DatabaseChannelBase.Error
-                .MissingAttributeUsedForLocking(attr)
+              throw DatabaseChannelError.missingAttributeUsedForLocking(attr)
             }
           }
           
@@ -220,7 +219,7 @@ open class DatabaseOperation : SmartDescription {
       
       default:
         log.warn("unsupported database operation:", dbop)
-        throw DatabaseChannelBase.Error.UnsupportedDatabaseOperator(dbop)
+        throw DatabaseChannelError.unsupportedDatabaseOperator(dbop)
     }
     return aop
   }

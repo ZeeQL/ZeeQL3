@@ -126,7 +126,7 @@ open class TypedDatabaseChannel<ObjectType> : DatabaseChannelBase,
       
       guard let entityName = fs.entityName else {
         assertionFailure("FetchSpecification misses entityName \(fs)")
-        throw Error.MissingEntity(nil)
+        throw DatabaseChannelError.missingEntity(nil)
       }
 
       // This CANNOT recurse in a TypedFetchSpecification, because the
