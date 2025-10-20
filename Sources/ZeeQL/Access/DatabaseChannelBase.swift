@@ -51,7 +51,7 @@ open class DatabaseChannelBase {
   // True if either the entity or the fetch spec are read-only.
   public var makesNoSnapshots = false
   
-  public var refreshObjects   = true
+  public var refreshObjects   = false
   
   var objectContext : ObjectTrackingContext? = nil
   
