@@ -65,8 +65,14 @@ public let CustomQueryExpressionHintKey = "CustomQueryExpressionHintKey"
 
 extension FetchSpecification { // Default Imp
 
+  /**
+   * Allows the modification fo the FetchSpecification. Will return a copy with
+   * the changes applied.
+   */
   @inlinable
-  func transform(_ transform: (inout Self) throws -> Void) rethrows -> Self {
+  public func transform(_ transform: (inout Self) throws -> Void)
+    rethrows -> Self
+  {
     var fs = self
     try transform(&fs)
     return fs
