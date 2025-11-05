@@ -64,9 +64,9 @@ public func qualifierWith(format: String, _ args: Any?...) -> Qualifier? {
  * Matching code:
  * ```swift
  *    var q = Qualifier.parse("lastname = $lastname AND firstname = $firstname")
- *    q = q.qualifierWith(bindings: self)
+ *    q = q.qualifierWithBindings(self)
  * ```
- * The q.qualifierWith(bindings:) method will ask 'self' for the
+ * The q.qualifierWithBindings method will ask 'self' for the
  * 'lastname' and 'firstname' keys using KVC.
  * 
  * ### Patterns

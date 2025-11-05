@@ -99,18 +99,19 @@ public struct KeyValueQualifier : Qualifier, Equatable {
   }
   
   @inlinable
-  public func qualifierWith(bindings: Any?, requiresAll: Bool) throws
+  public func qualifierWithBindings(_ bindings: Any?, requiresAll: Bool) throws
               -> Qualifier
   {
     guard let v = self.variable else { return self } /* nothing to replace */
     
     /* check if the value was found */
     
-    guard let vv = KeyValueCoding.value(forKeyPath: v.key, inObject: bindings)
-     else {
+    guard let vv = KeyValueCoding
+      .value(forKeyPath: v.key, inObject: bindings) else
+    {
       if requiresAll { throw QualifierBindingNotFound(binding: v.key) }
       return self
-     }
+    }
     
     return KeyValueQualifier(keyExpr, operation, vv)
   }

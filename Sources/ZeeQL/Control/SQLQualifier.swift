@@ -129,8 +129,8 @@ public struct SQLQualifier : Qualifier, Equatable {
   }
 
   @inlinable
-  public func qualifierWith(bindings: Any?, requiresAll: Bool) throws
-              -> Qualifier?
+  public func qualifierWithBindings(_ bindings: Any?, requiresAll: Bool) throws
+              -> Qualifier
   {
     guard hasUnresolvedBindings else { return self }
 
@@ -145,7 +145,7 @@ public struct SQLQualifier : Qualifier, Equatable {
             .value(forKeyPath: key, inObject: bindings) else
           {
             if requiresAll { throw QualifierBindingNotFound(binding: key) }
-            return nil
+            return self
           }
           if let opt = vv as? any AnyOptional {
             if let vv = opt.value {

@@ -38,8 +38,8 @@ public struct NotQualifier : Qualifier, Equatable {
   }
   
   @inlinable
-  public func qualifierWith(bindings: Any?, requiresAll: Bool) throws
-              -> Qualifier?
+  public func qualifierWithBindings(_ bindings: Any?, requiresAll: Bool) throws
+              -> Qualifier
   {
     return try qualifier
       .qualifierWithBindings(bindings, requiresAll: requiresAll)
