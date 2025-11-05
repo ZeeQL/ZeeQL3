@@ -161,7 +161,9 @@ extension TypedFetchSpecification {
    * format specifier!).
    */
   @inlinable
-  public func resolvingBindings(_ bindings: Any?) throws -> Self {
+  public func resolvingBindings(_ bindings: Any?, requiresAll: Bool? = false)
+    throws -> Self
+  {
     let newHints      = resolveHintBindPatterns(with: bindings)
     let hasUnresolved = qualifier?.hasUnresolvedBindings ?? false
     if newHints == nil && !hasUnresolved { return self }
@@ -169,9 +171,14 @@ extension TypedFetchSpecification {
     var boundFS = self
     if let newHints { boundFS.hints = newHints }
     if hasUnresolved, let q = boundFS.qualifier {
-      boundFS.qualifier =
-        try q.qualifierWith(bindings: bindings,
-                            requiresAll: requiresAllQualifierBindingVariables)
+      let check : Bool
+      if let requiresAll { check = requiresAll }
+      else { check = self.requiresAllQualifierBindingVariables }
+      
+      boundFS.qualifier = try q.qualifierWith(
+        bindings: bindings,
+        requiresAll: check
+      )
     }
     return boundFS
   }
