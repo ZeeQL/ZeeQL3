@@ -70,9 +70,8 @@ public struct CompoundQualifier : Qualifier, QualifierEvaluation, Equatable {
   }
 
   @inlinable
-  public func qualifierWithWithBindings(_ bindings : Any?,
-                                        requiresAll: Bool) throws
-              -> Qualifier
+  public func qualifierWithBindings(_ bindings: Any?, requiresAll: Bool)
+    throws -> Qualifier
   {
     if qualifiers.isEmpty { return self }
     if qualifiers.count == 1 {

@@ -17,8 +17,8 @@ public protocol Qualifier : Expression, EquatableType, SmartDescription {
   
   var isEmpty : Bool { get }
 
-  func qualifierWithBindings(_ bindings: Any?, requiresAll: Bool) throws
-                             -> Qualifier
+  func qualifierWithBindings(_ bindings: Any?, requiresAll: Bool)
+    throws -> Qualifier
 
   // MARK: - String Representation
   
