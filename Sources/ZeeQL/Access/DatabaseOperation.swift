@@ -169,7 +169,7 @@ open class DatabaseOperation : SmartDescription {
             }
           }
           
-          pq = CompoundQualifier(qualifiers: qualifiers, op: .And)
+          pq = CompoundQualifier(qualifiers: qualifiers, op: .and)
         }
         
         aop.qualifier = pq

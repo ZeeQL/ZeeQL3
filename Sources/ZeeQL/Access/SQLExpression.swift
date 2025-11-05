@@ -1761,8 +1761,8 @@ open class SQLExpression: SmartDescription {
     }
     if let q = q as? CompoundQualifier {
       switch q.op {
-        case .And: return sqlStringForConjoinedQualifiers(q.qualifiers)
-        case .Or:  return sqlStringForDisjoinedQualifiers(q.qualifiers)
+        case .and: return sqlStringForConjoinedQualifiers(q.qualifiers)
+        case .or:  return sqlStringForDisjoinedQualifiers(q.qualifiers)
       }
     }
 

@@ -199,7 +199,7 @@ public extension AccessDataSource { // Finders
         let q = KeyValueQualifier(key, .equalTo, primaryKeyValues[i])
         qualifiers.append(q)
       }
-      q = CompoundQualifier(qualifiers: qualifiers, op: .And)
+      q = CompoundQualifier(qualifiers: qualifiers, op: .and)
     }
     
     /* construct fetch specification */

@@ -71,7 +71,7 @@ public extension Qualifier { // default imp
     if let bq = q as? BooleanQualifier {
       return bq.value ? BooleanQualifier.trueQualifier : self
     }
-    return CompoundQualifier(qualifiers: [ self, q ], op: .Or)
+    return CompoundQualifier(qualifiers: [ self, q ], op: .or)
   }
   @inlinable
   func and(_ other: Qualifier?) -> Qualifier {
@@ -79,7 +79,7 @@ public extension Qualifier { // default imp
     if let bq = other as? BooleanQualifier {
       return bq.value ? self : BooleanQualifier.falseQualifier
     }
-    return CompoundQualifier(qualifiers: [ self, other ], op: .And)
+    return CompoundQualifier(qualifiers: [ self, other ], op: .and)
   }
 
 }
@@ -129,12 +129,12 @@ public extension Collection where Element == Qualifier {
   func and() -> Qualifier {
     if isEmpty { return BooleanQualifier.falseQualifier }
     if count == 1 { return self[self.startIndex] }
-    return CompoundQualifier(qualifiers: Array(self), op: .And)
+    return CompoundQualifier(qualifiers: Array(self), op: .and)
   }
   func or() -> Qualifier {
     if isEmpty { return BooleanQualifier.falseQualifier }
     if count == 1 { return self[self.startIndex] }
-    return CompoundQualifier(qualifiers: Array(self), op: .Or)
+    return CompoundQualifier(qualifiers: Array(self), op: .or)
   }
   func compactingOr() -> Qualifier {
     if isEmpty { return BooleanQualifier.falseQualifier }
@@ -147,7 +147,7 @@ public extension Array where Element == Qualifier {
     if isEmpty { return BooleanQualifier.falseQualifier }
     if count == 1 { return self[self.startIndex] }
     guard let kva = self as? [ KeyValueQualifier ] else {
-      return CompoundQualifier(qualifiers: Array(self), op: .Or)
+      return CompoundQualifier(qualifiers: Array(self), op: .or)
     }
     return kva.compactingOr()
   }
@@ -182,7 +182,7 @@ public extension Collection where Element == KeyValueQualifier {
     }
     
     if extra.count == 1 { return extra[extra.startIndex] }
-    return CompoundQualifier(qualifiers: extra, op: .Or)
+    return CompoundQualifier(qualifiers: extra, op: .or)
   }
 }
 
@@ -208,7 +208,7 @@ public func qualifierToMatchAllValues(_ values: [ String : Any? ]?,
   guard let values = values, !values.isEmpty else { return nil }
   let kvq = values.map { KeyValueQualifier(StringKey($0), op, $1) }
   if kvq.count == 1 { return kvq[0] }
-  return CompoundQualifier(qualifiers: kvq, op: .And)
+  return CompoundQualifier(qualifiers: kvq, op: .and)
 }
 
 /**
@@ -233,5 +233,5 @@ public func qualifierToMatchAnyValue(_ values: [ String : Any? ]?,
   guard let values = values, !values.isEmpty else { return nil }
   let kvq = values.map { KeyValueQualifier(StringKey($0), op, $1) }
   if kvq.count == 1 { return kvq[0] }
-  return CompoundQualifier(qualifiers: kvq, op: .Or)
+  return CompoundQualifier(qualifiers: kvq, op: .or)
 }

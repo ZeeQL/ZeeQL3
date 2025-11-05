@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 28/02/17.
-//  Copyright © 2017-2022 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2025 ZeeZide GmbH. All rights reserved.
 //
 
 public struct NotQualifier : Qualifier, Equatable {
@@ -14,20 +14,25 @@ public struct NotQualifier : Qualifier, Equatable {
     self.qualifier = qualifier
   }
   
+  @inlinable
   public var isEmpty : Bool      { return qualifier.isEmpty }
+  @inlinable
   public var not     : Qualifier { return qualifier }
   
   
   // MARK: - Bindings and References
 
+  @inlinable
   public func addReferencedKeys(to set: inout Set<String>) {
     qualifier.addReferencedKeys(to: &set)
   }
 
+  @inlinable
   public var hasUnresolvedBindings : Bool {
     return qualifier.hasUnresolvedBindings
   }
   
+  @inlinable
   public func keyPathForBindingKey(_ variable: String) -> String? {
     return qualifier.keyPathForBindingKey(variable)
   }

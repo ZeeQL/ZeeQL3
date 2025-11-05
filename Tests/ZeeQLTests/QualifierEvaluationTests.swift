@@ -153,7 +153,7 @@ class QualifierEvaluationTests: XCTestCase {
     let q = qualifiers.compactingOr()
     XCTAssert(q is CompoundQualifier)
     guard let tl = q as? CompoundQualifier else { return }
-    XCTAssert(tl.op == .Or)
+    XCTAssert(tl.op == .or)
     XCTAssert(tl.qualifiers.count == 2)
     guard tl.qualifiers.count >= 2 else { return }
     
