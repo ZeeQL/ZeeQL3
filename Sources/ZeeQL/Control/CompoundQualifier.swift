@@ -69,12 +69,15 @@ public struct CompoundQualifier : Qualifier, QualifierEvaluation, Equatable {
     return nil
   }
 
-  public func qualifierWith(bindings: Any?, requiresAll: Bool) throws
-              -> Qualifier?
+  @inlinable
+  public func qualifierWithWithBindings(_ bindings : Any?,
+                                        requiresAll: Bool) throws
+              -> Qualifier
   {
     if qualifiers.isEmpty { return self }
     if qualifiers.count == 1 {
-      return try qualifiers[0].qualifierWith(bindings: bindings)
+      return try qualifiers[0]
+        .qualifierWithBindings(bindings, requiresAll: requiresAll)
     }
     
     var didChange = false
@@ -91,23 +94,13 @@ public struct CompoundQualifier : Qualifier, QualifierEvaluation, Equatable {
        * want.
        */
       let bound = // this throws if requiresAll is not satisfied
-            try q.qualifierWith(bindings: bindings, requiresAll: requiresAll)
-      if let bound = bound {
-        if !didChange { didChange = !q.isEqual(to: bound) }
-        boundQualifiers.append(bound)
-      }
-      else {
-        didChange = true
-      }
+            try q.qualifierWithBindings(bindings, requiresAll: requiresAll)
+      if !didChange { didChange = !q.isEqual(to: bound) }
+      boundQualifiers.append(bound)
     }
     
     if !didChange { return self }
-    return _buildSameCompoundQualifier(qualifiers: boundQualifiers)
-  }
-  
-  func _buildSameCompoundQualifier(qualifiers: [Qualifier]) -> Qualifier {
-    // TODO: who invokes this?
-    return CompoundQualifier(qualifiers: qualifiers, op: op)
+    return CompoundQualifier(qualifiers: boundQualifiers, op: op)
   }
 
   @inlinable

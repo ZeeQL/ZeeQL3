@@ -17,8 +17,8 @@ public protocol Qualifier : Expression, EquatableType, SmartDescription {
   
   var isEmpty : Bool { get }
 
-  func qualifierWith(bindings: Any?, requiresAll: Bool) throws
-                     -> Qualifier?
+  func qualifierWithBindings(_ bindings: Any?, requiresAll: Bool) throws
+                             -> Qualifier
 
   // MARK: - String Representation
   
@@ -41,12 +41,14 @@ public extension Qualifier { // default imp
   var isEmpty : Bool { return false }
   
   @inlinable
-  func qualifierWith(bindings: Any?, requiresAll: Bool) throws -> Qualifier? {
+  func qualifierWithBindings(_ bindings: Any?, requiresAll: Bool)
+    throws -> Qualifier
+  {
     return self
   }
   @inlinable
-  func qualifierWith(bindings: Any?) throws -> Qualifier? {
-    return try qualifierWith(bindings: bindings, requiresAll: false)
+  func qualifierWithBindings(_ bindings: Any?) throws -> Qualifier {
+    return try qualifierWithBindings(bindings, requiresAll: false)
   }
   
   

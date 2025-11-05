@@ -116,9 +116,7 @@ public struct AdaptorOperation: Comparable, EquatableType, SmartDescription {
   func operationWith(bindings: Any?) throws -> AdaptorOperation? {
     guard let q = qualifier else { return self }
     
-    guard let bq = try q.qualifierWith(bindings: q, requiresAll: true) else {
-      return nil /* not all bindings could be resolved */
-    }
+    let bq = try q.qualifierWithBindings(bindings, requiresAll: true)
     
     if bq == q { return self } // no change
     

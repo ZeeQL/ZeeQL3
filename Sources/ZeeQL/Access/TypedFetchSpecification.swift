@@ -175,10 +175,8 @@ extension TypedFetchSpecification {
       if let requiresAll { check = requiresAll }
       else { check = self.requiresAllQualifierBindingVariables }
       
-      boundFS.qualifier = try q.qualifierWith(
-        bindings: bindings,
-        requiresAll: check
-      )
+      boundFS.qualifier =
+        try q.qualifierWithBindings(bindings, requiresAll: check)
     }
     return boundFS
   }

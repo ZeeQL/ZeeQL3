@@ -37,11 +37,12 @@ public struct NotQualifier : Qualifier, Equatable {
     return qualifier.keyPathForBindingKey(variable)
   }
   
+  @inlinable
   public func qualifierWith(bindings: Any?, requiresAll: Bool) throws
               -> Qualifier?
   {
     return try qualifier
-      .qualifierWith(bindings: bindings, requiresAll: requiresAll)?
+      .qualifierWithBindings(bindings, requiresAll: requiresAll)
       .not
   }
   

@@ -165,7 +165,7 @@ extension FetchSpecification { // Default Imp
     if let newHints { boundFS.hints = newHints }
     if hasUnresolved, let q = boundFS.qualifier {
       boundFS.qualifier =
-        try q.qualifierWith(bindings: bindings,
+        try q.qualifierWithBindings(bindings,
                             requiresAll: requiresAllQualifierBindingVariables)
     }
     return boundFS
