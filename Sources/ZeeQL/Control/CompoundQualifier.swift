@@ -3,19 +3,25 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 28/02/17.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2025 ZeeZide GmbH. All rights reserved.
 //
 
 public struct CompoundQualifier : Qualifier, QualifierEvaluation, Equatable {
   
   public enum Operator {
-    case And
-    case Or
+    case and
+    case or
     
+    @available(*, deprecated, message: "Using `and` is recommended.")
+    public static let And = Operator.and
+    @available(*, deprecated, message: "Using `or` is recommended.")
+    public static let Or  = Operator.or
+
+    @inlinable
     var stringRepresentation : String {
       switch self {
-        case .And: return "AND"
-        case .Or:  return "OR"
+        case .and: return "AND"
+        case .or:  return "OR"
       }
     }
   }
@@ -23,13 +29,16 @@ public struct CompoundQualifier : Qualifier, QualifierEvaluation, Equatable {
   public let op         : Operator
   public let qualifiers : [ Qualifier ]
   
+  @inlinable
   public init(qualifiers: [ Qualifier ], op: Operator) {
     self.qualifiers = qualifiers
     self.op         = op
   }
   
+  @inlinable
   public var isEmpty : Bool { return qualifiers.isEmpty }
 
+  @inlinable
   public func addReferencedKeys(to set: inout Set<String>) {
     for q in qualifiers {
       q.addReferencedKeys(to: &set)
@@ -39,17 +48,20 @@ public struct CompoundQualifier : Qualifier, QualifierEvaluation, Equatable {
   
   // MARK: - Bindings
 
+  @inlinable
   public func addBindingKeys(to set: inout Set<String>) {
     for q in qualifiers {
       q.addBindingKeys(to: &set)
     }
   }
   
+  @inlinable
   public var hasUnresolvedBindings : Bool {
     for q in qualifiers { if q.hasUnresolvedBindings { return true } }
     return false
   }
   
+  @inlinable
   public func keyPathForBindingKey(_ variable: String) -> String? {
     for q in qualifiers {
       if let kp = q.keyPathForBindingKey(variable) { return kp }
@@ -57,12 +69,14 @@ public struct CompoundQualifier : Qualifier, QualifierEvaluation, Equatable {
     return nil
   }
 
-  public func qualifierWith(bindings: Any?, requiresAll: Bool) throws
-              -> Qualifier?
+  @inlinable
+  public func qualifierWithBindings(_ bindings: Any?, requiresAll: Bool)
+    throws -> Qualifier
   {
     if qualifiers.isEmpty { return self }
     if qualifiers.count == 1 {
-      return try qualifiers[0].qualifierWith(bindings: bindings)
+      return try qualifiers[0]
+        .qualifierWithBindings(bindings, requiresAll: requiresAll)
     }
     
     var didChange = false
@@ -79,30 +93,22 @@ public struct CompoundQualifier : Qualifier, QualifierEvaluation, Equatable {
        * want.
        */
       let bound = // this throws if requiresAll is not satisfied
-            try q.qualifierWith(bindings: bindings, requiresAll: requiresAll)
-      if let bound = bound {
-        if !didChange { didChange = !q.isEqual(to: bound) }
-        boundQualifiers.append(bound)
-      }
-      else {
-        didChange = true
-      }
+            try q.qualifierWithBindings(bindings, requiresAll: requiresAll)
+      if !didChange { didChange = !q.isEqual(to: bound) }
+      boundQualifiers.append(bound)
     }
     
     if !didChange { return self }
-    return _buildSameCompoundQualifier(qualifiers: boundQualifiers)
-  }
-  
-  func _buildSameCompoundQualifier(qualifiers: [Qualifier]) -> Qualifier {
-    // TODO: who invokes this?
-    return CompoundQualifier(qualifiers: qualifiers, op: op)
+    return CompoundQualifier(qualifiers: boundQualifiers, op: op)
   }
 
+  @inlinable
   public var operatorAsString : String { return op.stringRepresentation }
   
   
   // MARK: - QualifierEvaluation
 
+  @inlinable
   public func evaluateWith(object: Any?) -> Bool {
     for q in qualifiers {
       guard let qe = q as? QualifierEvaluation else {
@@ -111,19 +117,20 @@ public struct CompoundQualifier : Qualifier, QualifierEvaluation, Equatable {
       }
       
       switch op {
-        case .Or:  if  qe.evaluateWith(object: object) { return true  }
-        case .And: if !qe.evaluateWith(object: object) { return false }
+        case .or:  if  qe.evaluateWith(object: object) { return true  }
+        case .and: if !qe.evaluateWith(object: object) { return false }
       }
     }
     switch op {
-      case .Or:  return false
-      case .And: return true
+      case .or:  return false
+      case .and: return true
     }
   }
 
   
   // MARK: - Equality
   
+  @inlinable
   public static func ==(lhs: CompoundQualifier, rhs: CompoundQualifier)
                      -> Bool
   {
@@ -185,33 +192,35 @@ public struct CompoundQualifier : Qualifier, QualifierEvaluation, Equatable {
   
   // MARK: - Convenience Optimization
 
+  @inlinable
   public func or(_ q: Qualifier?) -> Qualifier {
     guard let q = q else { return self }
     switch op {
-      case .Or:
-        if let oq = q as? CompoundQualifier, oq.op == .Or {
+      case .or:
+        if let oq = q as? CompoundQualifier, oq.op == .or {
           return CompoundQualifier(qualifiers: qualifiers + oq.qualifiers,
-                                   op: .Or)
+                                   op: .or)
         }
-        return CompoundQualifier(qualifiers: qualifiers + [ q ], op: .Or)
+        return CompoundQualifier(qualifiers: qualifiers + [ q ], op: .or)
       
-      case .And:
-        return CompoundQualifier(qualifiers: [ self, q ], op: .Or)
+      case .and:
+        return CompoundQualifier(qualifiers: [ self, q ], op: .or)
     }
   }
 
+  @inlinable
   public func and(_ q: Qualifier?) -> Qualifier {
     guard let q = q else { return self }
     switch op {
-      case .And:
-        if let oq = q as? CompoundQualifier, oq.op == .And {
+      case .and:
+        if let oq = q as? CompoundQualifier, oq.op == .and {
           return CompoundQualifier(qualifiers: qualifiers + oq.qualifiers,
-                                   op: .And)
+                                   op: .and)
         }
-        return CompoundQualifier(qualifiers: qualifiers + [ q ], op: .And)
+        return CompoundQualifier(qualifiers: qualifiers + [ q ], op: .and)
       
-      case .Or:
-        return CompoundQualifier(qualifiers: [ self, q ], op: .And)
+      case .or:
+        return CompoundQualifier(qualifiers: [ self, q ], op: .and)
     }
   }
 }

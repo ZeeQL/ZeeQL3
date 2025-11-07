@@ -397,6 +397,14 @@ public extension AdaptorChannel { // MARK: - Operations
     else {
       attributes = []
     }
+
+    if let fs = fs, fs.requiresAllQualifierBindingVariables,
+       let q = fs.qualifier
+    {
+      if q.hasUnresolvedBindings {
+        throw QualifierBindingNotFound(binding: q.bindingKeys[0])
+      }
+    }
     
     /* build SQL */
     

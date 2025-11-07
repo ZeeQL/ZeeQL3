@@ -189,7 +189,7 @@ public extension Entity { // default imp
     for i in 0..<kglobalID.keyCount {
       qualifiers.append(KeyValueQualifier(pkeys[i], .equalTo, kglobalID[i]))
     }
-    return CompoundQualifier(qualifiers: qualifiers, op: .And)
+    return CompoundQualifier(qualifiers: qualifiers, op: .and)
   }
 
   

@@ -29,7 +29,7 @@ class QualifierParserTests: XCTestCase {
 
     XCTAssert(q! is CompoundQualifier, "did not parse an AND qualifier")
     let aq = q! as! CompoundQualifier
-    XCTAssert(aq.op == .And, "did not parse an AND qualifier")
+    XCTAssert(aq.op == .and, "did not parse an AND qualifier")
     
     XCTAssertEqual(aq.qualifiers.count, 2, "length of top-level does not match")
   }
@@ -42,7 +42,7 @@ class QualifierParserTests: XCTestCase {
     
     XCTAssert(q! is CompoundQualifier, "did not parse an AND qualifier")
     let aq = q! as! CompoundQualifier
-    XCTAssert(aq.op == .And, "did not parse an AND qualifier")
+    XCTAssert(aq.op == .and, "did not parse an AND qualifier")
     
     XCTAssert(aq.qualifiers[0] is KeyComparisonQualifier,
               "first qualifier is not a key comparison")
@@ -72,22 +72,23 @@ class QualifierParserTests: XCTestCase {
     XCTAssert(keys.contains("salary"),    "missing 'salary' binding")
   }
   
-  func testQualifierWithParenthesis() {
-    let q = qualifierWith(format:
+  func testQualifierWithParenthesis() throws {
+    let qb = qualifierWith(format:
       "name = 'Duck' AND (balance = 1 OR balance = 2\n OR balance = 3)")
-    XCTAssertNotNil(q, "could not parse qualifier")
+    XCTAssertNotNil(qb, "could not parse qualifier")
+    let q = try XCTUnwrap(qb)
 
-    XCTAssert(q! is CompoundQualifier, "did not parse an AND qualifier")
-    let aq = q! as! CompoundQualifier
-    XCTAssert(aq.op == .And, "did not parse an AND qualifier")
+    XCTAssert(q is CompoundQualifier, "did not parse an AND qualifier")
+    let aq = try XCTUnwrap(q as? CompoundQualifier)
+    XCTAssert(aq.op == .and, "did not parse an AND qualifier")
     
     XCTAssert(aq.qualifiers[0] is KeyValueQualifier,
               "first qualifier is not a key/value qualifier")
     
     XCTAssert(aq.qualifiers[1] is CompoundQualifier,
               "second qualifier is not an OR qualifier")
-    let aq2 = aq.qualifiers[1] as! CompoundQualifier
-    XCTAssert(aq2.op == .Or, "second qualifier is not an OR qualifier")
+    let aq2 = try XCTUnwrap(aq.qualifiers[1] as? CompoundQualifier)
+    XCTAssert(aq2.op == .or, "second qualifier is not an OR qualifier")
   }
   
   func XtestArrayINQualifier() { // plist array values after IN unsupported
@@ -114,13 +115,13 @@ class QualifierParserTests: XCTestCase {
     XCTAssertEqual(bv, true)
   }
   
-  func testBoolKeyValueAndFrontQualifier() {
-    let q = qualifierWith(format: "isArchived AND code > 3")
-    XCTAssertNotNil(q, "could not parse qualifier")
+  func testBoolKeyValueAndFrontQualifier() throws {
+    let q = try XCTUnwrap(qualifierWith(format: "isArchived AND code > 3"),
+                          "could not parse qualifier")
 
-    XCTAssert(q! is CompoundQualifier, "did not parse an AND qualifier")
-    let aq = q! as! CompoundQualifier
-    XCTAssert(aq.op == .And, "did not parse an AND qualifier")
+    XCTAssert(q is CompoundQualifier, "did not parse an AND qualifier")
+    let aq = try XCTUnwrap(q as? CompoundQualifier)
+    XCTAssert(aq.op == .and, "did not parse an AND qualifier")
    
     XCTAssert(aq.qualifiers[0] is KeyValueQualifier,
               "first qualifier is not a key/value qualifier")
@@ -128,13 +129,13 @@ class QualifierParserTests: XCTestCase {
               "second qualifier is not a key/value qualifier")
   }
   
-  func testBoolKeyValueAndBackQualifier() {
-    let q = qualifierWith(format: "code > 3 AND isArchived")
-    XCTAssertNotNil(q, "could not parse qualifier")
+  func testBoolKeyValueAndBackQualifier() throws {
+    let q = try XCTUnwrap(qualifierWith(format: "code > 3 AND isArchived"),
+                          "could not parse qualifier")
     
-    XCTAssert(q! is CompoundQualifier, "did not parse an AND qualifier")
-    let aq = q! as! CompoundQualifier
-    XCTAssert(aq.op == .And, "did not parse an AND qualifier")
+    XCTAssert(q is CompoundQualifier, "did not parse an AND qualifier")
+    let aq = try XCTUnwrap(q as? CompoundQualifier)
+    XCTAssert(aq.op == .and, "did not parse an AND qualifier")
    
     XCTAssert(aq.qualifiers[0] is KeyValueQualifier,
               "first qualifier is not a key/value qualifier")
@@ -142,14 +143,14 @@ class QualifierParserTests: XCTestCase {
               "second qualifier is not a key/value qualifier")
   }
   
-  func testBoolKeyValueAndParenQualifier() {
-    let q = qualifierWith(format:
-                       "(isArchived) AND code > 3 AND (isUsed)")
-    XCTAssertNotNil(q, "could not parse qualifier")
+  func testBoolKeyValueAndParenQualifier() throws {
+    let q = try XCTUnwrap(qualifierWith(format:
+                            "(isArchived) AND code > 3 AND (isUsed)"),
+                          "could not parse qualifier")
 
-    XCTAssert(q! is CompoundQualifier, "did not parse an AND qualifier")
-    let aq = q! as! CompoundQualifier
-    XCTAssert(aq.op == .And, "did not parse an AND qualifier")
+    XCTAssert(q is CompoundQualifier, "did not parse an AND qualifier")
+    let aq = try XCTUnwrap(q as? CompoundQualifier)
+    XCTAssert(aq.op == .and, "did not parse an AND qualifier")
    
     XCTAssert(aq.qualifiers[0] is KeyValueQualifier,
               "first qualifier is not a key/value qualifier")
@@ -159,14 +160,14 @@ class QualifierParserTests: XCTestCase {
               "third qualifier is not a key/value qualifier")
   }
   
-  func testSQLQualifier() {
-    let q = qualifierWith(format:
-                         "SQL[lastname = $lastname AND balance = $balance]")
-    XCTAssertNotNil(q, "could not parse qualifier")
+  func testSQLQualifier() throws {
+    let q = try XCTUnwrap(qualifierWith(format:
+                         "SQL[lastname = $lastname AND balance = $balance]"),
+                          "could not parse qualifier")
 
-    XCTAssert(q! is SQLQualifier, "did not parse a SQL qualifier")
+    XCTAssert(q is SQLQualifier, "did not parse a SQL qualifier")
     
-    let parts = (q as! SQLQualifier).parts
+    let parts = (try XCTUnwrap(q as? SQLQualifier)).parts
     XCTAssertEqual(parts.count, 4, "number of parts does not match")
     
     if case .rawValue(let v) = parts[0] {
@@ -198,16 +199,16 @@ class QualifierParserTests: XCTestCase {
     }
   }
 
-  func testPlainString() {
+  func testPlainString() throws {
     // Actually the same like testSimpleBoolKeyValueQualifier, but for
     // clarity :-)
-    let q = qualifierWith(format: "hello")
-    XCTAssertNotNil(q, "could not parse qualifier")
+    let q = try XCTUnwrap(qualifierWith(format: "hello"),
+                          "could not parse qualifier")
     
     // Not sure whether this is actually intended :-) It makes sense for this:
     //   "lastname = 'abc' AND isLoggedIn" etc.
-    XCTAssert(q! is KeyValueQualifier, "did not parse a key/value qualifier")
-    guard let kvq = q as? KeyValueQualifier else { return }
+    XCTAssert(q is KeyValueQualifier, "did not parse a key/value qualifier")
+    let kvq = try XCTUnwrap(q as? KeyValueQualifier)
     
     XCTAssertEqual(kvq.operation, .equalTo)
     XCTAssert(kvq.value is Bool)

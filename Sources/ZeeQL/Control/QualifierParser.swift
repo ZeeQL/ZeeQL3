@@ -64,9 +64,9 @@ public func qualifierWith(format: String, _ args: Any?...) -> Qualifier? {
  * Matching code:
  * ```swift
  *    var q = Qualifier.parse("lastname = $lastname AND firstname = $firstname")
- *    q = q.qualifierWith(bindings: self)
+ *    q = q.qualifierWithBindings(self)
  * ```
- * The q.qualifierWith(bindings:) method will ask 'self' for the
+ * The q.qualifierWithBindings method will ask 'self' for the
  * 'lastname' and 'firstname' keys using KVC.
  * 
  * ### Patterns
@@ -442,8 +442,8 @@ public struct QualifierParser {
     if qualifiers.count == 1 { return qualifiers[0] }
     
     switch operation {
-      case STOK_AND: return CompoundQualifier(qualifiers: qualifiers, op: .And)
-      case STOK_OR:  return CompoundQualifier(qualifiers: qualifiers, op: .Or)
+      case STOK_AND: return CompoundQualifier(qualifiers: qualifiers, op: .and)
+      case STOK_OR:  return CompoundQualifier(qualifiers: qualifiers, op: .or)
       default:
         /* Note: we could make this extensible */
         addError("unknown compound operator: " + operation)
