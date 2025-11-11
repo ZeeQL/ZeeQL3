@@ -358,7 +358,8 @@ open class DatabaseChannelBase {
    * Prefetches a set of related objects.
    * 
    * - Parameters:
-   *   - entityName:         entity this fetch is relative to
+   *   - entity:             Optionally, the actual ``Entity`` object.
+   *   - entityName:         Name of entity this fetch is relative to.
    *   - prefetchRelPathes:  the pathes we want to prefetch
    *   - baseObjects:        the set of objects we want to prefetch for
    *   - ec:                 the active tracking context
@@ -416,6 +417,7 @@ open class DatabaseChannelBase {
       // TBD: process flattened relationships (walk over initial set)
       log.error("not processing flattened relationship: " +
                 "\(flattenedRel as Optional)")
+      assertionFailure("Flattened relships not supported.")
     }
   }
   
@@ -482,6 +484,12 @@ open class DatabaseChannelBase {
     }
     
     let srcValues = helper.getSourceValues(srcName)
+    #if DEBUG
+    do {
+      let unique = Set(srcValues)
+      assert(srcValues.count == unique.count)
+    }
+    #endif
     
     /* This is a Map which maps the join target-value to matching
      * DatabaseObjects. Usually its just one.

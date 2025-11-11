@@ -184,10 +184,12 @@ open class ActiveRecordBase : ActiveRecordType, SmartDescription {
     // TBD: Really AnyObject? Rather `DatabaseObject`?
     // Because the input is like that!
     if var list = storedValue(forKey: key) as? [ AnyObject ] {
-      list.append(object)
-      takeStoredValue(list, forKey: key)
+      if !list.contains(where: { $0 === object }) {
+        list.append(object)
+        takeStoredValue(list, forKey: key)
+      }
     }
-    else {
+    else { // add as an object
       takeStoredValue([ object ], forKey: key)
     }
   }
@@ -201,11 +203,7 @@ open class ActiveRecordBase : ActiveRecordType, SmartDescription {
     }
 
     guard var list = storedValue(forKey: key) as? [ AnyObject ] else { return }
-    #if swift(>=5)
-      guard let idx = list.firstIndex(where: { $0 === o }) else { return }
-    #else
-      guard let idx = list.index(where: { $0 === o }) else { return }
-    #endif
+    guard let idx = list.firstIndex(where: { $0 === o }) else { return }
     
     list.remove(at: idx)
     takeStoredValue([ list ], forKey: key)
