@@ -12,9 +12,9 @@ import Foundation
  * A date range that can have an optional start and/or end date.
  *
  * This is similar to the Foundation `DateInterval` or a `Range<Date>`, but
- * allows for open ends.
+ * allows for open ("nil") ends.
  *
- * This `OpenDateInterval` is supported in ``SQLExpression`` queries.
+ * This ``OpenDateInterval`` is supported in ``SQLExpression`` queries.
  */
 @frozen
 public struct OpenDateInterval: Hashable, Sendable, Codable {
@@ -132,6 +132,8 @@ public extension OpenDateInterval {
   /**
    * Returns true if this timerange and the other one cover a common section.
    *
+   * The end is treated as EXCLUSIVE.
+   *
    * - Parameters:
    *   - range: the other timerange
    * - Returns: `true` on overlap, false if the two are distinct.
@@ -141,9 +143,7 @@ public extension OpenDateInterval {
     // Note: range can be empty, but will still match open ranges?
     // Note: OGoCore/J has different behaviour here! It considers open ranges
     //       as non-overlapping!
-    if let end,   end   < range.lowerBound { return false } // before
-    if let start, start > range.upperBound { return false }
-    return true
+    self.range.overlaps(range)
   }
   
   /**

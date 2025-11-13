@@ -249,8 +249,10 @@ public extension RelationshipManipulation { // default imp
     // Because the input is like that!
     do {
       if var list = value(forKey: key) as? [ AnyObject ] {
-        list.append(object)
-        try takeValue(list, forKey: key)
+        if !list.contains(where: { $0 === object }) {
+          list.append(object)
+          try takeValue(list, forKey: key)
+        }
       }
       else {
         try takeValue([ object ], forKey: key)
