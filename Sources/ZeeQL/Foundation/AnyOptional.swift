@@ -1,6 +1,6 @@
 //
 //  Created by Helge Heß.
-//  Copyright © 2023-2024 ZeeZide GmbH.
+//  Copyright © 2023-2025 ZeeZide GmbH.
 //
 
 /**
@@ -14,18 +14,18 @@
  * Int?.self is any AnyOptional.Type // true
  * ```
  */
-public protocol AnyOptional {
+public protocol AnyOptional<Wrapped> {
   
   associatedtype Wrapped
   
   /// Returns `true` if the optional has a value attached, i.e. is not `nil`
   var isSome : Bool { get }
   
-  /// Returns the attached value as an `Any`, or `nil`.
-  var value  : Any? { get }
+  /// Returns the attached value as an `Wrapped`, or `nil`.
+  var value  : Wrapped? { get }
   
   /// Returns the dynamic type of the `Wrapped` value of the optional.
-  static var wrappedType : Any.Type { get }
+  static var wrappedType : Wrapped.Type { get }
   
   static var noneValue : Self { get }
 }
@@ -44,7 +44,7 @@ extension Optional : AnyOptional {
   }
   
   @inlinable
-  public var value : Any? {
+  public var value : Wrapped? {
     switch self {
       case .none: nil
       case .some(let unwrapped): unwrapped
@@ -52,5 +52,5 @@ extension Optional : AnyOptional {
   }
   
   @inlinable
-  public static var wrappedType : Any.Type { Wrapped.self }
+  public static var wrappedType : Wrapped.Type { Wrapped.self }
 }
