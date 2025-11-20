@@ -28,9 +28,13 @@ public protocol AnyOptional<Wrapped> {
   static var wrappedType : Wrapped.Type { get }
   
   static var noneValue : Self { get }
+  static func make(_ value: Wrapped?) -> Self
 }
 
 extension Optional : AnyOptional {
+
+  @inlinable
+  public static func make(_ value: Wrapped?) -> Self { return value }
 
   @inlinable
   public static var noneValue : Self { .none }
