@@ -321,16 +321,16 @@ open class SQLExpression: SmartDescription {
   
   /**
    * The primary entry point to create SQL SELECT expressions. Its usually
-   * called by the SQLExpressionFactory after it instantiated an adaptor
-   * specific SQLExpression class.
+   * called by the ``SQLExpressionFactory`` after it instantiated an adaptor
+   * specific ``SQLExpression`` class.
    *
    * What this method does:
    *
    * - checks for the CustomQueryExpressionHintKey
-   * - conjoins the `restrictingQualifier` of the ``Entity`` with the one of the
+   * - conjoins the ``Entity/restrictingQualifier`` with the one of the
    *   ``FetchSpecification``
    * - builds the select prefix (`SELECT, SELECT DISTINCT`) depending on the
-   *   `usesDistinct` setting of the ``FetchSpecification``
+   *   setting of ``FetchSpecification/usesDistinct``
    * - builds the list of columns by calling ``addSelectListAttribute(_:)`` with
    *   each ``Attribute`` given, or uses `*` if none are specified
    * - call `whereClauseString` to build the SQL `WHERE` expression, if
@@ -351,21 +351,27 @@ open class SQLExpression: SmartDescription {
    * The result of the method is stored in the ``statement`` ivar.
    *
    * - Parameters:
-   *   - attrs: The ``Attribute``'s to fetch, or null to fetch all (* SELECT).
-   *   - lock:  Whether the rows/table should be locked in the database
-   *   - fspec: The ``FetchSpecification`` containing the qualifier, etc
+   *   - attributes:         The ``Attribute``'s to fetch, or empty to fetch all
+   *                         (`SELECT *`).
+   *   - lock:               Whether the rows/table should be locked in the
+   *                         database (`WITH LOCK`).
+   *   - fetchSpecification: The ``FetchSpecification`` containing the
+   *                         qualifier, sort orderings, etc.
    */
-  open func prepareSelectExpressionWithAttributes(_ attrs : [ Attribute ],
-                                                  _ lock  : Bool,
-                                                  _ fspec : FetchSpecification?)
+  open func prepareSelectExpressionWithAttributes(
+    _ attributes         : [ Attribute ],
+    _ lock               : Bool,
+    _ fetchSpecification : FetchSpecification?
+  )
   {
     /* check for custom statements */
     
     let customSQL =
-          fspec?[hint: SQLExpression.CustomQueryExpressionHintKey] as? String
+          fetchSpecification?[hint: SQLExpression.CustomQueryExpressionHintKey]
+          as? String
     
     useAliases = true
-    qualifier  = fspec?.qualifier
+    qualifier  = fetchSpecification?.qualifier
     
     /* apply restricting qualifier */
     
@@ -382,16 +388,17 @@ open class SQLExpression: SmartDescription {
     
     /* check for distinct */
     
-    let select = (fspec?.usesDistinct ?? false) ? "SELECT DISTINCT" : "SELECT"
+    let select = (fetchSpecification?.usesDistinct ?? false) 
+        ? "SELECT DISTINCT" : "SELECT"
     
     /* prepare columns to select */
     // TODO: Some database require that values used in the qualifiers and/or
     //       sort orderings are part of the SELECT. Support that.
     
     let columns : String
-    if !attrs.isEmpty {
+    if !attributes.isEmpty {
       listString.removeAll()
-      for attr in attrs {
+      for attr in attributes {
         self.addSelectListAttribute(attr)
       }
       columns = listString
@@ -408,7 +415,7 @@ open class SQLExpression: SmartDescription {
     /* prepare order bys */
 
     let orderBy    : String?
-    let fetchOrder = fspec?.sortOrderings
+    let fetchOrder = fetchSpecification?.sortOrderings
     if let fetchOrder = fetchOrder, !fetchOrder.isEmpty {
       listString.removeAll()
       for so in fetchOrder {
@@ -447,8 +454,10 @@ open class SQLExpression: SmartDescription {
     
     /* limits */
     
-    let limitClause = self.limitClause(offset: fspec?.fetchOffset ?? -1,
-                                       limit: fspec?.fetchLimit   ?? -1)
+    let limitClause = self.limitClause(
+      offset: fetchSpecification?.fetchOffset ?? -1,
+      limit: fetchSpecification?.fetchLimit   ?? -1
+    )
     
     // TODO: GROUP BY expression [, ...]
     // TODO: HAVING condition [, ...]
@@ -457,98 +466,108 @@ open class SQLExpression: SmartDescription {
     
     if let customSQL = customSQL {
       statement = assembleCustomSelectStatementWithAttributes(
-                     attrs, lock, qualifier, fetchOrder,
-                     customSQL,
-                     select, columns, tables, whereClause, joinClause, orderBy,
-                     limitClause, lockClause) ?? ""
+        attributes: attributes, lock: lock, qualifier: qualifier,
+        sortOrderings: fetchOrder,
+        sqlPattern: customSQL,
+        select: select, columns: columns, tables: tables, where: whereClause,
+        joinClause: joinClause, orderBy: orderBy,
+        limit: limitClause, lockClause: lockClause
+      ) ?? ""
     }
     else {
       statement = assembleSelectStatementWithAttributes(
-                     attrs, lock, qualifier, fetchOrder,
-                     select, columns, tables, whereClause, joinClause, orderBy,
-                     limitClause, lockClause)
+        attributes: attributes, lock: lock, qualifier: qualifier,
+        sortOrderings: fetchOrder,
+        select: select, columns: columns, tables: tables, where: whereClause,
+        joinClause: joinClause, orderBy: orderBy,
+        limit: limitClause, lockClause: lockClause
+      )
     }
   }
   
   open func assembleSelectStatementWithAttributes
-    (_ _attrs : [ Attribute ], _ _lock : Bool, _ _qualifier : Qualifier?,
-     _ _fetchOrder : [ SortOrdering ]?,
-     _ _select     : String?,
-     _ _cols       : String,
-     _ _tables     : String?,
-     _ _where      : String?,
-     _ _joinClause : String?,
-     _ _orderBy    : String?,
-     _ _limit      : String?,
-     _ _lockClause : String?) -> String
+    (attributes : [ Attribute ], lock : Bool, qualifier : Qualifier?,
+     sortOrderings : [ SortOrdering ]?, // unused?
+     select     : String?,
+     columns    : String,
+     tables     : String?,
+     where      : String?,
+     joinClause : String?,
+     orderBy    : String?,
+     limit      : String?,
+     lockClause : String?) -> String
   {
     /* 128 was too small, SQL seems to be ~512 */
     var sb = ""
     sb.reserveCapacity(1024)
     
-    sb += _select ?? "SELECT"
+    sb += select ?? "SELECT"
     sb += " "
-    sb += _cols
-    if let tables = _tables { sb += " FROM \(tables)" }
+    sb += columns
+    if let tables = tables { sb += " FROM \(tables)" }
     
-    let hasWhere      = !(_where ?? "").isEmpty
-    let hasJoinClause = !(_joinClause ?? "").isEmpty
+    let hasWhere      = !(`where` ?? "").isEmpty
+    let hasJoinClause = !(joinClause ?? "").isEmpty
     
     if hasWhere || hasJoinClause {
       sb += " WHERE "
-      if hasWhere                  { sb += _where ?? "" }
+      if hasWhere                  { sb += `where` ?? "" }
       if hasWhere && hasJoinClause { sb += " AND " }
-      if hasJoinClause             { sb += _joinClause ?? "" }
+      if hasJoinClause             { sb += joinClause ?? "" }
     }
     
-    if let ob = _orderBy, !ob.isEmpty { sb += " ORDER BY \(ob)" }
+    if let ob = orderBy, !ob.isEmpty { sb += " ORDER BY \(ob)" }
     
-    if let limit      = _limit      { sb += " \(limit)"      }
-    if let lockClause = _lockClause { sb += " \(lockClause)" }
+    if let limit      = limit      { sb += " \(limit)"      }
+    if let lockClause = lockClause { sb += " \(lockClause)" }
     return sb
   }
   
   /**
    * Example:
    *
-   *     SELECT COUNT(*) FROM %(tables)s WHERE %(where)s %(limit)s
-   *   
-   * Keys:
+   *   `SELECT COUNT(*) FROM %(tables)s WHERE %(where)s %(limit)s`
    *
-   *     select       eg SELECT or SELECT DISTINCT
-   *     columns      eg BASE.lastname, BASE.firstname
-   *     tables       eg BASE.customer
-   *     basetable    eg customer
-   *     qualifier    eg lastname LIKE 'Duck%'
-   *     orderings    eg lastname ASC, firstname DESC
-   *     limit        eg OFFSET 0 LIMIT 1
-   *     lock         eg FOR UPDATE
-   *     joins
+   * Note: There are also SQL bind patterns that are resolved at a higher level
+   *       and result in those things. In those patterns, the keys have to be
+   *       escaped, e.g. `%%(select)s` instead of `%(select)s`.
+   *
+   * Keys:
+   * - `select`:    e.g. `SELECT or SELECT DISTINCT`
+   * - `columns`:   e.g. `BASE.lastname, BASE.firstname`
+   * - `tables`:    e.g. `BASE.customer`
+   * - `basetable`: e.g. `customer`
+   * - `qualifier`: e.g. `lastname LIKE 'Duck%'`
+   * - `orderings`: e.g. `lastname ASC, firstname DESC`
+   * - `limit`:     e.g. `OFFSET 0 LIMIT 1`
+   * - `lock`:      e.g. `FOR UPDATE`
+   * - `joins`
    *
    * Compound:
-   *
-   *     where        eg WHERE lastname LIKE 'Duck%'
-   *     andQualifier eg AND lastname LIKE 'Duck%'   (nothing w/o qualifier)
-   *     orQualifier  eg OR  lastname LIKE 'Duck%'   (nothing w/o qualifier)
-   *     orderby      eg ORDER BY mod_date DESC (nothing w/o orderings)
-   *     andOrderBy   eg , mod_date DESC (nothing w/o orderings)
-   *
+   * - `where`:        e.g. `WHERE lastname LIKE 'Duck%'`
+   * - `andQualifier`: e.g. `AND lastname LIKE 'Duck%'` (nothing w/o qualifier)
+   * - `orQualifier`:  e.g. `OR  lastname LIKE 'Duck%'` (nothing w/o qualifier)
+   * - `orderby`:      e.g. `ORDER BY mod_date DESC`    (nothing w/o orderings)
+   * - `andOrderBy`:   e.g. `, mod_date DESC`           (nothing w/o orderings)
    */
-  open func assembleCustomSelectStatementWithAttributes
-    (_ _attrs : [ Attribute ], _ _lock : Bool, _ _qualifier: Qualifier?,
-     _ _fetchOrder: [ SortOrdering ]?,
-     _ _sqlPattern : String,
-     _ _select     : String?,
-     _ _cols       : String?,
-     _ _tables     : String?,
-     _ _where      : String?,
-     _ _joinClause : String?,
-     _ _orderBy    : String?,
-     _ _limit      : String?,
-     _ _lockClause : String?) -> String?
+  open func assembleCustomSelectStatementWithAttributes(
+    attributes    : [ Attribute ],     // unused here
+    lock          : Bool,              // unused here
+    qualifier     : Qualifier?,        // unused here
+    sortOrderings : [ SortOrdering ]?, // unused here
+    sqlPattern    : String,
+    select        : String?,
+    columns       : String?,
+    tables        : String?,
+    where         : String?,
+    joinClause    : String?,
+    orderBy       : String?,
+    limit         : String?,
+    lockClause    : String?
+  ) -> String?
   {
-    guard !_sqlPattern.isEmpty      else { return nil }
-    guard _sqlPattern.contains("%") else { return _sqlPattern }
+    guard !sqlPattern.isEmpty      else { return nil }
+    guard sqlPattern.contains("%") else { return sqlPattern }
       /* contains no placeholders */
 
     /* prepare bindings */
@@ -563,31 +582,31 @@ open class SQLExpression: SmartDescription {
      */ 
     
     var bindings = [ String : Any? ]()
-    bindings["select"]    = _select     ?? ""
-    bindings["columns"]   = _cols       ?? ""
-    bindings["tables"]    = _tables     ?? ""
-    bindings["qualifier"] = _where      ?? ""
-    bindings["joins"]     = _joinClause ?? ""
-    bindings["limit"]     = _limit      ?? ""
-    bindings["lock"]      = _lockClause ?? ""
-    bindings["orderings"] = _orderBy    ?? ""
+    bindings["select"]    = select     ?? ""
+    bindings["columns"]   = columns    ?? ""
+    bindings["tables"]    = tables     ?? ""
+    bindings["qualifier"] = `where`    ?? ""
+    bindings["joins"]     = joinClause ?? ""
+    bindings["limit"]     = limit      ?? ""
+    bindings["lock"]      = lockClause ?? ""
+    bindings["orderings"] = orderBy    ?? ""
 
     /* adding compounds */
     
-    if let w = _where, let jc = _joinClause {
+    if let w = `where`, let jc = joinClause {
       bindings["where"] = " WHERE \(w) AND \(jc)"
     }
-    else if let w = _where {
+    else if let w = `where` {
       bindings["where"] = " WHERE \(w)"
     }
-    else if let jc = _joinClause {
+    else if let jc = joinClause {
       bindings["where"] = " WHERE \(jc)"
     }
     else {
       bindings["where"] = ""
     }
 
-    if let w = _where {
+    if let w = `where` {
       bindings["andQualifier"] = " AND \(w)"
       bindings["orQualifier"]  = " OR \(w)"
     }
@@ -596,7 +615,7 @@ open class SQLExpression: SmartDescription {
       bindings["orQualifier"]  = ""
     }
     
-    if let ob = _orderBy {
+    if let ob = orderBy {
       let s = " ORDER BY \(ob)"
       bindings["orderby"]    = s
       bindings["orderBy"]    = s
@@ -616,7 +635,7 @@ open class SQLExpression: SmartDescription {
   
     /* format */
     
-    return KeyValueStringFormatter.format(_sqlPattern, requiresAll: true,
+    return KeyValueStringFormatter.format(sqlPattern, requiresAll: true,
                                           object: bindings)
   }
   
@@ -624,15 +643,15 @@ open class SQLExpression: SmartDescription {
   /* column lists */
   
   /**
-   * This method calls sqlStringForAttribute() to get the column name of the
-   * attribute and then issues formatSQLString() with the configured
-   * `readFormat` (usually empty).
+   * This method calls `sqlStringForAttribute`() to get the column name of the
+   * attribute and then issues `formatSQLString`() with the configured
+   * ``Attribute/readFormat`` (usually empty).
    *
-   * The result of this is added the the 'self.listString' using
-   * appendItemToListString().
+   * The result of this is added the the `self.listString` using
+   * `appendItemToListString`().
    *
-   * The method is called by prepareSelectExpressionWithAttributes() to build
-   * the list of attributes used in the SELECT.
+   * The method is called by `prepareSelectExpressionWithAttributes`() to build
+   * the list of attributes used in the `SELECT`.
    */
   open func addSelectListAttribute(_ attribute: Attribute) {
     var s = sqlStringForAttribute(attribute)
@@ -815,12 +834,13 @@ open class SQLExpression: SmartDescription {
   }
   
   /**
-   * Returns the list of tables to be used in the FROM of the SQL.
-   * 
-   * @param _entity - root entity to use ("" alias)
-   * @return the list of tables, eg "person AS BASE, address T0"
+   * Returns the list of tables to be used in the `FROM` of the SQL.
+   *
+   * - Parameters:
+   *   - entity: The root entity to use ("" alias)
+   * - Returns:  The list of tables, e.g. `person AS BASE, address T0`
    */
-  func tableListWith(rootEntity _entity: Entity) -> String {
+  func tableListWith(rootEntity entity: Entity) -> String {
     var sb = ""
     
     if useAliases, let alias = relationshipPathToAlias[""] {
@@ -832,7 +852,7 @@ open class SQLExpression: SmartDescription {
        */
 
       /* the base entity */
-      sb += sqlStringFor(schemaObjectName: _entity.externalName ?? _entity.name)
+      sb += sqlStringFor(schemaObjectName: entity.externalName ?? entity.name)
       sb += " AS "
       sb += alias
       
@@ -858,37 +878,39 @@ open class SQLExpression: SmartDescription {
     }
     else { // use by UPDATE, DELETE, etc
       // TODO: just add all table names ...
-      sb += sqlStringFor(schemaObjectName: _entity.externalName ?? _entity.name)
+      sb += sqlStringFor(schemaObjectName: entity.externalName ?? entity.name)
     }
     
     return sb
   }
   
   /**
-   * Returns the list of tables to be used in the FROM of the SQL,
-   * plus all necessary JOIN parts of the FROM.
+   * Returns the list of tables to be used in the `FROM` of the SQL,
+   * plus all necessary `JOIN` parts of the `FROM`.
    *
-   * Builds the JOIN parts of the FROM statement, eg:
-   *
+   * Builds the `JOIN` parts of the `FROM` statement, eg:
+   * ```sql
    *   person AS BASE
    *   LEFT JOIN address AS T0 ON ( T0.person_id = BASE.person_id )
    *   LEFT JOIN company AS T1 ON ( T1.owner_id  = BASE.owner_id)
-   *
+   * ```
    * It just adds the joins from left to right, since I don't know yet
    * how to properly put the parenthesis around them :-)
    *
-   * We currently ALWAYS build LEFT JOINs. Which is wrong, but unless we
+   * We currently ALWAYS build `LEFT JOINs`. Which is wrong, but unless we
    * can order the JOINs, no option.
    * 
-   * @param _entity - root entity to use ("" alias)
-   * @return the list of tables, eg "person AS BASE INNER JOIN address AS T0"
+   * - Parameters:
+   *   - entity: The root entity to use ("" alias)
+   * - Returns:  The list of tables, e.g.
+   *             `person AS BASE INNER JOIN address AS T0`
    */
-  func tableListAndJoinsWith(rootEntity _entity: Entity) -> String {
+  func tableListAndJoinsWith(rootEntity entity: Entity) -> String {
     var sb = ""
     
     /* the base entity */
     if let base = relationshipPathToAlias[""] {
-      sb += sqlStringFor(schemaObjectName: _entity.externalName ?? _entity.name)
+      sb += sqlStringFor(schemaObjectName: entity.externalName ?? entity.name)
       sb += " AS "
       sb += base
     }
@@ -960,11 +982,11 @@ open class SQLExpression: SmartDescription {
   }
   
   /**
-   * This is called by prepareSelectExpressionWithAttributes() to construct
-   * the SQL expression used to join the various Entity tables involved in
+   * This is called by `prepareSelectExpressionWithAttributes`() to construct
+   * the SQL expression used to join the various ``Entity`` tables involved in
    * the query.
    *
-   * It constructs stuff like T1.person_id = T2.company_id. The actual joins
+   * It constructs stuff like `T1.person_id = T2.company_id`. The actual joins
    * are added using the addJoinClause method, which builds the expression
    * (in the self.joinClauseString ivar).
    */
@@ -1018,14 +1040,15 @@ open class SQLExpression: SmartDescription {
   
   /**
    * Calls assembleJoinClause() to build the join expression (eg
-   * T1.person_id = T2.company_id). Then adds it to the 'joinClauseString'
-   * using AND.
+   * `T1.person_id = T2.company_id`). Then adds it to the 'joinClauseString'
+   * using `AND`.
    *
    * The semantics trigger the proper operation, eg '=', '*=', '=*' or '*=*'.
-   * 
-   * @param _left     - left side join expression
-   * @param _right    - right side join expression
-   * @param _semantic - semantics, as passed on to assembleJoinClause()
+   *
+   * - Parameters:
+   *   - left:     Left side join expression
+   *   - right:    Right side join expression
+   *   - semantic: Semantics, as passed on to `assembleJoinClause`()
    */
   func addJoinClause(_ left: String, _ right: String,
                      _ semantic: Join.Semantic)
@@ -1057,15 +1080,17 @@ open class SQLExpression: SmartDescription {
   /* basic construction */
   
   /**
-   * Just adds the given _item String to the StringBuilder _sb. If the Builder
+   * Just adds the given String to the mutable String. If the String
    * is not empty, a ", " is added before the item.
    *
    * Used to assemble SELECT lists, eg:
-   *
+   * ```sql
    *     c_last_name, c_first_name
-   *   
-   * @param _item - String to add
-   * @param _sb   - StringBuilder containing the items
+   * ```
+   *
+   * - Parameters:
+   *   - item: String to add
+   *   - sb:   String containing the items
    */
   func appendItem(_ item: String, to sb: inout String) {
     if !sb.isEmpty { sb += ", " }
@@ -1076,13 +1101,14 @@ open class SQLExpression: SmartDescription {
   /* formatting */
   
   /**
-   * If the _format is null or contains no '%' character, the _sql is returned
-   * as-is.<br>
-   * Otherwise the '%P' String in the format is replaced with the _sql.
-   * 
-   * @param _sql    - SQL base expression (eg 'c_last_name')
-   * @param _format - pattern (eg 'UPPER(%P)')
-   * @return SQL string with the pattern applied
+   * If the _format is null or contains no `%` character, the sql is returned
+   * as-is.
+   * Otherwise the `%P` String in the format is replaced with the sql.
+   *
+   * - Parameters:
+   *   - sql:    SQL base expression (eg 'c_last_name')
+   *   - format: pattern (eg 'UPPER(%P)')
+   * - Returns:  SQL string with the pattern applied
    */
   func formatSQLString(_ sql: String, _ format: String?) -> String {
     guard let format = format else { return sql }
@@ -1096,33 +1122,37 @@ open class SQLExpression: SmartDescription {
   
   /**
    * Escapes the given String and embeds it into single quotes.
-   * Example:
    *
-   *     Hello World => 'Hello World'
-   * 
-   * - parameter v: String to escape and quote (eg Hello World)
-   * - returns:     the SQL escaped and quoted String (eg 'Hello World')
+   * Example:
+   * ```
+   * Hello World => 'Hello World'
+   * ```
+   *
+   * - Parameter v: String to escape and quote (eg Hello World)
+   * - Returns:     the SQL escaped and quoted String (eg 'Hello World')
    */
   public func formatStringValue(_ v: String?) -> String {
     // TODO: whats the difference to sqlStringForString?
     guard let v = v else { return "NULL" }
-    return "'" + escapeSQLString(v) + "'"
+    return "'\(escapeSQLString(v))'"
   }
 
   /**
    * Escapes the given String and embeds it into single quotes.
-   * Example:
    *
-   *     Hello World => 'Hello World'
-   * 
-   * - parameter v: String to escape and quote (eg Hello World)
-   * - returns:     the SQL escaped and quoted String (eg 'Hello World')
+   * Example:
+   * ```
+   * Hello World => 'Hello World'
+   * ```
+   *
+   * - Parameter v: String to escape and quote (eg Hello World)
+   * - Returns:     the SQL escaped and quoted String (eg 'Hello World')
    */
   public func sqlStringFor(string v: String?) -> String {
     // TBD: whats the difference to formatStringValue()? check docs
     guard let v = v else { return "NULL" }
 
-    return "'" + escapeSQLString(v) + "'"
+    return "'\(escapeSQLString(v))'"
   }
   
   /**
@@ -1130,8 +1160,8 @@ open class SQLExpression: SmartDescription {
    * value, for float/doubles/bigdecs it might be database specific.
    * The current implementation just calls the numbers toString() method.
    * 
-   * - parameter number: some Number object
-   * - returns the SQL representation of the given Number (or NULL for nil)
+   * - Parameter number: some Number object
+   * - Returns the SQL representation of the given Number (or NULL for nil)
    */
   public func sqlStringFor(number v: Int?) -> String {
     guard let v = v else { return "NULL" }
@@ -1161,8 +1191,8 @@ open class SQLExpression: SmartDescription {
    * value, for float/doubles/bigdecs it might be database specific.
    * The current implementation just calls the numbers toString() method.
    *
-   * - parameter number: some Number object
-   * - returns the SQL representation of the given Number (or NULL for nil)
+   * - Parameter number: some Number object
+   * - Returns the SQL representation of the given Number (or NULL for nil)
    */
   public func sqlStringFor(number v: Float?) -> String {
     guard let v = v else { return "NULL" }
@@ -1172,8 +1202,8 @@ open class SQLExpression: SmartDescription {
   /**
    * Returns the SQL representation of a Boolean. This returns TRUE and FALSE.
    * 
-   * - parameter bool: some boolean
-   * - returns the SQL representation of the given bool (or NULL for nil)
+   * - Parameter bool: some boolean
+   * - Returns the SQL representation of the given bool (or NULL for nil)
    */
   public func sqlStringFor(bool v: Bool?) -> String {
     guard let v = v else { return "NULL" }
@@ -1185,10 +1215,10 @@ open class SQLExpression: SmartDescription {
    * (which is rarely the correct thing to do).
    * You should really use bindings for that.
    * 
-   * - parameters:
+   * - Parameters:
    *   - v:    a Date object
    *   - attr: an Attribute containing formatting details
-   * - returns: the SQL representation of the given Date (or NULL for nil)
+   * - Returns: the SQL representation of the given Date (or NULL for nil)
    */
   public func formatDateValue(_ v: Date?, _ attr: Attribute? = nil) -> String? {
     // TODO: FIXME. Use format specifications as denoted in the attribute
@@ -1201,39 +1231,40 @@ open class SQLExpression: SmartDescription {
   /**
    * Returns the SQL String representation of the given value Object.
    *
-   * - 'nil' will be rendered as the SQL 'NULL'
-   * - String values are rendered using formatStringValue()
-   * - Number values are rendered using sqlStringForNumber()
-   * - Date values are rendered using formatDateValue()
-   * - toString() is called on RawSQLValue values
+   * - `nil` will be rendered as the SQL `NULL`
+   * - `String` values are rendered using formatStringValue()
+   * - `Number` values are rendered using sqlStringForNumber()
+   * - `Date` values are rendered using formatDateValue()
+   * - toString() is called on ``RawSQLValue`` values
    * - arrays and Collections are rendered in "( )"
-   * - KeyGlobalID objects with one value are rendered as their value
+   * - ``KeyGlobalID`` objects with one value are rendered as their value
    *
-   * When an QualifierVariable is encountered an error is logged and null is
+   * When an ``QualifierVariable`` is encountered an error is logged and null is
    * returned.
    * For unknown objects the string representation is rendered.
    * 
-   * - parameter v: some value to be formatted for inclusion in the SQL
-   * - returns: a String representing the value
+   * - Parameter v: some value to be formatted for inclusion in the SQL
+   * - Returns: a String representing the value
    */
   public func formatValue(_ v: Any?) -> String? {
     // own method for basic stuff
     guard let v = v else         { return "NULL" }
-    if let v = v as? String      { return self.formatStringValue(v)    }
-    if let v = v as? Int         { return self.sqlStringFor(number: v) }
-    if let v = v as? Int32       { return self.sqlStringFor(number: v) }
-    if let v = v as? Int64       { return self.sqlStringFor(number: v) }
+    switch v {
+      case let v as String      : return self.formatStringValue(v)
+      case let v as Int         : return self.sqlStringFor(number: v)
+      case let v as Int32       : return self.sqlStringFor(number: v)
+      case let v as Int64       : return self.sqlStringFor(number: v)
       // TBD: do we need to list all Integer types?
-    if let v = v as? Double      { return self.sqlStringFor(number: v) }
-    if let v = v as? Float       { return self.sqlStringFor(number: v) }
-    if let v = v as? Bool        { return self.sqlStringFor(bool:   v) }
-    if let v = v as? Date        { return self.formatDateValue(v)      }
-    if let v = v as? RawSQLValue { return v.value }
-    if let v = v as? any BinaryInteger {
-      return self.sqlStringFor(number: Int(v))
-    }
-    if let v = v as? any StringProtocol {
-      return self.formatStringValue(String(v))
+      case let v as Double      : return self.sqlStringFor(number: v)
+      case let v as Float       : return self.sqlStringFor(number: v)
+      case let v as Bool        : return self.sqlStringFor(bool:   v)
+      case let v as Date        : return self.formatDateValue(v)
+      case let v as RawSQLValue : return v.value
+      case let v as any BinaryInteger:
+        return self.sqlStringFor(number: Int(v))
+      case let v as any StringProtocol:
+        return self.formatStringValue(String(v))
+      default: break
     }
 
     /* process lists */
@@ -1256,7 +1287,7 @@ open class SQLExpression: SmartDescription {
       }
       return formatValue(key[0])
     }
-    
+
     /* warn about qualifier variables */
     
     if v is QualifierVariable {
