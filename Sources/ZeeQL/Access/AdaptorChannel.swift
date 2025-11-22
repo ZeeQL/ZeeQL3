@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 24/02/17.
-//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2025 ZeeZide GmbH. All rights reserved.
 //
 
 /**
@@ -219,15 +219,11 @@ public extension AdaptorChannel {
    * when exactly one row was affected.
    * 
    * - Parameters:
-   *   - op: the ``AdaptorOperation`` to be performed
+   *   - operation: the ``AdaptorOperation`` to be performed
    */
   @inlinable
-  func performAdaptorOperation(_ op: inout AdaptorOperation) throws {
-    let affectedRows = try performAdaptorOperationN(&op)
-    guard affectedRows == 1 else {
-      // TBD: Why would we actually care?!
-      throw AdaptorChannelError.OperationDidNotAffectOne
-    }
+  func performAdaptorOperation(_ operation: inout AdaptorOperation) throws {
+    _ = try performAdaptorOperationN(&operation)
   }
 
   /**
@@ -267,8 +263,9 @@ public extension AdaptorChannel {
         affectedRows = ok ? 1 : 0 /* a bit hackish? */
       
       case .insert:
-        guard let values = op.changedValues
-         else { throw AdaptorChannelError.MissingRecordToInsert }
+        guard let values = op.changedValues else {
+          throw AdaptorChannelError.MissingRecordToInsert
+        }
 
         // Note: we trigger a full refetch
         op.resultRow =
@@ -277,17 +274,20 @@ public extension AdaptorChannel {
         affectedRows = 1
     
       case .update:
-        guard let values = op.changedValues
-         else { throw AdaptorChannelError.MissingRecordToUpdate }
-        guard let q = op.qualifier
-         else { throw AdaptorChannelError.MissingQualification }
+        guard let values = op.changedValues else {
+          throw AdaptorChannelError.MissingRecordToUpdate
+        }
+        guard let q = op.qualifier else {
+          throw AdaptorChannelError.MissingQualification
+        }
         
         affectedRows = try updateValuesInRowsDescribedByQualifier(values,
                                                                   q, op.entity)
       
       case .delete:
-        guard let q = op.qualifier
-         else { throw AdaptorChannelError.MissingQualification }
+        guard let q = op.qualifier else {
+          throw AdaptorChannelError.MissingQualification
+        }
         
         affectedRows = try deleteRowsDescribedByQualifier(q, op.entity)
       
