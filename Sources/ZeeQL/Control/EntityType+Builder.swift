@@ -172,7 +172,8 @@ public extension TypedEntityType where FullEntity: CodeEntity<Self> {
    *
    * Example:
    * ```swift
-   * let objects = try oc.fetch(OGoCompany.where(\.type, [ "group", "case" ]))
+   * let objects = try oc.fetch(
+   *                  OGoCompany.where(\.type, in: [ "group", "case" ]))
    * ```
    *
    * - Parameters:
@@ -184,6 +185,31 @@ public extension TypedEntityType where FullEntity: CodeEntity<Self> {
   static func `where`<A, C>(_ key: Swift.KeyPath<FullEntity, A>,
                             in value: C) -> TypedFetchSpecification<Self>
     where A: TypedProperty, C: Collection, C.Element == A.T
+  {
+    var fs = TypedFetchSpecification<Self>(entity: Self.entity)
+    let property = Self.e[keyPath: key]
+    fs.qualifier = KeyValueQualifier(StringKey(property.name), .in, value)
+    return fs
+  }
+  /**
+   * Qualify a optional property being in a set of values.
+   *
+   * Example:
+   * ```swift
+   * let objects = try oc.fetch(
+   *                  OGoCompany.where(\.type, in: [ "group", "case" ]))
+   * ```
+   *
+   * - Parameters:
+   *   - key:   A keypath to a ``TypedProperty`` (e.g. `\.startDate`)
+   *   - value: A collection value of the same type (e.g. a `Date`)
+   * - Returns: The `TypedFetchSpecification` representing the query.
+   */
+  @inlinable
+  static func `where`<A, C>(_ key: Swift.KeyPath<FullEntity, A>,
+                            in value: C) -> TypedFetchSpecification<Self>
+    where A: TypedProperty, A.T: AnyOptional,
+          C: Collection, C.Element == A.T.Wrapped
   {
     var fs = TypedFetchSpecification<Self>(entity: Self.entity)
     let property = Self.e[keyPath: key]
