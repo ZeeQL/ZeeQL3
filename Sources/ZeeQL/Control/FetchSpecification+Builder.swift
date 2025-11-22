@@ -285,6 +285,9 @@ public extension DatabaseFetchSpecification
     return `where`(key, .equalTo, value)
   }
   
+  
+  // MARK: - AND
+  
   // Non-optional w/ operation.
   @inlinable
   func and<A: TypedProperty>(_ key: Swift.KeyPath<Object.FullEntity, A>,
@@ -322,6 +325,28 @@ public extension DatabaseFetchSpecification
   {
     return and(key, .equalTo, value)
   }
+
+  // In query on non-optional attribute
+  @inlinable
+  func and<A, C>(_ key: Swift.KeyPath<Object.FullEntity, A>, in values: C)
+    -> Self
+    where A: TypedProperty, C: Collection, C.Element == A.T
+  {
+    let property = Object.e[keyPath: key]
+    return and(KeyValueQualifier(StringKey(property.name), .in, values))
+  }
+  // In query on optional attribute
+  @inlinable
+  func and<A, C>(_ key: Swift.KeyPath<Object.FullEntity, A>, in values: C)
+    -> Self
+    where A: TypedProperty, A.T: AnyOptional,
+          C: Collection, C.Element == A.T.Wrapped
+  {
+    let property = Object.e[keyPath: key]
+    return and(KeyValueQualifier(StringKey(property.name), .in, values))
+  }
+
+  // MARK: - OR
   
   // Non-optional w/ operation.
   @inlinable
@@ -359,6 +384,26 @@ public extension DatabaseFetchSpecification
     where A: TypedProperty, A.T: AnyOptional
   {
     return or(key, .equalTo, value)
+  }
+  
+  // In query on non-optional attribute
+  @inlinable
+  func or<A, C>(_ key: Swift.KeyPath<Object.FullEntity, A>, in values: C)
+    -> Self
+    where A: TypedProperty, C: Collection, C.Element == A.T
+  {
+    let property = Object.e[keyPath: key]
+    return or(KeyValueQualifier(StringKey(property.name), .in, values))
+  }
+  // In query on optional attribute
+  @inlinable
+  func or<A, C>(_ key: Swift.KeyPath<Object.FullEntity, A>, in values: C)
+    -> Self
+    where A: TypedProperty, A.T: AnyOptional,
+          C: Collection, C.Element == A.T.Wrapped
+  {
+    let property = Object.e[keyPath: key]
+    return or(KeyValueQualifier(StringKey(property.name), .in, values))
   }
 
   
