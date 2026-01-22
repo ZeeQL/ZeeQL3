@@ -204,19 +204,76 @@ class QualifierParserTests: XCTestCase {
     // clarity :-)
     let q = try XCTUnwrap(qualifierWith(format: "hello"),
                           "could not parse qualifier")
-    
+
     // Not sure whether this is actually intended :-) It makes sense for this:
     //   "lastname = 'abc' AND isLoggedIn" etc.
     XCTAssert(q is KeyValueQualifier, "did not parse a key/value qualifier")
     let kvq = try XCTUnwrap(q as? KeyValueQualifier)
-    
+
     XCTAssertEqual(kvq.operation, .equalTo)
     XCTAssert(kvq.value is Bool)
     guard let bv = kvq.value as? Bool else { return }
     XCTAssertEqual(bv, true)
   }
 
-  
+
+  // MARK: - CONTAINS/BEGINSWITH/ENDSWITH
+
+  func testContainsQualifier() throws {
+    let q = try XCTUnwrap(parse("name CONTAINS 'Zee'"))
+    XCTAssert(q is KeyValueQualifier)
+    let kvq = try XCTUnwrap(q as? KeyValueQualifier)
+    XCTAssertEqual(kvq.key, "name")
+    XCTAssertEqual(kvq.operation, .contains)
+    XCTAssertEqual(kvq.value as? String, "Zee")
+  }
+
+  func testCaseInsensitiveContainsQualifier() throws {
+    let q = try XCTUnwrap(parse("name CONTAINS[c] 'zee'"))
+    XCTAssert(q is KeyValueQualifier)
+    let kvq = try XCTUnwrap(q as? KeyValueQualifier)
+    XCTAssertEqual(kvq.key, "name")
+    XCTAssertEqual(kvq.operation, .caseInsensitiveContains)
+    XCTAssertEqual(kvq.value as? String, "zee")
+  }
+
+  func testBeginsWithQualifier() throws {
+    let q = try XCTUnwrap(parse("name BEGINSWITH 'Zee'"))
+    XCTAssert(q is KeyValueQualifier)
+    let kvq = try XCTUnwrap(q as? KeyValueQualifier)
+    XCTAssertEqual(kvq.key, "name")
+    XCTAssertEqual(kvq.operation, .beginsWith)
+    XCTAssertEqual(kvq.value as? String, "Zee")
+  }
+
+  func testCaseInsensitiveBeginsWithQualifier() throws {
+    let q = try XCTUnwrap(parse("name BEGINSWITH[c] 'zee'"))
+    XCTAssert(q is KeyValueQualifier)
+    let kvq = try XCTUnwrap(q as? KeyValueQualifier)
+    XCTAssertEqual(kvq.key, "name")
+    XCTAssertEqual(kvq.operation, .caseInsensitiveBeginsWith)
+    XCTAssertEqual(kvq.value as? String, "zee")
+  }
+
+  func testEndsWithQualifier() throws {
+    let q = try XCTUnwrap(parse("name ENDSWITH 'QL'"))
+    XCTAssert(q is KeyValueQualifier)
+    let kvq = try XCTUnwrap(q as? KeyValueQualifier)
+    XCTAssertEqual(kvq.key, "name")
+    XCTAssertEqual(kvq.operation, .endsWith)
+    XCTAssertEqual(kvq.value as? String, "QL")
+  }
+
+  func testCaseInsensitiveEndsWithQualifier() throws {
+    let q = try XCTUnwrap(parse("name ENDSWITH[c] 'ql'"))
+    XCTAssert(q is KeyValueQualifier)
+    let kvq = try XCTUnwrap(q as? KeyValueQualifier)
+    XCTAssertEqual(kvq.key, "name")
+    XCTAssertEqual(kvq.operation, .caseInsensitiveEndsWith)
+    XCTAssertEqual(kvq.value as? String, "ql")
+  }
+
+
   // MARK: - Support
   
   func _testKeyValueQualifier(_ _qs: String, _ _k: String, _ _v: Any?) {
@@ -239,18 +296,27 @@ class QualifierParserTests: XCTestCase {
   }
 
   static var allTests = [
-    ( "testSimpleKeyValueQualifierInt",    testSimpleKeyValueQualifierInt ),
+    ( "testSimpleKeyValueQualifierInt",    testSimpleKeyValueQualifierInt    ),
     ( "testSimpleKeyValueQualifierString", testSimpleKeyValueQualifierString ),
-    ( "testComplexCompoundQualifier",      testComplexCompoundQualifier ),
-    ( "testComplexArgumentParsing",        testComplexArgumentParsing ),
-    ( "testQualifierWithOneVariables",     testQualifierWithOneVariables ),
-    ( "testQualifierWithSomeVariables",    testQualifierWithSomeVariables ),
-    ( "testQualifierWithParenthesis",      testQualifierWithParenthesis ),
-    ( "testSimpleBoolKeyValueQualifier",   testSimpleBoolKeyValueQualifier ),
+    ( "testComplexCompoundQualifier",      testComplexCompoundQualifier      ),
+    ( "testComplexArgumentParsing",        testComplexArgumentParsing        ),
+    ( "testQualifierWithOneVariables",     testQualifierWithOneVariables     ),
+    ( "testQualifierWithSomeVariables",    testQualifierWithSomeVariables    ),
+    ( "testQualifierWithParenthesis",      testQualifierWithParenthesis      ),
+    ( "testSimpleBoolKeyValueQualifier",   testSimpleBoolKeyValueQualifier   ),
     ( "testBoolKeyValueAndFrontQualifier", testBoolKeyValueAndFrontQualifier ),
-    ( "testBoolKeyValueAndBackQualifier",  testBoolKeyValueAndBackQualifier ),
+    ( "testBoolKeyValueAndBackQualifier",  testBoolKeyValueAndBackQualifier  ),
     ( "testBoolKeyValueAndParenQualifier", testBoolKeyValueAndParenQualifier ),
-    ( "testSQLQualifier",                  testSQLQualifier ),
-    ( "testPlainString",                   testPlainString ),
+    ( "testSQLQualifier",                  testSQLQualifier                  ),
+    ( "testPlainString",                   testPlainString                   ),
+    ( "testContainsQualifier",             testContainsQualifier             ),
+    ( "testCaseInsensitiveContainsQualifier",
+      testCaseInsensitiveContainsQualifier ),
+    ( "testBeginsWithQualifier",           testBeginsWithQualifier           ),
+    ( "testCaseInsensitiveBeginsWithQualifier",
+      testCaseInsensitiveBeginsWithQualifier ),
+    ( "testEndsWithQualifier",             testEndsWithQualifier             ),
+    ( "testCaseInsensitiveEndsWithQualifier",
+      testCaseInsensitiveEndsWithQualifier ),
   ]
 }

@@ -130,9 +130,50 @@ class QualifierEvaluationTests: XCTestCase {
     XCTAssertTrue (evaluate("firstname LIKE 'Don*'", donald))
 
     XCTAssertTrue (evaluate("firstname ILIKE 'don*'", donald))
-    
+
     XCTAssertTrue (evaluate("firstname LIKE 'Donald'",  donald))
     XCTAssertTrue (evaluate("firstname ILIKE 'Donald'", donald))
+  }
+
+  func testContainsOp() {
+    // Case-sensitive CONTAINS
+    XCTAssertTrue (evaluate("firstname CONTAINS 'onal'", donald))
+    XCTAssertTrue (evaluate("firstname CONTAINS 'Don'",  donald))
+    XCTAssertTrue (evaluate("firstname CONTAINS 'ald'",  donald))
+    XCTAssertFalse(evaluate("firstname CONTAINS 'onal'", anyDict) == false
+                   || evaluate("firstname CONTAINS 'ONAL'", donald))
+    XCTAssertFalse(evaluate("firstname CONTAINS 'Mickey'", donald))
+
+    // Case-insensitive CONTAINS
+    XCTAssertTrue (evaluate("firstname CONTAINS[c] 'ONAL'", donald))
+    XCTAssertTrue (evaluate("firstname CONTAINS[c] 'don'",  donald))
+    XCTAssertFalse(evaluate("firstname CONTAINS[c] 'mickey'", donald))
+  }
+
+  func testBeginsWithOp() {
+    // Case-sensitive BEGINSWITH
+    XCTAssertTrue (evaluate("firstname BEGINSWITH 'Don'", donald))
+    XCTAssertTrue (evaluate("firstname BEGINSWITH 'Donald'", donald))
+    XCTAssertFalse(evaluate("firstname BEGINSWITH 'don'", donald))
+    XCTAssertFalse(evaluate("firstname BEGINSWITH 'onald'", donald))
+
+    // Case-insensitive BEGINSWITH
+    XCTAssertTrue (evaluate("firstname BEGINSWITH[c] 'don'", donald))
+    XCTAssertTrue (evaluate("firstname BEGINSWITH[c] 'DON'", donald))
+    XCTAssertFalse(evaluate("firstname BEGINSWITH[c] 'onald'", donald))
+  }
+
+  func testEndsWithOp() {
+    // Case-sensitive ENDSWITH
+    XCTAssertTrue (evaluate("firstname ENDSWITH 'ald'", donald))
+    XCTAssertTrue (evaluate("firstname ENDSWITH 'Donald'", donald))
+    XCTAssertFalse(evaluate("firstname ENDSWITH 'ALD'", donald))
+    XCTAssertFalse(evaluate("firstname ENDSWITH 'Don'", donald))
+
+    // Case-insensitive ENDSWITH
+    XCTAssertTrue (evaluate("firstname ENDSWITH[c] 'ALD'", donald))
+    XCTAssertTrue (evaluate("firstname ENDSWITH[c] 'donald'", donald))
+    XCTAssertFalse(evaluate("firstname ENDSWITH[c] 'don'", donald))
   }
 
   func evaluate<T>(_ qualifier: String, _ object: T) -> Bool {

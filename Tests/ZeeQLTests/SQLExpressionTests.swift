@@ -275,13 +275,76 @@ class SQLExpressionTests: XCTestCase {
   }
 
 
+  // MARK: - CONTAINS/BEGINSWITH/ENDSWITH SQL Generation
+
+  func testContainsSQLExpr() {
+    let q = qualifierWith(format: "name CONTAINS 'Zee'")
+    XCTAssertNotNil(q, "could not parse qualifier")
+
+    let expr = factory.deleteStatementWithQualifier(q!, entity)
+    XCTAssertEqual(expr.statement,
+                   "DELETE FROM \"company\" WHERE \"name\" LIKE ?",
+                   "unexpected SQL result")
+    XCTAssertEqual(expr.bindVariables.count, 1)
+    XCTAssertEqual(expr.bindVariables.first?.value as? String, "%Zee%")
+  }
+
+  func testBeginsWithSQLExpr() {
+    let q = qualifierWith(format: "name BEGINSWITH 'Zee'")
+    XCTAssertNotNil(q, "could not parse qualifier")
+
+    let expr = factory.deleteStatementWithQualifier(q!, entity)
+    XCTAssertEqual(expr.statement,
+                   "DELETE FROM \"company\" WHERE \"name\" LIKE ?",
+                   "unexpected SQL result")
+    XCTAssertEqual(expr.bindVariables.count, 1)
+    XCTAssertEqual(expr.bindVariables.first?.value as? String, "Zee%")
+  }
+
+  func testEndsWithSQLExpr() {
+    let q = qualifierWith(format: "name ENDSWITH 'QL'")
+    XCTAssertNotNil(q, "could not parse qualifier")
+
+    let expr = factory.deleteStatementWithQualifier(q!, entity)
+    XCTAssertEqual(expr.statement,
+                   "DELETE FROM \"company\" WHERE \"name\" LIKE ?",
+                   "unexpected SQL result")
+    XCTAssertEqual(expr.bindVariables.count, 1)
+    XCTAssertEqual(expr.bindVariables.first?.value as? String, "%QL")
+  }
+
+  func testContainsWithSpecialCharsSQLExpr() {
+    // Test that % and _ are escaped in the value
+    let q = qualifierWith(format: "name CONTAINS '100%'")
+    XCTAssertNotNil(q, "could not parse qualifier")
+
+    let expr = factory.deleteStatementWithQualifier(q!, entity)
+    XCTAssertEqual(expr.bindVariables.first?.value as? String, "%100\\%%")
+  }
+
+  func testBeginsWithSpecialCharsSQLExpr() {
+    let q = qualifierWith(format: "name BEGINSWITH '_test'")
+    XCTAssertNotNil(q, "could not parse qualifier")
+
+    let expr = factory.deleteStatementWithQualifier(q!, entity)
+    XCTAssertEqual(expr.bindVariables.first?.value as? String, "\\_test%")
+  }
+
+
   static var allTests = [
-    ( "testRawDeleteSQLExpr",     testRawDeleteSQLExpr     ),
-    ( "testUpdateSQLExpr",        testUpdateSQLExpr        ),
-    ( "testInsertSQLExpr",        testInsertSQLExpr        ),
-    ( "testSimpleSelectExpr",     testSimpleSelectExpr     ),
-    ( "testJoinExpr",             testJoinExpr             ),
-    ( "testCountExpr",            testCountExpr            ),
-    ( "testRelationshipPathExpr", testRelationshipPathExpr ),
+    ( "testRawDeleteSQLExpr",              testRawDeleteSQLExpr              ),
+    ( "testUpdateSQLExpr",                 testUpdateSQLExpr                 ),
+    ( "testInsertSQLExpr",                 testInsertSQLExpr                 ),
+    ( "testSimpleSelectExpr",              testSimpleSelectExpr              ),
+    ( "testJoinExpr",                      testJoinExpr                      ),
+    ( "testCountExpr",                     testCountExpr                     ),
+    ( "testRelationshipPathExpr",          testRelationshipPathExpr          ),
+    ( "testContainsSQLExpr",               testContainsSQLExpr               ),
+    ( "testBeginsWithSQLExpr",             testBeginsWithSQLExpr             ),
+    ( "testEndsWithSQLExpr",               testEndsWithSQLExpr               ),
+    ( "testContainsWithSpecialCharsSQLExpr",
+      testContainsWithSpecialCharsSQLExpr ),
+    ( "testBeginsWithSpecialCharsSQLExpr",
+      testBeginsWithSpecialCharsSQLExpr   ),
   ]
 }

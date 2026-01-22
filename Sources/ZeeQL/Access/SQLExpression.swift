@@ -1749,9 +1749,15 @@ open class SQLExpression: SmartDescription {
       case .like, .SQLLike:      return "LIKE"
       
       case .caseInsensitiveLike, .SQLCaseInsensitiveLike:
-        if let ilike = sqlStringForCaseInsensitiveLike { return ilike }
+        return sqlStringForCaseInsensitiveLike ?? "LIKE"
+
+      case .contains, .beginsWith, .endsWith:
         return "LIKE"
-      
+
+      case .caseInsensitiveContains, .caseInsensitiveBeginsWith,
+           .caseInsensitiveEndsWith:
+        return sqlStringForCaseInsensitiveLike ?? "LIKE"
+
       case .other(let op):
         log.error("could not determine SQL operation for operator:", op)
         return op
@@ -2085,10 +2091,24 @@ open class SQLExpression: SmartDescription {
     
     /* a regular value */
     if let vv = v {
-      if opsel == .like ||  opsel == .caseInsensitiveLike {
+      if opsel == .like || opsel == .caseInsensitiveLike {
         // TODO: unless the DB supports a specific case-search LIKE, we need
         //       to perform an upper
         v = self.sqlPatternFromShellPattern(String(describing: vv))
+      }
+      else {
+        // CONTAINS/BEGINSWITH/ENDSWITH: wrap with % for LIKE pattern
+        let s = self.sqlEscapeLikePattern(String(describing: vv))
+        switch opsel {
+          case .contains, .caseInsensitiveContains:
+            v = "%" + s + "%"
+          case .beginsWith, .caseInsensitiveBeginsWith:
+            v = s + "%"
+          case .endsWith, .caseInsensitiveEndsWith:
+            v = "%" + s
+          default:
+            break
+        }
       }
     }
   
@@ -2226,7 +2246,28 @@ open class SQLExpression: SmartDescription {
       }
     }
   }
-  
+
+  /**
+   * Escapes special LIKE pattern characters in a literal string value.
+   *
+   * Unlike `sqlPatternFromShellPattern`, this method does not convert shell
+   * patterns (`*`, `?`) but escapes all SQL LIKE special characters (`%`, `_`)
+   * so the value is treated as a literal substring.
+   *
+   * Used for CONTAINS, BEGINSWITH, ENDSWITH operators where the value is
+   * not a pattern but a literal search string.
+   *
+   * - Parameters:
+   *   - value: The literal string value to escape
+   * - Returns: The escaped string safe for use in LIKE patterns
+   */
+  public func sqlEscapeLikePattern(_ value: String) -> String {
+    guard value.contains("%") || value.contains("_") else { return value }
+    return value
+      .replacingOccurrences(of: "%", with: "\\%")
+      .replacingOccurrences(of: "_", with: "\\_")
+  }
+
   #if false // TODO
   func sqlStringForCSVKeyValueQualifier(_ q: CSVKeyValueQualifier) -> String {
     /* the default implementation just builds a LIKE qualifier */

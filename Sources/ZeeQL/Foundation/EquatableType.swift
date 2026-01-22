@@ -32,6 +32,12 @@ public protocol ContainsComparisonType {
 public protocol LikeComparisonType {
   func isLike(other object: Any?, caseInsensitive: Bool) -> Bool
 }
+/**
+ * Types that can be compared as strings (for contains, beginsWith, endsWith).
+ */
+public protocol StringComparisonType {
+  var stringValue: String { get }
+}
 
 
 @inlinable
@@ -532,5 +538,13 @@ public extension StringProtocol {
   }
 }
 
-extension String    : ContainsComparisonType, LikeComparisonType {}
-extension Substring : ContainsComparisonType, LikeComparisonType {}
+extension String: ContainsComparisonType, LikeComparisonType,
+                  StringComparisonType
+{
+  @inlinable public var stringValue: String { self }
+}
+extension Substring: ContainsComparisonType, LikeComparisonType,
+                     StringComparisonType
+{
+  @inlinable public var stringValue: String { String(self) }
+}
