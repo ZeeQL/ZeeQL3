@@ -3,12 +3,13 @@
 //  ZeeQLTests
 //
 //  Created by Helge Heß on 24.08.19.
-//  Copyright © 2019-2025 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2019-2026 ZeeZide GmbH. All rights reserved.
 //
 
 public enum ComparisonOperation: Hashable, RawRepresentable {
   // Cannot nest in Qualifier protocol in Swift 3.0, maybe later
   // TODO: lowercase cases (can use static vars for compat)
+  // TODO: CoreData: LIKE[d], LIKE[cd], CONTAINS/BEGINSWITH/ENDSWITH([cd])
 
   case other(String)
   
@@ -113,7 +114,8 @@ public extension ComparisonOperation {
       case "<=", "=<": self = .lessThanOrEqual
       case "IN":       self = .in
       case "LIKE", "like": self = .like
-      case "ILIKE", "ilike", "caseInsensitiveLike:", "caseInsensitiveLike":
+      case "ILIKE", "ilike", "caseInsensitiveLike:", "caseInsensitiveLike",
+           "LIKE[c]": // CoreData
         self = .caseInsensitiveLike
       case "SQLLIKE":  self = .SQLLike
       case "SQLILIKE": self = .SQLCaseInsensitiveLike
