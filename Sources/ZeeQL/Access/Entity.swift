@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 18/02/2017.
-//  Copyright © 2017-2025 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2026 ZeeZide GmbH. All rights reserved.
 //
 
 /**
@@ -154,7 +154,7 @@ public extension Entity { // default imp
      else { return nil }
     
     let pkeyValues = pkeys.map {
-      KeyValueCoding.value(forKey: $0, inObject: row)
+      KeyValueCoding.valueForKey($0, inObject: row)
     }
     return KeyGlobalID.make(entityName: name, values: pkeyValues)
   }
@@ -225,12 +225,12 @@ public extension Entity { // default imp
   }
   
   @inlinable
-  func keyForAttributeWith(name: String) -> Key {
+  func keyForAttributeWithName(_ name: String) -> Key {
     guard let attr = self[attribute: name] else { return StringKey(name) }
     return AttributeKey(attr, entity: self)
   }
   @inlinable
-  func keyForAttributeWith(name: String, requireLookup: Bool) -> Key? {
+  func keyForAttributeWithName(_ name: String, requireLookup: Bool) -> Key? {
     guard let attr = self[attribute: name]
      else { return requireLookup ? nil : StringKey(name) }
     return AttributeKey(attr, entity: self)
@@ -370,7 +370,7 @@ public extension Entity { // primary keys
       return nil
     }
     
-    let pkey = KeyValueCoding.values(forKeys: pkeysNames, inObject: row)
+    let pkey = KeyValueCoding.valuesForKeys(pkeysNames, inObject: row)
     guard !pkey.isEmpty else {
       globalZeeQLLogger.trace("could not calculate primary key:", pkeysNames,
                               "from row:", row)

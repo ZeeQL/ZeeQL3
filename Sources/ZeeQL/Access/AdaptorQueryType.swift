@@ -3,13 +3,14 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 01/03/17.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2026 ZeeZide GmbH. All rights reserved.
 //
 
 /**
- * Objects you can throw SQL queries against. Those are usually `AdaptorChannel`
- * objects, but the `Adaptor` itself is one too (it automatically opens a
- * channel for you and runs the query).
+ * Objects you can throw SQL queries against.
+ *
+ * Those are usually ``AdaptorChannel`` objects, but the ``Adaptor`` itself is
+ * one too (it automatically opens a channel for you and runs the query).
  */
 public protocol AdaptorQueryType { // TBD: betta name
   
@@ -204,7 +205,7 @@ public extension AdaptorQueryType {
     }
     
     guard let result = optResult else {
-      throw AdaptorChannelError.RecordNotFound
+      throw AdaptorChannelError.recordNotFound
     }
     return result
   }

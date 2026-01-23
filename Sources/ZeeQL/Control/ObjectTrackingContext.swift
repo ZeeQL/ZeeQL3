@@ -3,8 +3,13 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 03/03/2017.
-//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2026 ZeeZide GmbH. All rights reserved.
 //
+
+public enum ObjectTrackingContextError: Swift.Error {
+
+  case fetchSpecificationHasUnresolvedBindings(FetchSpecification)
+}
 
 /**
  * An ``ObjectTrackingContext`` is primarily used as an object uniquer.
@@ -18,11 +23,7 @@
  * editing contexts).
  */
 open class ObjectTrackingContext : ObjectStore {
-  
-  public enum Error : Swift.Error {
-    case FetchSpecificationHasUnresolvedBindings(FetchSpecification)
-  }
-  
+
   @usableFromInline
   var gidToObject = [ GlobalID : AnyObject ]()
   
@@ -95,7 +96,7 @@ open class ObjectTrackingContext : ObjectStore {
     if fetchSpecification.requiresAllQualifierBindingVariables {
       if let q = fetchSpecification.qualifier {
         if q.hasUnresolvedBindings {
-          throw Error.FetchSpecificationHasUnresolvedBindings(fetchSpecification)
+          throw ObjectTrackingContextError.fetchSpecificationHasUnresolvedBindings(fetchSpecification)
         }
       }
     }

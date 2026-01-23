@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 28/02/17.
-//  Copyright © 2017-2025 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2026 ZeeZide GmbH. All rights reserved.
 //
 
 public struct KeyValueQualifier : Qualifier, Equatable {
@@ -133,7 +133,7 @@ public struct KeyValueQualifier : Qualifier, Equatable {
     /* check if the value was found */
     
     guard let vv = KeyValueCoding
-      .value(forKeyPath: v.key, inObject: bindings) else
+      .valueForKeyPath(v.key, inObject: bindings) else
     {
       if requiresAll { throw QualifierBindingNotFound(binding: v.key) }
       return self

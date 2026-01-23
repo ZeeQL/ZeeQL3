@@ -37,7 +37,7 @@ class SQLite3AdaptorTests: XCTestCase {
   }()
 
   func testBindQuery() {
-    let q = qualifierWith(format: "login = %@", "template")
+    let q = qualifierWithFormat( "login = %@", "template")
     XCTAssertNotNil(q, "could not parse qualifier")
     
     let fs = ModelFetchSpecification(entity: entity, qualifier: q)

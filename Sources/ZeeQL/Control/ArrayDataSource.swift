@@ -3,7 +3,7 @@
 //  ZeeQL3
 //
 //  Created by Helge Hess on 18/04/17.
-//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2026 ZeeZide GmbH. All rights reserved.
 //
 
 open class ArrayDataSource<Object: SwiftObject> : DataSource<Object>,
@@ -51,7 +51,7 @@ open class ArrayDataSource<Object: SwiftObject> : DataSource<Object>,
         if let qe = q as? QualifierEvaluation {
           var filter = [ Object ]()
           for object in objects {
-            guard qe.evaluateWith(object: object) else { continue }
+            guard qe.evaluate(with: object) else { continue }
             filter.append(object)
           }
           filtered = filter
@@ -83,7 +83,7 @@ open class ArrayDataSource<Object: SwiftObject> : DataSource<Object>,
     else if let q = auxiliaryQualifier {
       if let qe = q as? QualifierEvaluation {
         for object in objects {
-          if qe.evaluateWith(object: object) {
+          if qe.evaluate(with: object) {
             cb(object)
           }
         }

@@ -107,7 +107,7 @@ class CodeEntityModelTests: XCTestCase {
   func testCodeSchemaWithInheritance() {
     
     class OGoObject : ActiveRecord {
-      var id : Int { return value(forKey: "id") as! Int }
+      var id : Int { return valueForKey("id") as! Int }
     }
     class OGoCodeEntity<T: OGoObject> : CodeEntity<T> {
       // add common attributes, and support them in reflection
@@ -156,7 +156,7 @@ class CodeEntityModelTests: XCTestCase {
   func testCodeSchemaWithRelationships() {
     class OGoObject : ActiveRecord {
       // TODO: actuall add KVC to store the key in this var
-      var id : Int { return value(forKey: "id") as! Int }
+      var id : Int { return valueForKey("id") as! Int }
     }
     class OGoCodeEntity<T: OGoObject> : CodeEntity<T> {
       // add common attributes, and support them in reflection
@@ -221,7 +221,7 @@ class CodeEntityModelTests: XCTestCase {
   func testCodeSchemaWithAutoRelationships() {
     class OGoObject : ActiveRecord {
       // TODO: actuall add KVC to store the key in this var
-      var id : Int { return value(forKey: "id") as! Int }
+      var id : Int { return valueForKey("id") as! Int }
     }
     class OGoCodeEntity<T: OGoObject> : CodeEntity<T> {
       // add common attributes, and support them in reflection

@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Heß on 22.08.19.
-//  Copyright © 2019-2025 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2019-2026 ZeeZide GmbH. All rights reserved.
 //
 
 public extension AccessDataSource {
@@ -67,7 +67,7 @@ public extension AccessDataSource {
   func fetchObjectsFor(ids values: Any..., cb: ( Object ) -> Void) throws {
     guard let pkeys = entity?.primaryKeyAttributeNames, pkeys.count == 1 else {
       throw AccessDataSourceError
-              .CannotConstructFetchSpecification(.invalidPrimaryKey)
+              .cannotConstructFetchSpecification(.invalidPrimaryKey)
     }
     
     try fetchObjectsFor(attribute: pkeys[0], with: values, cb: cb)
@@ -85,7 +85,7 @@ public extension AccessDataSource {
   func fetchObjectsFor(ids values: Any...) throws -> [ Object ] {
     guard let pkeys = entity?.primaryKeyAttributeNames, pkeys.count == 1 else {
       throw AccessDataSourceError
-              .CannotConstructFetchSpecification(.invalidPrimaryKey)
+              .cannotConstructFetchSpecification(.invalidPrimaryKey)
     }
     
     var objects = [ Object ]()
@@ -117,7 +117,7 @@ public extension AccessDataSource { // GIDs
          //where S.Element : GlobalID
          where S.Element == KeyGlobalID
   {
-    guard let entity = entity else { throw AccessDataSourceError.MissingEntity }
+    guard let entity = entity else { throw AccessDataSourceError.missingEntity }
     let gidQualifiers = globalIDs.map { entity.qualifierForGlobalID($0) }
     let fs = ModelFetchSpecification(entity: entity,
                                      qualifier: gidQualifiers.or())
@@ -173,14 +173,14 @@ public extension AccessDataSource { // Finders
     
     guard let findEntity = entity else {
       throw AccessDataSourceError
-              .CannotConstructFetchSpecification(.missingEntity)
+              .cannotConstructFetchSpecification(.missingEntity)
     }
     
     guard let pkeys = findEntity.primaryKeyAttributeNames, !pkeys.isEmpty else{
       // TODO: hm, should we invoke a 'primary key find' policy here? (like
       //       matching 'id' or 'tablename_id')
       throw AccessDataSourceError
-              .CannotConstructFetchSpecification(.invalidPrimaryKey)
+              .cannotConstructFetchSpecification(.invalidPrimaryKey)
      }
     
     /* build qualifier for primary keys */
@@ -189,13 +189,13 @@ public extension AccessDataSource { // Finders
     //      other keys
     let q : Qualifier
     if pkeys.count == 1 {
-      let key = findEntity.keyForAttributeWith(name: pkeys[0])
+      let key = findEntity.keyForAttributeWithName( pkeys[0])
       q = KeyValueQualifier(key, .equalTo, primaryKeyValues[0])
     }
     else {
       var qualifiers = [ Qualifier ]()
       for i in 0..<pkeys.count {
-        let key = findEntity.keyForAttributeWith(name: pkeys[i])
+        let key = findEntity.keyForAttributeWithName( pkeys[i])
         let q = KeyValueQualifier(key, .equalTo, primaryKeyValues[i])
         qualifiers.append(q)
       }
@@ -229,7 +229,7 @@ public extension AccessDataSource { // Finders
     try _primaryFetchObjects(fs) {
       guard object == nil else {
         throw AccessDataSourceError
-          .FetchReturnedMoreThanOneResult(fetchSpecification: fs,
+          .fetchReturnedMoreThanOneResult(fetchSpecification: fs,
                                           firstObject: object!)
       }
       object = $0

@@ -3,7 +3,7 @@
 //  ZeeQL3
 //
 //  Created by Helge Heß on 03.09.19.
-//  Copyright © 2019 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2019-2026 ZeeZide GmbH. All rights reserved.
 //
 
 /**
@@ -48,12 +48,13 @@ public protocol DatabaseBoundObject {
 
 public extension ActiveRecordType { // default imp
 
-  func value(forKey k: String) -> Any? {
+  @inlinable
+  func valueForKey(_ k: String) -> Any? {
     // first check extra properties
     if let v = values[k] { return v }
     
     // then fallback to KVC
-    if let v = KeyValueCoding.defaultValue(forKey: k, inObject: self) {
+    if let v = KeyValueCoding.defaultValueForKey(k, inObject: self) {
       return v
     }
     
@@ -79,7 +80,7 @@ public extension ActiveRecordType { // default imp
       }
     }
     get {
-      return value(forKey: key)
+      return valueForKey(key)
     }
   }
   

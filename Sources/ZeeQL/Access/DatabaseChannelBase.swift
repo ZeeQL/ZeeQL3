@@ -7,6 +7,7 @@
 //
 
 public enum DatabaseChannelError : Swift.Error {
+  
   case transactionInProgress
   case couldNotAcquireChannel(Swift.Error?)
   case couldNotBeginTX       (Swift.Error?)
@@ -556,7 +557,7 @@ open class DatabaseChannelBase {
     
     while let relObject = fetchObject() {
       /* targetName is the target attribute in the join */
-      guard let rv = relObject.value(forKey: targetName) else {
+      guard let rv = relObject.valueForKey(targetName) else {
         continue
       }
 
@@ -750,7 +751,7 @@ open class DatabaseChannelBase {
     var snapshot = Snapshot()
     snapshot.reserveCapacity(attributes.count)
     for attributeName in attributes {
-      if let v = object.storedValue(forKey: attributeName) {
+      if let v = object.storedValueForKey(attributeName) {
         snapshot[attributeName] = v
       }
       else { // yes, the snapshot MUST have a value even for NULL values!

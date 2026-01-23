@@ -3,14 +3,15 @@
 //  ZeeQL3
 //
 //  Created by Helge Hess on 14.12.17.
-//  Copyright © 2017-2019 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2026 ZeeZide GmbH. All rights reserved.
 //
 
 public extension CodableObjectType { // MutableKeyValueCodingType
+  
   // TODO: This is only here to please `DatabaseObject`
   func takeValue(_ value : Any?, forKey k: String) throws {
     // TBD
-    throw KeyValueCoding.Error.CannotTakeValueForKey(k)
+    throw KeyValueCodingError.cannotTakeValueForKey(k)
   }
 }
 

@@ -3,43 +3,43 @@
 //  ZeeQL3
 //
 //  Created by Helge Hess on 29/04/17.
-//  Copyright © 2017-2020 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2026 ZeeZide GmbH. All rights reserved.
 //
 
 /**
- * Errors which are thrown by `Adaptor` and `AdaptorChannel` objects.
+ * Errors which are thrown by ``Adaptor`` and ``AdaptorChannel`` objects.
  */
 public enum AdaptorChannelError : Swift.Error {
-  
+
   /// The operation (e.g. an INSERT or UPDATE) was assumed to affect exactly
   /// one record, but didn't.
-  case OperationDidNotAffectOne
-  
+  case operationDidNotAffectOne
+
   /// Failed to access the primary key after INSERTing a record
-  case FailedToGrabNewPrimaryKey(entity: Entity, row: AdaptorRow)
-  
+  case failedToGrabNewPrimaryKey(entity: Entity, row: AdaptorRow)
+
   /// Attempt to do a insert w/ refetchall, but missing the required entity
-  case InsertRefetchRequiresEntity
-  
-  case FailedToRefetchInsertedRow(entity: Entity?, row: AdaptorRow)
-  
-  case UnexpectedOperation
-  
-  case MissingRecordToInsert
-  case MissingRecordToUpdate
-  case MissingQualification
-  
-  case TransactionInProgress
-  
-  case NotImplemented(String)
-  
-  case QueryFailed(sql: String, error: Swift.Error)
-  
-  case CouldNotOpenChannel(Swift.Error?)
-  
-  case CouldNotDescribeTable(String)
-  
-  case RecordNotFound
+  case insertRefetchRequiresEntity
+
+  case failedToRefetchInsertedRow(entity: Entity?, row: AdaptorRow)
+
+  case unexpectedOperation
+
+  case missingRecordToInsert
+  case missingRecordToUpdate
+  case missingQualification
+
+  case transactionInProgress
+
+  case notImplemented(String)
+
+  case queryFailed(sql: String, error: Swift.Error)
+
+  case couldNotOpenChannel(Swift.Error?)
+
+  case couldNotDescribeTable(String)
+
+  case recordNotFound
 }
 
 // TODO: consolidate on just AdaptorError

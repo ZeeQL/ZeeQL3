@@ -37,7 +37,7 @@ class SQLite3OGoAdaptorTests: AdaptorOGoTestCase {
 
     class OGoObject : ActiveRecord {
       // TODO: actually add KVC to store the key in this var
-      var id : Int { return value(forKey: "id") as! Int }
+      var id : Int { return valueForKey("id") as! Int }
     }
     class OGoCodeEntity<T: OGoObject> : CodeEntity<T> {
       // add common attributes, and support them in reflection
@@ -86,7 +86,7 @@ class SQLite3OGoAdaptorTests: AdaptorOGoTestCase {
 
     class OGoObject : ActiveRecord {
       // TODO: actually add KVC to store the key in this var
-      var id : Int { return value(forKey: "id") as! Int }
+      var id : Int { return valueForKey("id") as! Int }
     }
     class OGoCodeEntity<T: OGoObject> : CodeEntity<T> {
       // add common attributes, and support them in reflection

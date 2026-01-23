@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 26/02/2017.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2026 ZeeZide GmbH. All rights reserved.
 //
 
 /**
@@ -22,13 +22,14 @@ public protocol StoreKeyValueCodingType
                   : KeyValueCodingType, MutableKeyValueCodingType
 {
 
-  func storedValue(forKey k: String) -> Any?
+  func storedValueForKey(_ k: String) -> Any?
   func takeStoredValue(_ v: Any?, forKey k: String)
 
 }
 
 public extension StoreKeyValueCodingType {
 
+  @inlinable
   func takeStoredValue(_ v: Any?, forKey k: String) {
     fatalError("not implemented: \(#function)")
   }
@@ -37,19 +38,22 @@ public extension StoreKeyValueCodingType {
 
 public extension StoreKeyValueCodingType {
   
-  func storedValue(forKey k: String) -> Any? {
-    return StoreKeyValueCoding.defaultStoredValue(forKey: k, inObject: self)
+  @inlinable
+  func storedValueForKey(_ k: String) -> Any? {
+    return StoreKeyValueCoding.defaultStoredValueForKey(k, inObject: self)
   }
-  
+
+  @inlinable
   func takeStoredValues(_ values : [ String : Any? ]) {
     for ( key, value ) in values {
       takeStoredValue(value, forKey: key)
     }
   }
-  func storedValues(forKeys keys: [ String ]) -> [ String : Any? ] {
+  @inlinable
+  func storedValuesForKeys(_ keys: [ String ]) -> [ String : Any? ] {
     var values = [ String : Any? ]()
     for key in keys {
-      values[key] = storedValue(forKey: key)
+      values[key] = storedValueForKey(key)
     }
     return values
   }
@@ -57,21 +61,19 @@ public extension StoreKeyValueCodingType {
 
 public struct StoreKeyValueCoding {
 
-  public static func storedValue(forKey k: String, inObject o: Any?) -> Any? {
+  @inlinable
+  public static func storedValueForKey(_ k: String, inObject o: Any?) -> Any? {
     if let kvc = o as? StoreKeyValueCodingType {
-      return kvc.storedValue(forKey: k)
+      return kvc.storedValueForKey(k)
     }
-    return defaultStoredValue(forKey: k, inObject: o)
+    return defaultStoredValueForKey(k, inObject: o)
   }
-  
-  public static func defaultStoredValue(forKey k: String, inObject o: Any?)
+
+  @inlinable
+  public static func defaultStoredValueForKey(_ k: String, inObject o: Any?)
                      -> Any?
   {
-    if let kvc = o as? KeyValueCodingType {
-      return kvc.value(forKey: k)
-    }
-    
-    return nil
+    (o as? KeyValueCodingType)?.valueForKey(k)
   }
-  
+
 }

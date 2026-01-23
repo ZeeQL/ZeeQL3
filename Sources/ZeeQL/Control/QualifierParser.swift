@@ -3,15 +3,21 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 16/02/2017.
-//  Copyright © 2017-2025 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2026 ZeeZide GmbH. All rights reserved.
 //
 
 // public extension Qualifier {}
 //   no static methods on protocols
   
 @inlinable
+public func qualifierWithFormat(_ format: String, _ args: Any?...) -> Qualifier? {
+  var parser = QualifierParser(string: format, arguments: args)
+  return parser.parseQualifier()
+}
+
+@available(*, deprecated, renamed: "qualifierWithFormat(_:_:)")
+@inlinable
 public func qualifierWith(format: String, _ args: Any?...) -> Qualifier? {
-  // FIXME: function name is outdated style-wise
   var parser = QualifierParser(string: format, arguments: args)
   return parser.parseQualifier()
 }

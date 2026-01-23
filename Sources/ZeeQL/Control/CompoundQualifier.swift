@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 28/02/17.
-//  Copyright © 2017-2025 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2026 ZeeZide GmbH. All rights reserved.
 //
 
 public struct CompoundQualifier : Qualifier, QualifierEvaluation, Equatable {
@@ -109,7 +109,7 @@ public struct CompoundQualifier : Qualifier, QualifierEvaluation, Equatable {
   // MARK: - QualifierEvaluation
 
   @inlinable
-  public func evaluateWith(object: Any?) -> Bool {
+  public func evaluate(with object: Any?) -> Bool {
     for q in qualifiers {
       guard let qe = q as? QualifierEvaluation else {
         // TODO: what should we do. Just assert and log in non-debug?
@@ -117,8 +117,8 @@ public struct CompoundQualifier : Qualifier, QualifierEvaluation, Equatable {
       }
       
       switch op {
-        case .or:  if  qe.evaluateWith(object: object) { return true  }
-        case .and: if !qe.evaluateWith(object: object) { return false }
+        case .or:  if  qe.evaluate(with: object) { return true  }
+        case .and: if !qe.evaluate(with: object) { return false }
       }
     }
     switch op {
@@ -153,6 +153,7 @@ public struct CompoundQualifier : Qualifier, QualifierEvaluation, Equatable {
     return true
   }
   
+  @inlinable
   public func isEqual(to object: Any?) -> Bool {
     guard let other = object as? CompoundQualifier else { return false }
     return self == other
@@ -161,11 +162,13 @@ public struct CompoundQualifier : Qualifier, QualifierEvaluation, Equatable {
   
   // MARK: - Description
   
+  @inlinable
   public func appendToDescription(_ ms: inout String) {
     // TODO: improve
     ms += " \(op.stringRepresentation)(\(qualifiers))"
   }
   
+  @inlinable
   public func appendToStringRepresentation(_ ms: inout String) {
     guard !qualifiers.isEmpty else { return }
     if qualifiers.count == 1 {

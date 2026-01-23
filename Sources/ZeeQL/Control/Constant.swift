@@ -17,7 +17,7 @@ public final class ConstantValue<T> : Constant, ExpressionEvaluation {
   public init(value: T) { self.value = value }
 
   @inlinable
-  public func valueFor(object: Any?) -> Any? { return value }
+  public func valueForObject(_ object: Any?) -> Any? { return value }
 }
 
 
@@ -26,7 +26,7 @@ public final class NullExpression : Constant, ExpressionEvaluation {
   static let shared = NullExpression()
   
   @inlinable
-  public func valueFor(object: Any?) -> Any? { return nil }
+  public func valueForObject(_ object: Any?) -> Any? { return nil }
 }
 
 /**

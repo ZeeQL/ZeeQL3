@@ -3,7 +3,7 @@
 //  ZeeQL3
 //
 //  Created by Helge Hess on 14/04/17.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2026 ZeeZide GmbH. All rights reserved.
 //
 
 /**
@@ -22,29 +22,29 @@ public protocol ZeeQLLogger {
 public extension ZeeQLLogger { // Actual logging funcs
   
   func error(_ msg: @autoclosure () -> String, _ values: Any?...) {
-    primaryLog(.Error, msg, values)
+    primaryLog(.error, msg, values)
   }
   func warn (_ msg: @autoclosure () -> String, _ values: Any?...) {
-    primaryLog(.Warn, msg, values)
+    primaryLog(.warn, msg, values)
   }
   func log  (_ msg: @autoclosure () -> String, _ values: Any?...) {
-    primaryLog(.Log, msg, values)
+    primaryLog(.log, msg, values)
   }
   func info (_ msg: @autoclosure () -> String, _ values: Any?...) {
-    primaryLog(.Info, msg, values)
+    primaryLog(.info, msg, values)
   }
   func trace(_ msg: @autoclosure () -> String, _ values: Any?...) {
-    primaryLog(.Trace, msg, values)
+    primaryLog(.trace, msg, values)
   }
   
 }
 
 public enum ZeeQLLoggerLogLevel : Int8 { // cannot nest types in generics
-  case Error
-  case Warn
-  case Log
-  case Info
-  case Trace
+  case error
+  case warn
+  case log
+  case info
+  case trace
 }
 
 
@@ -59,22 +59,22 @@ import class Foundation.ProcessInfo
  */
 public var globalZeeQLLogger : ZeeQLLogger = {
   #if DEBUG
-    let defaultLevel = ZeeQLLoggerLogLevel.Log
+    let defaultLevel = ZeeQLLoggerLogLevel.log
   #else
-    let defaultLevel = ZeeQLLoggerLogLevel.Error
+    let defaultLevel = ZeeQLLoggerLogLevel.error
   #endif
   let logEnv = ProcessInfo.processInfo.environment["ZEEQL_LOGLEVEL"]?
                  .lowercased()
                ?? ""
   let level : ZeeQLLoggerLogLevel
-  
-  if      logEnv == "error"        { level = .Error }
-  else if logEnv.hasPrefix("warn") { level = .Warn  }
-  else if logEnv.hasPrefix("info") { level = .Info  }
-  else if logEnv == "trace"        { level = .Trace }
-  else if logEnv == "log"          { level = .Log   }
+
+  if      logEnv == "error"        { level = .error }
+  else if logEnv.hasPrefix("warn") { level = .warn  }
+  else if logEnv.hasPrefix("info") { level = .info  }
+  else if logEnv == "trace"        { level = .trace }
+  else if logEnv == "log"          { level = .log   }
   else { level = defaultLevel }
-  
+
   return ZeeQLPrintLogger(level: level)
 }()
 
@@ -87,14 +87,14 @@ public var globalZeeQLLogger : ZeeQLLogger = {
   import Darwin
 #endif
 
-fileprivate let stderrLogLevel : ZeeQLLoggerLogLevel = .Error
+fileprivate let stderrLogLevel : ZeeQLLoggerLogLevel = .error
 
 public struct ZeeQLPrintLogger : ZeeQLLogger {
   // public, maybe useful for ZeeQL users as well.
   
   let logLevel : ZeeQLLoggerLogLevel
   
-  public init(level: ZeeQLLoggerLogLevel = .Error) {
+  public init(level: ZeeQLLoggerLogLevel = .error) {
     logLevel = level
   }
   
@@ -128,11 +128,11 @@ fileprivate extension ZeeQLLoggerLogLevel {
   
   var logPrefix : String {
     switch self {
-      case .Error: return "ERROR: "
-      case .Warn:  return "WARN:  "
-      case .Info:  return "INFO:  "
-      case .Trace: return "Trace: "
-      case .Log:   return ""
+      case .error: return "ERROR: "
+      case .warn:  return "WARN:  "
+      case .info:  return "INFO:  "
+      case .trace: return "Trace: "
+      case .log:   return ""
     }
   }
 }

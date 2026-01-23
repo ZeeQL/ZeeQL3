@@ -70,7 +70,7 @@ class ModelTests: XCTestCase {
   
   class OGoObject : ActiveRecord {
     // TODO: actually add KVC to store the key in this var
-    var id : Int { return value(forKey: "id") as! Int }
+    var id : Int { return valueForKey("id") as! Int }
   }
   class Address : OGoObject, EntityType {
     class Entity : CodeEntity<Address> {
@@ -125,7 +125,7 @@ class ModelTests: XCTestCase {
     static let entity : ZeeQL.Entity = e // this erases the type
     
     var addresses : [ Address ] { // TBD: Careful, does it conflict with KVC?
-      return storedValue(forKey: "addresses") as? [ Address ] ?? []
+      return storedValueForKey("addresses") as? [ Address ] ?? []
     }
   }
   

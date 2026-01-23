@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 18/02/2017.
-//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2026 ZeeZide GmbH. All rights reserved.
 //
 
 /**
@@ -113,7 +113,7 @@ public struct AdaptorOperation: Comparable, EquatableType, SmartDescription {
   // MARK: - bindings
   
   @inlinable
-  func operationWith(bindings: Any?) throws -> AdaptorOperation? {
+  func operationWithBindings(_ bindings: Any?) throws -> AdaptorOperation? {
     guard let q = qualifier else { return self }
     
     let bq = try q.qualifierWithBindings(bindings, requiresAll: true)

@@ -3,13 +3,13 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 18/02/2017.
-//  Copyright © 2017-2025 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2026 ZeeZide GmbH. All rights reserved.
 //
 
 
 /**
- * A Relationship connects two `Entity`'s using `Join`'s. It is one-way,
- * so you need to have separate `Relationship` objects for each direction.
+ * A Relationship connects two ``Entity``'s using ``Join``'s. It is one-way,
+ * so you need to have separate ``Relationship`` objects for each direction.
  */
 public protocol Relationship : Property, ExpressionEvaluation,
                                SmartDescription
@@ -51,6 +51,7 @@ public enum ConstraintRule: Hashable {
   case noAction     // NO ACTION
   case applyDefault // SET DEFAULT
   
+  @inlinable
   public var sqlString : String { // TBD: name of property
     switch self {
       case .nullify:      return "SET NULL"
@@ -66,12 +67,18 @@ fileprivate var log : ZeeQLLogger { return globalZeeQLLogger }
 
 public extension Relationship { // default imp
   
+  @inlinable
   var joinSemantic   : Join.Semantic   { return .innerJoin }
+  @inlinable
   var deleteRule     : ConstraintRule? { return nil        }
+  @inlinable
   var updateRule     : ConstraintRule? { return nil        }
+  @inlinable
   var constraintName : String?         { return nil        }
 
+  @inlinable
   var minCount       : Int? { return isToMany ? nil : (isMandatory ? 0 : 1) }
+  @inlinable
   var maxCount       : Int? { return isToMany ? nil : 1 }
   
   var isMandatory : Bool { return isMandatoryDefaultImplementation }
@@ -103,13 +110,17 @@ public extension Relationship { // default imp
   
   // MARK: - ExpressionEvaluation
   
-  func valueFor(object: Any?) -> Any? {
-    return KeyValueCoding.value(forKeyPath: name, inObject: object)
+  @inlinable
+  func valueForObject(_ object: Any?) -> Any? {
+    return KeyValueCoding.valueForKeyPath(name, inObject: object)
   }
 
+  @inlinable
   func connectRelationships(in model : Model, entity: Entity) {}
+  @inlinable
   func disconnectRelationships() {}
 
+  @inlinable
   var  ownsDestination : Bool {
     guard let deleteRule = deleteRule else { return false }
     
@@ -121,11 +132,13 @@ public extension Relationship { // default imp
 
 public extension Relationship { // extra methods
   
+  @inlinable
   func isEqual(to object: Any?) -> Bool {
     guard let other = object as? Relationship else { return false }
     return other.isEqual(to: self)
   }
   
+  @inlinable
   func isEqual(to other: Self) -> Bool {
     if other === self { return true  }
     guard name              ==  other.name              else { return false }
@@ -145,6 +158,7 @@ public extension Relationship { // extra methods
     return true
   }
   
+  @inlinable
   static func ==(lhs: Self, rhs: Self) -> Bool {
     return lhs.isEqual(to: rhs)
   }
@@ -163,8 +177,10 @@ public extension Relationship { // extra methods
    * contains this path. The path of the real relationship can be retrieved
    * using the relationshipPath() method.
    */
+  @inlinable
   var isFlattened : Bool { return relationshipPath != nil }
   
+  @inlinable
   var isCompound  : Bool { return joins.count > 1 }
 
   
@@ -210,6 +226,7 @@ public extension Relationship { // extra methods
    * given property.
    * A property is an Attribute or Relationship object.
    */
+  @inlinable
   func references(property: Property) -> Bool {
     for join in joins {
       if join.references(property: property) { return true }
@@ -232,12 +249,10 @@ public extension Relationship { // extra methods
    * Checks whether the Relationship got resolved (whether the ``Entity`` of
    * the destination entity was looked up and whether all joins are connected).
    */
+  @inlinable
   var isConnected : Bool {
     if destinationEntity == nil { return false }
-    for join in joins {
-      if !join.isConnected { return false }
-    }
-    return true
+    return joins.contains(where: { !$0.isConnected }) ? false : true
   }
   
   
@@ -254,6 +269,7 @@ public extension Relationship { // extra methods
    * Company:
    *   toPerson [toMany] ( SRC.company_id = TAR.company_id )
    */
+  @inlinable
   var inverseRelationship : Relationship? {
     // TBD: implement me
     // TBD: consider N:M relationships
@@ -369,6 +385,7 @@ open class ModelRelationship : Relationship {
 
   public final var userData              = [ String : Any ]()
 
+  @inlinable
   public init(name   : String, isToMany    : Bool    = false,
               source : Entity, destination : Entity? = nil)
   {
@@ -428,8 +445,10 @@ open class ModelRelationship : Relationship {
     }
   }
   
+  @inlinable
   public var isPattern : Bool { return false } // not yet supported
   
+  @inlinable
   public func connectRelationships(in model : Model, entity: Entity) {
     guard !isConnected else {
       return
@@ -460,6 +479,7 @@ open class ModelRelationship : Relationship {
     }
     joins = newJoins
   }
+  @inlinable
   public func disconnectRelationships() {
     destinationEntity = nil
     
@@ -494,6 +514,7 @@ open class ModelRelationship : Relationship {
   
   // MARK: - Equatable
   
+  @inlinable
   static func ==(lhs: ModelRelationship, rhs: ModelRelationship) -> Bool {
     if lhs === rhs { return true }
     return lhs.isEqual(to: rhs)
@@ -515,6 +536,7 @@ open class ModelRelationship : Relationship {
     }
   }
 
+  @inlinable
   open func appendToDescription(_ ms: inout String) {
     if isPattern { ms += " pattern" }
     

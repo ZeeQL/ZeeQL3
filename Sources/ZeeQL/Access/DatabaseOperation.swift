@@ -3,7 +3,7 @@
 //  ZeeQL3
 //
 //  Created by Helge Hess on 15.05.17.
-//  Copyright © 2017-2025 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2026 ZeeZide GmbH. All rights reserved.
 //
 
 /**
@@ -116,7 +116,7 @@ open class DatabaseOperation : SmartDescription {
       case .insert:
         let props  = entity.classPropertyNames
                   ?? entity.attributes.map { $0.name }
-        let values = KeyValueCoding.values(forKeys: props, inObject: object)
+        let values = KeyValueCoding.valuesForKeys(props, inObject: object)
         aop.changedValues = values
         newRow            = values // TBD: don't, side effect!!
         
@@ -184,14 +184,14 @@ open class DatabaseOperation : SmartDescription {
           // no snapshot, need to update all
           let props  = entity.classPropertyNames
                     ?? entity.attributes.map { $0.name }
-          values = KeyValueCoding.values(forKeys: props, inObject: object)
+          values = KeyValueCoding.valuesForKeys(props, inObject: object)
         }
         #if false
           // Could work on any KVC object:
           if let dbo = op.object as? DatabaseObject { /*.. code above ..*/ }
           else {
             // update all, no change tracking
-            values = KeyValueCoding.values(forKeys: props, inObject: op.object)
+            values = KeyValueCoding.valuesForKeys(props, inObject: op.object)
             // TODO: changes might include non-class props (like assocs)
           }
         #endif

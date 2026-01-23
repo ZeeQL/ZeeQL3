@@ -3,7 +3,7 @@
 //  ZeeQL3
 //
 //  Created by Helge Hess on 04/06/17.
-//  Copyright © 2017-2025 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2026 ZeeZide GmbH. All rights reserved.
 //
 
 import struct Foundation.URL
@@ -13,6 +13,19 @@ import CoreFoundation
     import FoundationXML
   #endif
 #endif
+
+public enum ModelLoaderError: Swift.Error {
+
+  case couldNotLoadFile(url: URL, error: Swift.Error?)
+  case invalidPath(String)
+  case invalidFileFormat
+
+  case subclassResponsibility
+
+  case compiledModelsNotYetSupported
+
+  case todo(String)
+}
 
 /**
  * Load `Model` objects from files (vs. from the database or a code declaration)
@@ -48,41 +61,29 @@ import CoreFoundation
 open class ModelLoader {
 
   let log : ZeeQLLogger = globalZeeQLLogger
-  
-  public enum Error : Swift.Error {
-    case CouldNotLoadFile(url: URL, error: Swift.Error?)
-    case InvalidPath(String)
-    case InvalidFileFormat
-    
-    case SubclassResponsibility
-    
-    case CompiledModelsNotYetSupported
-    
-    case TODO(String)
-  }
-  
+
   public static func loadModel(from path: String) throws -> Model {
-    guard !path.isEmpty     else { throw Error.InvalidPath(path) }
-    
+    guard !path.isEmpty     else { throw ModelLoaderError.invalidPath(path) }
+
     let url = URL(fileURLWithPath: path)
-    guard !url.path.isEmpty else { throw Error.InvalidPath(path) }
-    
+    guard !url.path.isEmpty else { throw ModelLoaderError.invalidPath(path) }
+
     return try loadModel(from: url)
   }
-  
+
   public static func loadModel(from url: URL) throws -> Model {
     // peek at files/directories to load other model types
     let loader = CoreDataModelLoader()
     return try loader.loadModel(from: url)
   }
-  
-  
+
+
   // MARK: - Main Entrypoint
-  
+
   open func loadModel(from url: URL) throws -> Model {
-    throw Error.SubclassResponsibility
+    throw ModelLoaderError.subclassResponsibility
   }
-  
+
 }
 
 
@@ -96,14 +97,14 @@ open class CoreDataModelLoader : ModelLoader {
   enum Style {
     /// Use the schema used by CD itself - with those nize Z_ / Z names :-)
     /// Also add the maintenance tables?
-    case CoreDataDatabase
-    
+    case coreDataDatabase
+
     /// Create a model which makes sense in ZeeQL setups
     /// - add 'id' primary key, auto-increment
-    case ZeeQLDatabase
+    case zeeQLDatabase
   }
-  
-  let style = Style.ZeeQLDatabase
+
+  let style = Style.zeeQLDatabase
   
   struct ToManyEntry {
     let entity        : Entity
@@ -149,7 +150,7 @@ open class CoreDataModelLoader : ModelLoader {
    */
   open func loadDataModelContents(from xml: XMLDocument) throws -> Model {
     guard let root = xml.rootElement(), root.name == "model" else {
-      throw Error.InvalidFileFormat
+      throw ModelLoaderError.invalidFileFormat
     }
 
     toManyRelationshipFixups.removeAll()
@@ -311,7 +312,7 @@ open class CoreDataModelLoader : ModelLoader {
     let attrs = xml.attributesAsDict
     
     let q : Qualifier?
-    if let qs = attrs["predicateString"] { q = qualifierWith(format: qs) }
+    if let qs = attrs["predicateString"] { q = qualifierWithFormat( qs) }
     else                                 { q = nil                       }
 
     let limit : Int?
@@ -576,7 +577,7 @@ open class CoreDataModelLoader : ModelLoader {
   func addPrimaryKeyIfNecessary(to entity   : ModelEntity,
                                 idAttribute : Attribute? = nil)
   {
-    if style == .ZeeQLDatabase {
+    if style == .zeeQLDatabase {
       // Add primary key, those are not usually configured in CoreData. Though
       // you can add an 'id' attribute and we consider that the primary.
       if idAttribute == nil &&
@@ -892,7 +893,7 @@ open class CoreDataModelLoader : ModelLoader {
      */
     var isDirectory : ObjCBool = false
     if !fm.fileExists(atPath: url.path, isDirectory: &isDirectory) {
-      throw Error.CouldNotLoadFile(url:url, error: nil) // wrap
+      throw ModelLoaderError.couldNotLoadFile(url:url, error: nil) // wrap
     }
     
     // it is a file
@@ -913,14 +914,14 @@ open class CoreDataModelLoader : ModelLoader {
       contents = try fm.contentsOfDirectory(atPath: url.path)
     }
     catch {
-      throw Error.CouldNotLoadFile(url:url, error: error) // wrap
+      throw ModelLoaderError.couldNotLoadFile(url:url, error: error) // wrap
     }
     
     let hasDataModel = contents.contains {
       $0.hasSuffix(".xcdatamodel") || $0.hasSuffix(".mom")
     }
     guard hasDataModel else {
-      throw Error.CouldNotLoadFile(url:url, error: nil)
+      throw ModelLoaderError.couldNotLoadFile(url:url, error: nil)
     }
     
     return try loadDataModelDirectory(from: url)
@@ -953,10 +954,10 @@ open class CoreDataModelLoader : ModelLoader {
             .filter { $0.hasSuffix(".xcdatamodel") || $0.hasSuffix(".mom") }
         }
         catch {
-          throw Error.CouldNotLoadFile(url:url, error: error) // wrap
+          throw ModelLoaderError.couldNotLoadFile(url:url, error: error) // wrap
         }
         guard !contents.isEmpty else {
-          throw Error.CouldNotLoadFile(url:url, error: nil)
+          throw ModelLoaderError.couldNotLoadFile(url:url, error: nil)
         }
         
         // just pick the first :-) FIXME: sort by modification date?
@@ -970,7 +971,7 @@ open class CoreDataModelLoader : ModelLoader {
     
     guard let filename = versionName, !filename.isEmpty
      else {
-      throw Error.CouldNotLoadFile(url:url, error: nil)
+      throw ModelLoaderError.couldNotLoadFile(url:url, error: nil)
      }
     
     let dmURL = url.appendingPathComponent(filename)
@@ -980,7 +981,7 @@ open class CoreDataModelLoader : ModelLoader {
   open func loadDataModel(from url: URL) throws -> Model {
     var isDirectory : ObjCBool = false
     if !fm.fileExists(atPath: url.path, isDirectory: &isDirectory) {
-      throw Error.CouldNotLoadFile(url:url, error: nil) // wrap
+      throw ModelLoaderError.couldNotLoadFile(url:url, error: nil) // wrap
     }
 
     // it is a file
@@ -990,7 +991,7 @@ open class CoreDataModelLoader : ModelLoader {
     
     let contentsURL = url.appendingPathComponent("contents", isDirectory: false)
     guard fm.fileExists(atPath: contentsURL.path) else {
-      throw Error.CouldNotLoadFile(url:url, error: nil)
+      throw ModelLoaderError.couldNotLoadFile(url:url, error: nil)
     }
     
     return try loadDataModelContents(from: contentsURL)
@@ -1073,15 +1074,15 @@ open class CoreDataModelLoader : ModelLoader {
           plistDict["$archiver"] as? String ?? "" == "NSKeyedArchiver",
           plistDict["$version"]  as? Int    ?? 0  ==  100000,
           let topDict = plistDict["$top"] as? Dictionary<String, Any>
-     else { throw Error.CouldNotLoadFile(url:url, error: nil) }
+     else { throw ModelLoaderError.couldNotLoadFile(url:url, error: nil) }
 
     guard let eRootID = textDecodeObjectID(topDict["root"]) else {
       assert(false, "did not find root")
-      throw Error.CouldNotLoadFile(url:url, error: nil)
+      throw ModelLoaderError.couldNotLoadFile(url:url, error: nil)
     }
     guard let objects = plistDict["$objects"] as? [ Any ] else {
       assert(false, "did not find objects array")
-      throw Error.CouldNotLoadFile(url:url, error: nil)
+      throw ModelLoaderError.couldNotLoadFile(url:url, error: nil)
     }
 
     
@@ -1416,11 +1417,11 @@ open class CoreDataModelLoader : ModelLoader {
     
     guard let rootObject = decodeObject(index: eRootID) else {
       assert(false, "to no root object")
-      throw Error.CouldNotLoadFile(url:url, error: nil)
+      throw ModelLoaderError.couldNotLoadFile(url:url, error: nil)
     }
     
     guard let model = rootObject as? Model else {
-      throw Error.CompiledModelsNotYetSupported
+      throw ModelLoaderError.compiledModelsNotYetSupported
     }
     
     fixupToMany(in: model)
@@ -1444,7 +1445,7 @@ open class CoreDataModelLoader : ModelLoader {
       xml = try XMLDocument(contentsOf: url, options: options)
     }
     catch {
-      throw Error.CouldNotLoadFile(url:url, error: error) // wrap
+      throw ModelLoaderError.couldNotLoadFile(url:url, error: error) // wrap
     }
     
     let model = try loadDataModelContents(from: xml)
@@ -1469,27 +1470,27 @@ open class CoreDataModelLoader : ModelLoader {
     var stringValue : String?      = nil
   }
   
+  enum XMLDocumentError: Swift.Error {
+    case parsingFailed
+    case couldNotCreateParser
+    case todo
+  }
+
   public class XMLDocument : NSObject, XMLParserDelegate {
-    
-    enum Error : Swift.Error {
-      case ParsingFailed
-      case CouldNotCreateParser
-      case TODO
-    }
-    
+
     var root : XMLElement? = nil
-    
+
     init(contentsOf url: URL, options: Int) throws {
       super.init()
-      
+
       guard let parser = XMLParser(contentsOf: url)
-       else { throw Error.CouldNotCreateParser }
-      
+       else { throw XMLDocumentError.couldNotCreateParser }
+
       parser.delegate = self
-      guard parser.parse() else { throw Error.ParsingFailed }
-      
+      guard parser.parse() else { throw XMLDocumentError.parsingFailed }
+
       // FIXME: IMPLEMENT DELEGATE
-      throw Error.TODO
+      throw XMLDocumentError.todo
     }
     
     func rootElement() -> XMLElement? {

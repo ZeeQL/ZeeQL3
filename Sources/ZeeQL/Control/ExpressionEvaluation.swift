@@ -8,6 +8,6 @@
 
 public protocol ExpressionEvaluation {
   
-  func valueFor(object: Any?) -> Any?
+  func valueForObject(_ object: Any?) -> Any?
   
 }
