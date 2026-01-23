@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 15/02/2017.
-//  Copyright © 2017-2025 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2026 ZeeZide GmbH. All rights reserved.
 //
 
 /**
@@ -43,10 +43,10 @@ public extension Key {
   
   func rawValue(in object: Any?) -> Any? {
     guard let object = object else { return nil }
-    return KeyValueCoding.value(forKeyPath: key, inObject: object)
+    return KeyValueCoding.valueForKeyPath(key, inObject: object)
   }
 
-  func valueFor(object: Any?) -> Any? {
+  func valueForObject(_ object: Any?) -> Any? {
     return rawValue(in: object)
   }
   

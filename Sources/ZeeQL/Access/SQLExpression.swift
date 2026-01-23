@@ -1746,12 +1746,19 @@ open class SQLExpression: SmartDescription {
       case .lessThan:            return "<"
       case .lessThanOrEqual:     return "<="
       case .in:                  return "IN"
+      case .notIn:               return "NOT IN"
       case .like, .SQLLike:      return "LIKE"
       
       case .caseInsensitiveLike, .SQLCaseInsensitiveLike:
-        if let ilike = sqlStringForCaseInsensitiveLike { return ilike }
+        return sqlStringForCaseInsensitiveLike ?? "LIKE"
+
+      case .contains, .beginsWith, .endsWith:
         return "LIKE"
-      
+
+      case .caseInsensitiveContains, .caseInsensitiveBeginsWith,
+           .caseInsensitiveEndsWith:
+        return sqlStringForCaseInsensitiveLike ?? "LIKE"
+
       case .other(let op):
         log.error("could not determine SQL operation for operator:", op)
         return op
@@ -1936,7 +1943,7 @@ open class SQLExpression: SmartDescription {
       return sb
     }
     
-    if op == "IN" {
+    if op == "IN" || op == "NOT IN" {
       if let v = v as? QualifierVariable {
         log.error("detected unresolved qualifier variable in IN qualifier:\n" +
                   "  \(q)\n  variable: \(v)")
@@ -1954,25 +1961,27 @@ open class SQLExpression: SmartDescription {
       //   varcharcolumn = 1 OR varcharcolumn = 2 etc
 
       
+      let isNotIn = op == "NOT IN"
       if let c = v as? [ Any ] {
-        if let add = sqlStringForInValues(c, key: k) {
+        if let add = sqlStringForInValues(c, key: k, op: op) {
           return sb + add
         }
         else {
           /* An 'IN ()' does NOT work in PostgreSQL, weird. We treat such a
-           * qualifier as always false. */
-          return sqlFalseExpression
+           * qualifier as always false (or true for NOT IN). */
+          return isNotIn ? sqlTrueExpression : sqlFalseExpression
         }
       }
-      
+
       if let c = v as? any Collection {
-        if let add = sqlStringForInValues(c, key: k) {
+        if let add = sqlStringForInValues(c, key: k, op: op) {
           return sb + add
         }
         else {
           /* An 'IN ()' does NOT work in PostgreSQL, weird. We treat such a
-           * qualifier as always false. */
-          sb += sqlFalseExpression
+           * qualifier as always false (or true for NOT IN). */
+          sb.removeAll()
+          sb += isNotIn ? sqlTrueExpression : sqlFalseExpression
           return sb
         }
       }
@@ -2085,10 +2094,24 @@ open class SQLExpression: SmartDescription {
     
     /* a regular value */
     if let vv = v {
-      if opsel == .like ||  opsel == .caseInsensitiveLike {
+      if opsel == .like || opsel == .caseInsensitiveLike {
         // TODO: unless the DB supports a specific case-search LIKE, we need
         //       to perform an upper
         v = self.sqlPatternFromShellPattern(String(describing: vv))
+      }
+      else {
+        // CONTAINS/BEGINSWITH/ENDSWITH: wrap with % for LIKE pattern
+        let s = self.sqlEscapeLikePattern(String(describing: vv))
+        switch opsel {
+          case .contains, .caseInsensitiveContains:
+            v = "%" + s + "%"
+          case .beginsWith, .caseInsensitiveBeginsWith:
+            v = s + "%"
+          case .endsWith, .caseInsensitiveEndsWith:
+            v = "%" + s
+          default:
+            break
+        }
       }
     }
   
@@ -2098,7 +2121,8 @@ open class SQLExpression: SmartDescription {
     return sb
   }
   
-  private func sqlStringForInValues<C>(_ c: C, key k: String) -> String?
+  private func sqlStringForInValues<C>(_ c: C, key k: String,
+                                       op: String = "IN") -> String?
     where C: Collection
   {
     // TBD: can't we move all this to sqlStringForValue? This has similiar
@@ -2108,7 +2132,7 @@ open class SQLExpression: SmartDescription {
        * qualifier as always false. */
       return nil
     }
-    var sb = " IN ("
+    var sb = " \(op) ("
 
     var isFirst = true
     for subvalue in c {
@@ -2226,7 +2250,28 @@ open class SQLExpression: SmartDescription {
       }
     }
   }
-  
+
+  /**
+   * Escapes special LIKE pattern characters in a literal string value.
+   *
+   * Unlike `sqlPatternFromShellPattern`, this method does not convert shell
+   * patterns (`*`, `?`) but escapes all SQL LIKE special characters (`%`, `_`)
+   * so the value is treated as a literal substring.
+   *
+   * Used for CONTAINS, BEGINSWITH, ENDSWITH operators where the value is
+   * not a pattern but a literal search string.
+   *
+   * - Parameters:
+   *   - value: The literal string value to escape
+   * - Returns: The escaped string safe for use in LIKE patterns
+   */
+  public func sqlEscapeLikePattern(_ value: String) -> String {
+    guard value.contains("%") || value.contains("_") else { return value }
+    return value
+      .replacingOccurrences(of: "%", with: "\\%")
+      .replacingOccurrences(of: "_", with: "\\_")
+  }
+
   #if false // TODO
   func sqlStringForCSVKeyValueQualifier(_ q: CSVKeyValueQualifier) -> String {
     /* the default implementation just builds a LIKE qualifier */

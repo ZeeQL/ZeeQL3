@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 03/03/17.
-//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2026 ZeeZide GmbH. All rights reserved.
 //
 
 import struct Foundation.Data
@@ -21,13 +21,14 @@ import struct Foundation.Data
   import func Darwin.free
 #endif
 
-open class SQLite3AdaptorChannel : AdaptorChannel {
+public enum SQLite3AdaptorChannelError: Swift.Error {
 
-  public enum Error : Swift.Error {
-    case CannotPrepareSQL(Int32, String?)
-    case RowFetchFailed  (Int32, String?)
-    case BindFailed      (Int32, String?, SQLExpression.BindVariable)
-  }
+  case cannotPrepareSQL(Int32, String?)
+  case rowFetchFailed  (Int32, String?)
+  case bindFailed      (Int32, String?, SQLExpression.BindVariable)
+}
+
+open class SQLite3AdaptorChannel : AdaptorChannel {
 
   open   var log               : ZeeQLLogger
   public let expressionFactory : SQLExpressionFactory
@@ -69,7 +70,7 @@ open class SQLite3AdaptorChannel : AdaptorChannel {
       let rc = sqlite3_step(stmt)
       guard rc == SQLITE_ROW else {
         if rc == SQLITE_DONE { break }
-        throw Error.RowFetchFailed(rc, message(for: rc))
+        throw SQLite3AdaptorChannelError.rowFetchFailed(rc, message(for: rc))
       }
       
       let colCount = sqlite3_column_count(stmt)
@@ -132,7 +133,7 @@ open class SQLite3AdaptorChannel : AdaptorChannel {
     
     let rc = sqlite3_prepare_v2(handle, sql, -1, &stmt, nil)
     guard rc == SQLITE_OK else {
-      throw Error.CannotPrepareSQL(rc, message(for: rc))
+      throw SQLite3AdaptorChannelError.cannotPrepareSQL(rc, message(for: rc))
     }
     defer { if let stmt = stmt { sqlite3_finalize(stmt) } }
 
@@ -213,7 +214,7 @@ open class SQLite3AdaptorChannel : AdaptorChannel {
     
     let rc = sqlite3_prepare_v2(handle, sqlexpr.statement, -1, &stmt, nil)
     guard rc == SQLITE_OK, stmt != nil else {
-      throw Error.CannotPrepareSQL(rc, message(for: rc))
+      throw SQLite3AdaptorChannelError.cannotPrepareSQL(rc, message(for: rc))
     }
     defer { if let stmt = stmt { sqlite3_finalize(stmt) } }
     
@@ -238,7 +239,7 @@ open class SQLite3AdaptorChannel : AdaptorChannel {
     
     let rc = sqlite3_prepare_v2(handle, sqlexpr.statement, -1, &stmt, nil)
     guard rc == SQLITE_OK else {
-      throw Error.CannotPrepareSQL(rc, message(for: rc))
+      throw SQLite3AdaptorChannelError.cannotPrepareSQL(rc, message(for: rc))
     }
     defer { if let stmt = stmt { sqlite3_finalize(stmt) } }
     
@@ -267,7 +268,7 @@ open class SQLite3AdaptorChannel : AdaptorChannel {
     let result : AdaptorRow
     do {
       guard try evaluateUpdateExpression(expr) == 1 else {
-        throw AdaptorError.OperationDidNotAffectOne
+        throw AdaptorError.operationDidNotAffectOne
       }
 
       let pkey : AdaptorRow
@@ -280,7 +281,7 @@ open class SQLite3AdaptorChannel : AdaptorChannel {
         pkey = [ pkeys[0] : lastRowId ]
       }
       else {
-        throw AdaptorError.FailedToGrabNewPrimaryKey(entity: entity, row: row)
+        throw AdaptorError.failedToGrabNewPrimaryKey(entity: entity, row: row)
       }
       
       if refetchAll {
@@ -291,13 +292,13 @@ open class SQLite3AdaptorChannel : AdaptorChannel {
         try selectAttributes(entity.attributes, fs, lock: false, entity) {
           record in
           guard rec == nil else { // multiple matched!
-            throw AdaptorError.FailedToRefetchInsertedRow(
+            throw AdaptorError.failedToRefetchInsertedRow(
                                  entity: entity, row: row)
           }
           rec = record
         }
         guard let rrec = rec else { // none matched!
-          throw AdaptorError.FailedToRefetchInsertedRow(
+          throw AdaptorError.failedToRefetchInsertedRow(
                                entity: entity, row: row)
         }
         
@@ -368,7 +369,7 @@ open class SQLite3AdaptorChannel : AdaptorChannel {
               case .values(let values):
                 if values.count > 1 {
                   let rc = SQLITE_MISMATCH // TBD
-                  throw Error.BindFailed(rc, message(for: rc), bind)
+                  throw SQLite3AdaptorChannelError.bindFailed(rc, message(for: rc), bind)
                 }
                 if let value = values.first {
                   return try bindAnyValue(value)
@@ -390,7 +391,7 @@ open class SQLite3AdaptorChannel : AdaptorChannel {
       let rc = try bindAnyValue(bind.value)
       
       guard rc == SQLITE_OK
-       else { throw Error.BindFailed(rc, message(for: rc), bind) }
+       else { throw SQLite3AdaptorChannelError.bindFailed(rc, message(for: rc), bind) }
     }
   }
   
@@ -401,7 +402,7 @@ open class SQLite3AdaptorChannel : AdaptorChannel {
   
   public func begin() throws {
     guard !isTransactionInProgress
-     else { throw AdaptorChannelError.TransactionInProgress }
+     else { throw AdaptorChannelError.transactionInProgress }
     
     try performSQL("BEGIN TRANSACTION;")
     isTransactionInProgress = true

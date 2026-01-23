@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 26/02/2017.
-//  Copyright © 2017-2025 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2026 ZeeZide GmbH. All rights reserved.
 //
 
 /**
@@ -102,7 +102,7 @@ public extension SnapshotObject { // default imp
 
     if debugChanges { globalZeeQLLogger.log("snapshot:", snap) }
     for ( key, snapValue ) in snap {
-      let value = self.value(forKey: key)
+      let value = self.valueForKey(key)
       let eqv   = value as EquatableType
       
       if debugChanges {
@@ -132,7 +132,7 @@ public extension SnapshotObject { // default imp
   func hasChangesFromSnapshot(_ snap: Snapshot) -> Bool {
     if debugChanges { globalZeeQLLogger.log("snapshot:", snap) }
     for ( key, snapValue ) in snap {
-      let value = self.value(forKey: key)
+      let value = self.valueForKey(key)
       let eqv   = value as EquatableType
       
       if debugChanges {
@@ -194,8 +194,8 @@ public extension DatabaseObjectValidation { // default imp
 }
 
 public enum DatabaseObjectError : Swift.Error {
-  case ReadOnly(DatabaseObject)
-  case NoDatabase(DatabaseObject)
+  case readOnly(DatabaseObject)
+  case noDatabase(DatabaseObject)
 }
 
 
@@ -248,7 +248,7 @@ public extension RelationshipManipulation { // default imp
     // TBD: Really AnyObject? Rather `DatabaseObject`?
     // Because the input is like that!
     do {
-      if var list = value(forKey: key) as? [ AnyObject ] {
+      if var list = valueForKey(key) as? [ AnyObject ] {
         if !list.contains(where: { $0 === object }) {
           list.append(object)
           try takeValue(list, forKey: key)

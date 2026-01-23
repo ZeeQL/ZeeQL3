@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 24/02/17.
-//  Copyright © 2017-2025 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2026 ZeeZide GmbH. All rights reserved.
 //
 
 /**
@@ -264,7 +264,7 @@ public extension AdaptorChannel {
       
       case .insert:
         guard let values = op.changedValues else {
-          throw AdaptorChannelError.MissingRecordToInsert
+          throw AdaptorChannelError.missingRecordToInsert
         }
 
         // Note: we trigger a full refetch
@@ -275,10 +275,10 @@ public extension AdaptorChannel {
     
       case .update:
         guard let values = op.changedValues else {
-          throw AdaptorChannelError.MissingRecordToUpdate
+          throw AdaptorChannelError.missingRecordToUpdate
         }
         guard let q = op.qualifier else {
-          throw AdaptorChannelError.MissingQualification
+          throw AdaptorChannelError.missingQualification
         }
         
         affectedRows = try updateValuesInRowsDescribedByQualifier(values,
@@ -286,13 +286,13 @@ public extension AdaptorChannel {
       
       case .delete:
         guard let q = op.qualifier else {
-          throw AdaptorChannelError.MissingQualification
+          throw AdaptorChannelError.missingQualification
         }
         
         affectedRows = try deleteRowsDescribedByQualifier(q, op.entity)
       
       case .none:
-        throw AdaptorChannelError.UnexpectedOperation
+        throw AdaptorChannelError.unexpectedOperation
     }
     
     return affectedRows
@@ -568,7 +568,7 @@ public extension AdaptorChannel { // MARK: - Operations
     
     // Perform the INSERT
     guard try evaluateUpdateExpression(expr) == 1 else {
-      throw AdaptorError.OperationDidNotAffectOne
+      throw AdaptorError.operationDidNotAffectOne
     }
     
     // TODO: We need to refetch the pkey if it is auto-increment?! This just
@@ -584,7 +584,7 @@ public extension AdaptorChannel { // MARK: - Operations
       return refetchAll ? row : pkey
     }
     
-    throw AdaptorError.FailedToGrabNewPrimaryKey(entity: entity, row: row)
+    throw AdaptorError.failedToGrabNewPrimaryKey(entity: entity, row: row)
   }
 
   /**
@@ -681,7 +681,7 @@ public extension AdaptorChannel {
     
     for table in tableNames {
       guard let entity = try describeEntityWithTableName(table) else {
-        throw AdaptorChannelError.CouldNotDescribeTable(table)
+        throw AdaptorChannelError.couldNotDescribeTable(table)
       }
       
       entities.append(entity)

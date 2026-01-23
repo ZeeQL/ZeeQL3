@@ -25,7 +25,7 @@ class SQLExpressionTests: XCTestCase {
   
   
   func testRawDeleteSQLExpr() {
-    let q = qualifierWith(format: "id = 5")
+    let q = qualifierWithFormat( "id = 5")
     XCTAssertNotNil(q, "could not parse qualifier")
     
     let expr = factory.deleteStatementWithQualifier(q!, entity)
@@ -35,7 +35,7 @@ class SQLExpressionTests: XCTestCase {
   }
   
   func testUpdateSQLExpr() {
-    let q = qualifierWith(format: "id = 5")
+    let q = qualifierWithFormat( "id = 5")
     XCTAssertNotNil(q, "could not parse qualifier")
     
     let row : [ String : Any? ] = [ "age": 42, "name": "Zealandia" ]
@@ -94,7 +94,7 @@ class SQLExpressionTests: XCTestCase {
   }
   
   func testSimpleSelectExpr() {
-    let q = qualifierWith(format: "age > 13")
+    let q = qualifierWithFormat( "age > 13")
     XCTAssertNotNil(q, "could not parse qualifier")
     
     let fs = ModelFetchSpecification(entity: entity, qualifier: q)
@@ -154,7 +154,7 @@ class SQLExpressionTests: XCTestCase {
   func testCountExpr() {
     class OGoObject : ActiveRecord {
       // TODO: actually add KVC to store the key in this var
-      var id : Int { return value(forKey: "id") as! Int }
+      var id : Int { return valueForKey("id") as! Int }
     }
     class OGoCodeEntity<T: OGoObject> : CodeEntity<T> {
       // add common attributes, and support them in reflection
@@ -262,7 +262,7 @@ class SQLExpressionTests: XCTestCase {
       "login" : "donald"
     ])
     
-    let q = qualifierWith(format: "person = %@", person)!
+    let q = qualifierWithFormat( "person = %@", person)!
     let fs = ModelFetchSpecification(entity: Address.entity, qualifier: q)
     let expr = factory.selectExpressionForAttributes(
       [ Address.typedEntity.id ], fs, Address.entity
@@ -275,13 +275,76 @@ class SQLExpressionTests: XCTestCase {
   }
 
 
+  // MARK: - CONTAINS/BEGINSWITH/ENDSWITH SQL Generation
+
+  func testContainsSQLExpr() {
+    let q = qualifierWithFormat( "name CONTAINS 'Zee'")
+    XCTAssertNotNil(q, "could not parse qualifier")
+
+    let expr = factory.deleteStatementWithQualifier(q!, entity)
+    XCTAssertEqual(expr.statement,
+                   "DELETE FROM \"company\" WHERE \"name\" LIKE ?",
+                   "unexpected SQL result")
+    XCTAssertEqual(expr.bindVariables.count, 1)
+    XCTAssertEqual(expr.bindVariables.first?.value as? String, "%Zee%")
+  }
+
+  func testBeginsWithSQLExpr() {
+    let q = qualifierWithFormat( "name BEGINSWITH 'Zee'")
+    XCTAssertNotNil(q, "could not parse qualifier")
+
+    let expr = factory.deleteStatementWithQualifier(q!, entity)
+    XCTAssertEqual(expr.statement,
+                   "DELETE FROM \"company\" WHERE \"name\" LIKE ?",
+                   "unexpected SQL result")
+    XCTAssertEqual(expr.bindVariables.count, 1)
+    XCTAssertEqual(expr.bindVariables.first?.value as? String, "Zee%")
+  }
+
+  func testEndsWithSQLExpr() {
+    let q = qualifierWithFormat( "name ENDSWITH 'QL'")
+    XCTAssertNotNil(q, "could not parse qualifier")
+
+    let expr = factory.deleteStatementWithQualifier(q!, entity)
+    XCTAssertEqual(expr.statement,
+                   "DELETE FROM \"company\" WHERE \"name\" LIKE ?",
+                   "unexpected SQL result")
+    XCTAssertEqual(expr.bindVariables.count, 1)
+    XCTAssertEqual(expr.bindVariables.first?.value as? String, "%QL")
+  }
+
+  func testContainsWithSpecialCharsSQLExpr() {
+    // Test that % and _ are escaped in the value
+    let q = qualifierWithFormat( "name CONTAINS '100%'")
+    XCTAssertNotNil(q, "could not parse qualifier")
+
+    let expr = factory.deleteStatementWithQualifier(q!, entity)
+    XCTAssertEqual(expr.bindVariables.first?.value as? String, "%100\\%%")
+  }
+
+  func testBeginsWithSpecialCharsSQLExpr() {
+    let q = qualifierWithFormat( "name BEGINSWITH '_test'")
+    XCTAssertNotNil(q, "could not parse qualifier")
+
+    let expr = factory.deleteStatementWithQualifier(q!, entity)
+    XCTAssertEqual(expr.bindVariables.first?.value as? String, "\\_test%")
+  }
+
+
   static var allTests = [
-    ( "testRawDeleteSQLExpr",     testRawDeleteSQLExpr     ),
-    ( "testUpdateSQLExpr",        testUpdateSQLExpr        ),
-    ( "testInsertSQLExpr",        testInsertSQLExpr        ),
-    ( "testSimpleSelectExpr",     testSimpleSelectExpr     ),
-    ( "testJoinExpr",             testJoinExpr             ),
-    ( "testCountExpr",            testCountExpr            ),
-    ( "testRelationshipPathExpr", testRelationshipPathExpr ),
+    ( "testRawDeleteSQLExpr",              testRawDeleteSQLExpr              ),
+    ( "testUpdateSQLExpr",                 testUpdateSQLExpr                 ),
+    ( "testInsertSQLExpr",                 testInsertSQLExpr                 ),
+    ( "testSimpleSelectExpr",              testSimpleSelectExpr              ),
+    ( "testJoinExpr",                      testJoinExpr                      ),
+    ( "testCountExpr",                     testCountExpr                     ),
+    ( "testRelationshipPathExpr",          testRelationshipPathExpr          ),
+    ( "testContainsSQLExpr",               testContainsSQLExpr               ),
+    ( "testBeginsWithSQLExpr",             testBeginsWithSQLExpr             ),
+    ( "testEndsWithSQLExpr",               testEndsWithSQLExpr               ),
+    ( "testContainsWithSpecialCharsSQLExpr",
+      testContainsWithSpecialCharsSQLExpr ),
+    ( "testBeginsWithSpecialCharsSQLExpr",
+      testBeginsWithSpecialCharsSQLExpr   ),
   ]
 }

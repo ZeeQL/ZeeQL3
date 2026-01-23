@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 26/02/2017.
-//  Copyright © 2017-2025 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2026 ZeeZide GmbH. All rights reserved.
 //
 
 /**
@@ -141,7 +141,7 @@ open class ActiveRecordBase : ActiveRecordType, SmartDescription {
     }
   }
   
-  open func value(forKey k: String) -> Any? { // dupe for protocol override
+  open func valueForKey(_ k: String) -> Any? { // dupe for protocol override
     willRead()
     
     // first check extra properties
@@ -150,7 +150,7 @@ open class ActiveRecordBase : ActiveRecordType, SmartDescription {
     }
     
     // then fallback to KVC
-    if let v = KeyValueCoding.defaultValue(forKey: k, inObject: self) {
+    if let v = KeyValueCoding.defaultValueForKey(k, inObject: self) {
       return v
     }
     
@@ -158,10 +158,10 @@ open class ActiveRecordBase : ActiveRecordType, SmartDescription {
   }
   
   
-  open func storedValue(forKey k: String) -> Any? {
+  open func storedValueForKey(_ k: String) -> Any? {
     willRead()
-    
-    if let v = value(forKey: k) { return v } // ask regular KVC
+
+    if let v = valueForKey(k) { return v } // ask regular KVC
     if let v = values[k]        { return v }
     return nil
   }
@@ -183,7 +183,7 @@ open class ActiveRecordBase : ActiveRecordType, SmartDescription {
     
     // TBD: Really AnyObject? Rather `DatabaseObject`?
     // Because the input is like that!
-    if var list = storedValue(forKey: key) as? [ AnyObject ] {
+    if var list = storedValueForKey(key) as? [ AnyObject ] {
       if !list.contains(where: { $0 === object }) {
         list.append(object)
         takeStoredValue(list, forKey: key)
@@ -202,7 +202,7 @@ open class ActiveRecordBase : ActiveRecordType, SmartDescription {
       return
     }
 
-    guard var list = storedValue(forKey: key) as? [ AnyObject ] else { return }
+    guard var list = storedValueForKey(key) as? [ AnyObject ] else { return }
     guard let idx = list.firstIndex(where: { $0 === o }) else { return }
     
     list.remove(at: idx)
@@ -213,7 +213,7 @@ open class ActiveRecordBase : ActiveRecordType, SmartDescription {
   // MARK: - Save
   
   open func validateForSave() throws {
-    guard !isReadOnly else { throw DatabaseObjectError.ReadOnly(self) }
+    guard !isReadOnly else { throw DatabaseObjectError.readOnly(self) }
   }
   
   open func save() throws {
@@ -222,7 +222,7 @@ open class ActiveRecordBase : ActiveRecordType, SmartDescription {
      *       about us and lets us do the work.
      */
     guard let db = lookupDatabase() else {
-      throw DatabaseObjectError.NoDatabase(self)
+      throw DatabaseObjectError.noDatabase(self)
     }
     
     /* validate and create database operation */
@@ -266,7 +266,7 @@ open class ActiveRecordBase : ActiveRecordType, SmartDescription {
     guard !isNew else { return } /* nothing to be done in the DB */
 
     guard let db = lookupDatabase() else {
-      throw DatabaseObjectError.NoDatabase(self)
+      throw DatabaseObjectError.noDatabase(self)
     }
     
     /* create database operation */
@@ -399,7 +399,7 @@ open class ActiveRecordBase : ActiveRecordType, SmartDescription {
           assertionFailure("failed to take value for dynamic member: \(member)")
         }
       }
-      get { return value(forKey: member) }
+      get { return valueForKey(member) }
     }
   }
 #else

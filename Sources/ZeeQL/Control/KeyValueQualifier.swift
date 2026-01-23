@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 28/02/17.
-//  Copyright © 2017-2025 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2026 ZeeZide GmbH. All rights reserved.
 //
 
 public struct KeyValueQualifier : Qualifier, Equatable {
@@ -55,6 +55,32 @@ public struct KeyValueQualifier : Qualifier, Equatable {
   
   @inlinable
   public var isEmpty : Bool { return false }
+
+  /**
+   * Returns a negated qualifier.
+   *
+   * Converts operations to their inverses where possible:
+   * - `equalTo` ↔ `notEqualTo`
+   * - `lessThan` ↔ `greaterThanOrEqual`
+   * - `greaterThan` ↔ `lessThanOrEqual`
+   * - `in` ↔ `notIn`
+   *
+   * Otherwise wraps in a ``NotQualifier``.
+   */
+  @inlinable
+  public var not: Qualifier {
+    switch operation {
+      case .equalTo:            return KeyValueQualifier(keyExpr, .notEqualTo, value)
+      case .notEqualTo:         return KeyValueQualifier(keyExpr, .equalTo, value)
+      case .lessThan:           return KeyValueQualifier(keyExpr, .greaterThanOrEqual, value)
+      case .greaterThanOrEqual: return KeyValueQualifier(keyExpr, .lessThan, value)
+      case .greaterThan:        return KeyValueQualifier(keyExpr, .lessThanOrEqual, value)
+      case .lessThanOrEqual:    return KeyValueQualifier(keyExpr, .greaterThan, value)
+      case .in:                 return KeyValueQualifier(keyExpr, .notIn, value)
+      case .notIn:              return KeyValueQualifier(keyExpr, .in, value)
+      default:                  return NotQualifier(qualifier: self)
+    }
+  }
   
 
   // MARK: - Expressions
@@ -107,7 +133,7 @@ public struct KeyValueQualifier : Qualifier, Equatable {
     /* check if the value was found */
     
     guard let vv = KeyValueCoding
-      .value(forKeyPath: v.key, inObject: bindings) else
+      .valueForKeyPath(v.key, inObject: bindings) else
     {
       if requiresAll { throw QualifierBindingNotFound(binding: v.key) }
       return self

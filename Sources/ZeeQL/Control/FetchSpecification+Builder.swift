@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Heß on 04.12.24.
-//  Copyright © 2017-2025 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2026 ZeeZide GmbH. All rights reserved.
 //
 
 // MARK: - Fetch Specification Convenience
@@ -23,16 +23,16 @@ public extension FetchSpecification { // Qualifier Convenience Methods
   
   @inlinable
   mutating func setQualifier(_ format: String, _ args: String...) {
-    qualifier = qualifierWith(format: format, args)
+    qualifier = qualifierWithFormat( format, args)
   }
   @inlinable
   mutating func conjoin(_ format: String, _ args: String...) {
-    guard let q = qualifierWith(format: format, args) else { return }
+    guard let q = qualifierWithFormat( format, args) else { return }
     conjoin(qualifier: q)
   }
   @inlinable
   mutating func disjoin(_ format: String, _ args: String...) {
-    guard let q = qualifierWith(format: format, args) else { return }
+    guard let q = qualifierWithFormat( format, args) else { return }
     disjoin(qualifier: q)
   }
 }

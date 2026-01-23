@@ -32,71 +32,71 @@ class QualifierEvaluationTests: XCTestCase {
   ]
 
   func testMatchingKeyValueQualifier() {
-    let qq = qualifierWith(format: "firstname = 'Donald'")
+    let qq = qualifierWithFormat( "firstname = 'Donald'")
     XCTAssert(qq is KeyValueQualifier)
     guard let q = qq as? KeyValueQualifier else { return }
     
-    XCTAssertTrue(q.evaluateWith(object: anyDict))
-    XCTAssertTrue(q.evaluateWith(object: anyOptDict))
-    XCTAssertTrue(q.evaluateWith(object: donald))
+    XCTAssertTrue(q.evaluate(with: anyDict))
+    XCTAssertTrue(q.evaluate(with: anyOptDict))
+    XCTAssertTrue(q.evaluate(with: donald))
   }
   func testMatchingKeyComparisonQualifier() {
-    let qq = qualifierWith(format: "firstname = firstname")
+    let qq = qualifierWithFormat( "firstname = firstname")
     XCTAssert(qq is KeyComparisonQualifier)
     guard let q = qq as? KeyComparisonQualifier else { return }
     
-    XCTAssertTrue(q.evaluateWith(object: anyDict))
-    XCTAssertTrue(q.evaluateWith(object: anyOptDict))
-    XCTAssertTrue(q.evaluateWith(object: donald))
+    XCTAssertTrue(q.evaluate(with: anyDict))
+    XCTAssertTrue(q.evaluate(with: anyOptDict))
+    XCTAssertTrue(q.evaluate(with: donald))
   }
 
   func testNotMatchingKeyValueQualifier() {
-    let qq = qualifierWith(format: "firstname = 'Mickey'")
+    let qq = qualifierWithFormat( "firstname = 'Mickey'")
     XCTAssert(qq is KeyValueQualifier)
     guard let q = qq as? KeyValueQualifier else { return }
     
-    XCTAssertFalse(q.evaluateWith(object: anyDict))
-    XCTAssertFalse(q.evaluateWith(object: anyOptDict))
-    XCTAssertFalse(q.evaluateWith(object: donald))
+    XCTAssertFalse(q.evaluate(with: anyDict))
+    XCTAssertFalse(q.evaluate(with: anyOptDict))
+    XCTAssertFalse(q.evaluate(with: donald))
   }
   func testNotMatchingKeyComparisonQualifier() {
-    let qq = qualifierWith(format: "firstname != lastName")
+    let qq = qualifierWithFormat( "firstname != lastName")
     XCTAssert(qq is KeyComparisonQualifier)
     guard let q = qq as? KeyComparisonQualifier else { return }
     
-    XCTAssertTrue(q.evaluateWith(object: anyDict))
-    XCTAssertTrue(q.evaluateWith(object: anyOptDict))
-    XCTAssertTrue(q.evaluateWith(object: donald))
+    XCTAssertTrue(q.evaluate(with: anyDict))
+    XCTAssertTrue(q.evaluate(with: anyOptDict))
+    XCTAssertTrue(q.evaluate(with: donald))
   }
 
   func testCrossTypeKeyValueQualifier() {
-    let qq = qualifierWith(format: "firstname = 100")
+    let qq = qualifierWithFormat( "firstname = 100")
     XCTAssert(qq is KeyValueQualifier)
     guard let q = qq as? KeyValueQualifier else { return }
     
-    XCTAssertFalse(q.evaluateWith(object: anyDict))
-    XCTAssertFalse(q.evaluateWith(object: anyOptDict))
-    XCTAssertFalse(q.evaluateWith(object: donald))
+    XCTAssertFalse(q.evaluate(with: anyDict))
+    XCTAssertFalse(q.evaluate(with: anyOptDict))
+    XCTAssertFalse(q.evaluate(with: donald))
   }
 
   func testMatchingKeyValueIntQualifier() {
-    let qq = qualifierWith(format: "id = 1000")
+    let qq = qualifierWithFormat( "id = 1000")
     XCTAssert(qq is KeyValueQualifier)
     guard let q = qq as? KeyValueQualifier else { return }
     
-    XCTAssertTrue(q.evaluateWith(object: anyDict))
-    XCTAssertTrue(q.evaluateWith(object: anyOptDict))
-    XCTAssertTrue(q.evaluateWith(object: donald))
+    XCTAssertTrue(q.evaluate(with: anyDict))
+    XCTAssertTrue(q.evaluate(with: anyOptDict))
+    XCTAssertTrue(q.evaluate(with: donald))
   }
 
   func testMatchingKeyValueNotQualifier() {
-    let qq = qualifierWith(format: "id != 1001")
+    let qq = qualifierWithFormat( "id != 1001")
     XCTAssert(qq is KeyValueQualifier)
     guard let q = qq as? KeyValueQualifier else { return }
     
-    XCTAssertTrue(q.evaluateWith(object: anyDict))
-    XCTAssertTrue(q.evaluateWith(object: anyOptDict))
-    XCTAssertTrue(q.evaluateWith(object: donald))
+    XCTAssertTrue(q.evaluate(with: anyDict))
+    XCTAssertTrue(q.evaluate(with: anyOptDict))
+    XCTAssertTrue(q.evaluate(with: donald))
   }
   
   func testOpKeyValueQualifier() {
@@ -110,19 +110,118 @@ class QualifierEvaluationTests: XCTestCase {
   
   func testCollectionContains() {
     let list = [ "Donald", "Mickey" ]
-    let qq = qualifierWith(format: "firstname IN %@", list)
+    let qq = qualifierWithFormat( "firstname IN %@", list)
     XCTAssert(qq is QualifierEvaluation)
     guard let q = qq as? QualifierEvaluation else { return }
     
-    XCTAssertTrue(q.evaluateWith(object: donald))
+    XCTAssertTrue(q.evaluate(with: donald))
   }
   func testStringContains() {
     let list = "Donald Duck"
-    let qq = qualifierWith(format: "firstname IN %@", list)
+    let qq = qualifierWithFormat( "firstname IN %@", list)
     XCTAssert(qq is QualifierEvaluation)
     guard let q = qq as? QualifierEvaluation else { return }
     
-    XCTAssertTrue(q.evaluateWith(object: donald))
+    XCTAssertTrue(q.evaluate(with: donald))
+  }
+
+  func testCollectionNotIn() {
+    let list = [ "Mickey", "Goofy" ]
+    let qq = qualifierWithFormat( "firstname NOT IN %@", list)
+    XCTAssert(qq is QualifierEvaluation)
+    guard let q = qq as? QualifierEvaluation else { return }
+
+    XCTAssertTrue(q.evaluate(with: donald)) // Donald not in list
+  }
+
+  func testCollectionNotInFails() {
+    let list = [ "Donald", "Mickey" ]
+    let qq = qualifierWithFormat( "firstname NOT IN %@", list)
+    XCTAssert(qq is QualifierEvaluation)
+    guard let q = qq as? QualifierEvaluation else { return }
+
+    XCTAssertFalse(q.evaluate(with: donald)) // Donald IS in list
+  }
+
+  func testEmptyCollectionNotIn() {
+    let list = [ String ]()
+    let qq = qualifierWithFormat( "firstname NOT IN %@", list)
+    XCTAssert(qq is QualifierEvaluation)
+    guard let q = qq as? QualifierEvaluation else { return }
+
+    XCTAssertTrue(q.evaluate(with: donald)) // not in empty is true
+  }
+
+  func testInQualifierNotConvertsToNotIn() {
+    let list = [ "Donald", "Mickey" ]
+    let q = KeyValueQualifier("firstname", .in, list)
+    let notQ = q.not
+
+    XCTAssert(notQ is KeyValueQualifier, "expected KeyValueQualifier")
+    guard let kvq = notQ as? KeyValueQualifier else { return }
+    XCTAssertEqual(kvq.operation, .notIn)
+    XCTAssertEqual(kvq.key, "firstname")
+
+    // Donald is in the list, so NOT IN should be false
+    XCTAssertFalse(kvq.evaluate(with: donald))
+  }
+
+  func testNotInQualifierNotConvertsToIn() {
+    let list = [ "Donald", "Mickey" ]
+    let q = KeyValueQualifier("firstname", .notIn, list)
+    let notQ = q.not
+
+    XCTAssert(notQ is KeyValueQualifier, "expected KeyValueQualifier")
+    guard let kvq = notQ as? KeyValueQualifier else { return }
+    XCTAssertEqual(kvq.operation, .in)
+    XCTAssertEqual(kvq.key, "firstname")
+
+    // Donald is in the list, so IN should be true
+    XCTAssertTrue(kvq.evaluate(with: donald))
+  }
+
+  func testDoubleNotInReturnsOriginal() {
+    let list = [ "Donald", "Mickey" ]
+    let q = KeyValueQualifier("firstname", .in, list)
+    let doubleNot = q.not.not
+
+    XCTAssert(doubleNot is KeyValueQualifier, "expected KeyValueQualifier")
+    guard let kvq = doubleNot as? KeyValueQualifier else { return }
+    XCTAssertEqual(kvq.operation, .in)
+  }
+
+  func testNotConvertsComparisonOperations() {
+    // equalTo ↔ notEqualTo
+    let eq = KeyValueQualifier("id", .equalTo, 10)
+    let notEq = eq.not as? KeyValueQualifier
+    XCTAssertEqual(notEq?.operation, .notEqualTo)
+    XCTAssertEqual((notEq?.not as? KeyValueQualifier)?.operation, .equalTo)
+
+    // lessThan ↔ greaterThanOrEqual
+    let lt = KeyValueQualifier("id", .lessThan, 10)
+    let notLt = lt.not as? KeyValueQualifier
+    XCTAssertEqual(notLt?.operation, .greaterThanOrEqual)
+    XCTAssertEqual((notLt?.not as? KeyValueQualifier)?.operation, .lessThan)
+
+    // greaterThan ↔ lessThanOrEqual
+    let gt = KeyValueQualifier("id", .greaterThan, 10)
+    let notGt = gt.not as? KeyValueQualifier
+    XCTAssertEqual(notGt?.operation, .lessThanOrEqual)
+    XCTAssertEqual((notGt?.not as? KeyValueQualifier)?.operation, .greaterThan)
+  }
+
+  func testNotEvaluatesCorrectly() {
+    // NOT (id < 1001) should be id >= 1001, which is false for id=1000
+    let lt = KeyValueQualifier("id", .lessThan, 1001)
+    XCTAssertTrue(lt.evaluate(with: donald))
+    guard let notLt = lt.not as? KeyValueQualifier else { return XCTFail() }
+    XCTAssertFalse(notLt.evaluate(with: donald))
+
+    // NOT (id > 999) should be id <= 999, which is false for id=1000
+    let gt = KeyValueQualifier("id", .greaterThan, 999)
+    XCTAssertTrue(gt.evaluate(with: donald))
+    guard let notGt = gt.not as? KeyValueQualifier else { return XCTFail() }
+    XCTAssertFalse(notGt.evaluate(with: donald))
   }
   func testLikeOp() {
     XCTAssertTrue (evaluate("firstname LIKE 'Don*'", anyDict))
@@ -130,16 +229,57 @@ class QualifierEvaluationTests: XCTestCase {
     XCTAssertTrue (evaluate("firstname LIKE 'Don*'", donald))
 
     XCTAssertTrue (evaluate("firstname ILIKE 'don*'", donald))
-    
+
     XCTAssertTrue (evaluate("firstname LIKE 'Donald'",  donald))
     XCTAssertTrue (evaluate("firstname ILIKE 'Donald'", donald))
   }
 
+  func testContainsOp() {
+    // Case-sensitive CONTAINS
+    XCTAssertTrue (evaluate("firstname CONTAINS 'onal'", donald))
+    XCTAssertTrue (evaluate("firstname CONTAINS 'Don'",  donald))
+    XCTAssertTrue (evaluate("firstname CONTAINS 'ald'",  donald))
+    XCTAssertFalse(evaluate("firstname CONTAINS 'onal'", anyDict) == false
+                   || evaluate("firstname CONTAINS 'ONAL'", donald))
+    XCTAssertFalse(evaluate("firstname CONTAINS 'Mickey'", donald))
+
+    // Case-insensitive CONTAINS
+    XCTAssertTrue (evaluate("firstname CONTAINS[c] 'ONAL'", donald))
+    XCTAssertTrue (evaluate("firstname CONTAINS[c] 'don'",  donald))
+    XCTAssertFalse(evaluate("firstname CONTAINS[c] 'mickey'", donald))
+  }
+
+  func testBeginsWithOp() {
+    // Case-sensitive BEGINSWITH
+    XCTAssertTrue (evaluate("firstname BEGINSWITH 'Don'", donald))
+    XCTAssertTrue (evaluate("firstname BEGINSWITH 'Donald'", donald))
+    XCTAssertFalse(evaluate("firstname BEGINSWITH 'don'", donald))
+    XCTAssertFalse(evaluate("firstname BEGINSWITH 'onald'", donald))
+
+    // Case-insensitive BEGINSWITH
+    XCTAssertTrue (evaluate("firstname BEGINSWITH[c] 'don'", donald))
+    XCTAssertTrue (evaluate("firstname BEGINSWITH[c] 'DON'", donald))
+    XCTAssertFalse(evaluate("firstname BEGINSWITH[c] 'onald'", donald))
+  }
+
+  func testEndsWithOp() {
+    // Case-sensitive ENDSWITH
+    XCTAssertTrue (evaluate("firstname ENDSWITH 'ald'", donald))
+    XCTAssertTrue (evaluate("firstname ENDSWITH 'Donald'", donald))
+    XCTAssertFalse(evaluate("firstname ENDSWITH 'ALD'", donald))
+    XCTAssertFalse(evaluate("firstname ENDSWITH 'Don'", donald))
+
+    // Case-insensitive ENDSWITH
+    XCTAssertTrue (evaluate("firstname ENDSWITH[c] 'ALD'", donald))
+    XCTAssertTrue (evaluate("firstname ENDSWITH[c] 'donald'", donald))
+    XCTAssertFalse(evaluate("firstname ENDSWITH[c] 'don'", donald))
+  }
+
   func evaluate<T>(_ qualifier: String, _ object: T) -> Bool {
-    let qq = qualifierWith(format: qualifier)
+    let qq = qualifierWithFormat( qualifier)
     XCTAssert(qq is QualifierEvaluation)
     guard let q = qq as? QualifierEvaluation else { return false }
-    return q.evaluateWith(object: object)
+    return q.evaluate(with: object)
   }
   
   

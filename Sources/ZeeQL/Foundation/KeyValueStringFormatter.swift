@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 24/02/17.
-//  Copyright © 2017-2025 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2026 ZeeZide GmbH. All rights reserved.
 //
 
 import Foundation
@@ -30,6 +30,7 @@ final class KeyValueStringFormatter : Formatter {
   let format      : String
   let requiresAll : Bool
   
+  @inlinable
   init(format: String, requiresAll: Bool = false) {
     self.format      = format
     self.requiresAll = requiresAll
@@ -42,6 +43,7 @@ final class KeyValueStringFormatter : Formatter {
   
   // MARK: - Static Helper
   
+  @inlinable
   static func format(_ format: String, requiresAll: Bool = false, object: Any?)
               -> String
   {
@@ -49,6 +51,7 @@ final class KeyValueStringFormatter : Formatter {
     return fmt.string(for: object) ?? ""
   }
   
+  @inlinable
   static func format(_ format: String, requiresAll: Bool = false,
                      _ args: Any?...) -> String
   {
@@ -59,6 +62,7 @@ final class KeyValueStringFormatter : Formatter {
   
   // MARK: - Implementation
 
+  @inlinable
   override
   public func string(for obj: Any?) -> String? {
     guard format.contains("%") else { return format }
@@ -130,7 +134,7 @@ final class KeyValueStringFormatter : Formatter {
       
       /* determine value */
 
-      let value   = valuesHandler.value(forKey: key ?? "")
+      let value   = valuesHandler.valueForKey(key ?? "")
       let keyMiss = valuesHandler.lastKeyWasMiss
       
       if keyMiss && requiresAll {
@@ -190,12 +194,14 @@ final class KeyValueStringFormatter : Formatter {
     let lastKeyWasMiss = false
     let object : Any?
     
+    @inlinable
     init(object: Any?) {
       self.object = object
     }
     
-    func value(forKey key: String) -> Any? {
-      return KeyValueCoding.value(forKeyPath: key, inObject: object)
+    @inlinable
+    func valueForKey(_ key: String) -> Any? {
+      return KeyValueCoding.valueForKeyPath(key, inObject: object)
     }
   }
   
@@ -204,6 +210,7 @@ final class KeyValueStringFormatter : Formatter {
     let array  : [ Any? ]
     var cursor : Int = 0
     
+    @inlinable
     init(array: [ Any? ]) {
       self.array = array
     }
@@ -218,7 +225,8 @@ final class KeyValueStringFormatter : Formatter {
      * - 'length', 'size', 'count'
      * - an Integer is parsed as an index, eg %(2)s => array[2]
      */
-    func value(forKey key: String) -> Any? {
+    @inlinable
+    func valueForKey(_ key: String) -> Any? {
       if key.isEmpty {
         guard cursor < array.count else {
           lastKeyWasMiss = true
@@ -262,5 +270,5 @@ fileprivate protocol KeyValueStringFormatterValueHandler: AnyObject {
    * @param _key - the key to resolve, or null
    * @return the value stored under the key, or the next value from an array
    */
-  func value(forKey: String) -> Any?
+  func valueForKey(_ key: String) -> Any?
 }

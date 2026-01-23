@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 03/03/17.
-//  Copyright © 2017-2020 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2026 ZeeZide GmbH. All rights reserved.
 //
 
 import struct Foundation.TimeInterval
@@ -22,9 +22,9 @@ import struct Foundation.URLQueryItem
  * An adaptor is a low level object coordinating access to a specific database.
  * It is similar to a JDBC or ODBC driver.
  * 
- * In user level code you usually work with `Database` and `DataSource` objects,
- * but you can drop down to the Adaptor level if you need/want more direct
- * access to the databases.
+ * In user level code you usually work with ``Database`` and ``DataSource``
+ * objects, but you can drop down to the ``Adaptor`` level if you need/want more
+ * direct access to the databases.
  *
  * Since SQLite3 is available on essentially all platforms, this is a standard
  * component of ZeeQL.
@@ -36,55 +36,58 @@ import struct Foundation.URLQueryItem
  *
  * Initializing the adaptor doesn't touch the filesystem/database yet. This
  * only happens when a channel is opened.
- *
- *     let adaptor = SQLite3Adaptor(url.path, autocreate: true, readonly: false,
- *                                  options: .init())
- *     try adaptor.select("SELECT name, count FROM pets") {
- *       (name : String, count : Int) in
- *       print("\(name): #\(count)")
- *     }
+ * ```swift
+ * let adaptor = SQLite3Adaptor(url.path, autocreate: true, readonly: false,
+ *                              options: .init())
+ * try adaptor.select("SELECT name, count FROM pets") {
+ *   (name : String, count : Int) in
+ *   print("\(name): #\(count)")
+ * }
+ * ```
  *
  * The options can be used to enable things like WAL mode or auto-vacuum.
  *
  * ### Channels
  *
- * To run queries the adaptor creates `AdaptorChannel` objects. Those represent
- * a single connection to the database (i.e. a `sqlite_open`).
+ * To run queries the adaptor creates ``AdaptorChannel`` objects. Those
+ * represent a single connection to the database (i.e. a `sqlite_open`).
  *
  * ### AdaptorQueryType
  *
- * `Adaptor` itself is an `AdaptorQueryType` (like `AdaptorChannel`).
+ * ``Adaptor`` itself is an ``AdaptorQueryType`` (like ``AdaptorChannel``).
  * Which means, you can queries directly against the adaptor. The adaptor will
  * then auto-create and release channels.
  *
  * Example, type-safe query:
- *
- *     try adaptor.select("SELECT name, count FROM pets") {
- *       (name : String, count : Int) in
- *       print("\(name): #\(count)")
- *     }
+ * ```swift
+ * try adaptor.select("SELECT name, count FROM pets") {
+ *   (name : String, count : Int) in
+ *   print("\(name): #\(count)")
+ * }
+ * ```
  *
  * ### AdaptorDataSource
  *
  * If you don't want object mapping, but still want to use datasources, you
- * can use an `AdaptorDataSource`. With or without an attached entity. See
- * the `AdaptorDataSource` class for more info.
+ * can use an ``AdaptorDataSource``. With or without an attached entity. See
+ * the ``AdaptorDataSource`` class for more info.
  *
- * `AdaptorDataSources` return raw `AdaptorRecord` objects.
+ * ``AdaptorDataSources`` return raw ``AdaptorRecord`` objects.
  *
  * Example:
- *
- *     let ds = AdaptorDataSource(adaptor: adaptor, entity: entity)
- *     let user = ds.findBy(id: 9999)
- *
+ * ```swift
+ * let ds = AdaptorDataSource(adaptor: adaptor, entity: entity)
+ * let user = ds.findBy(id: 9999)
+ * ```
  */
+public enum SQLite3AdaptorError: Swift.Error {
+
+  case openFailed(errorCode: Int32, message: String?,
+                  path: String, mode: SQLite3Adaptor.OpenMode)
+}
+
 open class SQLite3Adaptor : Adaptor, SmartDescription {
-  
-  public enum Error : Swift.Error {
-    case OpenFailed(errorCode: Int32, message: String?,
-                    path: String, mode: OpenMode)
-  }
-  
+
   public enum OpenMode {
     
     case readOnly
@@ -173,8 +176,8 @@ open class SQLite3Adaptor : Adaptor, SmartDescription {
       
       log.trace("Could not open SQLite database:", path, "mode:", openMode,
                 "error:", rc, errorMessage)
-      throw AdaptorError.CouldNotOpenChannel(
-        Error.OpenFailed(errorCode: rc, message: errorMessage,
+      throw AdaptorError.couldNotOpenChannel(
+        SQLite3AdaptorError.openFailed(errorCode: rc, message: errorMessage,
                          path: path, mode: openMode)
       )
     }

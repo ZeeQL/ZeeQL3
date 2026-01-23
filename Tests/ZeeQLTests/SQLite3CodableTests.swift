@@ -97,7 +97,7 @@ extension Entity {
   func descriptionForObject(_ object: Any) -> String {
     var ms = "<\(type(of: object))[\(name)]:"
     for prop in classPropertyNames ?? attributes.map({ $0.name }) {
-      let v = KeyValueCoding.value(forKey: prop, inObject: object)
+      let v = KeyValueCoding.valueForKey(prop, inObject: object)
       if let v = v {
         ms += " \(prop)="
         if let s = v as? String {

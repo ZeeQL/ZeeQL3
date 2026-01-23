@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 06/03/17.
-//  Copyright © 2017-2025 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2026 ZeeZide GmbH. All rights reserved.
 //
 
 // TODO: this is not done yet
@@ -100,7 +100,7 @@ public struct TypedFetchSpecification<Object: DatabaseObject>
               prefetch      : [ String ]       = [])
   {
     self._entity       = entity
-    self.qualifier     = qualifierWith(format: q)
+    self.qualifier     = qualifierWithFormat( q)
     self.sortOrderings = sortOrderings
     self.fetchLimit    = limit
     self.prefetchingRelationshipKeyPathes = prefetch

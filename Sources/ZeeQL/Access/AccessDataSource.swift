@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 24/02/17.
-//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2026 ZeeZide GmbH. All rights reserved.
 //
 
 public protocol AccessDataSourceType: DataSourceType {
@@ -215,12 +215,12 @@ public extension AccessDataSourceType {
       // TBD: improve exception
       log.error("did not find entity, cannot construct fetchspec:",
                 fetchSpecificationName)
-      throw AccessDataSourceError.MissingEntity
+      throw AccessDataSourceError.missingEntity
     }
      
     guard let fs = findEntity[fetchSpecification: fetchSpecificationName] else {
       throw AccessDataSourceError
-        .DidNotFindFetchSpecification(name: fetchSpecificationName,
+        .didNotFindFetchSpecification(name: fetchSpecificationName,
                                       entity: findEntity)
     }
     return try fetchObjects(fs, binds, yield: yield)
@@ -331,7 +331,7 @@ public extension AccessDataSourceType {
     }
     else {
       throw AccessDataSourceError
-              .CannotConstructFetchSpecification(.missingEntity)
+              .cannotConstructFetchSpecification(.missingEntity)
     }
     
     let qb  = qualifierBindings

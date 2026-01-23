@@ -3,15 +3,21 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 16/02/2017.
-//  Copyright © 2017-2025 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2026 ZeeZide GmbH. All rights reserved.
 //
 
 // public extension Qualifier {}
 //   no static methods on protocols
   
 @inlinable
+public func qualifierWithFormat(_ format: String, _ args: Any?...) -> Qualifier? {
+  var parser = QualifierParser(string: format, arguments: args)
+  return parser.parseQualifier()
+}
+
+@available(*, deprecated, renamed: "qualifierWithFormat(_:_:)")
+@inlinable
 public func qualifierWith(format: String, _ args: Any?...) -> Qualifier? {
-  // FIXME: function name is outdated style-wise
   var parser = QualifierParser(string: format, arguments: args)
   return parser.parseQualifier()
 }
@@ -654,8 +660,17 @@ public struct QualifierParser {
       return ">"
     }
     
-    // TBD: support IN and => NOT IN
-    
+    // Handle "NOT IN" as a single operation
+    if match(TOK_NOT) {
+      let saveIdx = idx
+      idx = string.index(idx, offsetBy: TOK_NOT.count)
+      if skipSpaces(), match(TOK_IN) {
+        idx = string.index(idx, offsetBy: TOK_IN.count)
+        return "NOT IN"
+      }
+      idx = saveIdx // restore if not "NOT IN"
+    }
+
     // TODO: better an own parser? hm, yes.
     // the following stuff parses things like hasPrefix:, but also IN!
     
@@ -991,6 +1006,7 @@ public struct QualifierParser {
   let TOK_SQL   : [ Character ] = [ "S", "Q", "L", "[" ]
   let TOK_AND   : [ Character ] = [ "A", "N", "D" ]
   let TOK_OR    : [ Character ] = [ "O", "R" ]
+  let TOK_IN    : [ Character ] = [ "I", "N" ]
   
   let TOK_STAR_TRUE  : [ Character ] = [ "*", "t", "r", "u", "e", "*" ]
   let TOK_STAR_FALSE : [ Character ] = [ "*", "f", "a", "l", "s", "e", "*" ]

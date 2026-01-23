@@ -3,15 +3,15 @@
 //  ZeeQL3
 //
 //  Created by Helge Heß on 6/1/16.
-//  Copyright © 2016-2024 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2016-2026 ZeeZide GmbH. All rights reserved.
 //
 
 import class Foundation.NSObject
 
 public protocol KeyValueCodingType {
-  
-  func value(forKey k: String) -> Any?
-  
+
+  func valueForKey(_ k: String) -> Any?
+
 }
 
 public protocol MutableKeyValueCodingType : AnyObject {
@@ -40,37 +40,37 @@ public protocol KeyValueCodingTargetValue : AnyObject {
 public extension KeyValueCodingType {
 
   @inlinable
-  func value(forKey k: String) -> Any? {
-    return KeyValueCoding.defaultValue(forKey: k, inObject: self)
+  func valueForKey(_ k: String) -> Any? {
+    return KeyValueCoding.defaultValueForKey(k, inObject: self)
   }
-  
+
 }
 
 public extension KeyValueCodingType {
   // TODO: own protocol for that
-  
+
   @inlinable
-  func values(forKeys keys: [String]) -> [ String : Any ] {
+  func valuesForKeys(_ keys: [ String ]) -> [ String : Any ] {
     var values = [ String : Any ]()
     values.reserveCapacity(keys.count)
     for key in keys {
-      guard let value = self.value(forKey: key) else { continue }
+      guard let value = self.valueForKey(key) else { continue }
       values[key] = value
     }
     return values
   }
-  
+
+}
+
+public enum KeyValueCodingError: Swift.Error {
+  case unsupportedDictionaryKeyType(Any.Type)
+  case cannotCoerceValueForKey(Any.Type, Any?, String)
+  case cannotCoerceValue(Any.Type, Any?)
+  case emptyKeyPath
+  case cannotTakeValueForKey(String)
 }
 
 public struct KeyValueCoding {
-  
-  public enum Error : Swift.Error {
-    case UnsupportedDictionaryKeyType(Any.Type)
-    case CannotCoerceValueForKey(Any.Type, Any?, String)
-    case CannotCoerceValue(Any.Type, Any?)
-    case EmptyKeyPath
-    case CannotTakeValueForKey(String)
-  }
   
   @inlinable
   public static func takeValue(_ v: Any?, forKeyPath p: String,
@@ -84,27 +84,27 @@ public struct KeyValueCoding {
                                inObject o: Any?) throws
   {
     // TBD
-    guard !p.isEmpty else { throw Error.EmptyKeyPath }
+    guard !p.isEmpty else { throw KeyValueCodingError.emptyKeyPath }
     guard let o = o  else { return } // no-op
     
     if p.count == 1 { return try takeValue(v, forKey: p[0], inObject: o) }
     
-    let target = value(forKeyPath: Array(p[0..<(p.count - 1)]), inObject: o)
+    let target = valueForKeyPath(Array(p[0..<(p.count - 1)]), inObject: o)
     guard let t = target else { return } // no-op
     try takeValue(v, forKey: p[p.count - 1], inObject: t)
   }
 
   @inlinable
-  public static func value(forKeyPath p: String, inObject o: Any?) -> Any? {
+  public static func valueForKeyPath(_ p: String, inObject o: Any?) -> Any? {
     let path = p.split(separator: ".").map(String.init)
-    return value(forKeyPath: path, inObject: o)
+    return valueForKeyPath(path, inObject: o)
   }
-  
+
   @inlinable
-  public static func value(forKeyPath p: [ String ], inObject o: Any?) -> Any? {
+  public static func valueForKeyPath(_ p: [ String ], inObject o: Any?) -> Any? {
     var cursor = o
     for key in p {
-      cursor = value(forKey: key, inObject: cursor)
+      cursor = valueForKey(key, inObject: cursor)
       if cursor == nil { break }
     }
     return cursor
@@ -117,7 +117,7 @@ public struct KeyValueCoding {
     if let kvc = o as? MutableKeyValueCodingType {
       try kvc.takeValue(v, forKey: k)
     }
-    else if let target = value(forKey: k, inObject: o)
+    else if let target = valueForKey(k, inObject: o)
                          as? KeyValueCodingTargetValue
     {
       if let v = v {
@@ -128,37 +128,37 @@ public struct KeyValueCoding {
       }
     }
     else {
-      throw Error.CannotTakeValueForKey(k)
+      throw KeyValueCodingError.cannotTakeValueForKey(k)
     }
   }
 
   @inlinable
-  public static func value(forKey k: String, inObject o: Any?) -> Any? {
+  public static func valueForKey(_ k: String, inObject o: Any?) -> Any? {
     if let kvc = o as? KeyValueCodingType {
-      return kvc.value(forKey: k)
+      return kvc.valueForKey(k)
     }
-    return defaultValue(forKey: k, inObject: o)
+    return defaultValueForKey(k, inObject: o)
   }
 
   @inlinable
-  public static func defaultValue(forKey k: String, inObject o: Any?) -> Any? {
+  public static func defaultValueForKey(_ k: String, inObject o: Any?) -> Any? {
     // Presumably this is really inefficient, but well :-)
     guard let object = o else { return nil }
-    
+
     let mirror = Mirror(reflecting: object)
-    
+
     // extra guard against Optionals
     let isOpt  = mirror.displayStyle == .optional
     let isDict = mirror.displayStyle == .dictionary
     if isOpt {
       guard mirror.children.count > 0 else { return nil }
       let (_, some) = mirror.children.first!
-      return value(forKey: k, inObject: some)
+      return valueForKey(k, inObject: some)
     }
-    
+
     // support dictionary
     if isDict {
-      return defaultValue(forKey: k, inDictionary: object, mirror: mirror)
+      return defaultValueForKey(k, inDictionary: object, mirror: mirror)
     }
     
     // regular object, scan
@@ -179,18 +179,18 @@ public struct KeyValueCoding {
   }
   
   @inlinable
-  public static func values(forKeys keys: [String], inObject o: Any?)
+  public static func valuesForKeys(_ keys: [ String ], inObject o: Any?)
                      -> [ String : Any ]
   {
     guard let o = o else { return [:] }
-    
+
     if let ko = o as? KeyValueCodingType {
-      return ko.values(forKeys: keys)
+      return ko.valuesForKeys(keys)
     }
-    
+
     var values = [ String : Any ]()
     for key in keys {
-      if let value = value(forKey: key, inObject: o) {
+      if let value = valueForKey(key, inObject: o) {
         values[key] = value
       }
     }
@@ -201,8 +201,8 @@ public struct KeyValueCoding {
 public extension KeyValueCoding {
   
   @inlinable
-  static func defaultValue(forKey k: String, inDictionary o: Any,
-                           mirror: Mirror) -> Any?
+  static func defaultValueForKey(_ k: String, inDictionary o: Any,
+                                 mirror: Mirror) -> Any?
   {
     for ( _, pair ) in mirror.children {
       let pairMirror = Mirror(reflecting: pair)
@@ -249,31 +249,31 @@ extension Dictionary: KeyValueCodingType /*, MutableKeyValueCodingType */ {
   public mutating func takeValue(_ value : Any?, forKey key: String) throws {
     // TODO: support the Int.Type key values below
     guard let k = key as? Key else {
-      throw KeyValueCoding.Error.UnsupportedDictionaryKeyType(Key.self)
+      throw KeyValueCodingError.unsupportedDictionaryKeyType(Key.self)
     }
     
     // TODO: more coercion
     guard let v = value as? Value else {
-      throw KeyValueCoding.Error.CannotCoerceValueForKey(Value.self, value, key)
+      throw KeyValueCodingError.cannotCoerceValueForKey(Value.self, value, key)
     }
     
     self[k] = v
   }
   
   @inlinable
-  public func value(forKey k: String) -> Any? {
-    if let k = k as? Key {
+  public func valueForKey(_ key: String) -> Any? {
+    if let k = key as? Key {
       guard let value : Value = self[k] else { return nil }
       return value
     }
     
     if Key.self is Int.Type {
-      guard let ik = Int(k) else { return nil }
+      guard let ik = Int(key) else { return nil }
       guard let value : Value = self[ik as! Key] else { return nil }
       return value
     }
     
-    return value
+    return nil
   }
   
 }
@@ -282,7 +282,7 @@ extension Array : KeyValueCodingType {
   // KVC on an array is a map operation. Except for the special '@' functions.
   
   @inlinable
-  public func value(forKey k: String) -> Any? {
+  public func valueForKey(_ k: String) -> Any? {
     // Element
     if k.hasPrefix("@") {
       switch k {
@@ -291,10 +291,10 @@ extension Array : KeyValueCodingType {
         default: break
       }
     }
-    
+
     guard !isEmpty else { return [] }
 
-    return map { KeyValueCoding.value(forKey: k, inObject: $0) }
+    return map { KeyValueCoding.valueForKey(k, inObject: $0) }
   }
 }
 
@@ -317,7 +317,7 @@ open class KeyValueCodingBox<T> : KeyValueCodingTargetValue {
       self.value = v
     }
     else {
-      throw KeyValueCoding.Error.CannotCoerceValue(T.self, value)
+      throw KeyValueCodingError.cannotCoerceValue(T.self, value)
     }
   }
 }

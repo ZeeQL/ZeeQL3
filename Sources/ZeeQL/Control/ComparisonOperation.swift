@@ -3,12 +3,15 @@
 //  ZeeQLTests
 //
 //  Created by Helge Heß on 24.08.19.
-//  Copyright © 2019-2025 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2019-2026 ZeeZide GmbH. All rights reserved.
 //
+
+import Foundation
 
 public enum ComparisonOperation: Hashable, RawRepresentable {
   // Cannot nest in Qualifier protocol in Swift 3.0, maybe later
   // TODO: lowercase cases (can use static vars for compat)
+  // TODO: CoreData: LIKE[d], LIKE[cd]
 
   case other(String)
   
@@ -17,6 +20,9 @@ public enum ComparisonOperation: Hashable, RawRepresentable {
   
   // An `IN` query, e.g. `id IN %@`, where the %@ resolves to a collection.
   case `in`
+
+  /// A `NOT IN` query, e.g. `id NOT IN %@`, the inverse of `.in`.
+  case notIn
   
   /**
    * Compare the left hand side against a pattern. The `*` is used as the
@@ -67,6 +73,51 @@ public enum ComparisonOperation: Hashable, RawRepresentable {
   
   /// Check `.SQLLike` for a discussion and the difference to `.Like`.
   case SQLCaseInsensitiveLike
+
+  /**
+   * Check if the left hand side contains the right hand side as a substring.
+   *
+   * Example:
+   * ```swift
+   * name CONTAINS 'Zee'
+   * ```
+   *
+   * Generates SQL: `name LIKE '%Zee%'`
+   */
+  case contains
+
+  /// Case-insensitive version of `.contains`. Uses ILIKE where available.
+  case caseInsensitiveContains
+
+  /**
+   * Check if the left hand side starts with the right hand side.
+   *
+   * Example:
+   * ```swift
+   * name BEGINSWITH 'Zee'
+   * ```
+   *
+   * Generates SQL: `name LIKE 'Zee%'`
+   */
+  case beginsWith
+
+  /// Case-insensitive version of `.beginsWith`. Uses ILIKE where available.
+  case caseInsensitiveBeginsWith
+
+  /**
+   * Check if the left hand side ends with the right hand side.
+   *
+   * Example:
+   * ```swift
+   * name ENDSWITH 'QL'
+   * ```
+   *
+   * Generates SQL: `name LIKE '%QL'`
+   */
+  case endsWith
+
+  /// Case-insensitive version of `.endsWith`. Uses ILIKE where available.
+  case caseInsensitiveEndsWith
 }
 
 public extension ComparisonOperation {
@@ -112,12 +163,30 @@ public extension ComparisonOperation {
       case ">=", "=>": self = .greaterThanOrEqual
       case "<=", "=<": self = .lessThanOrEqual
       case "IN":       self = .in
+      case "NOT IN":   self = .notIn
       case "LIKE", "like": self = .like
-      case "ILIKE", "ilike", "caseInsensitiveLike:", "caseInsensitiveLike":
+      case "ILIKE", "ilike", "caseInsensitiveLike:", "caseInsensitiveLike",
+           "LIKE[c]": // CoreData
         self = .caseInsensitiveLike
       case "SQLLIKE":  self = .SQLLike
       case "SQLILIKE": self = .SQLCaseInsensitiveLike
-      default:         self = .other(string)
+
+      case "CONTAINS", "contains":
+        self = .contains
+      case "CONTAINS[c]", "contains[c]": // CoreData
+        self = .caseInsensitiveContains
+
+      case "BEGINSWITH", "beginsWith":
+        self = .beginsWith
+      case "BEGINSWITH[c]", "beginsWith[c]": // CoreData
+        self = .caseInsensitiveBeginsWith
+
+      case "ENDSWITH", "endsWith":
+        self = .endsWith
+      case "ENDSWITH[c]", "endsWith[c]": // CoreData
+        self = .caseInsensitiveEndsWith
+
+      default: self = .other(string)
     }
   }
   @inlinable
@@ -131,10 +200,17 @@ public extension ComparisonOperation {
       case .lessThan:               return "<"
       case .lessThanOrEqual:        return "<="
       case .in:                     return "IN"
-      case .like:                   return "LIKE"
-      case .caseInsensitiveLike:    return "ILIKE"
-      case .SQLLike:                return "SQLLIKE"
-      case .SQLCaseInsensitiveLike: return "SQLILIKE"
+      case .notIn:                  return "NOT IN"
+      case .like:                      return "LIKE"
+      case .caseInsensitiveLike:       return "ILIKE"
+      case .SQLLike:                   return "SQLLIKE"
+      case .SQLCaseInsensitiveLike:    return "SQLILIKE"
+      case .contains:                  return "CONTAINS"
+      case .caseInsensitiveContains:   return "CONTAINS[c]"
+      case .beginsWith:                return "BEGINSWITH"
+      case .caseInsensitiveBeginsWith: return "BEGINSWITH[c]"
+      case .endsWith:                  return "ENDSWITH"
+      case .caseInsensitiveEndsWith:   return "ENDSWITH[c]"
     }
   }
 }
@@ -178,6 +254,18 @@ public extension ComparisonOperation {
           return false
         }
         return list.contains(other: a)
+
+      case .notIn: // firstname NOT IN ["donald"]
+        guard let b = b else { return true } // not in nothing is true
+        guard let list = b as? ContainsComparisonType else {
+          globalZeeQLLogger.error(
+            "attempt to evaluate an ComparisonOperation dynamically:",
+            self, a, b
+          )
+          assertionFailure("comparison not supported for dynamic evaluation")
+          return false
+        }
+        return !list.contains(other: a)
       
       case .like, .caseInsensitiveLike: // firstname like *Donald*
         let ci = self == .caseInsensitiveLike
@@ -192,7 +280,38 @@ public extension ComparisonOperation {
         }
         return value.isLike(other: b, caseInsensitive: ci)
 
-      // TODO: support many more, geez :-)
+      case .contains, .caseInsensitiveContains:
+        let ci = self == .caseInsensitiveContains
+        guard let value = a as? StringComparisonType,
+              let search = (b as? StringComparisonType)?.stringValue
+        else {
+          return false
+        }
+        let str = value.stringValue
+        if ci { return str.lowercased().contains(search.lowercased()) }
+        return str.contains(search)
+
+      case .beginsWith, .caseInsensitiveBeginsWith:
+        let ci = self == .caseInsensitiveBeginsWith
+        guard let value = a as? StringComparisonType,
+              let search = (b as? StringComparisonType)?.stringValue
+        else {
+          return false
+        }
+        let str = value.stringValue
+        if ci { return str.lowercased().hasPrefix(search.lowercased()) }
+        return str.hasPrefix(search)
+
+      case .endsWith, .caseInsensitiveEndsWith:
+        let ci = self == .caseInsensitiveEndsWith
+        guard let value = a as? StringComparisonType,
+              let search = (b as? StringComparisonType)?.stringValue
+        else {
+          return false
+        }
+        let str = value.stringValue
+        if ci { return str.lowercased().hasSuffix(search.lowercased()) }
+        return str.hasSuffix(search)
       
       default:
         globalZeeQLLogger.error(

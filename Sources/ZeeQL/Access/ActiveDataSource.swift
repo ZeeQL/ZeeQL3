@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 27/02/17.
-//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2026 ZeeZide GmbH. All rights reserved.
 //
 
 public protocol ActiveDataSourceType<Object>: AccessDataSourceType
@@ -133,7 +133,7 @@ open class ActiveDataSource<Object: ActiveRecordType>: AccessDataSource<Object>,
     guard let pkeys = entity.primaryKeyAttributeNames, !pkeys.isEmpty else {
       globalZeeQLLogger.error("entity has no primary keys for gid fetch:",
                               entity)
-      throw AccessDataSourceError.MissingEntity
+      throw AccessDataSourceError.missingEntity
     }
     
     var cfs = fs
@@ -171,7 +171,7 @@ open class ActiveDataSource<Object: ActiveRecordType>: AccessDataSource<Object>,
       // required as we pass in the attributes to selectExpressionForAttrs...?
       // Hm.
       guard let cfs = fs.fetchSpecificationForCount else {
-        throw AccessDataSourceError.CannotConstructCountFetchSpecification
+        throw AccessDataSourceError.cannotConstructCountFetchSpecification
       }
     #else
       // The idea is that this preserves the WHERE part of the query, including
@@ -213,7 +213,7 @@ open class ActiveDataSource<Object: ActiveRecordType>: AccessDataSource<Object>,
     }
     
     guard let result = fetchCount else {
-      throw AccessDataSourceError.CountFetchReturnedNoResults
+      throw AccessDataSourceError.countFetchReturnedNoResults
     }
     
     return result

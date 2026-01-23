@@ -3,19 +3,20 @@
 //  ZeeQL3
 //
 //  Created by Helge Hess on 14/04/17.
-//  Copyright © 2017-2021 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2026 ZeeZide GmbH. All rights reserved.
 //
+
+public enum SQLite3ModelFetchError: Swift.Error {
+
+  case notImplemented
+  case gotNoSchemaVersion
+}
 
 /**
  * Wraps queries which do SQLite3 schema reflection.
  */
 open class SQLite3ModelFetch: AdaptorModelFetch {
-  
-  public enum Error : Swift.Error {
-    case NotImplemented
-    case GotNoSchemaVersion
-  }
-  
+
   let log : ZeeQLLogger = globalZeeQLLogger
   
   public var channel    : AdaptorChannel
@@ -34,7 +35,7 @@ open class SQLite3ModelFetch: AdaptorModelFetch {
     try channel.select("PRAGMA main.schema_version") { ( version : Int ) in
       tagOpt = SQLite3ModelTag(version: version)
     }
-    guard let tag = tagOpt else { throw Error.GotNoSchemaVersion }
+    guard let tag = tagOpt else { throw SQLite3ModelFetchError.gotNoSchemaVersion }
     return tag
   }
   

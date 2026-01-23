@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Heß on 28.04.25.
-//  Copyright © 2017-2025 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2026 ZeeZide GmbH. All rights reserved.
 //
 
 /**
@@ -68,9 +68,9 @@ class DatabaseChannelFetchHelper {
     for baseObject in baseObjects {
       // The srcName is the value for the join in the baseObjects entity.
       
-      // TBD: which one? storedValue(forKey:) or value(forKey:)?
-      guard let rv = baseObject.storedValue(forKey: srcName) else { continue }
-      // guard let rv = baseObject.value(forKey: srcName) else { continue }
+      // TBD: which one? storedValueForKey or valueForKey?
+      guard let rv = baseObject.storedValueForKey(srcName) else { continue }
+      // guard let rv = baseObject.valueForKey(srcName) else { continue }
       
       guard let v = hackValueHolder(rv) else { // TBD: do we know the entity?
         continue

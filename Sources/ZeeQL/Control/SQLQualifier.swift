@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 28/02/17.
-//  Copyright © 2017-2025 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2026 ZeeZide GmbH. All rights reserved.
 //
 
 /**
@@ -142,7 +142,7 @@ public struct SQLQualifier : Qualifier, Equatable {
           
         case .variable(let key):
           guard let vv = KeyValueCoding
-            .value(forKeyPath: key, inObject: bindings) else
+            .valueForKeyPath(key, inObject: bindings) else
           {
             if requiresAll { throw QualifierBindingNotFound(binding: key) }
             return self

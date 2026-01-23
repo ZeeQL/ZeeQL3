@@ -3,35 +3,46 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 15/02/2017.
-//  Copyright © 2017-2019 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2026 ZeeZide GmbH. All rights reserved.
 //
 
 public protocol QualifierEvaluation : ExpressionEvaluation {
-  
-  func evaluateWith(object: Any?) -> Bool
-  
+
+  func evaluate(with object: Any?) -> Bool
+
 }
 
 public extension QualifierEvaluation {
 
-  func valueFor(object: Any?) -> Any? {
-    return evaluateWith(object: object) ? true : false
+  @inlinable
+  func valueForObject(_ object: Any?) -> Any? {
+    return evaluate(with: object) ? true : false
   }
-  
+
+  @available(*, deprecated, renamed: "evaluate(with:)")
+  @inlinable
+  func evaluateWith(object: Any?) -> Bool {
+    return evaluate(with: object)
+  }
+
 }
 
 extension KeyValueQualifier: QualifierEvaluation {
-  public func evaluateWith(object: Any?) -> Bool {
+  
+  @inlinable
+  public func evaluate(with object: Any?) -> Bool {
     let objectValue =
-          KeyValueCoding.value(forKeyPath: keyExpr.key, inObject: object)
+          KeyValueCoding.valueForKeyPath(keyExpr.key, inObject: object)
     return operation.compare(objectValue, value)
   }
 }
 
 extension KeyComparisonQualifier: QualifierEvaluation {
-  public func evaluateWith(object: Any?) -> Bool {
-    let a = KeyValueCoding.value(forKeyPath: leftKeyExpr .key, inObject: object)
-    let b = KeyValueCoding.value(forKeyPath: rightKeyExpr.key, inObject: object)
+  
+  @inlinable
+  public func evaluate(with object: Any?) -> Bool {
+    let a = KeyValueCoding.valueForKeyPath(leftKeyExpr .key, inObject: object)
+    let b = KeyValueCoding.valueForKeyPath(rightKeyExpr.key, inObject: object)
     return operation.compare(a, b)
   }
 }

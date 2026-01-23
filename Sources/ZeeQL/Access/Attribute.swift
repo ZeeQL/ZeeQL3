@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 18/02/2017.
-//  Copyright © 2017-2025 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2026 ZeeZide GmbH. All rights reserved.
 //
 
 import Foundation
@@ -131,8 +131,8 @@ public extension Attribute { // default imp
   // MARK: - ExpressionEvaluation
   
   @inlinable
-  func valueFor(object: Any?) -> Any? {
-    return KeyValueCoding.value(forKeyPath: name, inObject: object)
+  func valueForObject(_ object: Any?) -> Any? {
+    return KeyValueCoding.valueForKeyPath(name, inObject: object)
   }
   
   // MARK: - Description
@@ -431,8 +431,8 @@ open class ModelAttribute : Attribute, Equatable {
   
   // MARK: - ExpressionEvaluation
   
-  public func valueFor(object: Any?) -> Any? {
-    return KeyValueCoding.value(forKeyPath: name, inObject: object)
+  public func valueForObject(_ object: Any?) -> Any? {
+    return KeyValueCoding.valueForKeyPath(name, inObject: object)
   }
   
   
