@@ -654,8 +654,17 @@ public struct QualifierParser {
       return ">"
     }
     
-    // TBD: support IN and => NOT IN
-    
+    // Handle "NOT IN" as a single operation
+    if match(TOK_NOT) {
+      let saveIdx = idx
+      idx = string.index(idx, offsetBy: TOK_NOT.count)
+      if skipSpaces(), match(TOK_IN) {
+        idx = string.index(idx, offsetBy: TOK_IN.count)
+        return "NOT IN"
+      }
+      idx = saveIdx // restore if not "NOT IN"
+    }
+
     // TODO: better an own parser? hm, yes.
     // the following stuff parses things like hasPrefix:, but also IN!
     
@@ -991,6 +1000,7 @@ public struct QualifierParser {
   let TOK_SQL   : [ Character ] = [ "S", "Q", "L", "[" ]
   let TOK_AND   : [ Character ] = [ "A", "N", "D" ]
   let TOK_OR    : [ Character ] = [ "O", "R" ]
+  let TOK_IN    : [ Character ] = [ "I", "N" ]
   
   let TOK_STAR_TRUE  : [ Character ] = [ "*", "t", "r", "u", "e", "*" ]
   let TOK_STAR_FALSE : [ Character ] = [ "*", "f", "a", "l", "s", "e", "*" ]

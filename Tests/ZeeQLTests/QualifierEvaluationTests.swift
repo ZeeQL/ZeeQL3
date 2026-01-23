@@ -124,6 +124,33 @@ class QualifierEvaluationTests: XCTestCase {
     
     XCTAssertTrue(q.evaluateWith(object: donald))
   }
+
+  func testCollectionNotIn() {
+    let list = [ "Mickey", "Goofy" ]
+    let qq = qualifierWith(format: "firstname NOT IN %@", list)
+    XCTAssert(qq is QualifierEvaluation)
+    guard let q = qq as? QualifierEvaluation else { return }
+
+    XCTAssertTrue(q.evaluateWith(object: donald)) // Donald not in list
+  }
+
+  func testCollectionNotInFails() {
+    let list = [ "Donald", "Mickey" ]
+    let qq = qualifierWith(format: "firstname NOT IN %@", list)
+    XCTAssert(qq is QualifierEvaluation)
+    guard let q = qq as? QualifierEvaluation else { return }
+
+    XCTAssertFalse(q.evaluateWith(object: donald)) // Donald IS in list
+  }
+
+  func testEmptyCollectionNotIn() {
+    let list = [ String ]()
+    let qq = qualifierWith(format: "firstname NOT IN %@", list)
+    XCTAssert(qq is QualifierEvaluation)
+    guard let q = qq as? QualifierEvaluation else { return }
+
+    XCTAssertTrue(q.evaluateWith(object: donald)) // not in empty is true
+  }
   func testLikeOp() {
     XCTAssertTrue (evaluate("firstname LIKE 'Don*'", anyDict))
     XCTAssertFalse(evaluate("firstname LIKE 'don*'", anyDict))

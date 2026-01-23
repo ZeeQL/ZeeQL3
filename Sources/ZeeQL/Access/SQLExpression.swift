@@ -1746,6 +1746,7 @@ open class SQLExpression: SmartDescription {
       case .lessThan:            return "<"
       case .lessThanOrEqual:     return "<="
       case .in:                  return "IN"
+      case .notIn:               return "NOT IN"
       case .like, .SQLLike:      return "LIKE"
       
       case .caseInsensitiveLike, .SQLCaseInsensitiveLike:
@@ -1942,7 +1943,7 @@ open class SQLExpression: SmartDescription {
       return sb
     }
     
-    if op == "IN" {
+    if op == "IN" || op == "NOT IN" {
       if let v = v as? QualifierVariable {
         log.error("detected unresolved qualifier variable in IN qualifier:\n" +
                   "  \(q)\n  variable: \(v)")
@@ -1960,25 +1961,27 @@ open class SQLExpression: SmartDescription {
       //   varcharcolumn = 1 OR varcharcolumn = 2 etc
 
       
+      let isNotIn = op == "NOT IN"
       if let c = v as? [ Any ] {
-        if let add = sqlStringForInValues(c, key: k) {
+        if let add = sqlStringForInValues(c, key: k, op: op) {
           return sb + add
         }
         else {
           /* An 'IN ()' does NOT work in PostgreSQL, weird. We treat such a
-           * qualifier as always false. */
-          return sqlFalseExpression
+           * qualifier as always false (or true for NOT IN). */
+          return isNotIn ? sqlTrueExpression : sqlFalseExpression
         }
       }
-      
+
       if let c = v as? any Collection {
-        if let add = sqlStringForInValues(c, key: k) {
+        if let add = sqlStringForInValues(c, key: k, op: op) {
           return sb + add
         }
         else {
           /* An 'IN ()' does NOT work in PostgreSQL, weird. We treat such a
-           * qualifier as always false. */
-          sb += sqlFalseExpression
+           * qualifier as always false (or true for NOT IN). */
+          sb.removeAll()
+          sb += isNotIn ? sqlTrueExpression : sqlFalseExpression
           return sb
         }
       }
@@ -2118,7 +2121,8 @@ open class SQLExpression: SmartDescription {
     return sb
   }
   
-  private func sqlStringForInValues<C>(_ c: C, key k: String) -> String?
+  private func sqlStringForInValues<C>(_ c: C, key k: String,
+                                       op: String = "IN") -> String?
     where C: Collection
   {
     // TBD: can't we move all this to sqlStringForValue? This has similiar
@@ -2128,7 +2132,7 @@ open class SQLExpression: SmartDescription {
        * qualifier as always false. */
       return nil
     }
-    var sb = " IN ("
+    var sb = " \(op) ("
 
     var isFirst = true
     for subvalue in c {

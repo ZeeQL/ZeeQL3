@@ -274,6 +274,33 @@ class QualifierParserTests: XCTestCase {
   }
 
 
+  // MARK: - NOT IN
+
+  func testNotInQualifier() throws {
+    let list = [ "Mickey", "Goofy" ]
+    let q = try XCTUnwrap(qualifierWith(format: "name NOT IN %@", list))
+    XCTAssert(q is KeyValueQualifier)
+    let kvq = try XCTUnwrap(q as? KeyValueQualifier)
+    XCTAssertEqual(kvq.key, "name")
+    XCTAssertEqual(kvq.operation, .notIn)
+  }
+
+  func testNotInQualifierWithCompound() throws {
+    let list = [ "Mickey", "Goofy" ]
+    let q = try XCTUnwrap(
+      qualifierWith(format: "age > 10 AND name NOT IN %@", list)
+    )
+    XCTAssert(q is CompoundQualifier, "expected compound qualifier")
+    let cq = try XCTUnwrap(q as? CompoundQualifier)
+    XCTAssertEqual(cq.op, .and)
+    XCTAssertEqual(cq.qualifiers.count, 2)
+
+    let kvq = try XCTUnwrap(cq.qualifiers[1] as? KeyValueQualifier)
+    XCTAssertEqual(kvq.key, "name")
+    XCTAssertEqual(kvq.operation, .notIn)
+  }
+
+
   // MARK: - Support
   
   func _testKeyValueQualifier(_ _qs: String, _ _k: String, _ _v: Any?) {
@@ -318,5 +345,7 @@ class QualifierParserTests: XCTestCase {
     ( "testEndsWithQualifier",             testEndsWithQualifier             ),
     ( "testCaseInsensitiveEndsWithQualifier",
       testCaseInsensitiveEndsWithQualifier ),
+    ( "testNotInQualifier",                testNotInQualifier                ),
+    ( "testNotInQualifierWithCompound",    testNotInQualifierWithCompound    ),
   ]
 }

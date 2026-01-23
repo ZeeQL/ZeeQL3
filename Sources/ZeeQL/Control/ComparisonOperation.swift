@@ -20,6 +20,9 @@ public enum ComparisonOperation: Hashable, RawRepresentable {
   
   // An `IN` query, e.g. `id IN %@`, where the %@ resolves to a collection.
   case `in`
+
+  /// A `NOT IN` query, e.g. `id NOT IN %@`, the inverse of `.in`.
+  case notIn
   
   /**
    * Compare the left hand side against a pattern. The `*` is used as the
@@ -160,6 +163,7 @@ public extension ComparisonOperation {
       case ">=", "=>": self = .greaterThanOrEqual
       case "<=", "=<": self = .lessThanOrEqual
       case "IN":       self = .in
+      case "NOT IN":   self = .notIn
       case "LIKE", "like": self = .like
       case "ILIKE", "ilike", "caseInsensitiveLike:", "caseInsensitiveLike",
            "LIKE[c]": // CoreData
@@ -196,6 +200,7 @@ public extension ComparisonOperation {
       case .lessThan:               return "<"
       case .lessThanOrEqual:        return "<="
       case .in:                     return "IN"
+      case .notIn:                  return "NOT IN"
       case .like:                      return "LIKE"
       case .caseInsensitiveLike:       return "ILIKE"
       case .SQLLike:                   return "SQLLIKE"
@@ -249,6 +254,18 @@ public extension ComparisonOperation {
           return false
         }
         return list.contains(other: a)
+
+      case .notIn: // firstname NOT IN ["donald"]
+        guard let b = b else { return true } // not in nothing is true
+        guard let list = b as? ContainsComparisonType else {
+          globalZeeQLLogger.error(
+            "attempt to evaluate an ComparisonOperation dynamically:",
+            self, a, b
+          )
+          assertionFailure("comparison not supported for dynamic evaluation")
+          return false
+        }
+        return !list.contains(other: a)
       
       case .like, .caseInsensitiveLike: // firstname like *Donald*
         let ci = self == .caseInsensitiveLike
