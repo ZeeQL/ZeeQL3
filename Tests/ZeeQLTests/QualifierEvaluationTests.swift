@@ -151,6 +151,78 @@ class QualifierEvaluationTests: XCTestCase {
 
     XCTAssertTrue(q.evaluateWith(object: donald)) // not in empty is true
   }
+
+  func testInQualifierNotConvertsToNotIn() {
+    let list = [ "Donald", "Mickey" ]
+    let q = KeyValueQualifier("firstname", .in, list)
+    let notQ = q.not
+
+    XCTAssert(notQ is KeyValueQualifier, "expected KeyValueQualifier")
+    guard let kvq = notQ as? KeyValueQualifier else { return }
+    XCTAssertEqual(kvq.operation, .notIn)
+    XCTAssertEqual(kvq.key, "firstname")
+
+    // Donald is in the list, so NOT IN should be false
+    XCTAssertFalse(kvq.evaluateWith(object: donald))
+  }
+
+  func testNotInQualifierNotConvertsToIn() {
+    let list = [ "Donald", "Mickey" ]
+    let q = KeyValueQualifier("firstname", .notIn, list)
+    let notQ = q.not
+
+    XCTAssert(notQ is KeyValueQualifier, "expected KeyValueQualifier")
+    guard let kvq = notQ as? KeyValueQualifier else { return }
+    XCTAssertEqual(kvq.operation, .in)
+    XCTAssertEqual(kvq.key, "firstname")
+
+    // Donald is in the list, so IN should be true
+    XCTAssertTrue(kvq.evaluateWith(object: donald))
+  }
+
+  func testDoubleNotInReturnsOriginal() {
+    let list = [ "Donald", "Mickey" ]
+    let q = KeyValueQualifier("firstname", .in, list)
+    let doubleNot = q.not.not
+
+    XCTAssert(doubleNot is KeyValueQualifier, "expected KeyValueQualifier")
+    guard let kvq = doubleNot as? KeyValueQualifier else { return }
+    XCTAssertEqual(kvq.operation, .in)
+  }
+
+  func testNotConvertsComparisonOperations() {
+    // equalTo ↔ notEqualTo
+    let eq = KeyValueQualifier("id", .equalTo, 10)
+    let notEq = eq.not as? KeyValueQualifier
+    XCTAssertEqual(notEq?.operation, .notEqualTo)
+    XCTAssertEqual((notEq?.not as? KeyValueQualifier)?.operation, .equalTo)
+
+    // lessThan ↔ greaterThanOrEqual
+    let lt = KeyValueQualifier("id", .lessThan, 10)
+    let notLt = lt.not as? KeyValueQualifier
+    XCTAssertEqual(notLt?.operation, .greaterThanOrEqual)
+    XCTAssertEqual((notLt?.not as? KeyValueQualifier)?.operation, .lessThan)
+
+    // greaterThan ↔ lessThanOrEqual
+    let gt = KeyValueQualifier("id", .greaterThan, 10)
+    let notGt = gt.not as? KeyValueQualifier
+    XCTAssertEqual(notGt?.operation, .lessThanOrEqual)
+    XCTAssertEqual((notGt?.not as? KeyValueQualifier)?.operation, .greaterThan)
+  }
+
+  func testNotEvaluatesCorrectly() {
+    // NOT (id < 1001) should be id >= 1001, which is false for id=1000
+    let lt = KeyValueQualifier("id", .lessThan, 1001)
+    XCTAssertTrue(lt.evaluateWith(object: donald))
+    guard let notLt = lt.not as? KeyValueQualifier else { return XCTFail() }
+    XCTAssertFalse(notLt.evaluateWith(object: donald))
+
+    // NOT (id > 999) should be id <= 999, which is false for id=1000
+    let gt = KeyValueQualifier("id", .greaterThan, 999)
+    XCTAssertTrue(gt.evaluateWith(object: donald))
+    guard let notGt = gt.not as? KeyValueQualifier else { return XCTFail() }
+    XCTAssertFalse(notGt.evaluateWith(object: donald))
+  }
   func testLikeOp() {
     XCTAssertTrue (evaluate("firstname LIKE 'Don*'", anyDict))
     XCTAssertFalse(evaluate("firstname LIKE 'don*'", anyDict))

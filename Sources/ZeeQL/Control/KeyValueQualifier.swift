@@ -55,6 +55,32 @@ public struct KeyValueQualifier : Qualifier, Equatable {
   
   @inlinable
   public var isEmpty : Bool { return false }
+
+  /**
+   * Returns a negated qualifier.
+   *
+   * Converts operations to their inverses where possible:
+   * - `equalTo` ↔ `notEqualTo`
+   * - `lessThan` ↔ `greaterThanOrEqual`
+   * - `greaterThan` ↔ `lessThanOrEqual`
+   * - `in` ↔ `notIn`
+   *
+   * Otherwise wraps in a ``NotQualifier``.
+   */
+  @inlinable
+  public var not: Qualifier {
+    switch operation {
+      case .equalTo:            return KeyValueQualifier(keyExpr, .notEqualTo, value)
+      case .notEqualTo:         return KeyValueQualifier(keyExpr, .equalTo, value)
+      case .lessThan:           return KeyValueQualifier(keyExpr, .greaterThanOrEqual, value)
+      case .greaterThanOrEqual: return KeyValueQualifier(keyExpr, .lessThan, value)
+      case .greaterThan:        return KeyValueQualifier(keyExpr, .lessThanOrEqual, value)
+      case .lessThanOrEqual:    return KeyValueQualifier(keyExpr, .greaterThan, value)
+      case .in:                 return KeyValueQualifier(keyExpr, .notIn, value)
+      case .notIn:              return KeyValueQualifier(keyExpr, .in, value)
+      default:                  return NotQualifier(qualifier: self)
+    }
+  }
   
 
   // MARK: - Expressions
