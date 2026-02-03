@@ -108,9 +108,8 @@ public extension TypedEntityObject {
 }
 
 
-// MARK: - Special Builder for CodeEntities
-
-public extension TypedEntityType where FullEntity: CodeEntity<Self> {
+// MARK: - Special Builder for ``TypedEntityType``'s
+public extension TypedEntityType {
   
   // TODO: select w/ pack iteration
   
