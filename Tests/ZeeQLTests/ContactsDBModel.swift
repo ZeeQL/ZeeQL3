@@ -43,46 +43,6 @@ enum ActiveRecordContactsDBModel {
   
 }
 
-enum PlainCodableContactsDBModel {
-  
-  static let model : Model = {
-    do {
-      return try Model.createFromTypes(Address.self, Person.self)
-    }
-    catch {
-      print("COULD NOT CREATE TEST MODEL:", error)
-      return Model(entities: [], tag: nil)
-    }
-  }()
-  static let sqlModel : Model = {
-    let model = (try? Model.createFromTypes(Address.self, Person.self))
-                   ?? Model(entities: [])
-    return ModelSQLizer().sqlizeModel(model)
-  }()
-  
-  class Address   : Codable {
-    // TODO:
-    // Hm, why does this compile w/ 4.0? breaks 4.1 due to Person not being init
-    // error: class 'PlainCodableContactsDBModel.Address' has no initializers
-    // note: stored property 'person' without initial value prevents synthesized
-    //       initializers
-    var id        : Int
-    var street    : String?
-    var city      : String?
-    var state     : String?
-    var country   : String?
-    var person    : Person
-  }
-  
-  class Person    : Codable {
-    var id        : Int
-    var firstname : String?
-    var lastname  : String
-    var addresses : [ Address ]
-  }
-  
-}
-
 enum RawContactsDBModel { // as a schema SQLite3 fetch returns it
 
   static let model = Model(entities: [ person, address ])
