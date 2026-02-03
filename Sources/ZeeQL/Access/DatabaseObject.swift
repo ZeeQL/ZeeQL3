@@ -6,6 +6,7 @@
 //  Copyright © 2017-2026 ZeeZide GmbH. All rights reserved.
 //
 
+#if compiler(>=6.2)
 /**
  * Interface of read/write ORM objects.
  */
@@ -24,6 +25,26 @@ public protocol DatabaseObject : DatabaseObjectValidation,
   func willRead()
   func willChange()
 }
+#else
+/**
+ * Interface of read/write ORM objects.
+ */
+public protocol DatabaseObject : DatabaseObjectValidation,
+                                 RelationshipManipulation,
+                                 SnapshotObject
+{
+  /* initialization */
+  // TODO: those are for AR, there are others for TC based objects
+  
+  func awakeFromFetch    (_ db: Database)
+  func awakeFromInsertion(_ db: Database) // only makes sense w/ EC
+  
+  /* accessor management */
+  
+  func willRead()
+  func willChange()
+}
+#endif
 
 public protocol SnapshotObject : SwiftObject, StoreKeyValueCodingType {
   
