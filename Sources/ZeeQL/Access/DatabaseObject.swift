@@ -11,7 +11,7 @@
  */
 public protocol DatabaseObject : DatabaseObjectValidation,
                                  RelationshipManipulation,
-                                 SnapshotObject
+                                 SnapshotObject, SendableMetatype
 {
   /* initialization */
   // TODO: those are for AR, there are others for TC based objects
