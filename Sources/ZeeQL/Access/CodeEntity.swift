@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 28/02/2017.
-//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2026 ZeeZide GmbH. All rights reserved.
 //
 
 #if canImport(Foundation)
@@ -92,6 +92,7 @@ open class CodeEntityBase : Entity {
  */
 open class CodeEntity<T: DatabaseObject> : CodeEntityBase {
 
+  @inlinable
   override public var objectType : DatabaseObject.Type? { return T.self }
   
   // MARK: - Setup
