@@ -197,19 +197,16 @@ public extension Entity { // default imp
   
   @inlinable
   subscript(attribute n: String) -> Attribute? {
-    for attr in attributes { if attr.name == n { return attr } }
-    return nil
+    attributes.first(where: { $0.name == n })
   }
   @inlinable
   subscript(columnName n: String) -> Attribute? {
-    for attr in attributes { if attr.columnName == n { return attr } }
-    return nil
+    attributes.first(where: { $0.columnName == n })
   }
   
   @inlinable
   subscript(relationship n: String) -> Relationship? {
-    for rel in relationships { if rel.name == n { return rel } }
-    return nil
+    relationships.first(where: { $0.name == n })
   }
   
   @inlinable
