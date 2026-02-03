@@ -323,7 +323,10 @@ public extension Relationship {
     ms += isToMany ? "[1:n]" : "[1:1]"
     ms += " '\(entity.name)'"
     
-    if let to = destinationEntity { ms += " to=\(to.name)" }
+    if let to = destinationEntity {
+      if to === entity { ms += "[SELF-JOIN]" }
+      else { ms += " to=\(to.name)" }
+    }
     
     if !joins.isEmpty {
       if joinSemantic != .innerJoin { ms += " \(joinSemantic)" }
