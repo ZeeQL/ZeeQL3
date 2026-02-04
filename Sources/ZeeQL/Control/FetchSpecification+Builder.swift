@@ -191,13 +191,11 @@ extension FetchSpecification {
 }
 
 
-// MARK: - Special Builder for CodeEntities
+// MARK: - Special Builder for ``TypedEntityType`` objects
 
 public extension DatabaseFetchSpecification
-  where Object: TypedEntityType, Object.FullEntity: CodeEntity<Object>
+  where Object: TypedEntityType
 {
-  
-  // TODO: select w/ pack iteration
 
   // MARK: - Qualifier
 
@@ -329,7 +327,7 @@ public extension DatabaseFetchSpecification
   // In query on non-optional attribute
   @inlinable
   func and<A, C>(_ key: Swift.KeyPath<Object.FullEntity, A>, in values: C)
-    -> Self
+       -> Self
     where A: TypedProperty, C: Collection, C.Element == A.T
   {
     let property = Object.e[keyPath: key]
@@ -338,7 +336,7 @@ public extension DatabaseFetchSpecification
   // In query on optional attribute
   @inlinable
   func and<A, C>(_ key: Swift.KeyPath<Object.FullEntity, A>, in values: C)
-    -> Self
+       -> Self
     where A: TypedProperty, A.T: AnyOptional,
           C: Collection, C.Element == A.T.Wrapped
   {
@@ -389,7 +387,7 @@ public extension DatabaseFetchSpecification
   // In query on non-optional attribute
   @inlinable
   func or<A, C>(_ key: Swift.KeyPath<Object.FullEntity, A>, in values: C)
-    -> Self
+       -> Self
     where A: TypedProperty, C: Collection, C.Element == A.T
   {
     let property = Object.e[keyPath: key]
@@ -398,7 +396,7 @@ public extension DatabaseFetchSpecification
   // In query on optional attribute
   @inlinable
   func or<A, C>(_ key: Swift.KeyPath<Object.FullEntity, A>, in values: C)
-    -> Self
+       -> Self
     where A: TypedProperty, A.T: AnyOptional,
           C: Collection, C.Element == A.T.Wrapped
   {
