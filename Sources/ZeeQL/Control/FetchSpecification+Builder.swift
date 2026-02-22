@@ -442,7 +442,7 @@ public extension DatabaseFetchSpecification
   #else // !compiler(>=6)
   @inlinable
   func order<V>(by key: Swift.KeyPath<Object.FullEntity, CodeAttribute<V>>,
-                _ selector: SortOrdering.Selector = .CompareAscending)
+                _ selector: SortOrdering.Selector = .ascending)
          -> Self
     where V: AttributeValue
   {
