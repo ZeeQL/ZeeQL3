@@ -38,14 +38,16 @@ extension Int     : AdaptorQueryColumnRepresentable {}
 extension Int16   : AdaptorQueryColumnRepresentable {}
 extension Int32   : AdaptorQueryColumnRepresentable {}
 extension Int64   : AdaptorQueryColumnRepresentable {}
-@available(macOS 15, iOS 13, *)
-extension Int128  : AdaptorQueryColumnRepresentable {}
 extension UInt    : AdaptorQueryColumnRepresentable {}
 extension UInt16  : AdaptorQueryColumnRepresentable {}
 extension UInt32  : AdaptorQueryColumnRepresentable {}
 extension UInt64  : AdaptorQueryColumnRepresentable {}
+#if compiler(>=6)
+@available(macOS 15, iOS 13, *)
+extension Int128  : AdaptorQueryColumnRepresentable {}
 @available(macOS 15, iOS 13, *)
 extension UInt128 : AdaptorQueryColumnRepresentable {}
+#endif
 
 extension BinaryInteger {
 
