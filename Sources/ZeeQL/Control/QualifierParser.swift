@@ -204,6 +204,7 @@ public struct QualifierParser {
       
       default:
         addError("unknown string format specification: \(_pat)")
+        assertionFailure("unknown string format specification: \(_pat)")
         return nil
     }
   }

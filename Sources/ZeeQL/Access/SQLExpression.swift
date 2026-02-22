@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Heß on 18.02.17.
-//  Copyright © 2017-2025 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2026 ZeeZide GmbH. All rights reserved.
 //
 
 import struct Foundation.Date
@@ -1260,9 +1260,9 @@ open class SQLExpression: SmartDescription {
       case let v as Bool        : return self.sqlStringFor(bool:   v)
       case let v as Date        : return self.formatDateValue(v)
       case let v as RawSQLValue : return v.value
-      case let v as any BinaryInteger:
-        return self.sqlStringFor(number: Int(v))
-      case let v as any StringProtocol:
+      case let v as any BinaryInteger : return self.sqlStringFor(number: Int(v))
+      case let v as any StringProtocol: return self.formatStringValue(String(v))
+      case let v as Character   :
         return self.formatStringValue(String(v))
       default: break
     }
@@ -1272,6 +1272,11 @@ open class SQLExpression: SmartDescription {
     if let list = v as? [ Int ] {
       if list.isEmpty { return "( )" } // empty list
       return "( " + list.map { String($0) }.joined(separator: ", ") + " )"
+    }
+    if #available(macOS 13, iOS 15, *) {
+      if let list = v as? any Sequence<any BinaryInteger> {
+        return "( " + list.map { String($0) }.joined(separator: ", ") + " )"
+      }
     }
 
     if let list = v as? [ Any? ] {
@@ -1297,7 +1302,7 @@ open class SQLExpression: SmartDescription {
     
     /* fallback to string representation */
     
-    log.error("unexpected SQL value, rendering as string:", v)
+    log.error("unexpected SQL value, rendering as string:", v, type(of: v))
     return formatStringValue("\(v)")
   }
   
@@ -2120,7 +2125,15 @@ open class SQLExpression: SmartDescription {
 
     return sb
   }
-  
+
+  private func sqlStringForInValues<C>(_ c: C, key k: String,
+                                       op: String = "IN") -> String?
+    where C: StringProtocol & Collection
+  {
+    // overload so that we don't break apart strings
+    return " \(op) (\(c))"
+  }
+
   private func sqlStringForInValues<C>(_ c: C, key k: String,
                                        op: String = "IN") -> String?
     where C: Collection

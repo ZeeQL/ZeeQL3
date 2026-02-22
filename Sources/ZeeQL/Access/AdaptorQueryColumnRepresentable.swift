@@ -6,10 +6,13 @@
 //  Copyright © 2017-2026 ZeeZide GmbH. All rights reserved.
 //
 
+/**
+ * A helper protocol that is used to convert ``AdaptorRecord`` columns into
+ * Swift typed values.
+ */
 public protocol AdaptorQueryColumnRepresentable {
 
   static func fromAdaptorQueryValue(_ value: Any?) throws -> Self
-  
 }
 
 public enum AdaptorQueryTypeError : Swift.Error {
@@ -21,8 +24,7 @@ extension String : AdaptorQueryColumnRepresentable {
   
   @inlinable
   public static func fromAdaptorQueryValue(_ value: Any?) throws -> String {
-    guard let value = value
-     else {
+    guard let value = value else {
       throw AdaptorQueryTypeError.nullInNonOptionalType(String.self)
     }
 
@@ -31,24 +33,82 @@ extension String : AdaptorQueryColumnRepresentable {
   }
 
 }
-extension Int : AdaptorQueryColumnRepresentable {
+
+extension Int     : AdaptorQueryColumnRepresentable {}
+extension Int16   : AdaptorQueryColumnRepresentable {}
+extension Int32   : AdaptorQueryColumnRepresentable {}
+extension Int64   : AdaptorQueryColumnRepresentable {}
+extension UInt    : AdaptorQueryColumnRepresentable {}
+extension UInt16  : AdaptorQueryColumnRepresentable {}
+extension UInt32  : AdaptorQueryColumnRepresentable {}
+extension UInt64  : AdaptorQueryColumnRepresentable {}
+#if compiler(>=6)
+@available(macOS 15, iOS 13, *)
+extension Int128  : AdaptorQueryColumnRepresentable {}
+@available(macOS 15, iOS 13, *)
+extension UInt128 : AdaptorQueryColumnRepresentable {}
+#endif
+
+extension BinaryInteger {
 
   @inlinable
-  public static func fromAdaptorQueryValue(_ value: Any?) throws -> Int {
-    guard let value = value
-     else {
+  public static func fromAdaptorQueryValue(_ value: Any?) throws -> Self {
+    guard let value = value else {
       throw AdaptorQueryTypeError.nullInNonOptionalType(Int.self)
     }
+    
+    if let value = value as? Self { return value }
+    
+    if #available(macOS 15, iOS 13, *) {
+      if let value = value as? any BinaryInteger { return Self(value) }
+    }
+    
     switch value {
-      case let typedValue as Int:    return typedValue
-      case let typedValue as Int64:  return Int(typedValue)
-      case let typedValue as Int32:  return Int(typedValue)
+      case let typedValue as Int:    return Self(typedValue)
+      case let typedValue as Int64:  return Self(typedValue)
+      case let typedValue as Int32:  return Self(typedValue)
       case let typedValue as String:
-        guard let i = Int(typedValue)
-         else {
+        guard let i = Int(typedValue) else {
           throw AdaptorQueryTypeError.cannotConvertValue(Int.self, value)
          }
-        return i
+        return Self(i)
+      default:
+        // ERROR: VALUE: 9999 Int32
+        globalZeeQLLogger.error("VALUE: \(value) \(type(of: value))")
+        throw AdaptorQueryTypeError.cannotConvertValue(Int.self, value)
+    }
+  }
+}
+
+extension Float  : AdaptorQueryColumnRepresentable {}
+extension Double : AdaptorQueryColumnRepresentable {}
+
+extension BinaryFloatingPoint {
+
+  @inlinable
+  public static func fromAdaptorQueryValue(_ value: Any?) throws -> Self {
+    guard let value = value else {
+      throw AdaptorQueryTypeError.nullInNonOptionalType(Int.self)
+    }
+    
+    if let value = value as? Self { return value }
+    
+    if #available(macOS 15, iOS 13, *) {
+      if let value = value as? any BinaryFloatingPoint { return Self(value) }
+      if let value = value as? any BinaryInteger       { return Self(value) }
+    }
+    
+    switch value {
+      case let typedValue as Double : return Self(typedValue)
+      case let typedValue as Float  : return Self(typedValue)
+      case let typedValue as Int    : return Self(typedValue)
+      case let typedValue as Int64  : return Self(typedValue)
+      case let typedValue as Int32  : return Self(typedValue)
+      case let typedValue as String:
+        guard let i = Double(typedValue) else {
+          throw AdaptorQueryTypeError.cannotConvertValue(Int.self, value)
+         }
+        return Self(i)
       default:
         // ERROR: VALUE: 9999 Int32
         globalZeeQLLogger.error("VALUE: \(value) \(type(of: value))")
