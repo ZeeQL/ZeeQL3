@@ -109,8 +109,7 @@ open class ObjectTrackingContext : ObjectStore {
   
   // MARK: - Object Registry
   
-  @inlinable
-  public func record(object: AnyObject, with gid: GlobalID) {
+  open func record(object: AnyObject, with gid: GlobalID) {
     gidToObject[gid] = object
   }
   
