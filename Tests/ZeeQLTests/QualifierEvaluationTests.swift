@@ -191,19 +191,19 @@ class QualifierEvaluationTests: XCTestCase {
   }
 
   func testNotConvertsComparisonOperations() {
-    // equalTo ↔ notEqualTo
+    // equalTo <-> notEqualTo
     let eq = KeyValueQualifier("id", .equalTo, 10)
     let notEq = eq.not as? KeyValueQualifier
     XCTAssertEqual(notEq?.operation, .notEqualTo)
     XCTAssertEqual((notEq?.not as? KeyValueQualifier)?.operation, .equalTo)
 
-    // lessThan ↔ greaterThanOrEqual
+    // lessThan <-> greaterThanOrEqual
     let lt = KeyValueQualifier("id", .lessThan, 10)
     let notLt = lt.not as? KeyValueQualifier
     XCTAssertEqual(notLt?.operation, .greaterThanOrEqual)
     XCTAssertEqual((notLt?.not as? KeyValueQualifier)?.operation, .lessThan)
 
-    // greaterThan ↔ lessThanOrEqual
+    // greaterThan <-> lessThanOrEqual
     let gt = KeyValueQualifier("id", .greaterThan, 10)
     let notGt = gt.not as? KeyValueQualifier
     XCTAssertEqual(notGt?.operation, .lessThanOrEqual)
