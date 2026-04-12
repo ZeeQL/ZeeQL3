@@ -10,13 +10,9 @@
 import struct Foundation.Data
 import struct Foundation.Date
 import struct Foundation.TimeInterval
-#endif
-#if canImport(Darwin)
-import Darwin
-#elseif canImport(Glibc)
-import Glibc
-#elseif canImport(Musl)
-import Musl
+import class  Foundation.DateFormatter
+import struct Foundation.Locale
+import struct Foundation.TimeZone
 #endif
 
 /**
@@ -181,18 +177,22 @@ extension Date: AdaptorQueryColumnRepresentable {
 @usableFromInline
 internal enum DateParser {
 
-  private static let formats = [ "%Y-%m-%dT%H:%M:%SZ", "%Y-%m-%dT%H:%M:%S",
-                                 "%Y-%m-%d %H:%M:%S",  "%Y-%m-%d" ]
+  private static let formatters: [ DateFormatter ] = {
+    let formats = [ "yyyy-MM-dd'T'HH:mm:ssZ", "yyyy-MM-dd'T'HH:mm:ss",
+                    "yyyy-MM-dd HH:mm:ss",    "yyyy-MM-dd" ]
+    return formats.map { fmt in
+      let df       = DateFormatter()
+      df.locale    = Locale(identifier: "en_US_POSIX")
+      df.timeZone  = TimeZone(secondsFromGMT: 0)
+      df.dateFormat = fmt
+      return df
+    }
+  }()
 
   @usableFromInline
   static func parseISO8601(_ string: String) -> Date? {
-    var tm = tm()
-    for fmt in formats {
-      memset(&tm, 0, MemoryLayout<tm>.size)
-      if strptime(string, fmt, &tm) != nil {
-        let time = timegm(&tm)
-        if time != -1 { return Date(timeIntervalSince1970: TimeInterval(time)) }
-      }
+    for df in formatters { // TBD: thread safe? Should be after creation?
+      if let date = df.date(from: string) { return date }
     }
     return nil
   }
