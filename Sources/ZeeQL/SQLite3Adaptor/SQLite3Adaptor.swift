@@ -80,7 +80,7 @@ import struct Foundation.URLQueryItem
  * let user = ds.findBy(id: 9999)
  * ```
  */
-public enum SQLite3AdaptorError: Swift.Error {
+public enum SQLite3AdaptorError: Swift.Error, Sendable {
 
   case openFailed(errorCode: Int32, message: String?,
                   path: String, mode: SQLite3Adaptor.OpenMode)
@@ -88,7 +88,7 @@ public enum SQLite3AdaptorError: Swift.Error {
 
 open class SQLite3Adaptor : Adaptor, SmartDescription {
 
-  public enum OpenMode {
+  public enum OpenMode: Sendable {
     
     case readOnly
     case readWrite
