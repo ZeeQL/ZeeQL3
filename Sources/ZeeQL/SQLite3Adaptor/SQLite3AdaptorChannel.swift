@@ -480,3 +480,7 @@ extension SQLite3AdaptorChannel: CustomStringConvertible {
     return ms
   }
 }
+
+#if swift(>=5.5)
+extension SQLite3AdaptorChannelError: Sendable {}
+#endif

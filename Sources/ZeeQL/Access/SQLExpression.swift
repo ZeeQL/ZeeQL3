@@ -94,24 +94,26 @@ open class SQLExpression: SmartDescription {
   public var listString       = ""
   public var valueList        = ""
   
-  /**
-   * Contains the list of bindings which got created during SQL construction. A
-   * bind dictionary contains such keys:
-   *
-   * - `BindVariableAttributeKey`   - the Attribute object
-   * - `BindVariablePlaceHolderKey` - the placeholder used in the SQL (eg '?')
-   * - `BindVariableNameKey`        - the name which is bound
-   *
-   * @return a List of bind records.
-   */
   public struct BindVariable {
-    public var attribute   : Attribute? = nil
-    public var placeholder = "?"
-    public var name        = ""
-    public var value       : Any?   = nil
     
-    public init() {}
+    public let attribute   : Attribute?
+    public let placeholder : String
+    public let name        : String
+    public let value       : Any?
+    
+    public init(attribute: Attribute?, placeholder: String = "?",
+                name: String = "", value: Any?)
+    {
+      self.attribute   = attribute
+      self.placeholder = placeholder
+      self.name        = name
+      self.value       = value
+    }
   }
+  
+  /**
+   * Contains the list of bindings which got created during SQL construction.
+   */
   public var bindVariables = [ BindVariable ]()
   
   public var useAliases       = false // only true for selects
@@ -1436,13 +1438,7 @@ open class SQLExpression: SmartDescription {
   open func bindVariableDictionary(for attribute: Attribute?, value: Any?)
             -> BindVariable
   {
-    var bind = BindVariable()
-    bind.attribute = attribute
-    bind.value     = value
 
-    // This depends on the database, e.g. APR DBD uses %s, %i etc
-    bind.placeholder = "?"
-    
     /* generate and add a variable name */
 
     var name : String
@@ -1456,9 +1452,9 @@ open class SQLExpression: SmartDescription {
     else {
       name = "NOATTR\(bindVariables.count)"
     }
-    bind.name = name
-    
-    return bind
+    // Placeholder depends on the database, e.g. APR DBD uses %s, %i etc
+    return BindVariable(attribute: attribute, placeholder: "?",
+                        name: name, value: value)
   }
   
   func addBindVariableDictionary(_ dict: BindVariable) {
@@ -2669,3 +2665,10 @@ fileprivate extension AdaptorRow {
     return result
   }
 }
+
+#if swift(>=5.5)
+// Contains `Any?` values which are base types and a reference to the
+// ``Attribute``, which is essentially immutable at runtime.
+// TBD: Maybe make Attribute Sendable too.
+extension SQLExpression.BindVariable: @unchecked Sendable {}
+#endif

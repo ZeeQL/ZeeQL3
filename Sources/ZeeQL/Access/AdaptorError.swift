@@ -42,5 +42,13 @@ public enum AdaptorChannelError : Swift.Error {
   case recordNotFound
 }
 
+#if swift(>=5.5)
+// @unchecked because associated values include `Entity` (a protocol, not
+// automatically Sendable) and `AdaptorRow` (`[String: Any?]` -- Any isn't
+// Sendable). At runtime the Entity refs are immutable model objects and
+// AdaptorRow values are database primitives (String, Int64, Double, Data, nil).
+extension AdaptorChannelError: @unchecked Sendable {}
+#endif
+
 // TODO: consolidate on just AdaptorError
 public typealias AdaptorError = AdaptorChannelError
