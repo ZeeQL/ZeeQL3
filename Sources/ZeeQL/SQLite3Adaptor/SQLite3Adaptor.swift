@@ -279,25 +279,25 @@ open class SQLite3Adaptor : Adaptor, SmartDescription {
 
   // MARK: - Runtime Options
   
-  public struct RuntimeOptions {
+  public struct RuntimeOptions: Sendable {
     // Note: values unset result in the default behavior
     
     public init() {}
     
-    public enum AutoVacuumMode {
+    public enum AutoVacuumMode: String, Sendable {
       case none, full, incremental
     }
-    public enum JournalMode {
+    public enum JournalMode: String, Sendable {
       case delete, truncate, persist, memory, wal, off
     }
-    public enum JournalSizeLimit {
+    public enum JournalSizeLimit: Sendable {
       case none
       case limit(Int)
     }
-    public enum LockingMode {
+    public enum LockingMode: String, Sendable {
       case normal, exclusive
     }
-    public enum SyncMode {
+    public enum SyncMode: String, Sendable {
       case off, normal, full, extra
     }
     
@@ -402,26 +402,6 @@ fileprivate extension Bool {
   var sqlString : String { return self ? "on" : "off" }
 }
 
-#if swift(>=5.5)
-// @unchecked because `model` (optional, set once during setup)
-// and `expressionFactory` (never really changed) are `var`.
-// The pool has its own internal locking. Safe as long as `model` is set before
-// concurrent access begins (which is the normal usage pattern).
-extension SQLite3Adaptor : @unchecked Sendable {}
-
-@available(macOS 10.15, iOS 13, tvOS 13, watchOS 6, *)
-extension SQLite3Adaptor : AdaptorAsyncRunnerProvider {}
-
-extension SQLite3AdaptorError                            : Sendable {}
-extension SQLite3Adaptor.OpenMode                        : Sendable {}
-extension SQLite3Adaptor.RuntimeOptions                  : Sendable {}
-extension SQLite3Adaptor.RuntimeOptions.AutoVacuumMode   : Sendable {}
-extension SQLite3Adaptor.RuntimeOptions.JournalMode      : Sendable {}
-extension SQLite3Adaptor.RuntimeOptions.JournalSizeLimit : Sendable {}
-extension SQLite3Adaptor.RuntimeOptions.LockingMode      : Sendable {}
-extension SQLite3Adaptor.RuntimeOptions.SyncMode         : Sendable {}
-#endif
-
 fileprivate extension RangeReplaceableCollection
                         where Iterator.Element == String
 {
@@ -434,3 +414,16 @@ fileprivate extension RangeReplaceableCollection
   }
 }
 
+
+#if swift(>=5.5)
+// @unchecked because `model` (optional, set once during setup)
+// and `expressionFactory` (never really changed) are `var`.
+// The pool has its own internal locking. Safe as long as `model` is set before
+// concurrent access begins (which is the normal usage pattern).
+extension SQLite3Adaptor : @unchecked Sendable {}
+
+#if false // not ready yet
+@available(macOS 10.15, iOS 13, tvOS 13, watchOS 6, *)
+extension SQLite3Adaptor : AdaptorAsyncRunnerProvider {}
+#endif
+#endif
