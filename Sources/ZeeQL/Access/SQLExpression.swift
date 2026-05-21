@@ -100,7 +100,8 @@ open class SQLExpression: SmartDescription {
     public let placeholder : String
     public let name        : String
     public let value       : Any?
-    
+
+    @inlinable
     public init(attribute: Attribute?, placeholder: String = "?",
                 name: String = "", value: Any?)
     {
