@@ -113,7 +113,15 @@ open class SQLite3Adaptor : Adaptor, SmartDescription {
   public  let openMode : OpenMode
   public  let options  : RuntimeOptions
   private let pool     : AdaptorChannelPool?
-  
+
+  #if swift(>=5.5)
+  public var asyncRunner: any AdaptorAsyncRunner {
+    get { _asyncRunner ?? OperationQueueAdaptorRunner.shared }
+    set { _asyncRunner = newValue }
+  }
+  private var _asyncRunner: (any AdaptorAsyncRunner)?
+  #endif
+
   public init(_  path    : String,
               autocreate : Bool = false, readonly: Bool = false,
               options    : RuntimeOptions = RuntimeOptions(),
@@ -124,6 +132,19 @@ open class SQLite3Adaptor : Adaptor, SmartDescription {
     self.options  = options
     self.pool     = pool
   }
+
+  #if swift(>=5.5)
+  public convenience init(_  path     : String,
+                          autocreate  : Bool = false, readonly: Bool = false,
+                          options     : RuntimeOptions = RuntimeOptions(),
+                          pool        : AdaptorChannelPool? = nil,
+                          asyncRunner : any AdaptorAsyncRunner)
+  {
+    self.init(path, autocreate: autocreate, readonly: readonly,
+              options: options, pool: pool)
+    self.asyncRunner = asyncRunner
+  }
+  #endif
   
   /**
    * Returns a URL representing the connection info.
@@ -421,9 +442,4 @@ fileprivate extension RangeReplaceableCollection
 // The pool has its own internal locking. Safe as long as `model` is set before
 // concurrent access begins (which is the normal usage pattern).
 extension SQLite3Adaptor : @unchecked Sendable {}
-
-#if false // not ready yet
-@available(macOS 10.15, iOS 13, tvOS 13, watchOS 6, *)
-extension SQLite3Adaptor : AdaptorAsyncRunnerProvider {}
-#endif
 #endif
