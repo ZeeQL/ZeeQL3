@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 21/02/2017.
-//  Copyright © 2017-2025 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2026 ZeeZide GmbH. All rights reserved.
 //
 
 import struct Foundation.URL
@@ -76,6 +76,12 @@ public protocol Adaptor : AnyObject, AdaptorQueryType, EquatableType {
   var log : ZeeQLLogger { get }
   
   var url : URL? { get }
+
+  #if swift(>=5.5)
+  /// The async helper to use for running async ops, defaults to an
+  /// OperationQueue implementation.
+  var asyncRunner : any AdaptorAsyncRunner { get set }
+  #endif
 }
 
 public extension Adaptor {

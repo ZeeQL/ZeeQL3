@@ -35,8 +35,7 @@ public struct KeyValueQualifier : Qualifier, Equatable {
     self.operation = op
   }
   @inlinable
-  public init<T>(_ key: String, _ op: ComparisonOperation = .equalTo,
-                 _ value: T)
+  public init<T>(_ key: String, _ op: ComparisonOperation = .equalTo, _ value:T)
     where T: AnyOptional
   {
     self.init(StringKey(key), op, value)
@@ -50,35 +49,32 @@ public struct KeyValueQualifier : Qualifier, Equatable {
   
   // MARK: - Properties
   
-  @inlinable
-  public var key : String { return keyExpr.key }
-  
-  @inlinable
-  public var isEmpty : Bool { return false }
+  @inlinable public var key     : String { return keyExpr.key }
+  @inlinable public var isEmpty : Bool   { return false }
 
   /**
    * Returns a negated qualifier.
    *
    * Converts operations to their inverses where possible:
-   * - `equalTo` ↔ `notEqualTo`
-   * - `lessThan` ↔ `greaterThanOrEqual`
-   * - `greaterThan` ↔ `lessThanOrEqual`
-   * - `in` ↔ `notIn`
+   * - `equalTo`     / `notEqualTo`
+   * - `lessThan`    /`greaterThanOrEqual`
+   * - `greaterThan` / `lessThanOrEqual`
+   * - `in`          / `notIn`
    *
    * Otherwise wraps in a ``NotQualifier``.
    */
   @inlinable
   public var not: Qualifier {
     switch operation {
-      case .equalTo:            return KeyValueQualifier(keyExpr, .notEqualTo, value)
-      case .notEqualTo:         return KeyValueQualifier(keyExpr, .equalTo, value)
-      case .lessThan:           return KeyValueQualifier(keyExpr, .greaterThanOrEqual, value)
-      case .greaterThanOrEqual: return KeyValueQualifier(keyExpr, .lessThan, value)
-      case .greaterThan:        return KeyValueQualifier(keyExpr, .lessThanOrEqual, value)
-      case .lessThanOrEqual:    return KeyValueQualifier(keyExpr, .greaterThan, value)
-      case .in:                 return KeyValueQualifier(keyExpr, .notIn, value)
-      case .notIn:              return KeyValueQualifier(keyExpr, .in, value)
-      default:                  return NotQualifier(qualifier: self)
+      case .equalTo           : KeyValueQualifier(keyExpr, .notEqualTo, value)
+      case .notEqualTo        : KeyValueQualifier(keyExpr, .equalTo, value)
+      case .greaterThanOrEqual: KeyValueQualifier(keyExpr, .lessThan, value)
+      case .lessThanOrEqual   : KeyValueQualifier(keyExpr, .greaterThan, value)
+      case .in                : KeyValueQualifier(keyExpr, .notIn, value)
+      case .notIn             : KeyValueQualifier(keyExpr, .in, value)
+      case .greaterThan : KeyValueQualifier(keyExpr, .lessThanOrEqual, value)
+      case .lessThan    : KeyValueQualifier(keyExpr, .greaterThanOrEqual, value)
+      default           : NotQualifier(qualifier: self)
     }
   }
   
@@ -96,9 +92,7 @@ public struct KeyValueQualifier : Qualifier, Equatable {
   // MARK: - Variables
   
   @inlinable
-  public var variable : QualifierVariable? {
-    return value as? QualifierVariable
-  }
+  public var variable : QualifierVariable? { value as? QualifierVariable }
   
   @inlinable
   public func addReferencedKeys(to set: inout Set<String>) {
@@ -146,16 +140,12 @@ public struct KeyValueQualifier : Qualifier, Equatable {
   // MARK: - Equality
   
   @inlinable
-  public static func ==(lhs: KeyValueQualifier, rhs: KeyValueQualifier)
-                     -> Bool
-  {
+  public static func ==(lhs: KeyValueQualifier,rhs: KeyValueQualifier) -> Bool {
     guard lhs.operation == rhs.operation       else { return false }
     guard lhs.keyExpr.isEqual(to: rhs.keyExpr) else { return false }
     
     if let a = lhs.value, let b = rhs.value {
-      if let ac = a as? EquatableType {
-        return ac.isEqual(to: b)
-      }
+      if let ac = a as? EquatableType { return ac.isEqual(to: b) }
       return false
     }
     else if lhs.value != nil { return false }
@@ -210,9 +200,12 @@ public struct KeyValueQualifier : Qualifier, Equatable {
       ms += v ? " true" : " false"
     }
     else if let v = value as? String {
-      // TODO
+      // TODO: This is just for printing, so I guess that's fine.
       let s = v.replacingOccurrences(of: "'", with: "\\'")
-      ms += "'\(s)'"
+      ms += " '\(s)'"
+    }
+    else if let v = value as? any BinaryInteger {
+      ms += " \(v)"
     }
     else {
       ms += " \(value)"

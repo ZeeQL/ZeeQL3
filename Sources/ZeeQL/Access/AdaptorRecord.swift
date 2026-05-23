@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 24/02/17.
-//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2026 ZeeZide GmbH. All rights reserved.
 //
 
 /**
@@ -58,11 +58,7 @@ open class AdaptorRecord : SwiftObject, SmartDescription {
   
   @inlinable
   public func _indexForName(_ name: String) -> Int? {
-    #if swift(>=5)
-      let idx = schema.attributeNames.firstIndex(of: name)
-    #else
-      let idx = schema.attributeNames.index(of: name)
-    #endif
+    let idx = schema.attributeNames.firstIndex(of: name)
     #if DEBUG
       if let checkIdx = idx {
         assert(checkIdx >= 0 && checkIdx < values.count)
@@ -126,6 +122,15 @@ open class AdaptorRecord : SwiftObject, SmartDescription {
     ms += asDictionary.description
   }
 }
+
+#if swift(>=5.5)
+// @unchecked because `values` is `[Any?]` which isn't Sendable, but the actual
+// runtime values are always database primitives (Int64, String, Double, Data,
+// nil).
+// The schema is shared across records from a single query and is effectively
+// immutable after query execution.
+extension AdaptorRecord: @unchecked Sendable {}
+#endif
 
 extension AdaptorRecord : Sequence {
   

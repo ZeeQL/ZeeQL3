@@ -80,7 +80,7 @@ import struct Foundation.URLQueryItem
  * let user = ds.findBy(id: 9999)
  * ```
  */
-public enum SQLite3AdaptorError: Swift.Error {
+public enum SQLite3AdaptorError: Swift.Error, Sendable {
 
   case openFailed(errorCode: Int32, message: String?,
                   path: String, mode: SQLite3Adaptor.OpenMode)
@@ -88,7 +88,7 @@ public enum SQLite3AdaptorError: Swift.Error {
 
 open class SQLite3Adaptor : Adaptor, SmartDescription {
 
-  public enum OpenMode {
+  public enum OpenMode: Sendable {
     
     case readOnly
     case readWrite
@@ -113,7 +113,15 @@ open class SQLite3Adaptor : Adaptor, SmartDescription {
   public  let openMode : OpenMode
   public  let options  : RuntimeOptions
   private let pool     : AdaptorChannelPool?
-  
+
+  #if swift(>=5.5)
+  public var asyncRunner: any AdaptorAsyncRunner {
+    get { _asyncRunner ?? OperationQueueAdaptorRunner.shared }
+    set { _asyncRunner = newValue }
+  }
+  private var _asyncRunner: (any AdaptorAsyncRunner)?
+  #endif
+
   public init(_  path    : String,
               autocreate : Bool = false, readonly: Bool = false,
               options    : RuntimeOptions = RuntimeOptions(),
@@ -124,6 +132,19 @@ open class SQLite3Adaptor : Adaptor, SmartDescription {
     self.options  = options
     self.pool     = pool
   }
+
+  #if swift(>=5.5)
+  public convenience init(_  path     : String,
+                          autocreate  : Bool = false, readonly: Bool = false,
+                          options     : RuntimeOptions = RuntimeOptions(),
+                          pool        : AdaptorChannelPool? = nil,
+                          asyncRunner : any AdaptorAsyncRunner)
+  {
+    self.init(path, autocreate: autocreate, readonly: readonly,
+              options: options, pool: pool)
+    self.asyncRunner = asyncRunner
+  }
+  #endif
   
   /**
    * Returns a URL representing the connection info.
@@ -279,25 +300,25 @@ open class SQLite3Adaptor : Adaptor, SmartDescription {
 
   // MARK: - Runtime Options
   
-  public struct RuntimeOptions {
+  public struct RuntimeOptions: Sendable {
     // Note: values unset result in the default behavior
     
     public init() {}
     
-    public enum AutoVacuumMode {
+    public enum AutoVacuumMode: String, Sendable {
       case none, full, incremental
     }
-    public enum JournalMode {
+    public enum JournalMode: String, Sendable {
       case delete, truncate, persist, memory, wal, off
     }
-    public enum JournalSizeLimit {
+    public enum JournalSizeLimit: Sendable {
       case none
       case limit(Int)
     }
-    public enum LockingMode {
+    public enum LockingMode: String, Sendable {
       case normal, exclusive
     }
-    public enum SyncMode {
+    public enum SyncMode: String, Sendable {
       case off, normal, full, extra
     }
     
@@ -414,3 +435,11 @@ fileprivate extension RangeReplaceableCollection
   }
 }
 
+
+#if swift(>=5.5)
+// @unchecked because `model` (optional, set once during setup)
+// and `expressionFactory` (never really changed) are `var`.
+// The pool has its own internal locking. Safe as long as `model` is set before
+// concurrent access begins (which is the normal usage pattern).
+extension SQLite3Adaptor : @unchecked Sendable {}
+#endif

@@ -352,6 +352,14 @@
 		E8EB9E641EA1254E00C6DA54 /* AdaptorModelFetch.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8EB9E631EA1254E00C6DA54 /* AdaptorModelFetch.swift */; };
 		E8F96E141EE4A968005FDC40 /* Pluralize.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8F96E131EE4A968005FDC40 /* Pluralize.swift */; };
 		E8F96E151EE4A968005FDC40 /* Pluralize.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8F96E131EE4A968005FDC40 /* Pluralize.swift */; };
+		E8AA0B011E606D1700D6F001 /* Adaptor+Async.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8AA0A011E606D1700D6F001 /* Adaptor+Async.swift */; };
+		E8AA0B011E606D1700D6F002 /* Adaptor+Async.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8AA0A011E606D1700D6F001 /* Adaptor+Async.swift */; };
+		E8AA0B011E606D1700D6F003 /* Adaptor+Async.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8AA0A011E606D1700D6F001 /* Adaptor+Async.swift */; };
+		E8AA0B011E606D1700D6F004 /* AdaptorAsyncRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8AA0A011E606D1700D6F002 /* AdaptorAsyncRunner.swift */; };
+		E8AA0B011E606D1700D6F005 /* AdaptorAsyncRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8AA0A011E606D1700D6F002 /* AdaptorAsyncRunner.swift */; };
+		E8AA0B011E606D1700D6F006 /* AdaptorAsyncRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8AA0A011E606D1700D6F002 /* AdaptorAsyncRunner.swift */; };
+		E8AA0B011E606D1700D6F007 /* AdaptorAsyncTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8AA0A011E606D1700D6F003 /* AdaptorAsyncTests.swift */; };
+		E8AA0B011E606D1700D6F008 /* AdaptorAsyncTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8AA0A011E606D1700D6F003 /* AdaptorAsyncTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -564,6 +572,9 @@
 		E8EB9E5C1EA1117100C6DA54 /* Logger.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Logger.swift; path = Sources/ZeeQL/Foundation/Logger.swift; sourceTree = SOURCE_ROOT; };
 		E8EB9E631EA1254E00C6DA54 /* AdaptorModelFetch.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = AdaptorModelFetch.swift; path = Sources/ZeeQL/Access/AdaptorModelFetch.swift; sourceTree = SOURCE_ROOT; };
 		E8F96E131EE4A968005FDC40 /* Pluralize.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Pluralize.swift; path = Sources/ZeeQL/Foundation/Pluralize.swift; sourceTree = SOURCE_ROOT; };
+		E8AA0A011E606D1700D6F001 /* Adaptor+Async.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "Adaptor+Async.swift"; path = "Sources/ZeeQL/Access/Adaptor+Async.swift"; sourceTree = SOURCE_ROOT; };
+		E8AA0A011E606D1700D6F002 /* AdaptorAsyncRunner.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = AdaptorAsyncRunner.swift; path = Sources/ZeeQL/Access/AdaptorAsyncRunner.swift; sourceTree = SOURCE_ROOT; };
+		E8AA0A011E606D1700D6F003 /* AdaptorAsyncTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AdaptorAsyncTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -863,6 +874,8 @@
 			isa = PBXGroup;
 			children = (
 				E80B3FA01E606D1700D6F0ED /* Adaptor.swift */,
+				E8AA0A011E606D1700D6F001 /* Adaptor+Async.swift */,
+				E8AA0A011E606D1700D6F002 /* AdaptorAsyncRunner.swift */,
 				E80B3FA11E606D1700D6F0ED /* AdaptorChannel.swift */,
 				E80B3FA21E606D1700D6F0ED /* AdaptorOperation.swift */,
 				E80B3FA31E606D1700D6F0ED /* AdaptorRecord.swift */,
@@ -892,6 +905,7 @@
 				E81B62CB1E65DA0D00D43EFA /* CodeEntityModelTests.swift */,
 				E80B3DEA1FE15B0B0081DC43 /* CodeObjectModelTests.swift */,
 				E84900252F32675D003ACE50 /* DumpHelpers.swift */,
+				E8AA0A011E606D1700D6F003 /* AdaptorAsyncTests.swift */,
 			);
 			path = ZeeQLTests;
 			sourceTree = "<group>";
@@ -1238,6 +1252,8 @@
 				E8ACA275231166FA000F6BEC /* ComparisonOperation.swift in Sources */,
 				E8263CCE1E93C89200508276 /* SQLite3Expression.swift in Sources */,
 				E8263CB61E93C89200508276 /* Adaptor.swift in Sources */,
+				E8AA0B011E606D1700D6F002 /* Adaptor+Async.swift in Sources */,
+				E8AA0B011E606D1700D6F005 /* AdaptorAsyncRunner.swift in Sources */,
 				E8263C921E93C89200508276 /* SimpleKVC.swift in Sources */,
 				E8920D9A2E648B4000301F78 /* OpenDateInterval.swift in Sources */,
 				E8263CA81E93C89200508276 /* GlobalID.swift in Sources */,
@@ -1293,6 +1309,7 @@
 				E8B249861EE44AD9008258B7 /* Contacts.xcdatamodel in Sources */,
 				E8263C901E93C82D00508276 /* SQLite3OGoAdaptorTests.swift in Sources */,
 				E80285531EE6DFFC00F25AD7 /* FakeAdaptor.swift in Sources */,
+				E8AA0B011E606D1700D6F008 /* AdaptorAsyncTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1341,6 +1358,8 @@
 				E83F579F2DBFA73E008A1437 /* TypedDatabaseChannel.swift in Sources */,
 				E892D1B22D01063B003489FC /* EntityType+Builder.swift in Sources */,
 				E8ACA36E2313E49C000F6BEC /* Adaptor.swift in Sources */,
+				E8AA0B011E606D1700D6F003 /* Adaptor+Async.swift in Sources */,
+				E8AA0B011E606D1700D6F006 /* AdaptorAsyncRunner.swift in Sources */,
 				E8ACA3942313E4B7000F6BEC /* SQLExpressionFactory.swift in Sources */,
 				E8ACA3672313E498000F6BEC /* DatabaseChannel.swift in Sources */,
 				E8ACA36C2313E498000F6BEC /* DatabaseOperation.swift in Sources */,
@@ -1457,6 +1476,8 @@
 				E8F96E141EE4A968005FDC40 /* Pluralize.swift in Sources */,
 				E80B3FCD1E606D1E00D6F0ED /* QualifierParser.swift in Sources */,
 				E80B3FAC1E606D1700D6F0ED /* Adaptor.swift in Sources */,
+				E8AA0B011E606D1700D6F001 /* Adaptor+Async.swift in Sources */,
+				E8AA0B011E606D1700D6F004 /* AdaptorAsyncRunner.swift in Sources */,
 				E8DA98341EC0F287009B0F0F /* ZeeQLTypes.swift in Sources */,
 				E84182071E661922003232E4 /* CodeEntity.swift in Sources */,
 				E80B3FC51E606D1E00D6F0ED /* Expression.swift in Sources */,
@@ -1510,6 +1531,7 @@
 				E80B3DEB1FE15B0B0081DC43 /* CodeObjectModelTests.swift in Sources */,
 				E84FD5781ECB389200B2A8F0 /* ContactsDBModel.swift in Sources */,
 				E80285521EE6DFFB00F25AD7 /* FakeAdaptor.swift in Sources */,
+				E8AA0B011E606D1700D6F007 /* AdaptorAsyncTests.swift in Sources */,
 				E81B62CD1E65DA1300D43EFA /* CodeEntityModelTests.swift in Sources */,
 				E84FD5721ECB1B8100B2A8F0 /* ModelTests.swift in Sources */,
 				E8DDEE3C1E5FA1E600EC1DD8 /* SQLExpressionTests.swift in Sources */,
