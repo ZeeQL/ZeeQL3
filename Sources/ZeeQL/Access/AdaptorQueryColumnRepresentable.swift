@@ -10,6 +10,7 @@
 import struct Foundation.Data
 import struct Foundation.Date
 import struct Foundation.Decimal
+import struct Foundation.UUID
 import struct Foundation.TimeInterval
 import class  Foundation.DateFormatter
 import struct Foundation.Locale
@@ -229,6 +230,38 @@ extension Decimal: AdaptorQueryColumnRepresentable {
       if let i64 = Int64 (exactly: i) { return Decimal(i64) }
       if let u64 = UInt64(exactly: i) { return Decimal(u64) }
     }
+    throw AdaptorQueryTypeError.cannotConvertValue(Self.self, value)
+  }
+}
+
+extension UUID: AdaptorQueryColumnRepresentable {
+
+  @inlinable
+  public static func fromAdaptorQueryValue(_ value: Any?) throws -> UUID {
+    guard let value = value else {
+      throw AdaptorQueryTypeError.nullInNonOptionalType(Self.self)
+    }
+    if let u = value as? Self { return u }
+    if let s = value as? String, let u = UUID(uuidString: s) { return u }
+
+    if let data = value as? Data, data.count == 16 {
+      return data.withUnsafeBytes { (raw: UnsafeRawBufferPointer) in
+        UUID(uuid: ( raw[0],  raw[1],  raw[2],  raw[3],
+                     raw[4],  raw[5],  raw[6],  raw[7],
+                     raw[8],  raw[9],  raw[10], raw[11],
+                     raw[12], raw[13], raw[14], raw[15] ))
+      }
+    }
+    #if compiler(>=6)
+    if #available(macOS 15, iOS 13, *), let n = value as? UInt128 {
+      return withUnsafeBytes(of: n.bigEndian) { (raw: UnsafeRawBufferPointer) in
+        UUID(uuid: ( raw[0],  raw[1],  raw[2],  raw[3],
+                     raw[4],  raw[5],  raw[6],  raw[7],
+                     raw[8],  raw[9],  raw[10], raw[11],
+                     raw[12], raw[13], raw[14], raw[15] ))
+      }
+    }
+    #endif
     throw AdaptorQueryTypeError.cannotConvertValue(Self.self, value)
   }
 }

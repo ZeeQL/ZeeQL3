@@ -11,6 +11,7 @@ import struct Foundation.Data
 import struct Foundation.Date
 import struct Foundation.URL
 import struct Foundation.Decimal
+import struct Foundation.UUID
 #endif
 
 // marker interface for types that can be used as columns
@@ -222,7 +223,12 @@ extension Decimal : AttributeValue {
     return Optional<Decimal>.self
   }
 }
+extension UUID    : AttributeValue {
+  @inlinable
+  public static var optionalBaseType : AttributeValue.Type? { return self }
+  @inlinable
+  public static var optionalType     : AttributeValue.Type? {
+    return Optional<UUID>.self
   }
-  public static var optionalType : AttributeValue.Type? { return self }
 }
 #endif
