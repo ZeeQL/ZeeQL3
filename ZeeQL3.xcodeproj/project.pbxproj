@@ -226,6 +226,7 @@
 		E8A834F91ECDADF700CCDD82 /* AdaptorActiveRecordTestCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8A834F81ECDADF700CCDD82 /* AdaptorActiveRecordTestCase.swift */; };
 		E8A834FA1ECDADF700CCDD82 /* AdaptorActiveRecordTestCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8A834F81ECDADF700CCDD82 /* AdaptorActiveRecordTestCase.swift */; };
 		E8ACA26D23115499000F6BEC /* EquatableTypeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8ACA26C23115499000F6BEC /* EquatableTypeTests.swift */; };
+		AA11DEC0DE0000000000B111 /* UUIDDecimalTypeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA11DEC0DE0000000000FE01 /* UUIDDecimalTypeTests.swift */; };
 		E8ACA271231164A5000F6BEC /* QualifierEvaluationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8ACA270231164A5000F6BEC /* QualifierEvaluationTests.swift */; };
 		E8ACA274231166F7000F6BEC /* ComparisonOperation.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8ACA272231166BE000F6BEC /* ComparisonOperation.swift */; };
 		E8ACA275231166FA000F6BEC /* ComparisonOperation.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8ACA272231166BE000F6BEC /* ComparisonOperation.swift */; };
@@ -541,6 +542,7 @@
 		E8A20F14230EE5CF00AEE53E /* AccessDataSourceFinders.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessDataSourceFinders.swift; sourceTree = "<group>"; };
 		E8A834F81ECDADF700CCDD82 /* AdaptorActiveRecordTestCase.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = AdaptorActiveRecordTestCase.swift; path = ZeeQLTests/AdaptorActiveRecordTestCase.swift; sourceTree = "<group>"; };
 		E8ACA26C23115499000F6BEC /* EquatableTypeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EquatableTypeTests.swift; sourceTree = "<group>"; };
+		AA11DEC0DE0000000000FE01 /* UUIDDecimalTypeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UUIDDecimalTypeTests.swift; sourceTree = "<group>"; };
 		E8ACA270231164A5000F6BEC /* QualifierEvaluationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QualifierEvaluationTests.swift; sourceTree = "<group>"; };
 		E8ACA272231166BE000F6BEC /* ComparisonOperation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComparisonOperation.swift; sourceTree = "<group>"; };
 		E8ACA33B2313E3DB000F6BEC /* libWatchZeeQL.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libWatchZeeQL.a; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -894,6 +896,7 @@
 			isa = PBXGroup;
 			children = (
 				E8ACA26C23115499000F6BEC /* EquatableTypeTests.swift */,
+				AA11DEC0DE0000000000FE01 /* UUIDDecimalTypeTests.swift */,
 				E8ACA270231164A5000F6BEC /* QualifierEvaluationTests.swift */,
 				E8DDEE381E5FA1E600EC1DD8 /* QualifierParserTests.swift */,
 				E8DDEE391E5FA1E600EC1DD8 /* SQLExpressionTests.swift */,
@@ -1524,6 +1527,7 @@
 				E8687C9B1E606F6A00D62ABF /* FormatterTests.swift in Sources */,
 				E80285491EE6CBE100F25AD7 /* SchemaSyncTests.swift in Sources */,
 				E8ACA26D23115499000F6BEC /* EquatableTypeTests.swift in Sources */,
+				AA11DEC0DE0000000000B111 /* UUIDDecimalTypeTests.swift in Sources */,
 				E8ACA271231164A5000F6BEC /* QualifierEvaluationTests.swift in Sources */,
 				E84900272F32675D003ACE50 /* DumpHelpers.swift in Sources */,
 				E8B249831EE44A66008258B7 /* ModelLoaderTests.swift in Sources */,
