@@ -225,6 +225,32 @@ extension Array: AdaptorQueryColumnRepresentable where Element == UInt8 {
     if let data = value as? Data { return Self(data) }
     #endif
     if let s = value as? String { return Self(s.utf8) }
+    
+    if #available(macOS 13, iOS 13, *) {
+      if let seq = value as? any Sequence<UInt8> { return .init(seq) }
+    }
+
+    throw AdaptorQueryTypeError.cannotConvertValue([ UInt8 ].self, value)
+  }
+}
+
+extension Set: AdaptorQueryColumnRepresentable where Element == UInt8 {
+
+  @inlinable
+  public static func fromAdaptorQueryValue(_ value: Any?) throws -> Self {
+    guard let value = value else {
+      throw AdaptorQueryTypeError.nullInNonOptionalType([ UInt8 ].self)
+    }
+    if let bytes = value as? Self { return bytes }
+    #if canImport(Foundation)
+    if let data = value as? Data { return Self(data) }
+    #endif
+    if let s = value as? String { return Self(s.utf8) }
+
+    if #available(macOS 13, iOS 13, *) {
+      if let seq = value as? any Sequence<UInt8> { return .init(seq) }
+    }
+
     throw AdaptorQueryTypeError.cannotConvertValue([ UInt8 ].self, value)
   }
 }
