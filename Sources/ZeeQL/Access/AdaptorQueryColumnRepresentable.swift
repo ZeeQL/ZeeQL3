@@ -9,6 +9,7 @@
 #if canImport(Foundation)
 import struct Foundation.Data
 import struct Foundation.Date
+import struct Foundation.Decimal
 import struct Foundation.TimeInterval
 import class  Foundation.DateFormatter
 import struct Foundation.Locale
@@ -208,6 +209,26 @@ extension Data: AdaptorQueryColumnRepresentable {
     if let data  = value as? Self       { return data }
     if let bytes = value as? [ UInt8 ]  { return Self(bytes) }
     if let s     = value as? String     { return Self(s.utf8) }
+    throw AdaptorQueryTypeError.cannotConvertValue(Self.self, value)
+  }
+}
+
+extension Decimal: AdaptorQueryColumnRepresentable {
+
+  @inlinable
+  public static func fromAdaptorQueryValue(_ value: Any?) throws -> Decimal {
+    guard let value = value else {
+      throw AdaptorQueryTypeError.nullInNonOptionalType(Self.self)
+    }
+    if let d = value as? Self   { return d }
+    if let d = value as? Double { return Decimal(d) }
+    if let i = value as? Int    { return Decimal(i) }
+    if let s = value as? String, let d = Decimal(string: s) { return d }
+    if let f = value as? Float  { return Decimal(Double(f)) }
+    if let i = value as? any BinaryInteger {
+      if let i64 = Int64 (exactly: i) { return Decimal(i64) }
+      if let u64 = UInt64(exactly: i) { return Decimal(u64) }
+    }
     throw AdaptorQueryTypeError.cannotConvertValue(Self.self, value)
   }
 }
