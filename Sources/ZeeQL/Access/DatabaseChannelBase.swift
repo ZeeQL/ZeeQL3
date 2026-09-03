@@ -16,6 +16,7 @@ public enum DatabaseChannelError : Swift.Error {
   case missingEntity(String?)
   case missingRelationship(Entity, String)
   case incompleteJoin(Join)
+  case unsupportedPrefetchJoinValue(Any.Type)
   
   case couldNotBuildPrimaryKeyQualifier
   case missingAttributeUsedForLocking(Attribute)
@@ -482,7 +483,7 @@ open class DatabaseChannelBase {
       throw DatabaseChannelError.incompleteJoin(join)
     }
     
-    let srcValues = helper.getSourceValues(srcName)
+    let srcValues = try helper.getSourceValues(srcName)
     #if DEBUG
     do {
       let unique = Set(srcValues)
@@ -493,7 +494,7 @@ open class DatabaseChannelBase {
     /* This is a Map which maps the join target-value to matching
      * DatabaseObjects. Usually its just one.
      */
-    let valueToObjects = helper.getValueToObjects(srcName)
+    let valueToObjects = try helper.getValueToObjects(srcName)
     
     // TBD: srcValues could be empty?! Well, values could be NULL (for non-pkey
     //      source attributes).
@@ -524,7 +525,8 @@ open class DatabaseChannelBase {
     
     // This does things like:
     // `companyId in [ 1, 2, 3, 4 ]`
-    let joinQualifier = KeyValueQualifier(targetName, .in, srcValues)
+    let joinValues: [ Any? ] = srcValues.map { $0.base }
+    let joinQualifier = KeyValueQualifier(targetName, .in, joinValues)
     
     guard let destEntity = rel.destinationEntity else {
       // TODO: what error
@@ -559,7 +561,7 @@ open class DatabaseChannelBase {
         continue
       }
 
-      guard let v = hackValueHolder(rv) else {
+      guard let v = try prefetchJoinKey(rv) else {
         continue
       }
       
