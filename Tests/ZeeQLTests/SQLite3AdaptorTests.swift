@@ -115,6 +115,34 @@ class SQLite3AdaptorTests: XCTestCase {
     adaptor.releaseChannel(reused)
   }
 
+  func testSQLLoggingIsDisabledByDefault() throws {
+    let logger = CapturingLogger()
+    let adaptor = SQLite3Adaptor(":memory:")
+    adaptor.log = logger
+    let channel = try adaptor.openChannel()
+
+    try channel.performSQL("SELECT 'private-value'")
+    XCTAssertTrue(logger.messages.isEmpty)
+  }
+
+  func testBindValuesAreRedactedFromSQLLoggingByDefault() throws {
+    var options = SQLite3Adaptor.RuntimeOptions()
+    options.logSQL = true
+    let logger = CapturingLogger()
+    let adaptor = SQLite3Adaptor(":memory:", options: options)
+    adaptor.log = logger
+    let channel = try adaptor.openChannel()
+    let expression = SQLExpression(entity: nil)
+    expression.statement = "SELECT ?"
+    expression.bindVariables = [
+      SQLExpression.BindVariable(attribute: nil, value: "private-value")
+    ]
+
+    try channel.evaluateQueryExpression(expression, nil) { _ in }
+    XCTAssertTrue(logger.messages.contains { $0.contains("SELECT ?") })
+    XCTAssertFalse(logger.messages.contains { $0.contains("private-value") })
+  }
+
   private func deferForeignKeysValue(_ channel: AdaptorChannel)
     throws -> Int64
   {
@@ -136,5 +164,21 @@ class SQLite3AdaptorTests: XCTestCase {
       testFailedRollbackReflectsSQLiteTransactionState ),
     ( "testDeferredForeignKeysAreReappliedToPooledChannel",
       testDeferredForeignKeysAreReappliedToPooledChannel ),
+    ( "testSQLLoggingIsDisabledByDefault",
+      testSQLLoggingIsDisabledByDefault ),
+    ( "testBindValuesAreRedactedFromSQLLoggingByDefault",
+      testBindValuesAreRedactedFromSQLLoggingByDefault ),
   ]
+}
+
+private final class CapturingLogger: ZeeQLLogger {
+
+  private(set) var messages = [ String ]()
+
+  func primaryLog(_ logLevel: ZeeQLLoggerLogLevel,
+                  _ message: () -> String, _ values: [ Any? ])
+  {
+    let suffix = values.map { String(describing: $0) }.joined(separator: " ")
+    messages.append(suffix.isEmpty ? message() : "\(message()) \(suffix)")
+  }
 }

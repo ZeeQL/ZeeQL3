@@ -34,7 +34,8 @@ open class SQLite3AdaptorChannel : AdaptorChannel {
   public let expressionFactory : SQLExpressionFactory
   public let handle            : OpaquePointer
   final  let closeHandle       : Bool
-  final  let doLogSQL          = true
+  final  let doLogSQL          : Bool
+  final  let doLogBindValues   : Bool
   final  let deferForeignKeys  : Bool?
   
   init(adaptor: Adaptor, handle: OpaquePointer, closeHandle: Bool = true) {
@@ -42,8 +43,10 @@ open class SQLite3AdaptorChannel : AdaptorChannel {
     self.expressionFactory = adaptor.expressionFactory
     self.handle            = handle
     self.closeHandle       = closeHandle
-    self.deferForeignKeys  = 
-        (adaptor as? SQLite3Adaptor)?.options.deferForeignKeys
+    let options            = (adaptor as? SQLite3Adaptor)?.options
+    self.doLogSQL          = options?.logSQL ?? false
+    self.doLogBindValues   = doLogSQL && (options?.logBindValues ?? false)
+    self.deferForeignKeys  = options?.deferForeignKeys
     
     // TODO: busy handler?
     // sqlite3_busy_timeout()
@@ -335,38 +338,42 @@ open class SQLite3AdaptorChannel : AdaptorChannel {
       
       func bindAnyValue(_ value: Any?) throws -> Int32 {
         guard let value = value else {
-          if doLogSQL { log.log("      [\(idx)]> bind NULL") }
+          if doLogBindValues { log.log("      [\(idx)]> bind NULL") }
           return sqlite3_bind_null(stmt, idx)
         }
         switch value {
           case let value as String:
-            if doLogSQL { log.log("      [\(idx)]> bind string \"\(value)\"") }
+            if doLogBindValues {
+              log.log("      [\(idx)]> bind string \"\(value)\"")
+            }
             return sqlite3_bind_text(stmt, idx, pool.pstrdup(value), -1, nil)
           case let value as Int:
-            if doLogSQL { log.log("      [\(idx)]> bind int \(value)") }
+            if doLogBindValues { log.log("      [\(idx)]> bind int \(value)") }
             return sqlite3_bind_int64(stmt, idx, sqlite3_int64(value))
           case let value as Int32:
-            if doLogSQL { log.log("      [\(idx)]> bind int \(value)") }
+            if doLogBindValues { log.log("      [\(idx)]> bind int \(value)") }
             return sqlite3_bind_int64(stmt, idx, sqlite3_int64(value))
           case let value as Int64:
-            if doLogSQL { log.log("      [\(idx)]> bind int \(value)") }
+            if doLogBindValues { log.log("      [\(idx)]> bind int \(value)") }
             return sqlite3_bind_int64(stmt, idx, sqlite3_int64(value))
           case let value as GlobalID:
             #if !GLOBALID_AS_OPEN_CLASS
             assert(value.keyCount == 1)
             switch value.value {
               case .singleNil:
-                if doLogSQL { log.log("      [\(idx)]> bind NULL") }
+                if doLogBindValues { log.log("      [\(idx)]> bind NULL") }
                 return sqlite3_bind_null(stmt, idx)
               case .int(let value):
-                if doLogSQL { log.log("      [\(idx)]> bind int \(value)") }
+                if doLogBindValues {
+                  log.log("      [\(idx)]> bind int \(value)")
+                }
                 return sqlite3_bind_int64(stmt, idx, sqlite3_int64(value))
               case .string(let value):
-                if doLogSQL {
+                if doLogBindValues {
                   log.log("      [\(idx)]> bind string \"\(value)\"") }
                 return sqlite3_bind_text(stmt, idx, pool.pstrdup(value), -1, nil)
               case .uuid(let value):
-                if doLogSQL {
+                if doLogBindValues {
                   log.log("      [\(idx)]> bind string \"\(value)\"") }
                 return sqlite3_bind_text(stmt, idx,
                                        pool.pstrdup(value.uuidString), -1, nil)
@@ -380,7 +387,7 @@ open class SQLite3AdaptorChannel : AdaptorChannel {
                 }
                 else {
                   assertionFailure("Empty key")
-                  if doLogSQL { log.log("      [\(idx)]> bind NULL") }
+                  if doLogBindValues { log.log("      [\(idx)]> bind NULL") }
                   return sqlite3_bind_null(stmt, idx)
                 }
             }
@@ -396,7 +403,9 @@ open class SQLite3AdaptorChannel : AdaptorChannel {
             #endif
           default:
             assertionFailure("Unexpected value, please add explicit type")
-            if doLogSQL { log.log("      [\(idx)]> bind other \(value)") }
+            if doLogBindValues {
+              log.log("      [\(idx)]> bind other \(value)")
+            }
             return sqlite3_bind_text(stmt, idx, pool.pstrdup(value), -1, nil)
         }
       }
