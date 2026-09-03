@@ -158,7 +158,7 @@ open class CoreDataModelLoader : ModelLoader {
     
     // scan for entities
     for element in root.childElementsWithName("entity") {
-      if let entity = loadEntity(from: element) {
+      if let entity = try loadEntity(from: element) {
         entities.append(entity)
       }
     }
@@ -168,7 +168,7 @@ open class CoreDataModelLoader : ModelLoader {
     fixupToMany(in: model)
     
     for node in root.childElementsWithName("fetchRequest") {
-      _ = loadFetchSpecification(from: node, into: model)
+      _ = try loadFetchSpecification(from: node, into: model)
     }
 
     for _ in root.childElementsWithName("configurations") {
@@ -207,7 +207,7 @@ open class CoreDataModelLoader : ModelLoader {
    */
   @discardableResult
   func loadFetchSpecification(from xml: XMLElement, into model: Model)
-       -> FetchSpecification?
+       throws -> FetchSpecification?
   {
     assert(xml.name == "fetchRequest" || xml.name == "fetch" /*Go*/)
     
@@ -222,7 +222,7 @@ open class CoreDataModelLoader : ModelLoader {
       return nil
     }
     
-    let fs = loadFetchSpecification(from: xml, entity: entity)
+    let fs = try loadFetchSpecification(from: xml, entity: entity)
     
     if let fs = entity.fetchSpecifications[name] {
       log.warn("duplicate fetchspecs for name:", name, "in entity:", entity, fs)
@@ -285,7 +285,7 @@ open class CoreDataModelLoader : ModelLoader {
    * - Returns: The ``FetchSpecification``, if it could be constructed.
    */
   func loadFetchSpecification(from xml: XMLElement, entity: Entity)
-       -> FetchSpecification?
+       throws -> FetchSpecification?
   {
     // TODO:
     // faulting stuff:
@@ -312,8 +312,10 @@ open class CoreDataModelLoader : ModelLoader {
     let attrs = xml.attributesAsDict
     
     let q : Qualifier?
-    if let qs = attrs["predicateString"] { q = qualifierWithFormat( qs) }
-    else                                 { q = nil                       }
+    if let qs = attrs["predicateString"] {
+      q = try QualifierParser.parse(qs)
+    }
+    else { q = nil }
 
     let limit : Int?
     if let l = attrs["fetchLimit"] ?? attrs["limit"], !l.isEmpty {
@@ -373,13 +375,7 @@ open class CoreDataModelLoader : ModelLoader {
     if let xml = xml.firstChildElementWithName("qualifier") {
       // <qualifier>(principalId IN $authIds) AND (objectId IN $ids)</qualifier>
       if let v = xml.textContent, !v.isEmpty {
-        if let q = QualifierParser.parse(v) {
-          fs.qualifier = q
-        }
-        else {
-          log.error("Could not parse qualifier:", v)
-          assertionFailure("Could not parse qualifier \(v)?")
-        }
+        fs.qualifier = try QualifierParser.parse(v)
       }
       else {
         log.warn("<qualifier> tag w/o content?", xml)
@@ -441,7 +437,7 @@ open class CoreDataModelLoader : ModelLoader {
    *   - xml: The `XMLElement` representing the entity.
    * - Returns: The ``Entity``, if it could be loaded.
    */
-  func loadEntity(from xml: XMLElement) -> Entity? {
+  func loadEntity(from xml: XMLElement) throws -> Entity? {
     assert(xml.name == "entity")
     
     let attrs = xml.attributesAsDict
@@ -478,7 +474,7 @@ open class CoreDataModelLoader : ModelLoader {
     if let v = attrs["schema"], !v.isEmpty { entity.schemaName = v } // Go
     if boolValue(attrs["readonly"]) { entity.isReadOnly = true } // Go
     if let v = attrs["restrictingQualifier"] { // Go
-      entity.restrictingQualifier = QualifierParser.parse(v)
+      entity.restrictingQualifier = try QualifierParser.parse(v)
     }
 
     var idAttribute : Attribute? = nil
@@ -562,7 +558,7 @@ open class CoreDataModelLoader : ModelLoader {
         continue
       }
 
-      let fs = loadFetchSpecification(from: node, entity: entity)
+      let fs = try loadFetchSpecification(from: node, entity: entity)
       if let fs = entity.fetchSpecifications[name] {
         log.warn("duplicate fetchspecs for name:", name, "in entity:", entity,
                  fs)

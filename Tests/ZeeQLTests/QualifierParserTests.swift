@@ -21,6 +21,60 @@ class QualifierParserTests: XCTestCase {
     _testKeyValueQualifier("name < 'Duck'",     "name", "Duck")
     _testKeyValueQualifier("name = null",       "name", nil)
   }
+
+  func testUnterminatedQuotedStringsReturnNil() {
+    XCTAssertNil(qualifierWithFormat("name = '"))
+    XCTAssertNil(qualifierWithFormat("name = 'unterminated"))
+    XCTAssertNil(qualifierWithFormat("name = \"unterminated"))
+    XCTAssertNil(qualifierWithFormat("name = 'escape\\"))
+  }
+
+  func testTrailingFormatMarkerReturnsNil() {
+    XCTAssertNil(qualifierWithFormat("name = %"))
+  }
+
+  func testThrowingParser() throws {
+    let qualifier = try QualifierParser.parse("name = 'Duck'")
+    let keyValue = try XCTUnwrap(qualifier as? KeyValueQualifier)
+
+    XCTAssertEqual(keyValue.key, "name")
+    XCTAssertEqual(keyValue.value as? String, "Duck")
+  }
+
+  func testThrowingParserReportsOriginalString() {
+    let input = "name = 'unterminated"
+
+    XCTAssertThrowsError(try QualifierParser.parse(input)) { thrown in
+      guard let error = thrown as? QualifierParser.ParserError else {
+        return XCTFail("unexpected error: \(thrown)")
+      }
+      XCTAssertEqual(error.string, input)
+      guard case .invalidSyntax(let reason, _, _) = error else {
+        return XCTFail("unexpected parser error: \(error)")
+      }
+      XCTAssertTrue(reason.contains("not closed"))
+    }
+  }
+
+  func testThrowingParserReportsEmptyInput() {
+    let input = " "
+
+    XCTAssertThrowsError(try QualifierParser.parse(input)) { thrown in
+      XCTAssertEqual(
+        thrown as? QualifierParser.ParserError,
+        .emptyInput(string: input))
+    }
+  }
+
+  func testMalformedTokenBoundariesDoNotTrap() {
+    let inputs = [
+      "", " ", "%", "'", "\"", "name ", "name =", "name = ",
+      "name = %", "name = '", "name = \\", "name = $", "(", "SQL[",
+      "SQL[$", "name = ()", "name = (Date", "name = (Date)",
+      "name = (Date) "
+    ]
+    for input in inputs { _ = qualifierWithFormat(input) }
+  }
   
   func testComplexCompoundQualifier() {
     // should be: ((a = 1 AND b = 2) OR c = 3) AND f = 4
@@ -325,6 +379,17 @@ class QualifierParserTests: XCTestCase {
   static var allTests = [
     ( "testSimpleKeyValueQualifierInt",    testSimpleKeyValueQualifierInt    ),
     ( "testSimpleKeyValueQualifierString", testSimpleKeyValueQualifierString ),
+    ( "testUnterminatedQuotedStringsReturnNil",
+      testUnterminatedQuotedStringsReturnNil ),
+    ( "testTrailingFormatMarkerReturnsNil",
+      testTrailingFormatMarkerReturnsNil ),
+    ( "testThrowingParser",               testThrowingParser               ),
+    ( "testThrowingParserReportsOriginalString",
+      testThrowingParserReportsOriginalString ),
+    ( "testThrowingParserReportsEmptyInput",
+      testThrowingParserReportsEmptyInput ),
+    ( "testMalformedTokenBoundariesDoNotTrap",
+      testMalformedTokenBoundariesDoNotTrap ),
     ( "testComplexCompoundQualifier",      testComplexCompoundQualifier      ),
     ( "testComplexArgumentParsing",        testComplexArgumentParsing        ),
     ( "testQualifierWithOneVariables",     testQualifierWithOneVariables     ),
