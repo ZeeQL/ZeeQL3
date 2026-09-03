@@ -155,45 +155,43 @@ open class DatabaseChannelBase {
     throws -> R
   {
     try withChannel { adaptorChannel in
+      let log = globalZeeQLLogger
       
       if isInTransaction { // Transaction managed by someone else
         return try code(adaptorChannel)
       }
 
       try adaptorChannel.begin()
+
+      let result: R
       do {
-        let result = try code(adaptorChannel)
-        
-        do {
-          if rollbackWhenDone {
-            try adaptorChannel.rollback()
-          }
-          else {
-            try adaptorChannel.commit()
-          }
-        }
-        catch {
-          if !rollbackWhenDone { // commit failed
-            // tx should be cancelled, no rollback required, but lets do it
-            // anyways.
-            try? adaptorChannel.rollback()
-          }
-          throw DatabaseChannelError.couldNotFinishTX(error)
-        }
-        
-        return result
+        result = try code(adaptorChannel)
       }
-      catch {
+      catch let bodyError {
         do {
           try adaptorChannel.rollback()
-          throw error // properly rolled back after error in code
         }
-        catch { // Could not rollback
-          globalZeeQLLogger.warn("could not rollback transaction:", error)
-          throw DatabaseChannelError.couldNotFinishTX(error)
-            // TBD: separate error?
+        catch {
+          log.warn("could not rollback transaction:", error,
+                   "after body error:", bodyError)
+        }
+        throw bodyError
+      }
+
+      do {
+        if rollbackWhenDone {
+          try adaptorChannel.rollback()
+        }
+        else {
+          try adaptorChannel.commit()
         }
       }
+      catch let finishError {
+        if !rollbackWhenDone { try? adaptorChannel.rollback() }
+        throw DatabaseChannelError.couldNotFinishTX(finishError)
+      }
+
+      return result
     }
   }
   
