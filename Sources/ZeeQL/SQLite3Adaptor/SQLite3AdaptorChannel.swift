@@ -352,6 +352,7 @@ open class SQLite3AdaptorChannel : AdaptorChannel {
             if doLogSQL { log.log("      [\(idx)]> bind int \(value)") }
             return sqlite3_bind_int64(stmt, idx, sqlite3_int64(value))
           case let value as GlobalID:
+            #if !GLOBALID_AS_OPEN_CLASS
             assert(value.keyCount == 1)
             switch value.value {
               case .singleNil:
@@ -383,6 +384,16 @@ open class SQLite3AdaptorChannel : AdaptorChannel {
                   return sqlite3_bind_null(stmt, idx)
                 }
             }
+            #else
+              guard let value = value as? KeyGlobalID,
+                    value.keyCount == 1 else
+              {
+                let rc = SQLITE_MISMATCH
+                throw SQLite3AdaptorChannelError.bindFailed(
+                  rc, message(for: rc), bind)
+              }
+              return try bindAnyValue(value[0])
+            #endif
           default:
             assertionFailure("Unexpected value, please add explicit type")
             if doLogSQL { log.log("      [\(idx)]> bind other \(value)") }

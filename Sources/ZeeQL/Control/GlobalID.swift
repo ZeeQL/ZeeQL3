@@ -156,14 +156,18 @@ public extension KeyGlobalID { // Initializers and Factory
                            values: [ Optional<AnyHashable>.none ])
       }
     }
-    let hashables : [ AnyHashable? ] = values.compactMap {
-      guard let value = $0 else { return nil }
+    
+    // This is a compound key or a single key w/ a nil value.
+    var hashables = [ AnyHashable? ]()
+    hashables.reserveCapacity(values.count)
+    for value in values {
+      guard let value else { hashables.append(nil); continue }
       guard let h = value as? any Hashable else {
-        fatalError("Key value must be Hashable \(entityName) \(values)")
+        assertionFailure("Non-hashable \(entityName) key: \(type(of: value))")
+        return nil
       }
-      return AnyHashable(h)
+      hashables.append(AnyHashable(h))
     }
-    assert(hashables.count == values.count)
     return KeyGlobalID(entityName: entityName, values: hashables)
   }
 }
@@ -198,7 +202,7 @@ extension KeyGlobalID: CustomStringConvertible {
   }
 }
 
-#else // GLOBALID_AS_OPEN_CLASS
+#else // GLOBALID_AS_OPEN_CLASS - disabled for now, drifts away too
 
 open class GlobalID : EquatableType, Hashable {
   // Note: cannot be a protocol because Hashable (because Equatable)
@@ -250,7 +254,12 @@ public class KeyGlobalID : GlobalID, CustomStringConvertible {
   @inlinable
   open subscript(i: Int) -> Any? { return nil }
 
-  static func make(entityName: String, values: [ Any? ]) -> KeyGlobalID {
+  @inlinable // legacy
+  public static func make(entityName: String,
+                          values: [ Any? ]) -> KeyGlobalID?
+  {
+    if values.isEmpty { return KeyGlobalID(entityName: entityName) }
+
     if values.count == 1, let v = values.first {
       switch v {
         case let i as Int:
@@ -261,8 +270,18 @@ public class KeyGlobalID : GlobalID, CustomStringConvertible {
           return SingleIntKeyGlobalID(entityName: entityName, value: Int(i))
         case let i as UInt32: // assumes 64-bit
           return SingleIntKeyGlobalID(entityName: entityName, value: Int(i))
+        case let i as any BinaryInteger:
+          return SingleIntKeyGlobalID(entityName: entityName, value: Int(i))
         default:
           break
+        }
+    }
+
+    for value in values {
+      guard let value else { continue }
+      guard value is any Hashable else {
+        assertionFailure("Non-hashable \(entityName) key: \(type(of: value))")
+        return nil
       }
     }
     return ComplexKeyGlobalID(entityName: entityName, values: values)
