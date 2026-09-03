@@ -206,7 +206,7 @@ open class ActiveRecordBase : ActiveRecordType, SmartDescription {
     guard let idx = list.firstIndex(where: { $0 === o }) else { return }
     
     list.remove(at: idx)
-    takeStoredValue([ list ], forKey: key)
+    takeStoredValue(list, forKey: key)
   }
   
   
