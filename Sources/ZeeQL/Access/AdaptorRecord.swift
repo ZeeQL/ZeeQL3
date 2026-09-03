@@ -16,7 +16,7 @@
  *       dictionary with an optional value to represent NULL columns.
  */
 @dynamicMemberLookup
-open class AdaptorRecord : SwiftObject, SmartDescription {
+public final class AdaptorRecord : SwiftObject, SmartDescription {
   // Note: used to be a struct, but for DataSource we need an object, and well.
   
   public let schema  : AdaptorRecordSchema
