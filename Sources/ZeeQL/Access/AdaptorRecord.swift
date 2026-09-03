@@ -107,8 +107,7 @@ open class AdaptorRecord : SwiftObject, SmartDescription {
     var dict = AdaptorRow()
     dict.reserveCapacity(schema.count)
     for key in schema.attributeNames {
-      guard let v = self[key] else { continue }
-      dict[key] = v
+      dict.updateValue(self[key], forKey: key)
     }
     return dict
   }
