@@ -65,12 +65,19 @@ open class SQLite3ModelFetch: AdaptorModelFetch {
     // TBD: iterate on all returned describeDatabaseNames
     // (via dbname.sqlite_master)
     // ATTACH DATABASE 'DatabaseName' As 'Alias-Name';
-    var sql = "SELECT name FROM sqlite_master WHERE type IN ('table', 'view')"
-    if let like = like {
-      sql += " AND name LIKE '" + like + "'"; // TODO: escape!
-    }
     var names = [ String ]()
-    try channel.select(sql) { ( name : String ) in names.append(name) }
+    let expression = channel.expressionFactory.createExpression(nil)
+    expression.statement =
+      "SELECT name FROM sqlite_master WHERE type IN ('table', 'view')"
+    if let like {
+      expression.statement += " AND name LIKE ?"
+      expression.bindVariables = [
+        SQLExpression.BindVariable(attribute: nil, value: like)
+      ]
+    }
+    try channel.evaluateQueryExpression(expression, nil) { record in
+      if let name = record[0] as? String { names.append(name) }
+    }
     return names
   }
 
@@ -89,16 +96,21 @@ open class SQLite3ModelFetch: AdaptorModelFetch {
   
   func _fetchColumnsOfTable(_ table: String) throws -> [ AdaptorRecord ] {
     // keys: cid, name, type, notnull, dflt_value, pk
-    let records : [ AdaptorRecord ] =
-                      try channel.querySQL("PRAGMA table_info(\(table))")
+    let table = quotedIdentifier(table)
+    let records = try channel.querySQL("PRAGMA table_info(\(table))")
     return records
   }
   
   func _fetchForeignKeysOfTable(_ table: String) throws -> [ AdaptorRecord ] {
     // keys: id, seq, table, from, to, on_update, on_delete, match
-    let records : [ AdaptorRecord ] =
-                      try channel.querySQL("PRAGMA foreign_key_list(\(table))")
+    let table = quotedIdentifier(table)
+    let records = try channel.querySQL("PRAGMA foreign_key_list(\(table))")
     return records
+  }
+
+  private func quotedIdentifier(_ identifier: String) -> String {
+    return channel.expressionFactory.createExpression(nil)
+                  .sqlStringFor(schemaObjectName: identifier)
   }
   
   func primaryKeyNamesFromColumnInfos(_ columnInfos : [ AdaptorRecord ],

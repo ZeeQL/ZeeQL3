@@ -97,6 +97,39 @@ class SQLite3ModelTests: XCTestCase {
     XCTAssert(!tag4.isEqual(to: tag6))
     XCTAssert(!tag1.isEqual(to: tag6))
   }
+
+  func testDescribeTableNamesBindsLikePattern() throws {
+    let channel = try SQLite3Adaptor(":memory:").openChannel()
+    try channel.performSQL("CREATE TABLE normal(id INTEGER)")
+    try channel.performSQL("CREATE TABLE \"odd'name\"(id INTEGER)")
+    let fetch = SQLite3ModelFetch(channel: channel)
+
+    XCTAssertEqual(try fetch.describeTableNames(like: "odd'%"),
+                   [ "odd'name" ])
+    XCTAssertTrue(
+      try fetch.describeTableNames(like: "%' OR 1=1 --").isEmpty)
+  }
+
+  func testDescribeEntityQuotesTableName() throws {
+    let channel = try SQLite3Adaptor(":memory:").openChannel()
+    try channel.performSQL(
+      "CREATE TABLE \"parent table\"(\"id\" INTEGER PRIMARY KEY)")
+    try channel.performSQL(
+      """
+      CREATE TABLE "child)""table"(
+        "parent id" INTEGER,
+        FOREIGN KEY("parent id") REFERENCES "parent table"("id"))
+      """)
+    let fetch = SQLite3ModelFetch(channel: channel)
+
+    let entity = try fetch.describeEntityWithTableName("child)\"table")
+    XCTAssertEqual(entity.externalName, "child)\"table")
+    XCTAssertNotNil(entity[attribute: "parent id"])
+    XCTAssertEqual(entity.relationships.count, 1)
+    let relationship = try XCTUnwrap(
+      entity.relationships[0] as? ModelRelationship)
+    XCTAssertEqual(relationship.destinationEntityName, "parent table")
+  }
   
   
   // MARK: - Non-ObjC Swift Support
@@ -106,5 +139,9 @@ class SQLite3ModelTests: XCTestCase {
     ( "testDescribeOGoTableNames", testDescribeOGoTableNames ),
     ( "testFetchModel",            testFetchModel ),
     ( "testSchemaTag",             testSchemaTag  ),
+    ( "testDescribeTableNamesBindsLikePattern",
+      testDescribeTableNamesBindsLikePattern ),
+    ( "testDescribeEntityQuotesTableName",
+      testDescribeEntityQuotesTableName ),
   ]
 }
