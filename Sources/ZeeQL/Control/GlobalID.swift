@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 17/02/17.
-//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2026 ZeeZide GmbH. All rights reserved.
 //
 
 #if !GLOBALID_AS_OPEN_CLASS
@@ -123,8 +123,7 @@ public extension KeyGlobalID { // Initializers and Factory
   }
 
   @inlinable // legacy
-  static func make(entityName: String, values: [ Any? ]) -> KeyGlobalID
-  {
+  static func make(entityName: String, values: [ Any? ]) -> KeyGlobalID? {
     if values.isEmpty { return KeyGlobalID(entityName: entityName, values: []) }
 
     if values.count == 1, let opt = values.first {
@@ -145,12 +144,11 @@ public extension KeyGlobalID { // Initializers and Factory
           case let v as any BinaryInteger:
             return KeyGlobalID(entityName: entityName, value: Int(v))
           default:
-            assert(!(v is any BinaryInteger), "Unexpected BinaryInteger")
             assertionFailure("Custom key value type, add explicit check")
             if let v = v as? AnyHashable {
               return KeyGlobalID(entityName: entityName, values: [ v ])
             }
-            fatalError("Unsupported key type \(type(of: v))")
+            return nil
         }
       }
       else {
