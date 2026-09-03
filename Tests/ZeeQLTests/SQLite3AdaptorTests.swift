@@ -69,10 +69,41 @@ class SQLite3AdaptorTests: XCTestCase {
     }
   }
 
+  func testFailedCommitPreservesTransactionState() throws {
+    let channel = try SQLite3Adaptor(":memory:").openChannel()
+    try channel.performSQL("PRAGMA foreign_keys = ON")
+    try channel.performSQL("CREATE TABLE parent(id INTEGER PRIMARY KEY)")
+    try channel.performSQL(
+      """
+      CREATE TABLE child(parent_id INTEGER REFERENCES parent(id)
+                         DEFERRABLE INITIALLY DEFERRED)
+      """)
+
+    try channel.begin()
+    try channel.performSQL("INSERT INTO child(parent_id) VALUES (1)")
+    XCTAssertThrowsError(try channel.commit())
+    XCTAssertTrue(channel.isTransactionInProgress)
+    try channel.rollback()
+    XCTAssertFalse(channel.isTransactionInProgress)
+  }
+
+  func testFailedRollbackReflectsSQLiteTransactionState() throws {
+    let channel = try SQLite3Adaptor(":memory:").openChannel()
+    try channel.begin()
+    try channel.performSQL("ROLLBACK TRANSACTION;")
+
+    XCTAssertThrowsError(try channel.rollback())
+    XCTAssertFalse(channel.isTransactionInProgress)
+  }
+
   
   // MARK: - Non-ObjC Swift Support
   
   static var allTests = [
     ( "testBindQuery", testBindQuery ),
+    ( "testFailedCommitPreservesTransactionState",
+      testFailedCommitPreservesTransactionState ),
+    ( "testFailedRollbackReflectsSQLiteTransactionState",
+      testFailedRollbackReflectsSQLiteTransactionState ),
   ]
 }

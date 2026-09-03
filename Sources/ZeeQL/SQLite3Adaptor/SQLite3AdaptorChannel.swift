@@ -398,21 +398,20 @@ open class SQLite3AdaptorChannel : AdaptorChannel {
 
   // MARK: - Transactions
   
-  private(set) public var isTransactionInProgress : Bool = false
+  public var isTransactionInProgress : Bool {
+    return sqlite3_get_autocommit(handle) == 0
+  }
   
   public func begin() throws {
     guard !isTransactionInProgress
      else { throw AdaptorChannelError.transactionInProgress }
     
     try performSQL("BEGIN TRANSACTION;")
-    isTransactionInProgress = true
   }
   public func commit() throws {
-    isTransactionInProgress = false
     try performSQL("COMMIT TRANSACTION;")
   }
   public func rollback() throws {
-    isTransactionInProgress = false
     try performSQL("ROLLBACK TRANSACTION;")
   }
   
