@@ -285,7 +285,7 @@ public extension AccessDataSourceType {
                     _ firstKey: String, _ firstValue: Any,
                     _ keysAndValues: Any...) throws -> [ Object ]
   {
-    var binds = [ String: Any ].createArgs(keysAndValues)
+    var binds = try [ String: Any ].createArgs(keysAndValues)
     binds[firstKey] = firstValue
     return try fetchObjects(fetchSpecificationName, binds)
   }

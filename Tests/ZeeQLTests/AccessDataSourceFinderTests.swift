@@ -29,6 +29,24 @@ final class AccessDataSourceFinderTests: XCTestCase {
     XCTAssertEqual(qualifier.qualifiers.count, 2)
   }
 
+  func testVariadicFinderRejectsOddBindingArguments() throws {
+    let dataSource = makeCompositeDataSource()
+
+    XCTAssertThrowsError(
+      try dataSource.find("named", "first", 1, "dangling")) { error in
+      XCTAssertEqual(error as? DictionaryArgumentError, .oddArgumentCount(1))
+    }
+  }
+
+  func testVariadicFetchRejectsOddBindingArguments() throws {
+    let dataSource = makeCompositeDataSource()
+
+    XCTAssertThrowsError(
+      try dataSource.fetchObjects("named", "first", 1, "dangling")) { error in
+      XCTAssertEqual(error as? DictionaryArgumentError, .oddArgumentCount(1))
+    }
+  }
+
   private func makeCompositeDataSource() -> AdaptorDataSource {
     let entity = ModelEntity(name: "LocalizedItem")
     entity.attributes = [

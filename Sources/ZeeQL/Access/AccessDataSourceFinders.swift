@@ -284,7 +284,7 @@ public extension AccessDataSource { // Finders
   func find(_ name: String, _ firstBinding: String, _ firstValue: Any,
             _ bindings: Any...) throws -> Object?
   {
-    var bindings = [ String: Any ].createArgs(bindings)
+    var bindings = try [ String: Any ].createArgs(bindings)
     assert(bindings[firstBinding] == nil, "Duplicate binding.")
     bindings[firstBinding] = firstValue
     return try find(name, bindings)
