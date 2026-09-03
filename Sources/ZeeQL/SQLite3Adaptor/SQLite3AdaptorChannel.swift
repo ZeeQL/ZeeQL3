@@ -35,12 +35,15 @@ open class SQLite3AdaptorChannel : AdaptorChannel {
   public let handle            : OpaquePointer
   final  let closeHandle       : Bool
   final  let doLogSQL          = true
+  final  let deferForeignKeys  : Bool?
   
   init(adaptor: Adaptor, handle: OpaquePointer, closeHandle: Bool = true) {
     self.log               = adaptor.log
     self.expressionFactory = adaptor.expressionFactory
-    self.handle      = handle
-    self.closeHandle = closeHandle
+    self.handle            = handle
+    self.closeHandle       = closeHandle
+    self.deferForeignKeys  = 
+        (adaptor as? SQLite3Adaptor)?.options.deferForeignKeys
     
     // TODO: busy handler?
     // sqlite3_busy_timeout()
@@ -407,6 +410,17 @@ open class SQLite3AdaptorChannel : AdaptorChannel {
      else { throw AdaptorChannelError.transactionInProgress }
     
     try performSQL("BEGIN TRANSACTION;")
+
+    do {
+      if let deferForeignKeys {
+        let value = deferForeignKeys ? "on" : "off"
+        try performSQL("PRAGMA defer_foreign_keys = \(value)")
+      }
+    }
+    catch {
+      try? rollback()
+      throw error
+    }
   }
   public func commit() throws {
     try performSQL("COMMIT TRANSACTION;")

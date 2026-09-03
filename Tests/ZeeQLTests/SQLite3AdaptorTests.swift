@@ -96,6 +96,35 @@ class SQLite3AdaptorTests: XCTestCase {
     XCTAssertFalse(channel.isTransactionInProgress)
   }
 
+  func testDeferredForeignKeysAreReappliedToPooledChannel() throws {
+    let pool = SingleConnectionPool(maxAge: 60)
+    let adaptor = SQLite3Adaptor(":memory:", pool: pool)
+    let first = try adaptor.openChannelFromPool()
+
+    try first.begin()
+    XCTAssertEqual(try deferForeignKeysValue(first), 1)
+    try first.commit()
+    XCTAssertEqual(try deferForeignKeysValue(first), 0)
+    adaptor.releaseChannel(first)
+
+    let reused = try adaptor.openChannelFromPool()
+    XCTAssertTrue(first as AnyObject === reused as AnyObject)
+    try reused.begin()
+    XCTAssertEqual(try deferForeignKeysValue(reused), 1)
+    try reused.rollback()
+    adaptor.releaseChannel(reused)
+  }
+
+  private func deferForeignKeysValue(_ channel: AdaptorChannel)
+    throws -> Int64
+  {
+    var value: Int64?
+    try channel.select("PRAGMA defer_foreign_keys") {
+      (result: Int64) in value = result
+    }
+    return try XCTUnwrap(value)
+  }
+
   
   // MARK: - Non-ObjC Swift Support
   
@@ -105,5 +134,7 @@ class SQLite3AdaptorTests: XCTestCase {
       testFailedCommitPreservesTransactionState ),
     ( "testFailedRollbackReflectsSQLiteTransactionState",
       testFailedRollbackReflectsSQLiteTransactionState ),
+    ( "testDeferredForeignKeysAreReappliedToPooledChannel",
+      testDeferredForeignKeysAreReappliedToPooledChannel ),
   ]
 }
