@@ -169,8 +169,6 @@ public extension AccessDataSource { // Finders
   func fetchSpecificationForFind(_ primaryKeyValues : [ Any ]) throws
        -> FetchSpecification?
   {
-    guard !primaryKeyValues.isEmpty else { return nil }
-    
     guard let findEntity = entity else {
       throw AccessDataSourceError
               .cannotConstructFetchSpecification(.missingEntity)
@@ -182,6 +180,11 @@ public extension AccessDataSource { // Finders
       throw AccessDataSourceError
               .cannotConstructFetchSpecification(.invalidPrimaryKey)
      }
+
+    guard primaryKeyValues.count == pkeys.count else {
+      throw AccessDataSourceError
+              .cannotConstructFetchSpecification(.invalidPrimaryKey)
+    }
     
     /* build qualifier for primary keys */
 
