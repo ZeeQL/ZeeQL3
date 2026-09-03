@@ -78,15 +78,15 @@ public extension KeyGlobalID.Value { // Initializers and Factory
   init(_ values: [ AnyHashable? ]) {
     if values.count == 1, let opt = values.first {
       if let v = opt {
-        switch v { // TBD: `as any BinaryInteger`, but requires 5.5+?
+        switch v {
           case let v as Int    : self = .int(v)
           case let v as Int64  : self = .int(Int(v))
           case let v as Int32  : self = .int(Int(v))
           case let v as UInt32 : self = .int(Int(v)) // assumes 64-bit
           case let v as String : self = .string(v)
           case let v as UUID   : self = .uuid(v)
+          case let v as any BinaryInteger : self = .int(Int(v))
           default:
-            assert(!(v.base is any BinaryInteger), "Unexpected BinaryInteger")
             self = .values(values)
         }
       }
@@ -129,7 +129,7 @@ public extension KeyGlobalID { // Initializers and Factory
 
     if values.count == 1, let opt = values.first {
       if let v = opt {
-        switch v { // TBD: `as any BinaryInteger`, but requires 5.5+?
+        switch v {
           case let v as Int    :
             return KeyGlobalID(entityName: entityName, value: v)
           case let v as Int64  :
@@ -142,6 +142,8 @@ public extension KeyGlobalID { // Initializers and Factory
             return KeyGlobalID(entityName: entityName, value: v)
           case let v as UUID   :
             return KeyGlobalID(entityName: entityName, value: v)
+          case let v as any BinaryInteger:
+            return KeyGlobalID(entityName: entityName, value: Int(v))
           default:
             assert(!(v is any BinaryInteger), "Unexpected BinaryInteger")
             assertionFailure("Custom key value type, add explicit check")
