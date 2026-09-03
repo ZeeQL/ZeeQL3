@@ -215,6 +215,18 @@ open class ActiveRecordBase : ActiveRecordType, SmartDescription {
   open func validateForSave() throws {
     guard !isReadOnly else { throw DatabaseObjectError.readOnly(self) }
   }
+
+  open func validateForInsert() throws {
+    try validateForSave()
+  }
+
+  open func validateForUpdate() throws {
+    try validateForSave()
+  }
+
+  open func validateForDelete() throws {
+    guard !isReadOnly else { throw DatabaseObjectError.readOnly(self) }
+  }
   
   open func save() throws {
     /* Note: we have no reference to the datasource which is why we can't
