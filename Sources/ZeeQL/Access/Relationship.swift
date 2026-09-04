@@ -77,7 +77,7 @@ public extension Relationship { // default imp
   var constraintName : String?         { return nil        }
 
   @inlinable
-  var minCount       : Int? { return isToMany ? nil : (isMandatory ? 0 : 1) }
+  var minCount       : Int? { return isToMany ? nil : (isMandatory ? 1 : 0) }
   @inlinable
   var maxCount       : Int? { return isToMany ? nil : 1 }
   
@@ -186,15 +186,14 @@ public extension Relationship { // extra methods
   
   /**
    * Returns the Relationship objects for each component of the
-   * relationshipPath() of a flattened Relationship. Eg:
+   * relationshipPath() of a flattened Relationship.
    *
-   *     employments.company.addresses
+   * E.g. `employments.company.addresses`
    *
    * could return three Relationship objects:
-   *
-   *     'employments', source = Persons,     dest = Employments
-   *     'company',     source = Employments, dest = Companies
-   *     'addresses',   source = Companies,   dest = Addresses
+   * - 'employments', source = Persons,     dest = Employments
+   * - 'company',     source = Employments, dest = Companies
+   * - 'addresses',   source = Companies,   dest = Addresses
    * 
    * The method returns nil if this is not a flattened relationship.
    */
@@ -212,9 +211,10 @@ public extension Relationship { // extra methods
         return nil // TODO: log
       }
       
-      assert(!rel.isFlattened, "Not implemented")
+      assert(!rel.isFlattened, "Flattend relships not implemented")
         // TODO: pathes containing flattened relships
-      
+
+      relships.append(rel)
       relentity = rel.destinationEntity
     }
     
@@ -224,7 +224,7 @@ public extension Relationship { // extra methods
   /**
    * Makes the Relationship check whether any of its joins reference the
    * given property.
-   * A property is an Attribute or Relationship object.
+   * A property is an ``Attribute`` or ``Relationship`` object.
    */
   @inlinable
   func references(property: Property) -> Bool {
@@ -375,7 +375,7 @@ open class ModelRelationship : Relationship {
   
   public final var minCount              : Int? {
     set { _minCount = newValue }
-    get { return _minCount ?? (isToMany ? nil : (isMandatory ? 0 : 1)) }
+    get { return _minCount ?? (isToMany ? nil : (isMandatory ? 1 : 0)) }
   }
   public final var maxCount              : Int? {
     set { _maxCount = newValue }
