@@ -469,79 +469,62 @@ public struct QualifierParser {
     return q
   }
   
-  func buildCompoundQualifier(operation: String,
-                              qualifiers: [ Qualifier ]) throws
-       -> Qualifier?
+  mutating func parseCompoundQualifier(minimumPrecedence: Int = 1) throws
+                -> Qualifier?
   {
-    guard !qualifiers.isEmpty else { return nil }
+    guard minimumPrecedence <= 2 else { return try parseOneQualifier() }
+    guard let lhs =
+      try parseCompoundQualifier(minimumPrecedence: minimumPrecedence + 1)
+    else { return nil }
     
-    if qualifiers.count == 1 { return qualifiers[0] }
-    
-    switch operation {
-      case STOK_AND: return CompoundQualifier(qualifiers: qualifiers, op: .and)
-      case STOK_OR:  return CompoundQualifier(qualifiers: qualifiers, op: .or)
-      default:
-        /* Note: we could make this extensible */
-        throw parseError("unknown compound operator: " + operation)
-    }
-  }
-  
-  mutating func parseCompoundQualifier() throws -> Qualifier? {
-    var qualifiers = [ Qualifier ]()
-    var lastCompoundOperator : String? = nil
-    
-    while idx < string.endIndex {
-      guard let q = try parseOneQualifier() else { return nil }
-      
-      qualifiers.append(q)
+    var qualifiers : [ Qualifier ]?
 
-      guard skipSpaces() else { break } /* expected EOF */
-      
-      /* check whether a closing paren is up front */
-      
-      if match(")") { break } /* stop processing */
-      
-      /* now check for AND or OR */
-      guard var compoundOperator = parseIdentifier(onlyBreakOnSpace: false)
-       else {
+    while idx < string.endIndex {
+      let operatorStart = idx
+      let argumentStart = currentArgument
+      guard skipSpaces() else { break }
+      if match(")") { break }
+
+      guard var compoundOperator = parseIdentifier(onlyBreakOnSpace: false) else
+      {
         throw parseError("could not parse compound operator, index: \(idx)")
-       }
-      
-      /* process formats */
+      }
       if compoundOperator.count > 1 && compoundOperator.hasPrefix("%") {
-        guard let s = try nextNonNullStringArgument(compoundOperator)
-         else { return nil }
-        compoundOperator = s
-      }
-      
-      guard skipSpaces() else {
-        throw parseError(
-          "expected another qualifier after compound operator " +
-          "(op='\(compoundOperator)')")
-      }
-      
-      if let lastCompoundOperator = lastCompoundOperator {
-        if compoundOperator != lastCompoundOperator {
-          /* operation changed, for example:
-           *   a AND b AND c OR d OR e AND f
-           * will be parsed as:
-           *   ((a AND b AND c) OR d OR e) AND f
-           */
-          
-          let q = try buildCompoundQualifier(
-            operation: lastCompoundOperator, qualifiers: qualifiers)
-          qualifiers.removeAll()
-          if let q = q {
-            qualifiers.append(q)
-          }
+        guard let value = try nextNonNullStringArgument(compoundOperator) else {
+          return nil
         }
+        compoundOperator = value
       }
-      
-      lastCompoundOperator = compoundOperator;
+
+      let precedence: Int
+      switch compoundOperator {
+        case STOK_AND: precedence = 2
+        case STOK_OR:  precedence = 1
+        default:
+          throw parseError("unknown compound operator: \(compoundOperator)")
+      }
+      if precedence != minimumPrecedence {
+        idx = operatorStart
+        currentArgument = argumentStart
+        break
+      }
+
+      guard skipSpaces() else {
+        throw parseError("expected another qualifier after compound operator " +
+                         "(op='\(compoundOperator)')")
+      }
+      guard let rhs =
+        try parseCompoundQualifier(minimumPrecedence: precedence + 1)
+       else { return nil }
+
+      if qualifiers == nil { qualifiers = [ lhs, rhs ] }
+      else                 { qualifiers?.append(rhs) }
     }
-    
-    return try buildCompoundQualifier(
-      operation: lastCompoundOperator ?? "AND", qualifiers: qualifiers)
+
+    guard let qualifiers else { return lhs }
+    let operation: CompoundQualifier.Operator = minimumPrecedence == 2
+                                              ? .and : .or
+    return CompoundQualifier(qualifiers: qualifiers, op: operation)
   }
  
   /**

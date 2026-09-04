@@ -76,16 +76,44 @@ class QualifierParserTests: XCTestCase {
     for input in inputs { _ = qualifierWithFormat(input) }
   }
   
-  func testComplexCompoundQualifier() {
-    // should be: ((a = 1 AND b = 2) OR c = 3) AND f = 4
-    let q = parse("a = 1 AND b = 2 OR c = 3 AND f = 4") // TODO: FAILS
-    XCTAssertNotNil(q, "could not parse qualifier")
+  func testComplexCompoundQualifier() throws {
+    let parsed = try XCTUnwrap(
+      parse("a = 1 AND b = 2 OR c = 3 AND f = 4"))
+    let disjunction = try XCTUnwrap(parsed as? CompoundQualifier)
+    XCTAssertEqual(disjunction.op, .or)
+    XCTAssertEqual(disjunction.qualifiers.count, 2)
 
-    XCTAssert(q! is CompoundQualifier, "did not parse an AND qualifier")
-    let aq = q! as! CompoundQualifier
-    XCTAssert(aq.op == .and, "did not parse an AND qualifier")
-    
-    XCTAssertEqual(aq.qualifiers.count, 2, "length of top-level does not match")
+    let left = try XCTUnwrap(
+      disjunction.qualifiers[0] as? CompoundQualifier)
+    XCTAssertEqual(left.op, .and)
+    XCTAssertEqual(left.qualifiers.count, 2)
+    XCTAssertEqual((left.qualifiers[0] as? KeyValueQualifier)?.key, "a")
+    XCTAssertEqual((left.qualifiers[1] as? KeyValueQualifier)?.key, "b")
+
+    let right = try XCTUnwrap(
+      disjunction.qualifiers[1] as? CompoundQualifier)
+    XCTAssertEqual(right.op, .and)
+    XCTAssertEqual(right.qualifiers.count, 2)
+    XCTAssertEqual((right.qualifiers[0] as? KeyValueQualifier)?.key, "c")
+    XCTAssertEqual((right.qualifiers[1] as? KeyValueQualifier)?.key, "f")
+  }
+
+  func testAndBindsMoreTightlyThanOr() throws {
+    let parsed = try XCTUnwrap(parse("a = 1 OR b = 2 AND c = 3"))
+    let disjunction = try XCTUnwrap(parsed as? CompoundQualifier)
+    XCTAssertEqual(disjunction.op, .or)
+    XCTAssertEqual(disjunction.qualifiers.count, 2)
+    XCTAssertEqual(
+      (disjunction.qualifiers[0] as? KeyValueQualifier)?.key, "a")
+
+    let conjunction = try XCTUnwrap(
+      disjunction.qualifiers[1] as? CompoundQualifier)
+    XCTAssertEqual(conjunction.op, .and)
+    XCTAssertEqual(conjunction.qualifiers.count, 2)
+    XCTAssertEqual(
+      (conjunction.qualifiers[0] as? KeyValueQualifier)?.key, "b")
+    XCTAssertEqual(
+      (conjunction.qualifiers[1] as? KeyValueQualifier)?.key, "c")
   }
   
   func testComplexArgumentParsing() {
@@ -391,6 +419,7 @@ class QualifierParserTests: XCTestCase {
     ( "testMalformedTokenBoundariesDoNotTrap",
       testMalformedTokenBoundariesDoNotTrap ),
     ( "testComplexCompoundQualifier",      testComplexCompoundQualifier      ),
+    ( "testAndBindsMoreTightlyThanOr",     testAndBindsMoreTightlyThanOr     ),
     ( "testComplexArgumentParsing",        testComplexArgumentParsing        ),
     ( "testQualifierWithOneVariables",     testQualifierWithOneVariables     ),
     ( "testQualifierWithSomeVariables",    testQualifierWithSomeVariables    ),
