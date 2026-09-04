@@ -34,24 +34,24 @@ public func qualifierWith(format: String, _ args: Any?...) -> Qualifier? {
  *
  * ### Comparison Operations
  *
- * - =
- * - !=
- * - <
- * - ">"
- * - =< <=
- * - => >=
- * - LIKE
- * - IN (ComparisonOperation.CONTAINS) [TBD: a NOT IN array]
- * - IS NULL / IS NOT NULL
- * - custom identifiers, eg: 'hasPrefix:'
+ * - `=`
+ * - `!=`
+ * - `<`
+ * - `>`
+ * - `=<` `<=`
+ * - `=>` `>=`
+ * - `LIKE`
+ * - `IN` (ComparisonOperation.CONTAINS) [TBD: a NOT IN array]
+ * - `IS NULL` / `IS NOT NULL`
+ * - custom identifiers/selectors, eg: `hasPrefix:`
  * - Note: you can use formats, eg: ("lastname %@ 'Duck'", "LIKE")
  *
  * ### Constants
  *
- * - numbers - 12345
+ * - numbers - `12345`
  * - strings - 'hello world' or "hello world"
- * - boolean - true/false/YES/NO
- * - null    - NULL / null (no support for nil!)
+ * - boolean - `true`/`false`/`YES`/`NO`
+ * - null    - `NULL` / `null` (no support for nil!)
  * - casts   - start with a '(', eg (Date)'2007-09-21'
  *
  * ### Qualifier Bindings
@@ -123,12 +123,6 @@ public func qualifierWith(format: String, _ args: Any?...) -> Qualifier? {
  */
 public struct QualifierParser {
 
-  /**
-   * Describes why a qualifier string could not be parsed.
-   *
-   * Each error retains the complete original string. Its description
-   * deliberately omits it so logging the error does not expose bound values.
-   */
   public enum ParserError: Swift.Error, Equatable, CustomStringConvertible {
 
     case emptyInput(string: String)
@@ -174,7 +168,7 @@ public struct QualifierParser {
 
   /// Parses a qualifier or throws a ``ParserError`` for invalid input.
   public static func parse(_ format: String, _ args: Any?...) throws
-       -> Qualifier
+                     -> Qualifier
   {
     var parser = Self(string: format, arguments: args)
     return try parser.parse()
@@ -182,12 +176,8 @@ public struct QualifierParser {
 
 
   public mutating func parseQualifier() -> Qualifier? {
-    do {
-      return try parse()
-    }
-    catch ParserError.emptyInput {
-      return nil
-    }
+    do { return try parse() }
+    catch ParserError.emptyInput { return nil }
     catch {
       log.error(String(describing: error))
       return nil
@@ -227,9 +217,7 @@ public struct QualifierParser {
     return try parseKeyBasedQualifier()
   }
   
-  mutating func nextNonNullStringArgument(_ _pat: String) throws
-       -> String?
-  {
+  mutating func nextNonNullStringArgument(_ _pat: String) throws -> String? {
     guard currentArgument < args.count else {
       throw parseError("more format patterns than arguments")
     }
@@ -241,12 +229,8 @@ public struct QualifierParser {
     let pidx = _pat.index(after: _pat.startIndex)
     switch _pat[pidx] {
       case "K", "s", "i", "d", "f", "@":
-        if let arg = arg {
-          return "\(arg)" // ... toString
-        }
-        else {
-          return "nil"
-        }
+        if let arg = arg { return "\(arg)" } // ... toString
+        else             { return "nil"    }
       
       case "%":
         throw parseError("not yet supported: %%")
@@ -461,17 +445,13 @@ public struct QualifierParser {
   mutating func parseNotQualifier() throws -> Qualifier? {
     guard consumeIfMatch(TOK_NOT) else { return nil }
     
-    guard skipSpaces() else {
-      throw parseError("missing qualifier after NOT!")
-    }
+    guard skipSpaces() else { throw parseError("missing qualifier after NOT!") }
     
     guard let q = try parseOneQualifier() else { return nil }
     return q.not
   }
   
-  mutating func parseCompoundQualifierInParenthesis() throws
-       -> Qualifier?
-  {
+  mutating func parseCompoundQualifierInParenthesis() throws -> Qualifier? {
     guard consumeIfMatch("(") else { return nil } /* not in parenthesis */
     
     guard skipSpaces() else {
@@ -806,25 +786,25 @@ public struct QualifierParser {
     let v : Constant?
     
     if string[idx] == "\'" {
-      v = .String(try parseQuotedString())
+      v = .string(try parseQuotedString())
     }
     else if string[idx] == "\"" { // TODO: could be a SQL id
-      v = .String(try parseQuotedString())
+      v = .string(try parseQuotedString())
     }
     else if _isDigit(string[idx]) {
       if let n = try parseNumber() {
         switch n {
-          case .Int   (let i): v = .Int(i)
-          case .Double(let i): v = .Double(i)
+          case .Int   (let i): v = .int(i)
+          case .Double(let i): v = .double(i)
         }
       }
       else { v = nil }
     }
     else if consumeIfMatch(TOK_TRUE) || consumeIfMatch(TOK_YES) {
-      v = .Bool(true)
+      v = .bool(true)
     }
     else if consumeIfMatch(TOK_FALSE) || consumeIfMatch(TOK_NO) {
-      v = .Bool(false)
+      v = .bool(false)
     }
     else if match("(") {
       /* a plist array after an IN (otherwise a CAST is handled above!) */
@@ -855,17 +835,17 @@ public struct QualifierParser {
   }
   
   enum Constant {
-    case String(String)
-    case Int   (Int)
-    case Double(Double)
-    case Bool  (Bool)
+    case string(String)
+    case int   (Int)
+    case double(Double)
+    case bool  (Bool)
     
     var asAny : Any {
       switch self {
-        case .String(let v): return v
-        case .Int   (let v): return v
-        case .Double(let v): return v
-        case .Bool  (let v): return v
+        case .string(let v): return v
+        case .int   (let v): return v
+        case .double(let v): return v
+        case .bool  (let v): return v
       }
     }
   }
