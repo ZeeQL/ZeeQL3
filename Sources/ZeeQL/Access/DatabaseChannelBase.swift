@@ -103,9 +103,9 @@ open class DatabaseChannelBase {
     
     do {
       try ac.begin()
-      releaseChannel() // only release if good
     }
     catch {
+      if !ac.isTransactionInProgress { releaseChannel() }
       throw DatabaseChannelError.couldNotBeginTX(error)
     }
   }
@@ -122,13 +122,12 @@ open class DatabaseChannelBase {
       else {
         try ac.commit()
       }
-      releaseChannel() // only release if everything was fine
+      releaseChannel()
     }
     catch {
+      if !ac.isTransactionInProgress { releaseChannel() }
       throw DatabaseChannelError.couldNotFinishTX(error)
     }
-    
-    releaseChannel()
   }
 
   /**

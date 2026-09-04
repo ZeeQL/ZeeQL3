@@ -52,6 +52,62 @@ class DatabaseChannelTests: XCTestCase {
     XCTAssertEqual(adaptor.channel.operations, [ .begin, .rollback ])
   }
 
+  @available(*, deprecated)
+  func testManualTransactionRetainsChannelUntilCommit() throws {
+    let adaptor = TransactionTestAdaptor()
+    let channel = DatabaseChannelBase(database: Database(adaptor: adaptor))
+
+    try channel.begin()
+    XCTAssertNotNil(channel.adaptorChannel)
+    XCTAssertTrue(channel.isInTransaction)
+    XCTAssertEqual(adaptor.channel.operations, [ .begin ])
+
+    try channel.commit()
+    XCTAssertNil(channel.adaptorChannel)
+    XCTAssertFalse(channel.isInTransaction)
+    XCTAssertEqual(adaptor.channel.operations, [ .begin, .commit ])
+  }
+
+  @available(*, deprecated)
+  func testManualTransactionRetainsChannelUntilRollback() throws {
+    let adaptor = TransactionTestAdaptor()
+    let channel = DatabaseChannelBase(database: Database(adaptor: adaptor))
+
+    try channel.begin()
+    try channel.rollback()
+
+    XCTAssertNil(channel.adaptorChannel)
+    XCTAssertEqual(adaptor.channel.operations, [ .begin, .rollback ])
+  }
+
+  @available(*, deprecated)
+  func testManualBeginFailureReleasesInactiveChannel() {
+    let adaptor = TransactionTestAdaptor(failing: .begin)
+    let channel = DatabaseChannelBase(database: Database(adaptor: adaptor))
+
+    XCTAssertThrowsError(try channel.begin())
+
+    XCTAssertNil(channel.adaptorChannel)
+    XCTAssertEqual(adaptor.channel.operations, [ .begin ])
+  }
+
+  @available(*, deprecated)
+  func testManualCommitFailureRetainsActiveChannel() throws {
+    let adaptor = TransactionTestAdaptor(failing: .commit)
+    let channel = DatabaseChannelBase(database: Database(adaptor: adaptor))
+
+    try channel.begin()
+    XCTAssertThrowsError(try channel.commit()) { error in
+      assertFinishError(error, wraps: .commit)
+    }
+    XCTAssertNotNil(channel.adaptorChannel)
+    XCTAssertTrue(channel.isInTransaction)
+
+    try channel.rollback()
+    XCTAssertNil(channel.adaptorChannel)
+    XCTAssertEqual(adaptor.channel.operations, [ .begin, .commit, .rollback ])
+  }
+
   private func assertFinishError(_ error: Error,
                                  wraps expected: TransactionTestError)
   {
