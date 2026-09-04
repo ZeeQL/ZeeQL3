@@ -130,6 +130,17 @@ class SQLite3ModelTests: XCTestCase {
       entity.relationships[0] as? ModelRelationship)
     XCTAssertEqual(relationship.destinationEntityName, "parent table")
   }
+
+  func testReflectsWidthAndCompositePrimaryKeyOrder() throws {
+    let channel = try SQLite3Adaptor(":memory:").openChannel()
+    try channel.performSQL(
+      "CREATE TABLE sample(a VARCHAR(40), b INTEGER, PRIMARY KEY (b, a))")
+    let fetch = SQLite3ModelFetch(channel: channel)
+
+    let entity = try fetch.describeEntityWithTableName("sample")
+    XCTAssertEqual(entity[attribute: "a"]?.width, 40)
+    XCTAssertEqual(entity.primaryKeyAttributeNames, [ "b", "a" ])
+  }
   
   
   // MARK: - Non-ObjC Swift Support
@@ -143,5 +154,7 @@ class SQLite3ModelTests: XCTestCase {
       testDescribeTableNamesBindsLikePattern ),
     ( "testDescribeEntityQuotesTableName",
       testDescribeEntityQuotesTableName ),
+    ( "testReflectsWidthAndCompositePrimaryKeyOrder",
+      testReflectsWidthAndCompositePrimaryKeyOrder ),
   ]
 }

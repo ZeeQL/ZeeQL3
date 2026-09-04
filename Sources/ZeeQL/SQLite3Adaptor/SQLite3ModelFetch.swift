@@ -119,24 +119,41 @@ open class SQLite3ModelFetch: AdaptorModelFetch {
   {
     guard !columnInfos.isEmpty else { return [] }
 
-    var pkeys = [ String ]()
-    
-    for i in 0..<columnInfos.count {
-      let colInfo = columnInfos[i]
-      guard let v = colInfo["pk"] else { continue }
-      
-      let doAdd : Bool
-      switch v {
-        case let typedValue as String: doAdd = typedValue == "1"
-        case let typedValue as Int:    doAdd = typedValue != 0
-        case let typedValue as Int32:  doAdd = typedValue != 0
-        case let typedValue as Int64:  doAdd = typedValue != 0
-        default: doAdd = false
-      }
-      if doAdd { pkeys.append(attributes[i].name) }
+    var firstPKey : ( ordinal: Int, name: String )?
+    var pkeys     : [ ( ordinal: Int, name: String ) ]?
+
+    func integerValue(_ value: Any) -> Int? {
+      if let value = value as? Int               { return value      }
+      if let value = value as? Int32             { return Int(value) }
+      if let value = value as? Int64             { return Int(value) }
+      if let value = value as? String            { return Int(value) }
+      if let value = value as? any BinaryInteger { return Int(value) }
+      return nil
     }
 
-    return pkeys
+    for i in 0..<columnInfos.count {
+      let colInfo = columnInfos[i]
+      guard let value = colInfo["pk"],
+            let ordinal = integerValue(value), ordinal > 0,
+            i < attributes.count
+       else { continue }
+      
+      let pkey = ( ordinal: ordinal, name: attributes[i].name )
+      if let firstPKey {
+        if pkeys == nil { pkeys = [ firstPKey, pkey ] }
+        else { pkeys?.append(pkey) }
+      }
+      else {
+        firstPKey = pkey
+      }
+    }
+
+    guard var pkeys else {
+      guard let firstPKey else { return [] }
+      return [ firstPKey.name ]
+    }
+    pkeys.sort { $0.ordinal < $1.ordinal }
+    return pkeys.map { $0.name }
   }
 
   func attributesFromColumnInfos(_ columnInfos: [ AdaptorRecord ])
@@ -154,27 +171,14 @@ open class SQLite3ModelFetch: AdaptorModelFetch {
       var width : Int? = nil
 
       /* process external type, eg: VARCHAR(40) */
-      #if swift(>=5.0)
-        if let idx = exttype.firstIndex(of: "(") {
-          let ws = exttype[idx..<exttype.endIndex]
-          exttype = String(exttype[exttype.startIndex..<idx])
-        
-          if let eidx = ws.firstIndex(of: ")") {
-            let iv = ws[ws.startIndex..<eidx]
-            width = Int(iv)
-          }
+      if let start = exttype.firstIndex(of: "(") {
+        let suffix = exttype[exttype.index(after: start)...]
+        exttype = String(exttype[..<start])
+
+        if let end = suffix.firstIndex(of: ")") {
+          width = Int(suffix[..<end])
         }
-      #else
-        if let idx = exttype.index(of: "(") {
-          let ws = exttype[idx..<exttype.endIndex]
-          exttype = String(exttype[exttype.startIndex..<idx])
-        
-          if let eidx = ws.index(of: ")") {
-            let iv = ws[ws.startIndex..<eidx]
-            width = Int(iv)
-          }
-        }
-      #endif
+      }
       exttype = exttype.uppercased()
       
       // TODO: complete information
