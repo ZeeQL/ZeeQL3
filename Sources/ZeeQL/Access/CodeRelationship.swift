@@ -11,6 +11,14 @@ public protocol CodeRelationshipType : Relationship {
   var sourceAttributeName : String? { get set }
   var targetAttributeName : String? { get set }
   var codeEntity : Entity? { get set }
+
+  /// Whether the source entity can be accessed without a resolution failure.
+  var isEntityResolved : Bool { get }
+}
+
+public extension CodeRelationshipType {
+
+  var isEntityResolved : Bool { return codeEntity != nil }
 }
 
 open class CodeRelationshipBase<Target: SwiftObject>
@@ -198,6 +206,13 @@ open class CodeRelationship<Target: DatabaseObject>
   public typealias T = Target
   
   public var codeEntity : Entity? = nil
+
+  /**
+   * Whether the source entity is resolved. Subclasses supplying ``entity``
+   * independently of ``codeEntity`` must override this status accordingly.
+   */
+  open var isEntityResolved : Bool { return codeEntity != nil }
+
   override open var entity : Entity {
     set {
       codeEntity = newValue
