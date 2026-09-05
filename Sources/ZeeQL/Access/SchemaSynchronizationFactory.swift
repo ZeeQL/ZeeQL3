@@ -80,12 +80,68 @@ open class SchemaSynchronizationFactory: SchemaGeneration, SchemaSynchronization
   }
 
   /// Builds the same validated statement plan used by ``synchronizeModels``.
-  public final func schemaSynchronizationStatements(old: Model,
-                                                     new: Model) throws
-       -> [ SQLExpression ]
+  public final func schemaSynchronizationStatements(old: Model, new: Model) 
+    throws -> [ SQLExpression ]
   {
     let plan = try makeSynchronizationPlan(old: old, new: new)
     return try statements(for: plan)
+  }
+
+  open func synchronizeModels(old: Model, new: Model) throws {
+    guard supportsSchemaSynchronization else {
+      throw SchemaSynchronizationError.unsupported
+    }
+    let plan       = try makeSynchronizationPlan(old: old, new: new)
+    let statements = try statements(for: plan)
+    guard !statements.isEmpty else { return }
+
+    let channel = try adaptor.openChannelFromPool()
+    var releaseChannel = false
+    defer {
+      if releaseChannel {
+        adaptor.releaseChannel(channel)
+      }
+      else {
+        log.error("discarding schema synchronization channel")
+      }
+    }
+
+    try channel.begin()
+
+    do {
+      try verifyPreconditions(of: plan, on: channel)
+      for statement in statements {
+        _ = try channel.evaluateUpdateExpression(statement)
+      }
+      try verifyEffects(of: plan, on: channel)
+    }
+    catch let bodyError {
+      do {
+        try channel.rollback()
+        releaseChannel = true
+      }
+      catch {
+        log.warn("could not rollback schema synchronization:", error,
+                 "after migration error:", bodyError)
+      }
+      throw bodyError
+    }
+
+    do {
+      try channel.commit()
+      releaseChannel = true
+    }
+    catch let commitError {
+      do {
+        try channel.rollback()
+        releaseChannel = true
+      }
+      catch {
+        log.warn("could not rollback schema synchronization:", error,
+                 "after commit error:", commitError)
+      }
+      throw commitError
+    }
   }
 
   open func normalizedColumnType(_ type: String) -> String {
@@ -145,8 +201,7 @@ open class SchemaSynchronizationFactory: SchemaGeneration, SchemaSynchronization
     return name
   }
 
-  open func columnTypesAreEquivalent(_ lhs: Attribute,
-                                     _ rhs: Attribute) -> Bool
+  open func columnTypesAreEquivalent(_ lhs: Attribute, _ rhs: Attribute) -> Bool
   {
     let expression = adaptor.expressionFactory.createExpression(nil)
     let lhsType = expression.columnTypeStringForAttribute(lhs)
@@ -154,10 +209,40 @@ open class SchemaSynchronizationFactory: SchemaGeneration, SchemaSynchronization
     return normalizedColumnType(lhsType) == normalizedColumnType(rhsType)
   }
 
+  open func columnTypesMatchForSchemaVerification(_   actual : Attribute,
+                                                  _ expected : Attribute)
+       -> Bool
+  {
+    if columnTypesAreEquivalent(actual, expected) { return true }
+    guard actual.width == nil || actual.precision == nil else { return false }
+    let comparable = ModelAttribute(attribute: expected)
+    if actual.width == nil { comparable.width = nil }
+    if actual.precision == nil { comparable.precision = nil }
+    return columnTypesAreEquivalent(actual, comparable)
+  }
+
   open func synchronizationIssuesForTable(named table: String) -> [ String ] {
     return []
   }
 
+  open func isSystemTableForSynchronization(_ table: String) -> Bool {
+    return false
+  }
+
+  open func columnNamesForVerification(in table: String,
+                                       on channel: AdaptorChannel) throws
+       -> Set<String>?
+  {
+    return nil
+  }
+
+  open func preflightSynchronizationIssues(modifyingTables: Set<String>,
+                                           droppingTables: Set<String>,
+                                           on channel: AdaptorChannel) throws
+       -> [ String ]
+  {
+    return []
+  }
 }
 
 fileprivate struct SchemaSynchronizationPlan {
@@ -176,6 +261,22 @@ fileprivate struct SchemaSynchronizationPlan {
   var changedNullability = [ SchemaColumnPair ]()
   var addedColumns       = [ SchemaColumnChange ]()
   var addedForeignKeys   = [ SchemaForeignKeyChange ]()
+}
+
+fileprivate struct SchemaSnapshot {
+
+  let tableNames : Set<String>
+  let model      : Model
+
+  func group(named table: String) -> SQLTableGroup {
+    return model[entityGroup: table]
+  }
+
+  func attribute(named column: String, in table: String) -> Attribute? {
+    return group(named: table).groupAttributes.first {
+      $0.columnNameOrName == column
+    }
+  }
 }
 
 fileprivate struct SchemaForeignKeyChange {
@@ -1453,10 +1554,509 @@ fileprivate extension SchemaSynchronizationFactory {
     return expression.sqlStringFor(schemaObjectName: name)
   }
 
+  func verifyPreconditions(of plan: SchemaSynchronizationPlan,
+                           on channel: AdaptorChannel) throws
+  {
+    let needsAllTables = !plan.droppedTables.isEmpty
+                      || !plan.droppedForeignKeys.isEmpty
+                      || !plan.addedForeignKeys.isEmpty
+                      || plan.createdTables.contains {
+                           !$0.groupForeignKeys.isEmpty
+                         }
+    let snapshot = try schemaSnapshot(
+      describing: plan.sourceTableNames, includeAllTables: needsAllTables,
+      on: channel)
+    var issues = [ String ]()
+
+    for group in plan.createdTables {
+      let table = group.groupExternalName
+      if snapshot.tableNames.contains(table) {
+        issues.append("table \(table) already exists")
+      }
+    }
+    for group in plan.droppedTables {
+      let table = group.groupExternalName
+      if !snapshot.tableNames.contains(table) {
+        issues.append("table \(table) does not exist")
+      }
+    }
+    for rename in plan.renamedTables {
+      if !snapshot.tableNames.contains(rename.oldName) {
+        issues.append("table \(rename.oldName) does not exist")
+      }
+      if snapshot.tableNames.contains(rename.newName)
+      {
+        issues.append("rename target table \(rename.newName) already exists")
+      }
+    }
+
+    if !plan.droppedTables.isEmpty {
+      try verifyDropScope(of: plan, in: snapshot, on: channel,
+                          issues: &issues)
+    }
+    if let oldModel = plan.oldModel {
+      for table in plan.retainedModifiedTableNames.sorted() {
+        let oldTable = plan.oldTableName(for: table)
+        verifyModeledTable(oldModel[entityGroup: oldTable], named: oldTable,
+                           in: snapshot, prefix: "old", issues: &issues)
+      }
+    }
+
+    for change in plan.droppedColumns {
+      let table = plan.oldTableName(for: change.table)
+      verifyOldColumn(change.attribute, in: table, snapshot: snapshot,
+                      issues: &issues)
+    }
+    for rename in plan.renamedColumns {
+      let table = plan.oldTableName(for: rename.table)
+      verifyOldColumn(rename.oldAttribute, in: table, snapshot: snapshot,
+                      issues: &issues)
+      rejectExistingColumn(rename.newName, in: table, snapshot: snapshot,
+                           issues: &issues)
+    }
+    for change in plan.changedTypes {
+      let table = plan.oldTableName(for: change.table)
+      verifyOldColumn(change.oldAttribute, in: table, snapshot: snapshot,
+                      issues: &issues)
+    }
+    for change in plan.changedNullability {
+      let table = plan.oldTableName(for: change.table)
+      verifyOldColumn(change.oldAttribute, in: table, snapshot: snapshot,
+                      issues: &issues)
+    }
+    for change in plan.addedColumns {
+      let table = plan.oldTableName(for: change.table)
+      let column = change.attribute.columnNameOrName
+      rejectExistingColumn(column, in: table, snapshot: snapshot,
+                           issues: &issues)
+    }
+
+    verifyForeignKeyPreconditions(of: plan, in: snapshot, issues: &issues)
+    issues.append(contentsOf: try preflightSynchronizationIssues(
+      modifyingTables: plan.modifyingTableNames,
+      droppingTables: plan.droppedTableNames, on: channel))
+    guard issues.isEmpty else {
+      throw SchemaSynchronizationError.preconditionFailed(
+        Array(Set(issues)).sorted())
+    }
+  }
+
+  func verifyEffects(of plan: SchemaSynchronizationPlan,
+                     on channel: AdaptorChannel) throws
+  {
+    let needsAllTables = !plan.droppedForeignKeys.isEmpty
+                      || !plan.addedForeignKeys.isEmpty
+                      || !plan.createdTables.isEmpty
+    let snapshot = try schemaSnapshot(
+      describing: plan.targetTableNames, includeAllTables: needsAllTables,
+      on: channel)
+    var issues = [ String ]()
+
+    for group in plan.droppedTables {
+      let table = group.groupExternalName
+      if snapshot.tableNames.contains(table) {
+        issues.append("dropped table \(table) still exists")
+      }
+    }
+    for rename in plan.renamedTables {
+      if snapshot.tableNames.contains(rename.oldName) {
+        issues.append("renamed table \(rename.oldName) still exists")
+      }
+      if !snapshot.tableNames.contains(rename.newName) {
+        issues.append("renamed table \(rename.newName) does not exist")
+      }
+    }
+    if let newModel = plan.newModel {
+      for table in plan.retainedModifiedTableNames.sorted() {
+        verifyModeledTable(newModel[entityGroup: table], named: table,
+                           in: snapshot, prefix: "new", issues: &issues)
+      }
+    }
+    for group in plan.createdTables {
+      verifyCreatedTable(group, in: snapshot, issues: &issues)
+    }
+    for change in plan.droppedColumns {
+      let column = change.attribute.columnNameOrName
+      rejectExistingColumn(column, in: change.table, snapshot: snapshot,
+                           issues: &issues, prefix: "dropped")
+    }
+    for rename in plan.renamedColumns {
+      rejectExistingColumn(rename.oldName, in: rename.table,
+                           snapshot: snapshot, issues: &issues,
+                           prefix: "renamed")
+      verifyColumn(rename.oldAttribute, in: rename.table,
+                   checkType: false, checkNullability: false,
+                   snapshot: snapshot, issues: &issues,
+                   columnName: rename.newName)
+    }
+    for change in plan.changedTypes {
+      verifyColumn(change.newAttribute, in: change.table,
+                   checkType: true, checkNullability: true,
+                   snapshot: snapshot, issues: &issues)
+    }
+    for change in plan.changedNullability {
+      verifyColumn(change.newAttribute, in: change.table,
+                   checkType: true, checkNullability: true,
+                   snapshot: snapshot, issues: &issues)
+    }
+    for change in plan.addedColumns {
+      verifyColumn(change.attribute, in: change.table,
+                   checkType: true, checkNullability: true,
+                   snapshot: snapshot, issues: &issues)
+    }
+    verifyForeignKeyEffects(of: plan, in: snapshot, issues: &issues)
+
+    guard issues.isEmpty else {
+      throw SchemaSynchronizationError.verificationFailed(
+        Array(Set(issues)).sorted())
+    }
+  }
+
+  func schemaSnapshot(describing tables: Set<String>,
+                      includeAllTables: Bool,
+                      on channel: AdaptorChannel) throws -> SchemaSnapshot
+  {
+    let tableNames = Set(try channel.describeTableNames())
+    let names = includeAllTables ? tableNames : tables.intersection(tableNames)
+    let entities = try channel.describeEntitiesWithTableNames(names.sorted())
+    let model = Model(entities: entities)
+    model.connectRelationships()
+    return SchemaSnapshot(tableNames: tableNames, model: model)
+  }
+
+  @discardableResult
+  func requireColumn(_ column: String, in table: String,
+                     snapshot: SchemaSnapshot,
+                     issues: inout [ String ]) -> Attribute?
+  {
+    guard snapshot.tableNames.contains(table) else {
+      issues.append("table \(table) does not exist")
+      return nil
+    }
+    guard let attribute = snapshot.attribute(named: column, in: table) else {
+      issues.append("column \(table).\(column) does not exist")
+      return nil
+    }
+    return attribute
+  }
+
+  func rejectExistingColumn(_ column: String, in table: String,
+                            snapshot: SchemaSnapshot,
+                            issues: inout [ String ],
+                            prefix: String = "target")
+  {
+    guard snapshot.tableNames.contains(table) else {
+      issues.append("table \(table) does not exist")
+      return
+    }
+    if snapshot.attribute(named: column, in: table) != nil {
+      issues.append("\(prefix) column \(table).\(column) already exists")
+    }
+  }
+
+  func verifyColumn(_ expected: Attribute, in table: String,
+                    checkType: Bool, checkNullability: Bool,
+                    snapshot: SchemaSnapshot, issues: inout [ String ],
+                    columnName: String? = nil)
+  {
+    let column = columnName ?? expected.columnNameOrName
+    guard let actual = requireColumn(column, in: table, snapshot: snapshot,
+                                     issues: &issues) else { return }
+    if checkType && !columnTypesMatchForSchemaVerification(
+      actual, expected)
+    {
+      issues.append("type of \(table).\(column) does not match the model")
+    }
+    if checkNullability, let actualNull = actual.allowsNull,
+       (expected.allowsNull ?? true) != actualNull
+    {
+      issues.append(
+        "nullability of \(table).\(column) does not match the model")
+    }
+  }
+
+  func verifyOldColumn(_ expected: Attribute, in table: String,
+                       checkNullability: Bool = true,
+                       snapshot: SchemaSnapshot,
+                       issues: inout [ String ])
+  {
+    let column = expected.columnNameOrName
+    guard let actual = requireColumn(column, in: table, snapshot: snapshot,
+                                     issues: &issues) else { return }
+    if !columnTypesMatchForSchemaVerification(actual, expected) {
+      issues.append("type of \(table).\(column) is stale")
+    }
+    if checkNullability, let actualNull = actual.allowsNull,
+       (expected.allowsNull ?? true) != actualNull
+    {
+      issues.append("nullability of \(table).\(column) is stale")
+    }
+  }
+
+  func verifyCreatedTable(_ group: SQLTableGroup,
+                          in snapshot: SchemaSnapshot,
+                          issues: inout [ String ])
+  {
+    let table = group.groupExternalName
+    guard snapshot.tableNames.contains(table) else {
+      issues.append("created table \(table) does not exist")
+      return
+    }
+    var ignored = [ String ]()
+    let primaryKeyColumns = primaryKeyColumns(in: group, invalid: &ignored)
+    let primaryKey = Set(primaryKeyColumns)
+    let expectedColumns = Set(group.groupAttributes.map {
+      $0.columnNameOrName
+    })
+    let actualColumns = Set(snapshot.group(named: table).groupAttributes.map {
+      $0.columnNameOrName
+    })
+    if expectedColumns != actualColumns {
+      issues.append("columns of created table \(table) do not match")
+    }
+    let actualPrimaryKey = self.primaryKeyColumns(
+      in: snapshot.group(named: table), invalid: &ignored)
+    if primaryKeyColumns != actualPrimaryKey {
+      issues.append("primary key of created table \(table) does not match")
+    }
+    for attribute in group.groupAttributes {
+      verifyColumn(attribute, in: table, checkType: true,
+                   checkNullability:
+                     !primaryKey.contains(attribute.columnNameOrName),
+                   snapshot: snapshot, issues: &issues)
+    }
+    let expectedForeignKeys = group.groupForeignKeys
+    let actualForeignKeys = snapshot.group(named: table).groupForeignKeys
+    let foreignKeysMatch = expectedForeignKeys.count == actualForeignKeys.count
+      && expectedForeignKeys.allSatisfy { expected in
+        actualForeignKeys.contains { actual in
+          reflectedForeignKey(actual, matches: expected,
+                              expectedName:
+                                expected.relationship.constraintName)
+        }
+      }
+    if !foreignKeysMatch {
+      issues.append("foreign keys of created table \(table) do not match")
+    }
+  }
+
+  func verifyModeledTable(_ group: SQLTableGroup, named table: String,
+                          in snapshot: SchemaSnapshot, prefix: String,
+                          issues: inout [ String ])
+  {
+    guard snapshot.tableNames.contains(table) else {
+      issues.append("\(prefix) table \(table) does not exist")
+      return
+    }
+    var ignored = [ String ]()
+    let expectedPrimaryKey = primaryKeyColumns(in: group, invalid: &ignored)
+    let actualGroup = snapshot.group(named: table)
+    let actualPrimaryKey = primaryKeyColumns(in: actualGroup,
+                                             invalid: &ignored)
+    if expectedPrimaryKey != actualPrimaryKey {
+      issues.append("\(prefix) primary key of table \(table) does not match")
+    }
+    let primaryKey = Set(expectedPrimaryKey)
+    for attribute in synchronizationAttributes(in: group) {
+      let column = attribute.columnNameOrName
+      verifyColumn(
+        attribute, in: table, checkType: true,
+        checkNullability: !primaryKey.contains(column)
+                       && hasConsistentNullability(for: column, in: group),
+        snapshot: snapshot, issues: &issues)
+    }
+  }
+
+  func verifyDropScope(of plan: SchemaSynchronizationPlan,
+                       in snapshot: SchemaSnapshot,
+                       on channel: AdaptorChannel,
+                       issues: inout [ String ]) throws
+  {
+    let actualTables = Set(snapshot.tableNames.filter {
+      !isSystemTableForSynchronization($0)
+    })
+    let unmodeled = actualTables.subtracting(plan.oldTableNames)
+    if !unmodeled.isEmpty {
+      issues.append("cannot safely drop tables with unmodeled tables: " +
+                    unmodeled.sorted().joined(separator: ", "))
+    }
+
+    for group in plan.droppedTables {
+      let table = group.groupExternalName
+      guard snapshot.tableNames.contains(table) else { continue }
+      let attributes = synchronizationAttributes(in: group)
+      let expectedColumns = Set(attributes.map {
+        $0.columnNameOrName
+      })
+      let actualGroup = snapshot.group(named: table)
+      let reflectedColumns = Set(actualGroup.groupAttributes.map {
+        $0.columnNameOrName
+      })
+      let actualColumns = try columnNamesForVerification(
+        in: table, on: channel) ?? reflectedColumns
+      if expectedColumns != actualColumns {
+        issues.append("cannot safely drop partially modeled table \(table)")
+        continue
+      }
+
+      var ignored = [ String ]()
+      let expectedPrimaryKey = primaryKeyColumns(in: group, invalid: &ignored)
+      let actualPrimaryKey = primaryKeyColumns(in: actualGroup,
+                                               invalid: &ignored)
+      if expectedPrimaryKey != actualPrimaryKey {
+        issues.append("primary key of table \(table) is stale")
+      }
+      if group.groupForeignKeys != actualGroup.groupForeignKeys {
+        issues.append("foreign keys of table \(table) are stale")
+      }
+      let primaryKey = Set(expectedPrimaryKey)
+      for attribute in attributes {
+        verifyOldColumn(
+          attribute, in: table,
+          checkNullability: !primaryKey.contains(attribute.columnNameOrName),
+          snapshot: snapshot, issues: &issues)
+      }
+    }
+
+    for group in snapshot.model.entities.extractEntityGroups() {
+      let source = group.groupExternalName
+      guard !plan.droppedTableNames.contains(source) else { continue }
+      for foreignKey in group.groupForeignKeys
+            where plan.droppedTableNames.contains(
+              foreignKey.destinationTableName)
+      {
+        let hasDrop = plan.droppedForeignKeys.contains {
+          $0.table == source
+            && foreignKeysShareStructure($0.foreignKey, foreignKey)
+        }
+        if !hasDrop {
+          issues.append(
+            "retained table \(source) references a table being dropped")
+        }
+      }
+    }
+  }
+
+  func verifyForeignKeyPreconditions(of plan: SchemaSynchronizationPlan,
+                                     in snapshot: SchemaSnapshot,
+                                     issues: inout [ String ])
+  {
+    let createdTables = Set(plan.createdTables.map { $0.groupExternalName })
+    for group in plan.createdTables {
+      for foreignKey in group.groupForeignKeys {
+        verifyForeignKeyDestination(
+          foreignKey, plan: plan, createdTables: createdTables,
+          snapshot: snapshot, issues: &issues)
+      }
+    }
+    for change in plan.droppedForeignKeys {
+      let actual = snapshot.group(named: change.table).groupForeignKeys
+      let name = change.foreignKey.relationship.constraintName
+      if !actual.contains(where: {
+        reflectedForeignKey($0, matches: change.foreignKey,
+                            expectedName: name)
+      }) {
+        issues.append("foreign key on \(change.table) does not exist")
+      }
+    }
+    for change in plan.addedForeignKeys {
+      verifyForeignKeyDestination(
+        change.foreignKey, plan: plan, createdTables: createdTables,
+        snapshot: snapshot, issues: &issues)
+      let table = plan.oldTableName(for: change.table)
+      let actual = snapshot.group(named: table).groupForeignKeys
+      let hasUnreplacedForeignKey = actual.contains { existing in
+        guard foreignKeysShareStructure(existing, change.foreignKey)
+         else { return false }
+        return !plan.droppedForeignKeys.contains { dropped in
+          guard dropped.table == table else { return false }
+          return reflectedForeignKey(
+            existing, matches: dropped.foreignKey,
+            expectedName: dropped.foreignKey.relationship.constraintName)
+        }
+      }
+      if hasUnreplacedForeignKey {
+        issues.append("foreign key on \(table) already exists")
+      }
+    }
+  }
+
+  func reflectedForeignKey(_ actual: SQLForeignKey,
+                           matches expected: SQLForeignKey,
+                           expectedName: String?) -> Bool
+  {
+    guard actual == expected else { return false }
+    guard reflectsForeignKeyConstraintNames,
+          let expectedName, !expectedName.isEmpty else { return true }
+    guard let actualName = actual.relationship.constraintName,
+          !actualName.isEmpty else { return false }
+    return normalizedSchemaObjectName(actualName)
+        == normalizedSchemaObjectName(expectedName)
+  }
+
   func expectedAddedForeignKeyName(_ foreignKey: SQLForeignKey) -> String {
     let relationship = foreignKey.relationship
     if let name = relationship.constraintName, !name.isEmpty { return name }
     return relationship.name
+  }
+
+  func verifyForeignKeyDestination(_ foreignKey: SQLForeignKey,
+                                   plan: SchemaSynchronizationPlan,
+                                   createdTables: Set<String>,
+                                   snapshot: SchemaSnapshot,
+                                   issues: inout [ String ])
+  {
+    let destination = foreignKey.destinationTableName
+    if createdTables.contains(destination) { return }
+    let oldDestination = plan.oldTableName(for: destination)
+    guard snapshot.tableNames.contains(oldDestination) else {
+      issues.append("foreign key destination table \(destination) " +
+                    "does not exist")
+      return
+    }
+
+    var ignored = [ String ]()
+    let actualPrimaryKey = primaryKeyColumns(
+      in: snapshot.group(named: oldDestination), invalid: &ignored)
+    let expectedPrimaryKey = foreignKey.sortedJoinColumns.map {
+      plan.oldColumnName(for: $0.1, in: destination)
+    }
+    if expectedPrimaryKey.count != actualPrimaryKey.count
+       || Set(expectedPrimaryKey) != Set(actualPrimaryKey)
+    {
+      issues.append("foreign key destination key \(destination) is stale")
+    }
+  }
+
+  func verifyForeignKeyEffects(of plan: SchemaSynchronizationPlan,
+                               in snapshot: SchemaSnapshot,
+                               issues: inout [ String ])
+  {
+    for change in plan.droppedForeignKeys {
+      let table = plan.newTableName(for: change.table)
+      let actual = snapshot.group(named: table).groupForeignKeys
+      if actual.contains(change.foreignKey) {
+        issues.append("dropped foreign key on \(table) still exists")
+      }
+    }
+    for change in plan.addedForeignKeys {
+      let actual = snapshot.group(named: change.table).groupForeignKeys
+      let name = expectedAddedForeignKeyName(change.foreignKey)
+      if !actual.contains(where: {
+        reflectedForeignKey($0, matches: change.foreignKey,
+                            expectedName: name)
+      }) {
+        issues.append("added foreign key on \(change.table) does not exist")
+      }
+    }
+  }
+
+  func foreignKeysShareStructure(_ lhs: SQLForeignKey,
+                                 _ rhs: SQLForeignKey) -> Bool
+  {
+    return lhs.destinationTableName == rhs.destinationTableName
+        && lhs.sortedJoinColumns.elementsEqual(
+             rhs.sortedJoinColumns, by: { $0.0 == $1.0 && $0.1 == $1.1 })
   }
 
   func sort(plan: inout SchemaSynchronizationPlan) {
@@ -1535,6 +2135,73 @@ fileprivate extension SchemaColumnPair {
 fileprivate extension SchemaColumnRename {
 
   var sortKey: String { return table + "." + oldName + "." + newName }
+}
+
+fileprivate extension SchemaSynchronizationPlan {
+
+  var droppedTableNames: Set<String> {
+    return Set(droppedTables.map { $0.groupExternalName })
+  }
+
+  func oldTableName(for newName: String) -> String {
+    return renamedTables.first { $0.newName == newName }?.oldName ?? newName
+  }
+
+  func newTableName(for oldName: String) -> String {
+    return renamedTables.first { $0.oldName == oldName }?.newName ?? oldName
+  }
+
+  func oldColumnName(for newName: String, in table: String) -> String {
+    return renamedColumns.first {
+      $0.table == table && $0.newName == newName
+    }?.oldName ?? newName
+  }
+
+  var sourceTableNames: Set<String> {
+    var names = droppedTableNames
+    names.formUnion(renamedTables.map { $0.oldName })
+    names.formUnion(droppedForeignKeys.map { $0.table })
+    names.formUnion(droppedColumns.map { oldTableName(for: $0.table) })
+    names.formUnion(renamedColumns.map { oldTableName(for: $0.table) })
+    names.formUnion(changedTypes.map { oldTableName(for: $0.table) })
+    names.formUnion(changedNullability.map { oldTableName(for: $0.table) })
+    names.formUnion(addedColumns.map { oldTableName(for: $0.table) })
+    names.formUnion(addedForeignKeys.map { oldTableName(for: $0.table) })
+    return names
+  }
+
+  var targetTableNames: Set<String> {
+    var names = Set(createdTables.map { $0.groupExternalName })
+    names.formUnion(renamedTables.map { $0.newName })
+    names.formUnion(droppedForeignKeys.map { newTableName(for: $0.table) })
+    names.formUnion(droppedColumns.map { $0.table })
+    names.formUnion(renamedColumns.map { $0.table })
+    names.formUnion(changedTypes.map { $0.table })
+    names.formUnion(changedNullability.map { $0.table })
+    names.formUnion(addedColumns.map { $0.table })
+    names.formUnion(addedForeignKeys.map { $0.table })
+    return names
+  }
+
+  var modifyingTableNames: Set<String> {
+    var names = sourceTableNames
+    names.formUnion(targetTableNames)
+    return names
+  }
+
+  var retainedModifiedTableNames: Set<String> {
+    var names = Set(renamedTables.map { $0.newName })
+    names.formUnion(droppedForeignKeys.map { newTableName(for: $0.table) })
+    names.formUnion(droppedColumns.map { $0.table })
+    names.formUnion(renamedColumns.map { $0.table })
+    names.formUnion(changedTypes.map { $0.table })
+    names.formUnion(changedNullability.map { $0.table })
+    names.formUnion(addedColumns.map { $0.table })
+    names.formUnion(addedForeignKeys.map { $0.table })
+    names.subtract(Set(createdTables.map { $0.groupExternalName }))
+    names.subtract(Set(droppedTables.map { $0.groupExternalName }))
+    return names
+  }
 }
 
 fileprivate protocol SchemaSynchronizationJoinProvider {

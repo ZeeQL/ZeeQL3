@@ -758,6 +758,116 @@ class SchemaSyncTests: XCTestCase {
     }
   }
 
+  func testSQLiteSynchronizesSupportedChanges() throws {
+    let pool = SingleConnectionPool(maxAge: 60)
+    let adaptor = SQLite3Adaptor(":memory:", pool: pool)
+    try adaptor.performSQL(
+      "CREATE TABLE parent(id INTEGER PRIMARY KEY, name TEXT NULL)")
+    try adaptor.performSQL("INSERT INTO parent VALUES (1, 'Alice')")
+    try adaptor.performSQL("CREATE TABLE obsolete(id INTEGER PRIMARY KEY)")
+
+    let oldParent = modelEntity(
+      table: "parent",
+      attributes: [
+        modelAttribute("id", type: "INTEGER", allowsNull: false),
+        modelAttribute("name", type: "TEXT", allowsNull: true)
+      ], primaryKey: [ "id" ])
+    let obsolete = modelEntity(
+      table: "obsolete",
+      attributes: [
+        modelAttribute("id", type: "INTEGER", allowsNull: false)
+      ], primaryKey: [ "id" ])
+    let oldModel = Model(entities: [ oldParent, obsolete ])
+
+    let newParent = ModelEntity(entity: oldParent, deep: true)
+    newParent.attributes.append(
+      modelAttribute("nickname", type: "TEXT", allowsNull: true))
+    let child = modelEntity(
+      table: "child",
+      attributes: [
+        modelAttribute("id", type: "INTEGER", allowsNull: false),
+        modelAttribute("parentId", column: "parent_id", type: "INTEGER",
+                       allowsNull: false)
+      ], primaryKey: [ "id" ])
+    let relationship = ModelRelationship(name: "parent", source: child,
+                                         destination: newParent)
+    relationship.constraintName = "child parent fk"
+    relationship.updateRule = .cascade
+    relationship.deleteRule = .deny
+    relationship.joins = [ Join(source: "parentId", destination: "id") ]
+    child.relationships = [ relationship ]
+    let newModel = Model(entities: [ newParent, child ])
+    let factory = adaptor.synchronizationFactory
+
+    XCTAssertTrue(factory is SQLite3SchemaSynchronizationFactory)
+    XCTAssertTrue(factory.supportsSchemaSynchronization)
+    let statements = try factory.schemaSynchronizationStatements(
+      old: oldModel, new: newModel).map { $0.statement }
+    XCTAssertFalse(statements.contains {
+      $0.contains("ALTER TABLE \"child\" ADD CONSTRAINT")
+    })
+    XCTAssertTrue(statements.contains {
+      $0.contains("CONSTRAINT \"child parent fk\" FOREIGN KEY")
+    })
+
+    try factory.synchronizeModels(old: oldModel, new: newModel)
+
+    let rows = try adaptor.querySQL("SELECT id, name FROM parent")
+    XCTAssertEqual(rows.count, 1)
+    XCTAssertEqual(rows.first?["name"] as? String, "Alice")
+    let channel = try adaptor.openChannelFromPool()
+    defer { adaptor.releaseChannel(channel) }
+    XCTAssertFalse(channel.isTransactionInProgress)
+    XCTAssertEqual(Set(try channel.describeTableNames()),
+                   Set([ "parent", "child" ]))
+    let parent = try XCTUnwrap(
+      channel.describeEntityWithTableName("parent"))
+    XCTAssertNotNil(parent[columnName: "nickname"])
+    let reflectedChild = try XCTUnwrap(
+      channel.describeEntityWithTableName("child"))
+    XCTAssertEqual(reflectedChild.relationships.count, 1)
+    let reflectedRelationship = try XCTUnwrap(
+      reflectedChild.relationships.first)
+    XCTAssertEqual(reflectedRelationship.updateRule, .cascade)
+    XCTAssertEqual(reflectedRelationship.deleteRule, .deny)
+  }
+
+  func testSQLiteCreatesForeignKeyToUnchangedTable() throws {
+    let pool = SingleConnectionPool(maxAge: 60)
+    let adaptor = SQLite3Adaptor(":memory:", pool: pool)
+    try adaptor.performSQL("PRAGMA foreign_keys = ON")
+    try adaptor.performSQL("CREATE TABLE parent(id INTEGER PRIMARY KEY)")
+    let oldParent = modelEntity(
+      table: "parent",
+      attributes: [
+        modelAttribute("id", type: "INTEGER", allowsNull: false)
+      ], primaryKey: [ "id" ])
+    let newParent = ModelEntity(entity: oldParent, deep: true)
+    let child = modelEntity(
+      table: "child",
+      attributes: [
+        modelAttribute("id", type: "INTEGER", allowsNull: false),
+        modelAttribute("parentId", column: "parent_id", type: "INTEGER",
+                       allowsNull: true)
+      ], primaryKey: [ "id" ])
+    let relationship = ModelRelationship(name: "parent", source: child,
+                                         destination: newParent)
+    relationship.joins = [ Join(source: "parentId", destination: "id") ]
+    child.relationships = [ relationship ]
+
+    try adaptor.synchronizationFactory.synchronizeModels(
+      old: Model(entities: [ oldParent ]),
+      new: Model(entities: [ newParent, child ]))
+
+    let channel = try adaptor.openChannelFromPool()
+    defer { adaptor.releaseChannel(channel) }
+    let reflected = try XCTUnwrap(
+      channel.describeEntityWithTableName("child"))
+    XCTAssertEqual(reflected.relationships.count, 1)
+    XCTAssertThrowsError(try channel.performSQL(
+      "INSERT INTO child(id, parent_id) VALUES (1, 999)"))
+  }
+
   func testRejectsForeignKeyToNonPrimaryColumn() throws {
     let parent = modelEntity(
       table: "parent",
@@ -929,6 +1039,35 @@ class SchemaSyncTests: XCTestCase {
     XCTAssertEqual(statements, [
       "ALTER TABLE \"shared\" ADD COLUMN \"extra\" TEXT NULL"
     ])
+  }
+
+  func testSynchronizesSharedTableWithLogicalNullabilityDifferences() throws {
+    let pool = SingleConnectionPool(maxAge: 60)
+    let adaptor = SQLite3Adaptor(":memory:", pool: pool)
+    try adaptor.performSQL("CREATE TABLE shared(value TEXT NULL)")
+    let first = modelEntity(
+      table: "shared",
+      attributes: [
+        modelAttribute("value", type: "TEXT", allowsNull: false)
+      ], primaryKey: [])
+    first.name = "First"
+    let second = modelEntity(
+      table: "shared",
+      attributes: [
+        modelAttribute("value", type: "TEXT", allowsNull: true)
+      ], primaryKey: [])
+    second.name = "Second"
+    let oldModel = Model(entities: [ second, first ])
+    let newModel = Model(model: oldModel, deep: true)
+    let newFirst = try XCTUnwrap(newModel[entity: "First"] as? ModelEntity)
+    newFirst.attributes.append(
+      modelAttribute("extra", type: "TEXT", allowsNull: true))
+
+    try adaptor.synchronizationFactory.synchronizeModels(
+      old: oldModel, new: newModel)
+
+    XCTAssertEqual(try columns(of: "shared", using: adaptor),
+                   [ "value", "extra" ])
   }
 
   func testSharedTableEntityOrderDoesNotChangeSchema() throws {
@@ -1234,6 +1373,473 @@ class SchemaSyncTests: XCTestCase {
     })
   }
 
+  func testSQLiteRejectsUnsupportedPlanBeforeExecuting() throws {
+    let pool = SingleConnectionPool(maxAge: 60)
+    let adaptor = SQLite3Adaptor(":memory:", pool: pool)
+    try adaptor.performSQL(
+      "CREATE TABLE parent(id INTEGER PRIMARY KEY, name TEXT NULL)")
+    let oldEntity = modelEntity(
+      table: "parent",
+      attributes: [
+        modelAttribute("id", type: "INTEGER", allowsNull: false),
+        modelAttribute("name", type: "TEXT", allowsNull: true)
+      ], primaryKey: [ "id" ])
+    let newEntity = ModelEntity(entity: oldEntity, deep: true)
+    let name = try XCTUnwrap(
+      newEntity[attribute: "name"] as? ModelAttribute)
+    name.allowsNull = false
+    newEntity.attributes.append(
+      modelAttribute("nickname", type: "TEXT", allowsNull: true))
+    let factory = adaptor.synchronizationFactory
+
+    XCTAssertThrowsError(try factory.synchronizeModels(
+      old: Model(entities: [ oldEntity ]),
+      new: Model(entities: [ newEntity ]))) { error in
+      guard case SchemaSynchronizationError.unsupportedChanges = error else {
+        return XCTFail("unexpected error: \(error)")
+      }
+    }
+    XCTAssertEqual(try columns(of: "parent", using: adaptor),
+                   [ "id", "name" ])
+  }
+
+  func testSQLiteRejectsCaseOnlyTableReplacement() throws {
+    let pool = SingleConnectionPool(maxAge: 60)
+    let adaptor = SQLite3Adaptor(":memory:", pool: pool)
+    try adaptor.performSQL("CREATE TABLE Foo(id INTEGER PRIMARY KEY)")
+    try adaptor.performSQL("INSERT INTO Foo VALUES (1)")
+    let oldEntity = modelEntity(
+      table: "Foo",
+      attributes: [
+        modelAttribute("id", type: "INTEGER", allowsNull: false)
+      ], primaryKey: [ "id" ])
+    oldEntity.name = "Old"
+    oldEntity.elementID = "old-id"
+    let newEntity = modelEntity(
+      table: "foo",
+      attributes: [
+        modelAttribute("id", type: "INTEGER", allowsNull: false)
+      ], primaryKey: [ "id" ])
+    newEntity.name = "New"
+    newEntity.elementID = "new-id"
+
+    XCTAssertThrowsError(try adaptor.synchronizationFactory.synchronizeModels(
+      old: Model(entities: [ oldEntity ]),
+      new: Model(entities: [ newEntity ]))) { error in
+      guard case SchemaSynchronizationError.unsupportedChanges = error else {
+        return XCTFail("unexpected error: \(error)")
+      }
+    }
+    let rows = try adaptor.querySQL("SELECT id FROM Foo")
+    XCTAssertEqual(rows.first?["id"] as? Int64, 1)
+  }
+
+  func testSQLiteRollsBackFailedPlan() throws {
+    let pool = SingleConnectionPool(maxAge: 60)
+    let adaptor = SQLite3Adaptor(":memory:", pool: pool)
+    try adaptor.performSQL("CREATE TABLE sample(id INTEGER PRIMARY KEY)")
+    let oldEntity = modelEntity(
+      table: "sample",
+      attributes: [
+        modelAttribute("id", type: "INTEGER", allowsNull: false)
+      ], primaryKey: [ "id" ])
+    let newEntity = ModelEntity(entity: oldEntity, deep: true)
+    newEntity.attributes.append(
+      modelAttribute("first", type: "TEXT", allowsNull: true))
+    newEntity.attributes.append(
+      modelAttribute("second", type: "BROKEN +", allowsNull: true))
+    let factory = adaptor.synchronizationFactory
+
+    XCTAssertThrowsError(try factory.synchronizeModels(
+      old: Model(entities: [ oldEntity ]),
+      new: Model(entities: [ newEntity ])))
+    XCTAssertEqual(try columns(of: "sample", using: adaptor), [ "id" ])
+    let channel = try adaptor.openChannelFromPool()
+    defer { adaptor.releaseChannel(channel) }
+    XCTAssertFalse(channel.isTransactionInProgress)
+  }
+
+  func testSQLiteRejectsStaleOldSchemaBeforeExecuting() throws {
+    let pool = SingleConnectionPool(maxAge: 60)
+    let adaptor = SQLite3Adaptor(":memory:", pool: pool)
+    try adaptor.performSQL(
+      "CREATE TABLE sample(id INTEGER PRIMARY KEY, first TEXT NULL)")
+    let oldEntity = modelEntity(
+      table: "sample",
+      attributes: [
+        modelAttribute("id", type: "INTEGER", allowsNull: false)
+      ], primaryKey: [ "id" ])
+    let newEntity = ModelEntity(entity: oldEntity, deep: true)
+    newEntity.attributes.append(
+      modelAttribute("first", type: "TEXT", allowsNull: true))
+    let factory = adaptor.synchronizationFactory
+
+    XCTAssertThrowsError(try factory.synchronizeModels(
+      old: Model(entities: [ oldEntity ]),
+      new: Model(entities: [ newEntity ]))) { error in
+      guard case SchemaSynchronizationError.preconditionFailed = error else {
+        return XCTFail("unexpected error: \(error)")
+      }
+    }
+    XCTAssertEqual(try columns(of: "sample", using: adaptor), [ "id", "first" ])
+  }
+
+  func testSQLiteLeavesNoOpSynchronizationAlone() throws {
+    let pool = SingleConnectionPool(maxAge: 60)
+    let adaptor = SQLite3Adaptor(":memory:", pool: pool)
+    let entity = modelEntity(
+      table: "missing",
+      attributes: [
+        modelAttribute("id", type: "INTEGER", allowsNull: false)
+      ], primaryKey: [ "id" ])
+    let model = Model(entities: [ entity ])
+
+    let factory = adaptor.synchronizationFactory
+    XCTAssertTrue(try factory.schemaSynchronizationStatements(
+      old: model, new: model).isEmpty)
+    try factory.synchronizeModels(old: model, new: model)
+    XCTAssertTrue(try adaptor.fetchModel().entities.isEmpty)
+  }
+
+  func testSQLiteCreatesCompositePrimaryKey() throws {
+    let pool = SingleConnectionPool(maxAge: 60)
+    let adaptor = SQLite3Adaptor(":memory:", pool: pool)
+    let entity = modelEntity(
+      table: "translation",
+      attributes: [
+        modelAttribute("id", type: "INTEGER", allowsNull: false),
+        modelAttribute("language", type: "TEXT", allowsNull: false),
+        modelAttribute("value", type: "TEXT", allowsNull: true)
+      ], primaryKey: [ "id", "language" ])
+    let factory = adaptor.synchronizationFactory
+
+    try factory.synchronizeModels(
+      old: Model(entities: []), new: Model(entities: [ entity ]))
+
+    let channel = try adaptor.openChannelFromPool()
+    defer { adaptor.releaseChannel(channel) }
+    let reflected = try XCTUnwrap(
+      channel.describeEntityWithTableName("translation"))
+    XCTAssertEqual(reflected.primaryKeyAttributeNames, [ "id", "language" ])
+  }
+
+  func testSQLiteIgnoresToOneRelationshipWithoutJoins() throws {
+    let pool = SingleConnectionPool(maxAge: 60)
+    let adaptor = SQLite3Adaptor(":memory:", pool: pool)
+    let parent = modelEntity(
+      table: "parent",
+      attributes: [
+        modelAttribute("id", type: "INTEGER", allowsNull: false)
+      ], primaryKey: [ "id" ])
+    let child = modelEntity(
+      table: "child",
+      attributes: [
+        modelAttribute("id", type: "INTEGER", allowsNull: false)
+      ], primaryKey: [ "id" ])
+    child.relationships = [
+      ModelRelationship(name: "parent", source: child,
+                        destination: parent)
+    ]
+
+    try adaptor.synchronizationFactory.synchronizeModels(
+      old: Model(entities: []),
+      new: Model(entities: [ parent, child ]))
+
+    XCTAssertEqual(Set(try adaptor.fetchModel().entityNames),
+                   Set([ "parent", "child" ]))
+  }
+
+  func testSQLiteRejectsUnsafeDropWithUnmodeledReference() throws {
+    let pool = SingleConnectionPool(maxAge: 60)
+    let adaptor = SQLite3Adaptor(":memory:", pool: pool)
+    try adaptor.performSQL("PRAGMA foreign_keys = ON")
+    try adaptor.performSQL("CREATE TABLE parent(id INTEGER PRIMARY KEY)")
+    try adaptor.performSQL(
+      "CREATE TABLE external_child(parent_id INTEGER REFERENCES parent(id))")
+    let parent = modelEntity(
+      table: "parent",
+      attributes: [
+        modelAttribute("id", type: "INTEGER", allowsNull: false)
+      ], primaryKey: [ "id" ])
+
+    XCTAssertThrowsError(try adaptor.synchronizationFactory.synchronizeModels(
+      old: Model(entities: [ parent ]), new: Model(entities: []))) { error in
+      guard case SchemaSynchronizationError.preconditionFailed = error else {
+        return XCTFail("unexpected error: \(error)")
+      }
+    }
+    XCTAssertEqual(Set(try adaptor.fetchModel().entityNames),
+                   Set([ "parent", "external_child" ]))
+  }
+
+  func testSQLiteRejectsStaleForeignKeyDestinationKey() throws {
+    let pool = SingleConnectionPool(maxAge: 60)
+    let adaptor = SQLite3Adaptor(":memory:", pool: pool)
+    try adaptor.performSQL("CREATE TABLE parent(id INTEGER)")
+    let oldParent = modelEntity(
+      table: "parent",
+      attributes: [
+        modelAttribute("id", type: "INTEGER", allowsNull: false)
+      ], primaryKey: [ "id" ])
+    let newParent = ModelEntity(entity: oldParent, deep: true)
+    let child = modelEntity(
+      table: "child",
+      attributes: [
+        modelAttribute("id", type: "INTEGER", allowsNull: false),
+        modelAttribute("parentId", column: "parent_id", type: "INTEGER",
+                       allowsNull: true)
+      ], primaryKey: [ "id" ])
+    let relationship = ModelRelationship(name: "parent", source: child,
+                                         destination: newParent)
+    relationship.joins = [ Join(source: "parentId", destination: "id") ]
+    child.relationships = [ relationship ]
+
+    XCTAssertThrowsError(try adaptor.synchronizationFactory.synchronizeModels(
+      old: Model(entities: [ oldParent ]),
+      new: Model(entities: [ newParent, child ]))) { error in
+      guard case SchemaSynchronizationError.preconditionFailed = error else {
+        return XCTFail("unexpected error: \(error)")
+      }
+    }
+    XCTAssertEqual(Set(try adaptor.fetchModel().entityNames), [ "parent" ])
+  }
+
+  func testRejectsStaleForeignKeyConstraintNameBeforeExecuting() throws {
+    let pool = SingleConnectionPool(maxAge: 60)
+    let adaptor = SQLite3Adaptor(":memory:", pool: pool)
+    try adaptor.performSQL("PRAGMA foreign_keys = ON")
+    try adaptor.performSQL("CREATE TABLE parent_a(id INTEGER PRIMARY KEY)")
+    try adaptor.performSQL("CREATE TABLE parent_b(id INTEGER PRIMARY KEY)")
+    try adaptor.performSQL(
+      "CREATE TABLE child(id INTEGER PRIMARY KEY, a_id INTEGER, " +
+      "b_id INTEGER, FOREIGN KEY(a_id) REFERENCES parent_a(id), " +
+      "FOREIGN KEY(b_id) REFERENCES parent_b(id))")
+    let oldModel = try adaptor.fetchModel()
+    let oldChild = try XCTUnwrap(oldModel[entity: "child"])
+    let toA = try XCTUnwrap(oldChild.relationships.first {
+      $0.destinationEntity?.externalNameOrName == "parent_a"
+    } as? ModelRelationship)
+    let toB = try XCTUnwrap(oldChild.relationships.first {
+      $0.destinationEntity?.externalNameOrName == "parent_b"
+    } as? ModelRelationship)
+    let nameA = try XCTUnwrap(toA.constraintName)
+    let nameB = try XCTUnwrap(toB.constraintName)
+    XCTAssertNotEqual(nameA, nameB)
+    toA.constraintName = nameB
+    toB.constraintName = nameA
+    let newModel = Model(model: oldModel, deep: true)
+    let newChild = try XCTUnwrap(newModel[entity: "child"])
+    let newToA = try XCTUnwrap(newChild.relationships.first {
+      $0.destinationEntity?.externalNameOrName == "parent_a"
+    } as? ModelRelationship)
+    newToA.deleteRule = .cascade
+    let factory = NamedForeignKeySQLiteSynchronizationFactory(
+      adaptor: adaptor)
+
+    XCTAssertThrowsError(try factory.synchronizeModels(
+      old: oldModel, new: newModel)) { error in
+      guard case SchemaSynchronizationError.preconditionFailed = error else {
+        return XCTFail("unexpected error: \(error)")
+      }
+    }
+    let reflected = try adaptor.fetchModel()
+    let child = try XCTUnwrap(reflected[entity: "child"])
+    XCTAssertTrue(child.relationships.allSatisfy {
+      $0.deleteRule == .noAction
+    })
+  }
+
+  func testSQLiteRejectsShorthandCaseInsensitiveInboundForeignKey() throws {
+    let pool = SingleConnectionPool(maxAge: 60)
+    let adaptor = SQLite3Adaptor(":memory:", pool: pool)
+    try adaptor.performSQL("PRAGMA foreign_keys = ON")
+    try adaptor.performSQL("CREATE TABLE Parent(id INTEGER PRIMARY KEY)")
+    try adaptor.performSQL(
+      "CREATE TABLE child(parent_id INTEGER REFERENCES parent)")
+    let parent = modelEntity(
+      table: "Parent",
+      attributes: [
+        modelAttribute("id", type: "INTEGER", allowsNull: false)
+      ], primaryKey: [ "id" ])
+    let child = modelEntity(
+      table: "child",
+      attributes: [
+        modelAttribute("parentId", column: "parent_id", type: "INTEGER",
+                       allowsNull: true)
+      ], primaryKey: [])
+    let newChild = ModelEntity(entity: child, deep: true)
+
+    XCTAssertThrowsError(try adaptor.synchronizationFactory.synchronizeModels(
+      old: Model(entities: [ parent, child ]),
+      new: Model(entities: [ newChild ]))) { error in
+      guard case SchemaSynchronizationError.preconditionFailed = error else {
+        return XCTFail("unexpected error: \(error)")
+      }
+    }
+    XCTAssertEqual(Set(try adaptor.fetchModel().entityNames),
+                   Set([ "Parent", "child" ]))
+  }
+
+  func testSQLiteRejectsUnmodeledGeneratedColumnBeforeDrop() throws {
+    let pool = SingleConnectionPool(maxAge: 60)
+    let adaptor = SQLite3Adaptor(":memory:", pool: pool)
+    try adaptor.performSQL(
+      "CREATE TABLE sample(id INTEGER PRIMARY KEY, " +
+      "doubled INTEGER GENERATED ALWAYS AS (id * 2) STORED)")
+    let entity = modelEntity(
+      table: "sample",
+      attributes: [
+        modelAttribute("id", type: "INTEGER", allowsNull: false)
+      ], primaryKey: [ "id" ])
+
+    XCTAssertThrowsError(try adaptor.synchronizationFactory.synchronizeModels(
+      old: Model(entities: [ entity ]),
+      new: Model(entities: []))) { error in
+      guard case SchemaSynchronizationError.preconditionFailed = error else {
+        return XCTFail("unexpected error: \(error)")
+      }
+    }
+    XCTAssertEqual(try adaptor.fetchModel().entityNames, [ "sample" ])
+  }
+
+  func testSQLiteRejectsImplicitNullableStaleDrop() throws {
+    let pool = SingleConnectionPool(maxAge: 60)
+    let adaptor = SQLite3Adaptor(":memory:", pool: pool)
+    try adaptor.performSQL(
+      "CREATE TABLE sample(id INTEGER PRIMARY KEY, name TEXT NOT NULL)")
+    let entity = ModelEntity(name: "sample", table: "sample")
+    entity.attributes = [
+      modelAttribute("id", type: "INTEGER", allowsNull: false),
+      ImplicitNullableAttribute(name: "name", externalType: "TEXT")
+    ]
+    entity.primaryKeyAttributeNames = [ "id" ]
+
+    XCTAssertThrowsError(try adaptor.synchronizationFactory.synchronizeModels(
+      old: Model(entities: [ entity ]), new: Model(entities: []))) { error in
+      guard case SchemaSynchronizationError.preconditionFailed = error else {
+        return XCTFail("unexpected error: \(error)")
+      }
+    }
+    XCTAssertEqual(try columns(of: "sample", using: adaptor), [ "id", "name" ])
+  }
+
+  func testSQLiteRejectsStaleDroppedTableForeignKeys() throws {
+    let pool = SingleConnectionPool(maxAge: 60)
+    let adaptor = SQLite3Adaptor(":memory:", pool: pool)
+    try adaptor.performSQL("PRAGMA foreign_keys = ON")
+    try adaptor.performSQL("CREATE TABLE parent_a(id INTEGER PRIMARY KEY)")
+    try adaptor.performSQL("CREATE TABLE parent_b(id INTEGER PRIMARY KEY)")
+    try adaptor.performSQL(
+      "CREATE TABLE child(id INTEGER PRIMARY KEY, parent_id INTEGER, " +
+      "FOREIGN KEY(parent_id) REFERENCES parent_b(id))")
+    let parentA = modelEntity(
+      table: "parent_a",
+      attributes: [
+        modelAttribute("id", type: "INTEGER", allowsNull: false)
+      ], primaryKey: [ "id" ])
+    let parentB = modelEntity(
+      table: "parent_b",
+      attributes: [
+        modelAttribute("id", type: "INTEGER", allowsNull: false)
+      ], primaryKey: [ "id" ])
+    let child = modelEntity(
+      table: "child",
+      attributes: [
+        modelAttribute("id", type: "INTEGER", allowsNull: false),
+        modelAttribute("parentId", column: "parent_id", type: "INTEGER",
+                       allowsNull: true)
+      ], primaryKey: [ "id" ])
+    let relationship = ModelRelationship(name: "parent", source: child,
+                                         destination: parentA)
+    relationship.joins = [ Join(source: "parentId", destination: "id") ]
+    child.relationships = [ relationship ]
+
+    XCTAssertThrowsError(try adaptor.synchronizationFactory.synchronizeModels(
+      old: Model(entities: [ parentA, parentB, child ]),
+      new: Model(entities: [ parentA, parentB ]))) { error in
+      guard case SchemaSynchronizationError.preconditionFailed = error else {
+        return XCTFail("unexpected error: \(error)")
+      }
+    }
+    XCTAssertTrue(try adaptor.fetchModel().entityNames.contains("child"))
+  }
+
+  func testSQLiteRejectsVirtualTableShadowModification() throws {
+    let pool = SingleConnectionPool(maxAge: 60)
+    let adaptor = SQLite3Adaptor(":memory:", pool: pool)
+    try adaptor.performSQL("CREATE VIRTUAL TABLE docs USING fts5(body)")
+    let oldModel = try adaptor.fetchModel()
+    let newModel = Model(entities: oldModel.entities.filter {
+      $0.externalNameOrName != "docs_data"
+    })
+
+    XCTAssertThrowsError(try adaptor.synchronizationFactory.synchronizeModels(
+      old: oldModel, new: newModel)) { error in
+      guard case SchemaSynchronizationError.preconditionFailed = error else {
+        return XCTFail("unexpected error: \(error)")
+      }
+    }
+    XCTAssertTrue(try adaptor.fetchModel().entityNames.contains("docs_data"))
+  }
+
+  func testSQLiteRejectsDropWithRetainedVirtualTable() throws {
+    let pool = SingleConnectionPool(maxAge: 60)
+    let adaptor = SQLite3Adaptor(":memory:", pool: pool)
+    try adaptor.performSQL(
+      "CREATE TABLE docs(id INTEGER PRIMARY KEY, body TEXT)")
+    try adaptor.performSQL(
+      "CREATE VIRTUAL TABLE search USING fts5(" +
+      "body, content='docs', content_rowid='id')")
+    let oldModel = try adaptor.fetchModel()
+    let newModel = Model(entities: oldModel.entities.filter {
+      $0.externalNameOrName != "docs"
+    })
+
+    XCTAssertThrowsError(try adaptor.synchronizationFactory.synchronizeModels(
+      old: oldModel, new: newModel)) { error in
+      guard case SchemaSynchronizationError.preconditionFailed = error else {
+        return XCTFail("unexpected error: \(error)")
+      }
+    }
+    XCTAssertTrue(try adaptor.fetchModel().entityNames.contains("docs"))
+  }
+
+  func testSynchronizesForeignKeyAcrossTableRename() throws {
+    let pool = SingleConnectionPool(maxAge: 60)
+    let adaptor = SQLite3Adaptor(":memory:", pool: pool)
+    try adaptor.performSQL("PRAGMA foreign_keys = ON")
+    try adaptor.performSQL("CREATE TABLE parent_old(id INTEGER PRIMARY KEY)")
+    let oldParent = modelEntity(
+      table: "parent_old",
+      attributes: [
+        modelAttribute("id", type: "INTEGER", allowsNull: false)
+      ], primaryKey: [ "id" ])
+    oldParent.elementID = "parent-id"
+    let newParent = ModelEntity(entity: oldParent, deep: true)
+    newParent.externalName = "parent_new"
+    let child = modelEntity(
+      table: "child",
+      attributes: [
+        modelAttribute("id", type: "INTEGER", allowsNull: false),
+        modelAttribute("parentId", column: "parent_id", type: "INTEGER",
+                       allowsNull: true)
+      ], primaryKey: [ "id" ])
+    let relationship = ModelRelationship(name: "parent", source: child,
+                                         destination: newParent)
+    relationship.joins = [ Join(source: "parentId", destination: "id") ]
+    child.relationships = [ relationship ]
+    let factory = TestSQLiteSchemaSynchronizationFactory(adaptor: adaptor)
+
+    try factory.synchronizeModels(
+      old: Model(entities: [ oldParent ]),
+      new: Model(entities: [ newParent, child ]))
+
+    XCTAssertEqual(Set(try adaptor.fetchModel().entityNames),
+                   Set([ "parent_new", "child" ]))
+    XCTAssertThrowsError(try adaptor.performSQL(
+      "INSERT INTO child(id, parent_id) VALUES (1, 999)"))
+  }
+
   private func modelAttribute(_ name: String, column: String? = nil,
                               type: String, allowsNull: Bool)
        -> ModelAttribute
@@ -1252,6 +1858,16 @@ class SchemaSyncTests: XCTestCase {
     return entity
   }
 
+  private func columns(of table: String, using adaptor: Adaptor) throws
+       -> [ String ]
+  {
+    let channel = try adaptor.openChannelFromPool()
+    defer { adaptor.releaseChannel(channel) }
+    let entity = try XCTUnwrap(
+      channel.describeEntityWithTableName(table))
+    return entity.attributes.map { $0.columnNameOrName }
+  }
+
   static var allTests = [
     ( "testForeignKeyResolvesDestinationColumns",
       testForeignKeyResolvesDestinationColumns ),
@@ -1262,30 +1878,22 @@ class SchemaSyncTests: XCTestCase {
     ( "testSQLiteConstraintRuleParsing", testSQLiteConstraintRuleParsing ),
     ( "testSQLiteReflectsAndCopiesForeignKeyActions",
       testSQLiteReflectsAndCopiesForeignKeyActions ),
-    ( "testCompositePrimaryKeyCreation",
-      testCompositePrimaryKeyCreation ),
-    ( "testDropAddressStatement",
-      testDropAddressStatement ),
-    ( "testCreateAddressStatements",
-      testCreateAddressStatements ),
-    ( "testCreateStatementOrdering",
-      testCreateStatementOrdering ),
+    ( "testCompositePrimaryKeyCreation", testCompositePrimaryKeyCreation ),
+    ( "testDropAddressStatement",    testDropAddressStatement ),
+    ( "testCreateAddressStatements", testCreateAddressStatements ),
+    ( "testCreateStatementOrdering", testCreateStatementOrdering ),
     ( "testCreateStatementOrderingForDependencyChain",
       testCreateStatementOrderingForDependencyChain ),
     ( "testNonDirectAdaptorForcesEmbeddedConstraints",
       testNonDirectAdaptorForcesEmbeddedConstraints ),
     ( "testCyclicCreationOrderIsStable",
       testCyclicCreationOrderIsStable ),
-    ( "testEmbeddedConstraint",
-      testEmbeddedConstraint ),
-    ( "testLateConstraint",
-      testLateConstraint ),
-    ( "testPlansDirectSchemaChanges",
-      testPlansDirectSchemaChanges ),
+    ( "testEmbeddedConstraint",      testEmbeddedConstraint ),
+    ( "testLateConstraint",          testLateConstraint ),
+    ( "testPlansDirectSchemaChanges", testPlansDirectSchemaChanges ),
     ( "testPlansChangesFromCodeEntities",
       testPlansChangesFromCodeEntities ),
-    ( "testRejectsPatternModels",
-      testRejectsPatternModels ),
+    ( "testRejectsPatternModels", testRejectsPatternModels ),
     ( "testRejectsDuplicateTargetColumns",
       testRejectsDuplicateTargetColumns ),
     ( "testRejectsDuplicateLogicalEntityNames",
@@ -1310,6 +1918,10 @@ class SchemaSyncTests: XCTestCase {
       testRejectsForeignKeyConstraintRename ),
     ( "testRejectsUnsupportedDefaultChange",
       testRejectsUnsupportedDefaultChange ),
+    ( "testSQLiteSynchronizesSupportedChanges",
+      testSQLiteSynchronizesSupportedChanges ),
+    ( "testSQLiteCreatesForeignKeyToUnchangedTable",
+      testSQLiteCreatesForeignKeyToUnchangedTable ),
     ( "testRejectsForeignKeyToNonPrimaryColumn",
       testRejectsForeignKeyToNonPrimaryColumn ),
     ( "testRejectsDuplicateForeignKeyColumns",
@@ -1322,6 +1934,8 @@ class SchemaSyncTests: XCTestCase {
       testRejectsInconsistentSharedTablePrimaryKeys ),
     ( "testAllowsSharedTableLogicalNullabilityDifferences",
       testAllowsSharedTableLogicalNullabilityDifferences ),
+    ( "testSynchronizesSharedTableWithLogicalNullabilityDifferences",
+      testSynchronizesSharedTableWithLogicalNullabilityDifferences ),
     ( "testSharedTableEntityOrderDoesNotChangeSchema",
       testSharedTableEntityOrderDoesNotChangeSchema ),
     ( "testRejectsInconsistentSharedCreatedColumn",
@@ -1334,20 +1948,50 @@ class SchemaSyncTests: XCTestCase {
       testRejectsCreatedTableWithoutColumns ),
     ( "testRejectsMissingLockingAttribute",
       testRejectsMissingLockingAttribute ),
-    ( "testRejectsSchemaMove",
-      testRejectsSchemaMove ),
-    ( "testRejectsCyclicTableDrops",
-      testRejectsCyclicTableDrops ),
+    ( "testRejectsSchemaMove", testRejectsSchemaMove ),
+    ( "testRejectsCyclicTableDrops", testRejectsCyclicTableDrops ),
     ( "testRejectsRecycledTableRenameTarget",
       testRejectsRecycledTableRenameTarget ),
     ( "testPlansParentAlterBeforeDependentTableCreation",
       testPlansParentAlterBeforeDependentTableCreation ),
-    ( "testRejectsUnsafeColumnType",
-      testRejectsUnsafeColumnType ),
+    ( "testRejectsUnsafeColumnType", testRejectsUnsafeColumnType ),
     ( "testAcceptsSafeComplexColumnTypes",
       testAcceptsSafeComplexColumnTypes ),
     ( "testQuotedColumnTypeCaseIsSignificant",
-      testQuotedColumnTypeCaseIsSignificant )
+      testQuotedColumnTypeCaseIsSignificant ),
+    ( "testSQLiteRejectsUnsupportedPlanBeforeExecuting",
+      testSQLiteRejectsUnsupportedPlanBeforeExecuting ),
+    ( "testSQLiteRejectsCaseOnlyTableReplacement",
+      testSQLiteRejectsCaseOnlyTableReplacement ),
+    ( "testSQLiteRollsBackFailedPlan", testSQLiteRollsBackFailedPlan ),
+    ( "testSQLiteRejectsStaleOldSchemaBeforeExecuting",
+      testSQLiteRejectsStaleOldSchemaBeforeExecuting ),
+    ( "testSQLiteLeavesNoOpSynchronizationAlone",
+      testSQLiteLeavesNoOpSynchronizationAlone ),
+    ( "testSQLiteCreatesCompositePrimaryKey",
+      testSQLiteCreatesCompositePrimaryKey ),
+    ( "testSQLiteIgnoresToOneRelationshipWithoutJoins",
+      testSQLiteIgnoresToOneRelationshipWithoutJoins ),
+    ( "testSQLiteRejectsUnsafeDropWithUnmodeledReference",
+      testSQLiteRejectsUnsafeDropWithUnmodeledReference ),
+    ( "testSQLiteRejectsStaleForeignKeyDestinationKey",
+      testSQLiteRejectsStaleForeignKeyDestinationKey ),
+    ( "testRejectsStaleForeignKeyConstraintNameBeforeExecuting",
+      testRejectsStaleForeignKeyConstraintNameBeforeExecuting ),
+    ( "testSQLiteRejectsShorthandCaseInsensitiveInboundForeignKey",
+      testSQLiteRejectsShorthandCaseInsensitiveInboundForeignKey ),
+    ( "testSQLiteRejectsUnmodeledGeneratedColumnBeforeDrop",
+      testSQLiteRejectsUnmodeledGeneratedColumnBeforeDrop ),
+    ( "testSQLiteRejectsImplicitNullableStaleDrop",
+      testSQLiteRejectsImplicitNullableStaleDrop ),
+    ( "testSQLiteRejectsStaleDroppedTableForeignKeys",
+      testSQLiteRejectsStaleDroppedTableForeignKeys ),
+    ( "testSQLiteRejectsVirtualTableShadowModification",
+      testSQLiteRejectsVirtualTableShadowModification ),
+    ( "testSQLiteRejectsDropWithRetainedVirtualTable",
+      testSQLiteRejectsDropWithRetainedVirtualTable ),
+    ( "testSynchronizesForeignKeyAcrossTableRename",
+      testSynchronizesForeignKeyAcrossTableRename ),
   ]
 }
 
@@ -1367,5 +2011,31 @@ private final class ResolvedSourceCodeRelationship:
     super.init(name: "parent", source: source, destination: destination)
     sourceAttributeName = "parentId"
     targetAttributeName = "id"
+  }
+}
+
+private final class TestSQLiteSchemaSynchronizationFactory:
+                    SQLite3SchemaSynchronizationFactory
+{
+  override var supportsDirectTableRenaming: Bool { return true }
+}
+
+private final class NamedForeignKeySQLiteSynchronizationFactory:
+                    SQLite3SchemaSynchronizationFactory
+{
+  override var supportsDirectForeignKeyModification: Bool { return true }
+  override var reflectsForeignKeyConstraintNames: Bool { return true }
+}
+
+private final class ImplicitNullableAttribute: Attribute {
+
+  let name         : String
+  let externalType : String?
+  let userData     = [ String : Any ]()
+  let elementID    : String? = nil
+
+  init(name: String, externalType: String) {
+    self.name = name
+    self.externalType = externalType
   }
 }
