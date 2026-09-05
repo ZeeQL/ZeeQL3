@@ -176,6 +176,9 @@ open class SQLite3Adaptor : Adaptor, SmartDescription {
   open var log : ZeeQLLogger = globalZeeQLLogger
   public var expressionFactory : SQLExpressionFactory
                                = SQLite3ExpressionFactory.shared
+  open var synchronizationFactory : SchemaSynchronizationFactory {
+    return SQLite3SchemaSynchronizationFactory(adaptor: self)
+  }
   public var model             : Model? = nil
   
   

@@ -8,6 +8,9 @@
 
 open class SQLite3SchemaSynchronizationFactory : SchemaSynchronizationFactory {
   
+  override open
+  var supportsDirectTableRenaming                : Bool { return false }
+
   /// Not supported: ALTER TABLE hello ALTER COLUMN doit TYPE INT;
   override open
   var supportsDirectColumnCoercion               : Bool { return false }
@@ -37,5 +40,32 @@ open class SQLite3SchemaSynchronizationFactory : SchemaSynchronizationFactory {
   /// Not supported: ALTER TABLE hello RENAME COLUMN doit TO testit;
   override open
   var supportsDirectColumnRenaming               : Bool { return false }
-  
+
+  override open
+  var reflectsForeignKeyConstraintNames          : Bool { return false }
+
+  override open func normalizedColumnType(_ type: String) -> String {
+    let type = super.normalizedColumnType(type)
+    if type.contains("INT") { return "INTEGER" }
+    if type.contains("CHAR") || type.contains("CLOB") || type.contains("TEXT") {
+      return "TEXT"
+    }
+    if type.isEmpty || type.contains("BLOB") { return "BLOB" }
+    if type.contains("REAL") || type.contains("FLOA") || type.contains("DOUB") {
+      return "REAL"
+    }
+    return "NUMERIC"
+  }
+
+  override open func normalizedSchemaObjectName(_ name: String) -> String {
+    return name.lowercased()
+  }
+
+  override open func synchronizationIssuesForTable(named table: String)
+       -> [ String ]
+  {
+    guard table.lowercased().hasPrefix("sqlite_") else { return [] }
+    return [ "synchronizing SQLite system table \(table)" ]
+  }
+
 }
