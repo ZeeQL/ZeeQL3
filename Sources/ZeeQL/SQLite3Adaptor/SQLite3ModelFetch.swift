@@ -221,6 +221,15 @@ open class SQLite3ModelFetch: AdaptorModelFetch {
     let foreignKeyRecords = try _fetchForeignKeysOfTable(table)
     guard !foreignKeyRecords.isEmpty else { return [] }
 
+    func constraintRule(_ value: Any?, column: String) -> ConstraintRule? {
+      guard let value = value as? String else { return nil }
+      guard let rule = ConstraintRule(sqliteRule: value) else {
+        log.warn("unexpected foreign-key \(column) rule:", value)
+        return nil
+      }
+      return rule
+    }
+
     let fkeysByConstraint : [ Int : [ AdaptorRecord ] ] = {
       var grouped = [ Int : [ AdaptorRecord ] ]()
       for record in foreignKeyRecords {
@@ -260,7 +269,6 @@ open class SQLite3ModelFetch: AdaptorModelFetch {
       relship.constraintName = name
       
       for fkey in fkeys {
-        // TODO: match (e.g. NONE), on_update(updateRule)
         guard let destname     = fkey["table"] as? String,
               let sourceColumn = fkey["from"]  as? String,
               let targetColumn = fkey["to"]    as? String
@@ -270,27 +278,9 @@ open class SQLite3ModelFetch: AdaptorModelFetch {
         
         let join = Join(source: sourceColumn, destination: targetColumn)
         relship.joins.append(join)
-        
-        let drc = (fkey["on_delete"] as? String)?.first
-        
-        if let deleteRule = drc {
-          switch deleteRule {
-            case "n", "N": relship.deleteRule = .noAction
-            case "r", "R": relship.deleteRule = .deny
-            case "c", "C": relship.deleteRule = .cascade
-            
-            case "s", "S":
-              let n = (fkey["on_delete"] as? String)?.uppercased() ?? ""
-              if      n == "SET NULL"    { relship.deleteRule = .nullify      }
-              else if n == "SET DEFAULT" { relship.deleteRule = .applyDefault }
-              else {
-                fallthrough
-              }
-            
-            default:
-              log.warn("unexpected foreign-key delete rule:", fkey["on_delete"])
-          }
-        }
+
+        relship.updateRule = constraintRule(fkey["on_update"], column: "update")
+        relship.deleteRule = constraintRule(fkey["on_delete"], column: "delete")
       }
       
       if !relship.joins.isEmpty {
@@ -299,6 +289,21 @@ open class SQLite3ModelFetch: AdaptorModelFetch {
     }
     
     return relships
+  }
+}
+
+public extension ConstraintRule {
+
+  /// Parses an action returned by SQLite's foreign_key_list pragma.
+  init?(sqliteRule: String) {
+    switch sqliteRule.uppercased() {
+      case "NO ACTION":   self = .noAction
+      case "RESTRICT":    self = .deny
+      case "CASCADE":     self = .cascade
+      case "SET NULL":    self = .nullify
+      case "SET DEFAULT": self = .applyDefault
+      default:            return nil
+    }
   }
 }
 

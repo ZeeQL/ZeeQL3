@@ -15,7 +15,115 @@ class SchemaSyncTests: XCTestCase {
   let adaptor = FakeAdaptor(model: ActiveRecordContactsDBModel.model)
   
   let verbose = true
-  
+
+  func testForeignKeyResolvesDestinationColumns() throws {
+    let source = modelEntity(table: "child", attributes: [
+      modelAttribute("parentId", column: "owner_id", type: "INTEGER",
+                     allowsNull: true)
+    ], primaryKey: [])
+    let destination = modelEntity(table: "parent", attributes: [
+      modelAttribute("id", column: "object_id", type: "INTEGER",
+                     allowsNull: false)
+    ], primaryKey: [ "id" ])
+    let relationship = ModelRelationship(name: "parent", source: source,
+                                         destination: destination)
+    relationship.joins = [ Join(source: "parentId", destination: "id") ]
+
+    let key = try XCTUnwrap(relationship.foreignKey)
+    XCTAssertEqual(key.destinationTableName, "parent")
+    XCTAssertEqual(key.sortedJoinColumns.map { $0.0 }, [ "owner_id" ])
+    XCTAssertEqual(key.sortedJoinColumns.map { $0.1 }, [ "object_id" ])
+  }
+
+  func testCompositeForeignKeyIdentityIncludesRules() throws {
+    let source = modelEntity(table: "child", attributes: [
+      modelAttribute("parentId", type: "INTEGER", allowsNull: true),
+      modelAttribute("language", type: "TEXT", allowsNull: true)
+    ], primaryKey: [])
+    let destination = modelEntity(table: "parent", attributes: [
+      modelAttribute("id", type: "INTEGER", allowsNull: false),
+      modelAttribute("locale", type: "TEXT", allowsNull: false)
+    ], primaryKey: [ "id", "locale" ])
+    let first = ModelRelationship(name: "first", source: source,
+                                  destination: destination)
+    first.joins = [ Join(source: "parentId", destination: "id"),
+                    Join(source: "language", destination: "locale") ]
+    let second = ModelRelationship(relationship: first)
+    second.name = "second"
+    second.joins.reverse()
+    source.relationships = [ first, second ]
+
+    let key = try XCTUnwrap(first.foreignKey)
+    let sameKey = try XCTUnwrap(second.foreignKey)
+    XCTAssertEqual(key, sameKey)
+    XCTAssertEqual(Set([ key, sameKey ]).count, 1)
+    XCTAssertEqual([ source ].groupRelationships.count, 1)
+
+    second.updateRule = .cascade
+    let updateKey = try XCTUnwrap(second.foreignKey)
+    XCTAssertNotEqual(key, updateKey)
+    XCTAssertEqual([ source ].groupRelationships.count, 2)
+    second.deleteRule = .nullify
+    XCTAssertNotEqual(updateKey, try XCTUnwrap(second.foreignKey))
+
+    second.updateRule = nil
+    second.deleteRule = nil
+    second.joins = [ Join(source: "parentId", destination: "locale"),
+                     Join(source: "language", destination: "id") ]
+    XCTAssertNotEqual(key, try XCTUnwrap(second.foreignKey))
+  }
+
+  func testForeignKeyRejectsEmptyAndUnresolvedJoins() {
+    let source = modelEntity(table: "child", attributes: [
+      modelAttribute("parentId", type: "INTEGER", allowsNull: true)
+    ], primaryKey: [])
+    let destination = modelEntity(table: "parent", attributes: [
+      modelAttribute("id", type: "INTEGER", allowsNull: false)
+    ], primaryKey: [ "id" ])
+    let relationship = ModelRelationship(name: "parent", source: source,
+                                         destination: destination)
+    XCTAssertNil(relationship.foreignKey)
+    relationship.joins = [ Join(source: "parentId", destination: "id"),
+                           Join(source: "missing", destination: "id") ]
+    XCTAssertNil(relationship.foreignKey)
+    relationship.joins = [ Join(source: "parentId", destination: "id") ]
+    relationship.isToMany = true
+    XCTAssertNil(relationship.foreignKey)
+  }
+
+  func testSQLiteConstraintRuleParsing() {
+    let rules: [ ( String, ConstraintRule ) ] = [
+      ( "NO ACTION", .noAction ), ( "RESTRICT", .deny ),
+      ( "CASCADE", .cascade ), ( "SET NULL", .nullify ),
+      ( "SET DEFAULT", .applyDefault )
+    ]
+    for ( sql, rule ) in rules {
+      XCTAssertEqual(ConstraintRule(sqliteRule: sql), rule)
+      XCTAssertEqual(ConstraintRule(sqliteRule: sql.lowercased()), rule)
+    }
+    XCTAssertNil(ConstraintRule(sqliteRule: ""))
+    XCTAssertNil(ConstraintRule(sqliteRule: "UNKNOWN"))
+  }
+
+  func testSQLiteReflectsAndCopiesForeignKeyActions() throws {
+    let pool = SingleConnectionPool(maxAge: 60)
+    let adaptor = SQLite3Adaptor(":memory:", pool: pool)
+    try adaptor.performSQL("CREATE TABLE parent(id INTEGER PRIMARY KEY)")
+    try adaptor.performSQL(
+      "CREATE TABLE child(parent_id INTEGER REFERENCES parent(id) " +
+      "ON UPDATE CASCADE ON DELETE SET NULL)")
+    let channel = try adaptor.openChannelFromPool()
+    defer { adaptor.releaseChannel(channel) }
+    let entity = try XCTUnwrap(channel.describeEntityWithTableName("child"))
+    let relationship = try XCTUnwrap(entity.relationships.first)
+
+    XCTAssertEqual(relationship.updateRule, .cascade)
+    XCTAssertEqual(relationship.deleteRule, .nullify)
+    let copy = ModelRelationship(relationship: relationship)
+    XCTAssertEqual(copy.updateRule, .cascade)
+    XCTAssertEqual(copy.deleteRule, .nullify)
+  }
+
   func testDropAddressStatement() {
     let options = SchemaGenerationOptions()
     options.createTables = false
@@ -198,12 +306,45 @@ class SchemaSyncTests: XCTestCase {
     // TODO: sync!!!
   }
 
+  private func modelAttribute(_ name: String, column: String? = nil,
+                              type: String, allowsNull: Bool)
+       -> ModelAttribute
+  {
+    return ModelAttribute(name: name, column: column, externalType: type,
+                          allowsNull: allowsNull)
+  }
+
+  private func modelEntity(table: String,
+                           attributes: [ ModelAttribute ],
+                           primaryKey: [ String ]) -> ModelEntity
+  {
+    let entity = ModelEntity(name: table, table: table)
+    entity.attributes = attributes
+    entity.primaryKeyAttributeNames = primaryKey
+    return entity
+  }
+
   static var allTests = [
-    ( "testDropAddressStatement",    testDropAddressStatement ),
-    ( "testCreateAddressStatements", testCreateAddressStatements ),
-    ( "testCreateStatementOrdering", testCreateStatementOrdering ),
-    ( "testEmbeddedConstraint",      testEmbeddedConstraint ),
-    ( "testLateConstraint",          testLateConstraint ),
-    ( "testSimpleModelSync",         testSimpleModelSync ),
+    ( "testForeignKeyResolvesDestinationColumns",
+      testForeignKeyResolvesDestinationColumns ),
+    ( "testCompositeForeignKeyIdentityIncludesRules",
+      testCompositeForeignKeyIdentityIncludesRules ),
+    ( "testForeignKeyRejectsEmptyAndUnresolvedJoins",
+      testForeignKeyRejectsEmptyAndUnresolvedJoins ),
+    ( "testSQLiteConstraintRuleParsing", testSQLiteConstraintRuleParsing ),
+    ( "testSQLiteReflectsAndCopiesForeignKeyActions",
+      testSQLiteReflectsAndCopiesForeignKeyActions ),
+    ( "testDropAddressStatement",
+      testDropAddressStatement ),
+    ( "testCreateAddressStatements",
+      testCreateAddressStatements ),
+    ( "testCreateStatementOrdering",
+      testCreateStatementOrdering ),
+    ( "testEmbeddedConstraint",
+      testEmbeddedConstraint ),
+    ( "testLateConstraint",
+      testLateConstraint ),
+    ( "testSimpleModelSync",
+      testSimpleModelSync )
   ]
 }

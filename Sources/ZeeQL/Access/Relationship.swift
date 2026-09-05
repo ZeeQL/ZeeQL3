@@ -371,6 +371,7 @@ open class ModelRelationship : Relationship {
   public final var joinSemantic          = Join.Semantic.innerJoin
   open         var isToMany              = false
   public final var relationshipPath      : String?
+  public final var updateRule            : ConstraintRule?
   public final var deleteRule            : ConstraintRule?
   
   public final var minCount              : Int? {
@@ -406,6 +407,7 @@ open class ModelRelationship : Relationship {
     constraintName    = rs.constraintName
     joinSemantic      = rs.joinSemantic
     isToMany          = rs.isToMany
+    updateRule        = rs.updateRule
     deleteRule        = rs.deleteRule
     relationshipPath  = rs.relationshipPath
     entity            = newEntity ?? rs.entity

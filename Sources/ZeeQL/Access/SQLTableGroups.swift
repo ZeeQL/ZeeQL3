@@ -85,9 +85,17 @@ extension Sequence where Iterator.Element == Entity { // a table group
   var groupRelationships : [ Relationship ] {
     var relships                = [ Relationship ]()
     var registeredRelationships = Set<String>()
+    var registeredForeignKeys   = Set<SQLForeignKey>()
     
     for entity in self {
       for rs in entity.relationships {
+        if let foreignKey = rs.foreignKey {
+          guard registeredForeignKeys.insert(foreignKey).inserted else { 
+            continue 
+          }
+          relships.append(rs)
+          continue
+        }
         guard let key = rs.constraintKey             else { continue }
         guard !registeredRelationships.contains(key) else { continue }
         relships.append(rs)
