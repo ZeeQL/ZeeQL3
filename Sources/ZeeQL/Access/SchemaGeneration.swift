@@ -3,7 +3,7 @@
 //  ZeeQL3
 //
 //  Created by Helge Hess on 08.06.17.
-//  Copyright © 2017-2021 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2026 ZeeZide GmbH. All rights reserved.
 //
 
 public protocol SchemaGeneration: AnyObject {
@@ -41,12 +41,55 @@ public protocol SchemaGeneration: AnyObject {
   var supportsDirectForeignKeyModification : Bool { get }
 }
 
-public class SchemaGenerationOptions {
+public class SchemaGenerationOptions { // TBD: Make that an optionset?
   
   var dropTables              = true
   var createTables            = true
   var embedConstraintsInTable = true
-  
+}
+
+private func orderEntityGroupsForCreation(_ groups: [ SQLTableGroup ])
+             -> [ SQLTableGroup ]
+{
+  guard groups.count > 1 else { return groups }
+
+  var dependencies = Array(repeating: Set<Int>(), count: groups.count)
+  for source in groups.indices {
+    for destination in groups.indices where source != destination {
+      if groups[source].countReferencesToEntityGroup(groups[destination]) > 0 {
+        dependencies[source].insert(destination)
+      }
+    }
+  }
+
+  func isPreferred(_ candidate: Int, over current: Int?) -> Bool {
+    guard let current else { return true }
+    let candidateName = groups[candidate].groupExternalName
+    let currentName   = groups[current].groupExternalName
+    if candidateName != currentName { return candidateName < currentName }
+    return candidate < current
+  }
+
+  var remaining = Set(groups.indices)
+  var ordered   = [ SQLTableGroup ]()
+  ordered.reserveCapacity(groups.count)
+  while !remaining.isEmpty {
+    var next: Int?
+    for candidate in remaining
+      where dependencies[candidate].isDisjoint(with: remaining)
+    {
+      if isPreferred(candidate, over: next) { next = candidate }
+    }
+    if next == nil {
+      for candidate in remaining {
+        if isPreferred(candidate, over: next) { next = candidate }
+      }
+    }
+    guard let next else { break }
+    ordered.append(groups[next])
+    remaining.remove(next)
+  }
+  return ordered
 }
 
 public extension SchemaGeneration {
@@ -81,16 +124,7 @@ public extension SchemaGeneration {
       if !supportsDirectForeignKeyModification ||
          options.embedConstraintsInTable // not strictly necessary but nicer
       {
-        entityGroups.sort { lhs, rhs in // areInIncreasingOrder
-          let lhsr = lhs.countReferencesToEntityGroup(rhs)
-          let rhsr = rhs.countReferencesToEntityGroup(lhs)
-          
-          if lhsr < rhsr { return true  }
-          if lhsr > rhsr { return false }
-        
-          // sort by name
-          return lhs[0].name < rhs[0].name
-        }
+        entityGroups = orderEntityGroupsForCreation(entityGroups)
       }
       
       for group in entityGroups {
@@ -124,9 +158,28 @@ public extension SchemaGeneration {
     assert(!createdTables.contains(table))
     createdTables.insert(table)
     
+    let primaryKeyNames = rootEntity.primaryKeyAttributeNames ?? []
+    let hasCompositePrimaryKey = primaryKeyNames.count > 1
     for attr in attributes {
-      // TBD: is the pkey handling right for groups?
-      expr.addCreateClauseForAttribute(attr, in: rootEntity)
+      // A composite key must be emitted as one table-level constraint.
+      expr.addCreateClauseForAttribute(
+        attr, in: hasCompositePrimaryKey ? nil : rootEntity)
+    }
+    if hasCompositePrimaryKey {
+      let columns = primaryKeyNames.compactMap {
+        rootEntity[attribute: $0]?.columnNameOrName
+      }
+      if columns.count == primaryKeyNames.count {
+        if !expr.listString.isEmpty { expr.listString += ",\n" }
+        expr.listString += "PRIMARY KEY ( "
+        expr.listString += columns.map {
+          expr.sqlStringFor(schemaObjectName: $0)
+        }.joined(separator: ", ")
+        expr.listString += " )"
+      }
+      else {
+        log.error("Could not resolve composite primary key:", rootEntity)
+      }
     }
     
     var sql = "CREATE TABLE "
@@ -139,29 +192,40 @@ public extension SchemaGeneration {
       guard rs.isForeignKeyRelationship else { continue }
       
       let fkexpr = adaptor.expressionFactory.createExpression(rootEntity)
-      guard let fkSQL  = fkexpr.sqlForForeignKeyConstraint(rs)
-       else {
+      guard let fkSQL  = fkexpr.sqlForForeignKeyConstraint(rs) else {
         log.warn("Could not create constraint statement for relationship:", rs)
         continue
        }
       
       var needsAlter = true
       
-      if options.embedConstraintsInTable && rs.constraintName == nil {
-        // if the constraint has an explicit name, keep it!
-        
-        if let dest = rs.destinationEntity?.externalName
-                   ?? rs.destinationEntity?.name,
-           createdTables.contains(dest)
+      if options.embedConstraintsInTable ||
+         !supportsDirectForeignKeyModification
+      {
+        let destination = rs.destinationEntity?.externalName
+                       ?? rs.destinationEntity?.name
+        if !supportsDirectForeignKeyModification
+           || destination.map(createdTables.contains) == true
         {
           sql += ",\n"
+          if let name = rs.constraintName, !name.isEmpty {
+            sql += "CONSTRAINT "
+            sql += expr.sqlStringFor(schemaObjectName: name)
+            sql += " "
+          }
           sql += fkSQL
           needsAlter = false
         }
       }
       
       if needsAlter {
-        var constraintName : String = rs.constraintName ?? rs.name
+        var constraintName: String
+        if let name = rs.constraintName, !name.isEmpty {
+          constraintName = name
+        }
+        else {
+          constraintName = rs.name
+        }
         if constraintNames.contains(constraintName) {
           constraintName = rs.name + String(describing: constraintNames.count)
           if constraintNames.contains(constraintName) {

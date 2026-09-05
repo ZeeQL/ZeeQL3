@@ -124,6 +124,29 @@ class SchemaSyncTests: XCTestCase {
     XCTAssertEqual(copy.deleteRule, .nullify)
   }
 
+  func testCompositePrimaryKeyCreation() throws {
+    let entity = modelEntity(table: "translation", attributes: [
+      modelAttribute("id", type: "INTEGER", allowsNull: false),
+      modelAttribute("language", type: "TEXT", allowsNull: false)
+    ], primaryKey: [ "id", "language" ])
+    let adaptor = SQLite3Adaptor(":memory:")
+    let factory = SQLite3SchemaSynchronizationFactory(adaptor: adaptor)
+    let options = SchemaGenerationOptions()
+    options.dropTables = false
+    let statements =
+      factory.schemaCreationStatementsForEntities([ entity ], options: options)
+    let statement = try XCTUnwrap(statements.first)
+    XCTAssertTrue(statement.statement.contains(
+      "PRIMARY KEY ( \"id\", \"language\" )"))
+
+    let channel = try adaptor.openChannelFromPool()
+    defer { adaptor.releaseChannel(channel) }
+    _ = try channel.evaluateUpdateExpression(statement)
+    let reflected = try XCTUnwrap(
+      channel.describeEntityWithTableName("translation"))
+    XCTAssertEqual(reflected.primaryKeyAttributeNames, [ "id", "language" ])
+  }
+
   func testDropAddressStatement() {
     let options = SchemaGenerationOptions()
     options.createTables = false
@@ -182,6 +205,101 @@ class SchemaSyncTests: XCTestCase {
       XCTAssertTrue(a.hasPrefix("CREATE TABLE \"person\""))
       XCTAssertTrue(b.hasPrefix("CREATE TABLE \"address\""))
     }
+  }
+
+  func testCreateStatementOrderingForDependencyChain() {
+    let grandparent = modelEntity(
+      table: "grandparent",
+      attributes: [
+        modelAttribute("id", type: "INTEGER", allowsNull: false)
+      ], primaryKey: [ "id" ])
+    let parent = modelEntity(
+      table: "parent",
+      attributes: [
+        modelAttribute("id", type: "INTEGER", allowsNull: false),
+        modelAttribute("grandparentId", type: "INTEGER", allowsNull: true)
+      ], primaryKey: [ "id" ])
+    let child = modelEntity(
+      table: "child",
+      attributes: [
+        modelAttribute("id", type: "INTEGER", allowsNull: false),
+        modelAttribute("parentId", type: "INTEGER", allowsNull: true)
+      ], primaryKey: [ "id" ])
+    let toGrandparent = ModelRelationship(
+      name: "grandparent", source: parent, destination: grandparent)
+    toGrandparent.joins = [
+      Join(source: "grandparentId", destination: "id")
+    ]
+    parent.relationships = [ toGrandparent ]
+    let toParent = ModelRelationship(name: "parent", source: child,
+                                     destination: parent)
+    toParent.joins = [ Join(source: "parentId", destination: "id") ]
+    child.relationships = [ toParent ]
+    let options = SchemaGenerationOptions()
+    options.dropTables = false
+
+    let statements = adaptor.synchronizationFactory
+      .schemaCreationStatementsForEntities(
+        [ child, grandparent, parent ], options: options)
+    let prefixes = statements.prefix(3).map {
+      $0.statement.split(separator: " ").prefix(3).joined(separator: " ")
+    }
+    XCTAssertEqual(prefixes, [
+      "CREATE TABLE \"grandparent\"", "CREATE TABLE \"parent\"",
+      "CREATE TABLE \"child\""
+    ])
+  }
+
+  func testNonDirectAdaptorForcesEmbeddedConstraints() throws {
+    let options = SchemaGenerationOptions()
+    options.dropTables = false
+    options.embedConstraintsInTable = false
+    let factory = SQLite3SchemaSynchronizationFactory(adaptor: adaptor)
+    let address = try XCTUnwrap(model[entity: "Address"])
+    let person  = try XCTUnwrap(model[entity: "Person"])
+    let statements = factory.schemaCreationStatementsForEntities(
+      [ address, person ], options: options)
+
+    XCTAssertEqual(statements.count, 2)
+    XCTAssertTrue(statements[1].statement.contains("FOREIGN KEY"))
+    XCTAssertFalse(statements.contains {
+      $0.statement.hasPrefix("ALTER TABLE")
+    })
+  }
+
+  func testCyclicCreationOrderIsStable() {
+    let first = modelEntity(
+      table: "first",
+      attributes: [
+        modelAttribute("id", type: "INTEGER", allowsNull: false),
+        modelAttribute("secondId", type: "INTEGER", allowsNull: true)
+      ], primaryKey: [ "id" ])
+    let second = modelEntity(
+      table: "second",
+      attributes: [
+        modelAttribute("id", type: "INTEGER", allowsNull: false),
+        modelAttribute("firstId", type: "INTEGER", allowsNull: true)
+      ], primaryKey: [ "id" ])
+    let toSecond = ModelRelationship(name: "second", source: first,
+                                     destination: second)
+    toSecond.constraintName = ""
+    toSecond.joins = [ Join(source: "secondId", destination: "id") ]
+    first.relationships = [ toSecond ]
+    let toFirst = ModelRelationship(name: "first", source: second,
+                                    destination: first)
+    toFirst.joins = [ Join(source: "firstId", destination: "id") ]
+    second.relationships = [ toFirst ]
+    let options = SchemaGenerationOptions()
+    options.dropTables = false
+    let factory = SchemaSynchronizationFactory(adaptor: adaptor)
+
+    let forward = factory.schemaCreationStatementsForEntities(
+      [ first, second ], options: options).map { $0.statement }
+    let reverse = factory.schemaCreationStatementsForEntities(
+      [ second, first ], options: options).map { $0.statement }
+    XCTAssertEqual(forward, reverse)
+    XCTAssertTrue(forward.first?.hasPrefix("CREATE TABLE \"first\"") == true)
+    XCTAssertTrue(forward.last?.contains("ADD CONSTRAINT \"second\"") == true)
   }
 
   func testEmbeddedConstraint() {
@@ -334,12 +452,20 @@ class SchemaSyncTests: XCTestCase {
     ( "testSQLiteConstraintRuleParsing", testSQLiteConstraintRuleParsing ),
     ( "testSQLiteReflectsAndCopiesForeignKeyActions",
       testSQLiteReflectsAndCopiesForeignKeyActions ),
+    ( "testCompositePrimaryKeyCreation",
+      testCompositePrimaryKeyCreation ),
     ( "testDropAddressStatement",
       testDropAddressStatement ),
     ( "testCreateAddressStatements",
       testCreateAddressStatements ),
     ( "testCreateStatementOrdering",
       testCreateStatementOrdering ),
+    ( "testCreateStatementOrderingForDependencyChain",
+      testCreateStatementOrderingForDependencyChain ),
+    ( "testNonDirectAdaptorForcesEmbeddedConstraints",
+      testNonDirectAdaptorForcesEmbeddedConstraints ),
+    ( "testCyclicCreationOrderIsStable",
+      testCyclicCreationOrderIsStable ),
     ( "testEmbeddedConstraint",
       testEmbeddedConstraint ),
     ( "testLateConstraint",
