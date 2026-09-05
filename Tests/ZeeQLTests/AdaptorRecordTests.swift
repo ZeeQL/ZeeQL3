@@ -31,4 +31,21 @@ class AdaptorRecordTests: XCTestCase {
     XCTAssertEqual(dictionary["id"] as? Int, 42)
     XCTAssertFalse(dictionary.keys.contains("nickname"))
   }
+
+  func testAdaptorRowDynamicEqualityPreservesNullPresence() {
+    var lhs: AdaptorRow = [ "id": 42 ]
+    lhs.updateValue(nil, forKey: "nickname")
+    var rhs = lhs
+
+    XCTAssertTrue(lhs.isEqual(to: rhs))
+
+    rhs.removeValue(forKey: "nickname")
+    XCTAssertFalse(lhs.isEqual(to: rhs))
+
+    rhs.updateValue(nil, forKey: "nickname")
+    XCTAssertTrue(lhs.isEqual(to: rhs))
+
+    rhs["id"] = 43
+    XCTAssertFalse(lhs.isEqual(to: rhs))
+  }
 }

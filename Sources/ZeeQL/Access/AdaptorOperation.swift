@@ -88,25 +88,48 @@ public struct AdaptorOperation: Comparable, EquatableType, SmartDescription {
 
   @inlinable
   public static func ==(lhs: AdaptorOperation, rhs: AdaptorOperation) -> Bool {
-    guard lhs.entity === rhs.entity                  else { return false }
-    guard lhs.adaptorOperator == rhs.adaptorOperator else { return false }
+    guard lhs.entity           === rhs.entity,
+          lhs.adaptorOperator   == rhs.adaptorOperator,
+          lhs.attributes?.count ?? 0 == rhs.attributes?.count ?? 0 
+     else { return false }
     
-    // TODO: the rest.
+    // TBD: we should probably sort
+    if let lhs = lhs.attributes, let rhs = rhs.attributes {
+      guard lhs.count == rhs.count else { return false } // already checked ^^^
+      for i in lhs.indices {
+        // TBD: we might actually want to compare them
+        guard lhs[i] === rhs[i] else { return false } // identity check only
+      }
+    }
     
+    if let lhs = lhs.qualifier {
+      guard let rhs = rhs.qualifier, eq(lhs, rhs) else { return false }
+    }
+    else if rhs.qualifier != nil { return false }
+    
+    if let lhs = lhs.changedValues {
+      guard let rhs = rhs.changedValues, eq(lhs, rhs) else { return false }
+    }
+    else if rhs.changedValues != nil { return false }
+
+    if let lhs = lhs.resultRow {
+      guard let rhs = rhs.resultRow, eq(lhs, rhs) else { return false }
+    }
+    else if rhs.resultRow != nil { return false }
+
+    // Not comparing the completion-closure.
     return true
   }
   
   @inlinable
   public static func < (lhs: AdaptorOperation, rhs: AdaptorOperation) -> Bool {
-    // first order by entity name
-    if lhs.entity.name < rhs.entity.name { return true }
+    let lhsName = lhs.entity.name
+    let rhsName = rhs.entity.name
+    if lhsName != rhsName { return lhsName < rhsName }
     
-    // then by operation
-    if lhs.adaptorOperator.rawValue < rhs.adaptorOperator.rawValue {
-      return true
-    }
-    
-    return false
+    let lhsOperator = lhs.adaptorOperator.rawValue
+    let rhsOperator = rhs.adaptorOperator.rawValue
+    return lhsOperator < rhsOperator
   }
 
   

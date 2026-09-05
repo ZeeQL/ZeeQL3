@@ -321,6 +321,21 @@ public extension AdaptorChannel {
  */
 public typealias AdaptorRow = Dictionary<String, Any?>
 
+extension AdaptorRow: EquatableType {
+
+  @inlinable
+  public func isEqual(to object: Any?) -> Bool {
+    guard let other = object as? Self else { return false }
+    guard count == other.count else { return false }
+
+    for ( key, value ) in self {
+      guard let otherValue = other[key] else { return false }
+      guard eq(value, otherValue) else { return false }
+    }
+    return true
+  }
+}
+
 public extension AdaptorChannel { // MARK: - Operations
 
   /**
