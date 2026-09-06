@@ -3,10 +3,44 @@
 //  ZeeQL
 //
 
+import Dispatch
 import XCTest
 @testable import ZeeQL
 
 class AdaptorRecordTests: XCTestCase {
+
+  func testAttributeSchemaSnapshotsNamesAtInitialization() {
+    let attribute = ModelAttribute(name: "id")
+    let schema    = AdaptorRecordSchemaWithAttributes([ attribute ])
+    attribute.name = "renamed"
+
+    XCTAssertEqual(schema.attributeNames, [ "id" ])
+    XCTAssertEqual(schema.count, 1)
+    XCTAssertTrue(schema.attributes?.first === attribute)
+  }
+
+  func testConcurrentReadsShareAttributeSchema() {
+    let attributes = [ ModelAttribute(name: "id"),
+                       ModelAttribute(name: "name") ]
+    for _ in 0..<10 {
+      let schema = AdaptorRecordSchemaWithAttributes(attributes)
+      let record = AdaptorRecord(schema: schema, values: [ 42, "Duck" ])
+
+      DispatchQueue.concurrentPerform(iterations: 64) { _ in
+        XCTAssertEqual(schema.attributeNames, [ "id", "name" ])
+        XCTAssertEqual(schema.count, 2)
+        XCTAssertEqual(record["id"] as? Int, 42)
+        XCTAssertEqual(record["name"] as? String, "Duck")
+      }
+    }
+  }
+
+  func testEmptyAttributeSchema() {
+    let schema = AdaptorRecordSchemaWithAttributes([])
+
+    XCTAssertTrue(schema.attributeNames.isEmpty)
+    XCTAssertEqual(schema.count, 0)
+  }
 
   func testAdaptorRowIncludesNullValues() {
     let schema = AdaptorRecordSchemaWithNames([ "id", "nickname" ])
