@@ -154,6 +154,7 @@ class ModelLoaderTests: XCTestCase {
     }
   }
   
+  #if !os(Linux) // Compiled model UID decoding is Darwin-specific.
   func testCompiledModelLoad() {
     let url = urlToMOMModel
     let model : Model
@@ -225,6 +226,8 @@ class ModelLoaderTests: XCTestCase {
       }
     }
   }
+
+  #endif
 
   func testModelSQLize() {
     let url = urlToModel
