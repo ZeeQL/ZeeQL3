@@ -71,7 +71,7 @@ open class AdaptorDataSource : AccessDataSource<AdaptorRecord>,
   open func _primaryFetchObjects(_ fs: FetchSpecification,
                                  yield: ( AdaptorRecord ) throws -> Void) throws
   {
-    let channel = try adaptor.openChannel()
+    let channel = try adaptor.openChannelFromPool()
     defer { adaptor.releaseChannel(channel) }
     
     /* This is the primary fetch method. Unfortunately AdaptorChannel
