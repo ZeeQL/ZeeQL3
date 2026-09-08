@@ -135,16 +135,30 @@ public extension Relationship { // extra methods
   @inlinable
   func isEqual(to object: Any?) -> Bool {
     guard let other = object as? Relationship else { return false }
-    return other.isEqual(to: self)
+    return isEqual(to: other)
   }
   
   @inlinable
-  func isEqual(to other: Self) -> Bool {
+  func isEqual(to other: Relationship) -> Bool {
     if other === self { return true  }
     guard name              ==  other.name              else { return false }
     guard isToMany          ==  other.isToMany          else { return false }
-    guard entity            === other.entity            else { return false }
-    guard destinationEntity === other.destinationEntity else { return false }
+
+    // Compare endpoint identity or names without following cyclic model graphs.
+    guard entity === other.entity || entity.name == other.entity.name else {
+      return false
+    }
+    let destination      = destinationEntity
+    let otherDestination = other.destinationEntity
+    if destination == nil || destination !== otherDestination {
+      let destinationName = destination?.name
+        ?? (self as? ModelRelationship)?.destinationEntityName
+      let otherDestinationName = otherDestination?.name
+        ?? (other as? ModelRelationship)?.destinationEntityName
+      guard destinationName == otherDestinationName else { return false }
+    }
+    guard relationshipPath == other.relationshipPath else { return false }
+
     guard ownsDestination   ==  other.ownsDestination   else { return false }
     guard isMandatory       ==  other.isMandatory       else { return false }
     guard minCount          ==  other.minCount          else { return false }

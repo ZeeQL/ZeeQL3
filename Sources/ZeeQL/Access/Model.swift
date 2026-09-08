@@ -99,7 +99,7 @@ open class Model : SmartDescription, EquatableType, Equatable {
   }
   
   public init(model: Model, deep: Bool = true) {
-    // TBD: keep tag?
+    tag = model.tag
     if deep {
       self.entities = [ Entity ]()
       for entity in model.entities {
@@ -257,10 +257,21 @@ open class Model : SmartDescription, EquatableType, Equatable {
     guard eq(tag, other.tag) else { return false }
     guard entities.count == other.entities.count else { return false }
     
-    // Not very scientific
-    let ownEntities   = Set(self .entities.lazy.map { ObjectIdentifier($0) })
-    let otherEntities = Set(other.entities.lazy.map { ObjectIdentifier($0) })
-    return ownEntities == otherEntities
+    if entities.isEmpty { return true }
+    if entities.count == 1 {
+      return (entities[0] as any EquatableType).isEqual(to: other.entities[0])
+    }
+
+    // Match each occurrence once.
+    var matched = [ Bool ](repeating: false, count: other.entities.count)
+    for entity in entities {
+      guard let index = other.entities.indices.first(where: {
+        !matched[$0]
+          && (entity as any EquatableType).isEqual(to: other.entities[$0])
+      }) else { return false }
+      matched[index] = true
+    }
+    return true
   }
   
   public static func ==(lhs: Model, rhs: Model) -> Bool {

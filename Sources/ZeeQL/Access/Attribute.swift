@@ -165,10 +165,10 @@ public extension Attribute { // default imp
   @inlinable
   func isEqual(to object: Any?) -> Bool {
     guard let other = object as? Attribute else { return false }
-    return other.isEqual(to: self)
+    return isEqual(to: other)
   }
   
-  func isEqual(to other: Self) -> Bool {
+  func isEqual(to other: Attribute) -> Bool {
     if other === self { return true  }
     guard name                == other.name                else { return false }
     guard columnName          == other.columnName          else { return false }
