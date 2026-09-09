@@ -23,8 +23,7 @@ class AdapterActiveRecordTests: XCTestCase {
   let verbose = true
   let model   = ActiveRecordContactsDBModel.model
   
-  func testSnapshotting() throws {
-    try XCTSkipIf(type(of: self) == Self.self, "Test.super")
+  func runSnapshotting() throws {
     let db = Database(adaptor: try XCTUnwrap(adaptor))
     
     let entity : Entity! = model[entity: "Person"]
@@ -41,8 +40,7 @@ class AdapterActiveRecordTests: XCTestCase {
     XCTAssertFalse(dagobert!.hasChanges, "marked as having changes")
   }
   
-  func testSimpleChange() throws {
-    try XCTSkipIf(type(of: self) == Self.self, "Test.super")
+  func runSimpleChange() throws {
     let db    = Database(adaptor: try XCTUnwrap(adaptor))
     
     let entity : Entity! = model[entity: "Person"]
@@ -66,8 +64,7 @@ class AdapterActiveRecordTests: XCTestCase {
     XCTAssert((changes["firstname"] as EquatableType).isEqual(to: "Bobby"))
   }
   
-  func testInsertAndDelete() throws {
-    try XCTSkipIf(type(of: self) == Self.self, "Test.super")
+  func runInsertAndDelete() throws {
     let db    = Database(adaptor: try XCTUnwrap(adaptor))
     let ds    = db.datasource(ActiveRecordContactsDBModel.Person.self)
     
@@ -125,9 +122,4 @@ class AdapterActiveRecordTests: XCTestCase {
     }
   }
 
-  static var sharedTests = [
-    ( "testSnapshotting",    testSnapshotting    ),
-    ( "testSimpleChange",    testSimpleChange    ),
-    ( "testInsertAndDelete", testInsertAndDelete ),
-  ]
 }

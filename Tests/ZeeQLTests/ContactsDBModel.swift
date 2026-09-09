@@ -108,7 +108,10 @@ enum RawContactsDBModel { // as a schema SQLite3 fetch returns it
 
 import class Foundation.ProcessInfo
 import class Foundation.FileManager
+import class Foundation.Bundle
 import struct Foundation.URL
+import struct Foundation.UUID
+import XCTest
 
 internal func lookupTestDataPath() -> String {
   let fm = FileManager.default
@@ -147,4 +150,21 @@ internal func lookupTestDataPath() -> String {
   }
   fatalError("Missing data path?")
   //return "\(path)/data"
+}
+
+internal func temporaryTestDatabase(named name: String) throws -> URL {
+  let manager = FileManager.default
+  let source  : URL
+  #if ZEE_BUNDLE_RESOURCES
+    let bundle = Bundle(for: AdapterActiveRecordTests.self)
+    source = try XCTUnwrap(bundle.url(forResource: name, withExtension: nil))
+  #else
+    source = URL(fileURLWithPath: lookupTestDataPath())
+               .appendingPathComponent(name)
+  #endif
+  let destination = manager.temporaryDirectory
+    .appendingPathComponent(UUID().uuidString)
+    .appendingPathExtension("sqlite3")
+  try manager.copyItem(at: source, to: destination)
+  return destination
 }
