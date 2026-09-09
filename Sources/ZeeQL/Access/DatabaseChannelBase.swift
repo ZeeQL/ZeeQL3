@@ -791,6 +791,17 @@ open class DatabaseChannelBase {
       try adaptorChannel.performAdaptorOperations(&aops)
       
       
+      // Carry results from the executed value copies back to their owners.
+      var resultIndex = aops.startIndex
+      for op in ops {
+        for index in op.adaptorOperations.indices {
+          op.adaptorOperations[index] = aops[resultIndex]
+          resultIndex += 1
+        }
+        op.captureAdaptorOperationResults()
+      }
+      assert(resultIndex == aops.endIndex)
+
       // OK, the database operations have been successful. Now we need to handle
       // the side effects.
       
@@ -881,6 +892,7 @@ open class DatabaseChannelBase {
     var aops = [ AdaptorOperation ]()
 
     for op in ops {
+      op.adaptorOperations.removeAll(keepingCapacity: true)
       guard let aop = try op.primaryAdaptorOperation() else { continue }
       aops.append(aop)
       op.addAdaptorOperation(aop) // TBD: do we really need this?

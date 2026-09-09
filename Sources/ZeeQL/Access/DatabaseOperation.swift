@@ -68,6 +68,17 @@ open class DatabaseOperation : SmartDescription {
       cb()
     }
   }
+
+  func captureAdaptorOperationResults() {
+    guard databaseOperator == .insert else { return }
+    assert(newRow != nil, "insert operation has no pending row")
+    for operation in adaptorOperations {
+      guard let row = operation.resultRow else { continue }
+      for ( key, value ) in row {
+        newRow?.updateValue(value, forKey: key)
+      }
+    }
+  }
   
   
   // MARK: - Generating the operations
@@ -119,19 +130,6 @@ open class DatabaseOperation : SmartDescription {
         let values = KeyValueCoding.valuesForKeys(props, inObject: object)
         aop.changedValues = values
         newRow            = values // TBD: don't, side effect!!
-        
-        // TBD: Not sure whether completionBlocks are the best way to
-        //      communicate up, maybe make this more formal.
-        aop.completionBlock = { [weak self] in // op retains its aop's
-          guard let self else { return }
-          
-          if let rr = aop.resultRow {
-            assert(self.newRow != nil)
-            for ( key, value ) in rr {
-              self.newRow?[key] = value
-            }
-          }
-        }
         
       case .update:
         let snapshot = dbSnapshot
