@@ -321,6 +321,21 @@ public extension AdaptorChannel {
  */
 public typealias AdaptorRow = Dictionary<String, Any?>
 
+extension AdaptorRow: EquatableType {
+
+  @inlinable
+  public func isEqual(to object: Any?) -> Bool {
+    guard let other = object as? Self else { return false }
+    guard count == other.count else { return false }
+
+    for ( key, value ) in self {
+      guard let otherValue = other[key] else { return false }
+      guard eq(value, otherValue) else { return false }
+    }
+    return true
+  }
+}
+
 public extension AdaptorChannel { // MARK: - Operations
 
   /**
@@ -399,7 +414,7 @@ public extension AdaptorChannel { // MARK: - Operations
     }
 
     if let fs = fs, fs.requiresAllQualifierBindingVariables,
-       let q = fs.qualifier
+       let q  = fs.qualifier
     {
       if q.hasUnresolvedBindings {
         throw QualifierBindingNotFound(binding: q.bindingKeys[0])
@@ -426,43 +441,18 @@ public extension AdaptorChannel { // MARK: - Operations
      */
     let isRawFetch = fs?.fetchesRawRows ?? true
     
-    /* perform fetch */
-    // TODO: do the mapping inline
-    
-    var rows = [ AdaptorRecord ]()
+    /* Map the shared result schema once, then deliver each row immediately. */
+
+    var needsSchemaMapping = !isRawFetch
     try evaluateQueryExpression(expr, isRawFetch ? nil : attributes) { record in
-      if isRawFetch { // no SQL name to Entity name mapping for rawrows
-        try result(record)
+      if needsSchemaMapping {
+        needsSchemaMapping = false
+        let schema = record.schema
+        for attribute in attributesWhichRequireRowNameMapping(attributes) {
+          schema.switchKey(columnNameForAttribute(attribute),
+                           to: attribute.name)
+        }
       }
-      else { // collect
-        rows.append(record)
-      }
-    }
-  
-    if isRawFetch { // no SQL name to Entity name mapping for rawrows
-      return // already fed results
-    }
-    if rows.isEmpty {
-      return
-    }
-  
-    
-    /* map row names */
-    
-    let attributesToMap = attributesWhichRequireRowNameMapping(attributes)
-    if !attributesToMap.isEmpty {
-      // hack schema
-      // TBD: We could also set a new, mapped, schema in all rows. But that sounds
-      //      more expensive.
-      let anyRow = rows[0]
-      let schema = anyRow.schema
-      for a in attributesToMap {
-        schema.switchKey(columnNameForAttribute(a),
-                         to: a.name) // TODO: column-name-deriver
-      }
-    }
-    
-    for record in rows {
       try result(record)
     }
   }

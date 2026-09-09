@@ -562,7 +562,6 @@
 		E8DA98311EC0F0D6009B0F0F /* AdaptorQueryColumnRepresentable.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = AdaptorQueryColumnRepresentable.swift; path = Sources/ZeeQL/Access/AdaptorQueryColumnRepresentable.swift; sourceTree = SOURCE_ROOT; };
 		E8DA98331EC0F287009B0F0F /* ZeeQLTypes.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = ZeeQLTypes.swift; path = Sources/ZeeQL/Access/ZeeQLTypes.swift; sourceTree = SOURCE_ROOT; };
 		E8DA98351EC0F2C2009B0F0F /* MirrorHelpers.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = MirrorHelpers.swift; path = Sources/ZeeQL/Access/MirrorHelpers.swift; sourceTree = SOURCE_ROOT; };
-		E8DBF5672031ECF800C1EF0E /* LinuxMain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinuxMain.swift; sourceTree = "<group>"; };
 		E8DD611F231EC22700D93C96 /* ActiveRecordType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActiveRecordType.swift; sourceTree = "<group>"; };
 		E8DDEE371E5FA1E600EC1DD8 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = ZeeQLTests/Info.plist; sourceTree = "<group>"; };
 		E8DDEE381E5FA1E600EC1DD8 /* QualifierParserTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = QualifierParserTests.swift; sourceTree = "<group>"; };
@@ -810,7 +809,6 @@
 			isa = PBXGroup;
 			children = (
 				E8DDEE371E5FA1E600EC1DD8 /* Info.plist */,
-				E8DBF5672031ECF800C1EF0E /* LinuxMain.swift */,
 				E8263CD41E93CD5800508276 /* data */,
 				E8DDEE361E5FA1E600EC1DD8 /* ZeeQLTests */,
 				E8263C601E93B34E00508276 /* SQLite3Tests */,

@@ -22,7 +22,6 @@ public func qualifierWith(format: String, _ args: Any?...) -> Qualifier? {
   return parser.parseQualifier()
 }
 
-
 /**
  * Parses Qualifier objects from a char buffer. Qualifiers look like a
  * SQL WHERE statement, but some special rules apply.
@@ -35,24 +34,24 @@ public func qualifierWith(format: String, _ args: Any?...) -> Qualifier? {
  *
  * ### Comparison Operations
  *
- * - =
- * - !=
- * - <
- * - ">"
- * - =< <=
- * - => >=
- * - LIKE
- * - IN (ComparisonOperation.CONTAINS) [TBD: a NOT IN array]
- * - IS NULL / IS NOT NULL
- * - custom identifiers, eg: 'hasPrefix:'
+ * - `=`
+ * - `!=`
+ * - `<`
+ * - `>`
+ * - `=<` `<=`
+ * - `=>` `>=`
+ * - `LIKE`
+ * - `IN` (ComparisonOperation.CONTAINS) [TBD: a NOT IN array]
+ * - `IS NULL` / `IS NOT NULL`
+ * - custom identifiers/selectors, eg: `hasPrefix:`
  * - Note: you can use formats, eg: ("lastname %@ 'Duck'", "LIKE")
  *
  * ### Constants
  *
- * - numbers - 12345
+ * - numbers - `12345`
  * - strings - 'hello world' or "hello world"
- * - boolean - true/false/YES/NO
- * - null    - NULL / null (no support for nil!)
+ * - boolean - `true`/`false`/`YES`/`NO`
+ * - null    - `NULL` / `null` (no support for nil!)
  * - casts   - start with a '(', eg (Date)'2007-09-21'
  *
  * ### Qualifier Bindings
@@ -124,6 +123,28 @@ public func qualifierWith(format: String, _ args: Any?...) -> Qualifier? {
  */
 public struct QualifierParser {
 
+  public enum ParserError: Swift.Error, Equatable, CustomStringConvertible {
+
+    case emptyInput(string: String)
+    case invalidSyntax(reason: String, position: Int, string: String)
+
+    public var string: String {
+      switch self {
+        case .emptyInput(let string):             return string
+        case .invalidSyntax(_, _, let string):    return string
+      }
+    }
+
+    public var description: String {
+      switch self {
+        case .emptyInput:
+          return "empty qualifier"
+        case .invalidSyntax(let reason, let position, _):
+          return "\(reason) at position \(position)"
+      }
+    }
+  }
+
   public let log : ZeeQLLogger = globalZeeQLLogger
   
   /* input */
@@ -145,43 +166,60 @@ public struct QualifierParser {
   
   /* main entry */
 
-  @inlinable
-  public static func parse(_ format: String, _ args: Any?...) -> Qualifier? {
+  /// Parses a qualifier or throws a ``ParserError`` for invalid input.
+  public static func parse(_ format: String, _ args: Any?...) throws
+                     -> Qualifier
+  {
     var parser = Self(string: format, arguments: args)
-    return parser.parseQualifier()
+    return try parser.parse()
   }
 
 
   public mutating func parseQualifier() -> Qualifier? {
-    guard skipSpaces() else { return nil } // EOF
-    return parseCompoundQualifier()
+    do { return try parse() }
+    catch ParserError.emptyInput { return nil }
+    catch {
+      log.error(String(describing: error))
+      return nil
+    }
+  }
+
+  private mutating func parse() throws -> Qualifier {
+    guard skipSpaces() else { throw ParserError.emptyInput(string: string) }
+    guard let qualifier = try parseCompoundQualifier() else {
+      throw parseError("expected qualifier")
+    }
+    _ = skipSpaces()
+    guard idx == string.endIndex else {
+      throw parseError("unexpected trailing input")
+    }
+    return qualifier
   }
   
   /* parsing */
 
-  mutating func parseOneQualifier() -> Qualifier? {
+  mutating func parseOneQualifier() throws -> Qualifier? {
     guard skipSpaces() else { return nil } // EOF
     
     /* sub-qualifiers in parenthesis */
-    if match("(") { return parseCompoundQualifierInParenthesis() }
+    if match("(") { return try parseCompoundQualifierInParenthesis() }
     
     /* NOT qualifier */
-    if match(TOK_NOT) { return parseNotQualifier() }
+    if match(TOK_NOT) { return try parseNotQualifier() }
     
     /* raw SQL qualifier */
-    if match(TOK_SQL) { return parseRawSQLQualifier() }
+    if match(TOK_SQL) { return try parseRawSQLQualifier() }
     
     /* special constant qualifiers */
 
     if consumeIfMatch(TOK_STAR_TRUE)  { return BooleanQualifier.trueQualifier  }
     if consumeIfMatch(TOK_STAR_FALSE) { return BooleanQualifier.falseQualifier }
-    return parseKeyBasedQualifier()
+    return try parseKeyBasedQualifier()
   }
   
-  mutating func nextNonNullStringArgument(_ _pat: String) -> String? {
+  mutating func nextNonNullStringArgument(_ _pat: String) throws -> String? {
     guard currentArgument < args.count else {
-      addError("more format patterns than arguments")
-      return nil
+      throw parseError("more format patterns than arguments")
     }
     let arg = args[currentArgument]
     currentArgument += 1 /* consume */
@@ -191,25 +229,18 @@ public struct QualifierParser {
     let pidx = _pat.index(after: _pat.startIndex)
     switch _pat[pidx] {
       case "K", "s", "i", "d", "f", "@":
-        if let arg = arg {
-          return "\(arg)" // ... toString
-        }
-        else {
-          return "nil"
-        }
+        if let arg = arg { return "\(arg)" } // ... toString
+        else             { return "nil"    }
       
       case "%":
-        addError("not yet supported: %%")
-        return nil
+        throw parseError("not yet supported: %%")
       
       default:
-        addError("unknown string format specification: \(_pat)")
-        assertionFailure("unknown string format specification: \(_pat)")
-        return nil
+        throw parseError("unknown string format specification: \(_pat)")
     }
   }
   
-  mutating func parseKeyBasedQualifier() -> Qualifier? {
+  mutating func parseKeyBasedQualifier() throws -> Qualifier? {
     // TODO: we need to improve and consolidate the argument handling, but hey,
     //       it works ;-)
     //       Maybe we want to move it to the identifier parsing?
@@ -222,7 +253,7 @@ public struct QualifierParser {
     /* process formats */
     if id.count > 1 && id.hasPrefix("%") {
       // the id itself is a format, eg: "%@ LIKE 'Hello*'"
-      guard let pid = nextNonNullStringArgument(id) else { return nil }
+      guard let pid = try nextNonNullStringArgument(id) else { return nil }
       id = pid
     }
     
@@ -257,7 +288,9 @@ public struct QualifierParser {
     
     if operation.count > 1 && operation.hasPrefix("%") {
       // the operation is a pattern, eg: "value %@ 5", "<"
-      guard let pid = nextNonNullStringArgument(operation) else { return nil }
+      guard let pid = try nextNonNullStringArgument(operation) else {
+        return nil
+      }
       operation = pid
     }
     
@@ -288,9 +321,9 @@ public struct QualifierParser {
     /* and finally the right hand side (either id or value) */
 
     guard skipSpaces() else {
-      addError("expected value/id after identifier and operation " +
-               "(op=\(operation), id=\(id))")
-      return nil /* EOF */
+      throw parseError(
+        "expected value/id after identifier and operation " +
+        "(op=\(operation), id=\(id))")
     }
     
     /* process variables ($name) */
@@ -299,8 +332,7 @@ public struct QualifierParser {
       idx = string.index(after: idx) // consume $
       
       guard let varId = parseIdentifier(onlyBreakOnSpace: false) else {
-        addError("expected variable identifier after '$'?!")
-        return nil /* EOF */
+        throw parseError("expected variable identifier after '$'?!")
       }
       
       let op = ComparisonOperation(string: operation)
@@ -314,15 +346,17 @@ public struct QualifierParser {
        *       strings, like "col_%K" or something like this
        */
       idx = string.index(after: idx) // consume %
-      
+
+      guard idx < string.endIndex else {
+        throw parseError("missing format specification after '%'")
+      }
       let fspec = string[idx]
       idx = string.index(after: idx) // consume format spec char
       
       /* retrieve argument */
       
       guard currentArgument < args.count else {
-        addError("more format patterns than arguments")
-        return nil
+        throw parseError("more format patterns than arguments")
       }
       let arg = args[currentArgument]
       currentArgument += 1 /* consume */
@@ -377,16 +411,14 @@ public struct QualifierParser {
             return KeyComparisonQualifier(id, operation, "\(arg)") // hm
           }
           else {
-            addError("Argument for %K pattern is nil, needs to be a key!")
-            return nil
+            throw parseError(
+              "Argument for %K pattern is nil, needs to be a key!")
           }
         
         case "%":
-          addError("not yet supported: %%")
-          return nil
+          throw parseError("not yet supported: %%")
         default:
-          addError("unknown format specification: %\(fspec)")
-          return nil
+          throw parseError("unknown format specification: %\(fspec)")
       }
     }
     
@@ -395,7 +427,7 @@ public struct QualifierParser {
     if matchConstant() {
       /* KeyValueQualifier */
       let isIN = operation == "IN" || operation == "NOT IN"
-      let v = parseConstant(allowCast: !isIN /* allow cast */)
+      let v = try parseConstant(allowCast: !isIN /* allow cast */)
       
       return KeyValueQualifier(id, operation, v)
     }
@@ -403,118 +435,95 @@ public struct QualifierParser {
     /* process identifiers */
     
     guard let rhs = parseIdentifier(onlyBreakOnSpace: false) else {
-      addError("expected value/id after identifier and operation?!")
-      return nil /* EOF */
+      throw parseError("expected value/id after identifier and operation?!")
     }
     
     return KeyComparisonQualifier(id, operation, rhs)
   }
   
-  mutating func parseNotQualifier() -> Qualifier? {
+  mutating func parseNotQualifier() throws -> Qualifier? {
     guard consumeIfMatch(TOK_NOT) else { return nil }
     
-    guard skipSpaces() else {
-      addError("missing qualifier after NOT!");
-      return nil /* ERROR */
-    }
+    guard skipSpaces() else { throw parseError("missing qualifier after NOT!") }
     
-    guard let q = parseOneQualifier() else { return nil } /* parsing failed */
+    guard let q = try parseOneQualifier() else { return nil }
     return q.not
   }
   
-  mutating func parseCompoundQualifierInParenthesis() -> Qualifier? {
+  mutating func parseCompoundQualifierInParenthesis() throws -> Qualifier? {
     guard consumeIfMatch("(") else { return nil } /* not in parenthesis */
     
     guard skipSpaces() else {
-      addError("missing closing parenthesis!")
-      return nil /* ERROR */
+      throw parseError("missing closing parenthesis!")
     }
     
     /* parse qualifier */
-    guard let q = parseCompoundQualifier() else { return nil }
+    guard let q = try parseCompoundQualifier() else { return nil }
     
     _ = skipSpaces()
-    if !consumeIfMatch(")") { /* be tolerant and keep the qualifier */
-      addError("missing closing parenthesis!")
+    guard consumeIfMatch(")") else {
+      throw parseError("missing closing parenthesis!")
     }
     
     return q
   }
   
-  func buildCompoundQualifier(operation: String, qualifiers: [ Qualifier ])
-       -> Qualifier?
+  mutating func parseCompoundQualifier(minimumPrecedence: Int = 1) throws
+                -> Qualifier?
   {
-    guard !qualifiers.isEmpty else { return nil }
+    guard minimumPrecedence <= 2 else { return try parseOneQualifier() }
+    guard let lhs =
+      try parseCompoundQualifier(minimumPrecedence: minimumPrecedence + 1)
+    else { return nil }
     
-    if qualifiers.count == 1 { return qualifiers[0] }
-    
-    switch operation {
-      case STOK_AND: return CompoundQualifier(qualifiers: qualifiers, op: .and)
-      case STOK_OR:  return CompoundQualifier(qualifiers: qualifiers, op: .or)
-      default:
-        /* Note: we could make this extensible */
-        addError("unknown compound operator: " + operation)
-        return nil
-    }
-  }
-  
-  mutating func parseCompoundQualifier() -> Qualifier? {
-    var qualifiers = [ Qualifier ]()
-    var lastCompoundOperator : String? = nil
-    
-    while idx < string.endIndex {
-      guard let q = parseOneQualifier() else { return nil }
-      
-      qualifiers.append(q)
+    var qualifiers : [ Qualifier ]?
 
-      guard skipSpaces() else { break } /* expected EOF */
-      
-      /* check whether a closing paren is up front */
-      
-      if match(")") { break } /* stop processing */
-      
-      /* now check for AND or OR */
-      guard var compoundOperator = parseIdentifier(onlyBreakOnSpace: false)
-       else {
-        addError("could not parse compound operator, index: \(idx)")
-        break
-       }
-      
-      /* process formats */
+    while idx < string.endIndex {
+      let operatorStart = idx
+      let argumentStart = currentArgument
+      guard skipSpaces() else { break }
+      if match(")") { break }
+
+      guard var compoundOperator = parseIdentifier(onlyBreakOnSpace: false) else
+      {
+        throw parseError("could not parse compound operator, index: \(idx)")
+      }
       if compoundOperator.count > 1 && compoundOperator.hasPrefix("%") {
-        guard let s = nextNonNullStringArgument(compoundOperator)
-         else { return nil }
-        compoundOperator = s
+        guard let value = try nextNonNullStringArgument(compoundOperator) else {
+          return nil
+        }
+        compoundOperator = value
       }
-      
-      guard skipSpaces() else {
-        addError("expected another qualifier after compound operator " +
-                 "(op='\(compoundOperator)')")
+
+      let precedence: Int
+      switch compoundOperator {
+        case STOK_AND: precedence = 2
+        case STOK_OR:  precedence = 1
+        default:
+          throw parseError("unknown compound operator: \(compoundOperator)")
+      }
+      if precedence != minimumPrecedence {
+        idx = operatorStart
+        currentArgument = argumentStart
         break
       }
-      
-      if let lastCompoundOperator = lastCompoundOperator {
-        if compoundOperator != lastCompoundOperator {
-          /* operation changed, for example:
-           *   a AND b AND c OR d OR e AND f
-           * will be parsed as:
-           *   ((a AND b AND c) OR d OR e) AND f
-           */
-          
-          let q = buildCompoundQualifier(operation:  lastCompoundOperator,
-                                         qualifiers: qualifiers)
-          qualifiers.removeAll()
-          if let q = q {
-            qualifiers.append(q)
-          }
-        }
+
+      guard skipSpaces() else {
+        throw parseError("expected another qualifier after compound operator " +
+                         "(op='\(compoundOperator)')")
       }
-      
-      lastCompoundOperator = compoundOperator;
+      guard let rhs =
+        try parseCompoundQualifier(minimumPrecedence: precedence + 1)
+       else { return nil }
+
+      if qualifiers == nil { qualifiers = [ lhs, rhs ] }
+      else                 { qualifiers?.append(rhs) }
     }
-    
-    return buildCompoundQualifier(operation: lastCompoundOperator ?? "AND",
-                                  qualifiers: qualifiers)
+
+    guard let qualifiers else { return lhs }
+    let operation: CompoundQualifier.Operator = minimumPrecedence == 2
+                                              ? .and : .or
+    return CompoundQualifier(qualifiers: qualifiers, op: operation)
   }
  
   /**
@@ -531,7 +540,7 @@ public struct QualifierParser {
    * Note that the SQL strings are converted into RawSQLValue objects so
    * that they do not get quoted as SQL strings during SQL generation.
    */
-  mutating func parseRawSQLQualifier() -> Qualifier? {
+  mutating func parseRawSQLQualifier() throws -> Qualifier? {
     guard consumeIfMatch(TOK_SQL) else { return nil }
     
     var parts = Array<SQLQualifier.Part>()
@@ -558,7 +567,7 @@ public struct QualifierParser {
           parts.append(.variable(varName))
         }
         else {
-          addError("could not parse SQL qualifier variable?!")
+          throw parseError("could not parse SQL qualifier variable?!")
         }
       }
       else {
@@ -712,27 +721,23 @@ public struct QualifierParser {
     return false
   }
  
-  mutating func parseCast() -> String? {
+  mutating func parseCast() throws -> String? {
     guard canLA(2)           else { return nil } /* at least (a) */
     guard string[idx] == "(" else { return nil }
     
     guard skipSpaces() else {
-      addError("expected class cast identifier after parenthesis!");
-      return nil;
+      throw parseError("expected class cast identifier after parenthesis!")
     }
     
     guard let castClass = parseIdentifier(onlyBreakOnSpace: false /* on all */)
      else {
-      addError("expected class cast identifier after parenthesis!");
-      return nil
+      throw parseError("expected class cast identifier after parenthesis!")
      }
     guard skipSpaces() else {
-      addError("expected closing parenthesis after class cast!");
-      return nil
+      throw parseError("expected closing parenthesis after class cast!")
     }
     guard consumeIfMatch(")") else {
-      addError("expected closing parenthesis after class cast!");
-      return nil
+      throw parseError("expected closing parenthesis after class cast!")
     }
     
     return castClass
@@ -753,35 +758,39 @@ public struct QualifierParser {
    *
    * But the casts are not resolved yet ...
    */
-  mutating func _parseConstant(allowCast: Bool) -> Constant? { // TODO
-    let castClass = allowCast ? parseCast() : nil
+  mutating func _parseConstant(allowCast: Bool) throws
+       -> Constant?
+  {
+    let castClass = allowCast ? try parseCast() : nil
+    guard idx < string.endIndex else {
+      throw parseError("expected value after class cast")
+    }
     let v : Constant?
     
     if string[idx] == "\'" {
-      if let s = parseQuotedString() { v = .String(s) } else { v = nil }
+      v = .string(try parseQuotedString())
     }
     else if string[idx] == "\"" { // TODO: could be a SQL id
-      if let s = parseQuotedString() { v = .String(s) } else { v = nil }
+      v = .string(try parseQuotedString())
     }
     else if _isDigit(string[idx]) {
-      if let n = parseNumber() {
+      if let n = try parseNumber() {
         switch n {
-          case .Int   (let i): v = .Int(i)
-          case .Double(let i): v = .Double(i)
+          case .Int   (let i): v = .int(i)
+          case .Double(let i): v = .double(i)
         }
       }
       else { v = nil }
     }
     else if consumeIfMatch(TOK_TRUE) || consumeIfMatch(TOK_YES) {
-      v = .Bool(true)
+      v = .bool(true)
     }
     else if consumeIfMatch(TOK_FALSE) || consumeIfMatch(TOK_NO) {
-      v = .Bool(false)
+      v = .bool(false)
     }
     else if match("(") {
       /* a plist array after an IN (otherwise a CAST is handled above!) */
-      addError("plist array values after IN are not yet supported!")
-      v = nil
+      throw parseError("plist array values after IN are not yet supported!")
     }
     else if consumeIfMatch(TOK_NULL) {
       return nil // do not apply casts for nil
@@ -808,44 +817,47 @@ public struct QualifierParser {
   }
   
   enum Constant {
-    case String(String)
-    case Int   (Int)
-    case Double(Double)
-    case Bool  (Bool)
+    case string(String)
+    case int   (Int)
+    case double(Double)
+    case bool  (Bool)
     
     var asAny : Any {
       switch self {
-        case .String(let v): return v
-        case .Int   (let v): return v
-        case .Double(let v): return v
-        case .Bool  (let v): return v
+        case .string(let v): return v
+        case .int   (let v): return v
+        case .double(let v): return v
+        case .bool  (let v): return v
       }
     }
   }
   
-  mutating func parseConstant(allowCast: Bool) -> Any? {
-    guard let c = _parseConstant(allowCast: allowCast) else { return nil }
+  mutating func parseConstant(allowCast: Bool) throws -> Any? {
+    guard let c = try _parseConstant(allowCast: allowCast) else { return nil }
     return c.asAny
   }
  
-  mutating func parseQuotedString() -> String? {
+  mutating func parseQuotedString() throws -> String {
     let quoteChar = string[idx]
     
     /* a quoted string */
     var pos      = string.index(after: idx) /* skip quote */
     let startPos = pos
-    guard startPos != string.endIndex else { return nil }
+    guard startPos != string.endIndex else {
+      idx = startPos
+      throw parseError("quoted string not closed (expected '\(quoteChar)')")
+    }
     
     var containsEscaped = false
     
     /* loop until closing quote */
-    while (string[pos] != quoteChar) && (pos < string.endIndex) {
+    while pos < string.endIndex && string[pos] != quoteChar {
       if string[pos] == "\\" {
         containsEscaped = true
         pos = string.index(after: pos) /* skip following char */
         if pos == string.endIndex {
-          addError("escape in quoted string not finished!")
-          return nil
+          idx = pos
+          throw parseError("escape in quoted string not finished!")
         }
       }
       pos = string.index(after: pos)
@@ -853,8 +865,7 @@ public struct QualifierParser {
     
     if pos == string.endIndex { /* syntax error, quote not closed */
       idx = pos
-      addError("quoted string not closed (expected '\(quoteChar)')")
-      return nil
+      throw parseError("quoted string not closed (expected '\(quoteChar)')")
     }
     
     idx = string.index(after: pos) /* skip closing quote, consume */
@@ -874,7 +885,7 @@ public struct QualifierParser {
     case Int(Int)
     case Double(Double)
   }
-  mutating func parseNumber() -> Number? { // TODO: not just int
+  mutating func parseNumber() throws -> Number? { // TODO: not just int
     guard idx < string.endIndex else { return nil } // EOF
     guard _isDigit(string[idx]) || string[idx] == "-" else { return nil }
     
@@ -891,23 +902,23 @@ public struct QualifierParser {
     
     if numstr.contains(".") {
       guard let v = Double(numstr) else {
-        addError("failed to parse number: '" + numstr + "'");
-        return nil
+        throw parseError("failed to parse number: '" + numstr + "'")
       }
       return Number.Double(v)
     }
     else {
       guard let v = Int(numstr) else {
-        addError("failed to parse number: '" + numstr + "'");
-        return nil
+        throw parseError("failed to parse number: '" + numstr + "'")
       }
       return Number.Int(v)
     }
   }
   
-  func addError(_ _reason: String) {
-    // TODO: generate some exception
-    log.error(_reason)
+  private func parseError(_ reason: String) -> ParserError {
+    return .invalidSyntax(
+      reason: reason,
+      position: string.distance(from: string.startIndex, to: idx),
+      string: string)
   }
  
   /* core parsing */

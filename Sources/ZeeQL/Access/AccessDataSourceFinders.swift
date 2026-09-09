@@ -169,8 +169,6 @@ public extension AccessDataSource { // Finders
   func fetchSpecificationForFind(_ primaryKeyValues : [ Any ]) throws
        -> FetchSpecification?
   {
-    guard !primaryKeyValues.isEmpty else { return nil }
-    
     guard let findEntity = entity else {
       throw AccessDataSourceError
               .cannotConstructFetchSpecification(.missingEntity)
@@ -182,6 +180,11 @@ public extension AccessDataSource { // Finders
       throw AccessDataSourceError
               .cannotConstructFetchSpecification(.invalidPrimaryKey)
      }
+
+    guard primaryKeyValues.count == pkeys.count else {
+      throw AccessDataSourceError
+              .cannotConstructFetchSpecification(.invalidPrimaryKey)
+    }
     
     /* build qualifier for primary keys */
 
@@ -281,7 +284,7 @@ public extension AccessDataSource { // Finders
   func find(_ name: String, _ firstBinding: String, _ firstValue: Any,
             _ bindings: Any...) throws -> Object?
   {
-    var bindings = [ String: Any ].createArgs(bindings)
+    var bindings = try [ String: Any ].createArgs(bindings)
     assert(bindings[firstBinding] == nil, "Duplicate binding.")
     bindings[firstBinding] = firstValue
     return try find(name, bindings)

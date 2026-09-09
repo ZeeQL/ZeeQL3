@@ -65,12 +65,19 @@ open class SQLite3ModelFetch: AdaptorModelFetch {
     // TBD: iterate on all returned describeDatabaseNames
     // (via dbname.sqlite_master)
     // ATTACH DATABASE 'DatabaseName' As 'Alias-Name';
-    var sql = "SELECT name FROM sqlite_master WHERE type IN ('table', 'view')"
-    if let like = like {
-      sql += " AND name LIKE '" + like + "'"; // TODO: escape!
-    }
     var names = [ String ]()
-    try channel.select(sql) { ( name : String ) in names.append(name) }
+    let expression = channel.expressionFactory.createExpression(nil)
+    expression.statement =
+      "SELECT name FROM sqlite_master WHERE type IN ('table', 'view')"
+    if let like {
+      expression.statement += " AND name LIKE ?"
+      expression.bindVariables = [
+        SQLExpression.BindVariable(attribute: nil, value: like)
+      ]
+    }
+    try channel.evaluateQueryExpression(expression, nil) { record in
+      if let name = record[0] as? String { names.append(name) }
+    }
     return names
   }
 
@@ -89,16 +96,21 @@ open class SQLite3ModelFetch: AdaptorModelFetch {
   
   func _fetchColumnsOfTable(_ table: String) throws -> [ AdaptorRecord ] {
     // keys: cid, name, type, notnull, dflt_value, pk
-    let records : [ AdaptorRecord ] =
-                      try channel.querySQL("PRAGMA table_info(\(table))")
+    let table = quotedIdentifier(table)
+    let records = try channel.querySQL("PRAGMA table_info(\(table))")
     return records
   }
   
   func _fetchForeignKeysOfTable(_ table: String) throws -> [ AdaptorRecord ] {
     // keys: id, seq, table, from, to, on_update, on_delete, match
-    let records : [ AdaptorRecord ] =
-                      try channel.querySQL("PRAGMA foreign_key_list(\(table))")
+    let table = quotedIdentifier(table)
+    let records = try channel.querySQL("PRAGMA foreign_key_list(\(table))")
     return records
+  }
+
+  private func quotedIdentifier(_ identifier: String) -> String {
+    return channel.expressionFactory.createExpression(nil)
+                  .sqlStringFor(schemaObjectName: identifier)
   }
   
   func primaryKeyNamesFromColumnInfos(_ columnInfos : [ AdaptorRecord ],
@@ -107,24 +119,41 @@ open class SQLite3ModelFetch: AdaptorModelFetch {
   {
     guard !columnInfos.isEmpty else { return [] }
 
-    var pkeys = [ String ]()
-    
-    for i in 0..<columnInfos.count {
-      let colInfo = columnInfos[i]
-      guard let v = colInfo["pk"] else { continue }
-      
-      let doAdd : Bool
-      switch v {
-        case let typedValue as String: doAdd = typedValue == "1"
-        case let typedValue as Int:    doAdd = typedValue != 0
-        case let typedValue as Int32:  doAdd = typedValue != 0
-        case let typedValue as Int64:  doAdd = typedValue != 0
-        default: doAdd = false
-      }
-      if doAdd { pkeys.append(attributes[i].name) }
+    var firstPKey : ( ordinal: Int, name: String )?
+    var pkeys     : [ ( ordinal: Int, name: String ) ]?
+
+    func integerValue(_ value: Any) -> Int? {
+      if let value = value as? Int               { return value      }
+      if let value = value as? Int32             { return Int(value) }
+      if let value = value as? Int64             { return Int(value) }
+      if let value = value as? String            { return Int(value) }
+      if let value = value as? any BinaryInteger { return Int(value) }
+      return nil
     }
 
-    return pkeys
+    for i in 0..<columnInfos.count {
+      let colInfo = columnInfos[i]
+      guard let value = colInfo["pk"],
+            let ordinal = integerValue(value), ordinal > 0,
+            i < attributes.count
+       else { continue }
+      
+      let pkey = ( ordinal: ordinal, name: attributes[i].name )
+      if let firstPKey {
+        if pkeys == nil { pkeys = [ firstPKey, pkey ] }
+        else { pkeys?.append(pkey) }
+      }
+      else {
+        firstPKey = pkey
+      }
+    }
+
+    guard var pkeys else {
+      guard let firstPKey else { return [] }
+      return [ firstPKey.name ]
+    }
+    pkeys.sort { $0.ordinal < $1.ordinal }
+    return pkeys.map { $0.name }
   }
 
   func attributesFromColumnInfos(_ columnInfos: [ AdaptorRecord ])
@@ -142,27 +171,14 @@ open class SQLite3ModelFetch: AdaptorModelFetch {
       var width : Int? = nil
 
       /* process external type, eg: VARCHAR(40) */
-      #if swift(>=5.0)
-        if let idx = exttype.firstIndex(of: "(") {
-          let ws = exttype[idx..<exttype.endIndex]
-          exttype = String(exttype[exttype.startIndex..<idx])
-        
-          if let eidx = ws.firstIndex(of: ")") {
-            let iv = ws[ws.startIndex..<eidx]
-            width = Int(iv)
-          }
+      if let start = exttype.firstIndex(of: "(") {
+        let suffix = exttype[exttype.index(after: start)...]
+        exttype = String(exttype[..<start])
+
+        if let end = suffix.firstIndex(of: ")") {
+          width = Int(suffix[..<end])
         }
-      #else
-        if let idx = exttype.index(of: "(") {
-          let ws = exttype[idx..<exttype.endIndex]
-          exttype = String(exttype[exttype.startIndex..<idx])
-        
-          if let eidx = ws.index(of: ")") {
-            let iv = ws[ws.startIndex..<eidx]
-            width = Int(iv)
-          }
-        }
-      #endif
+      }
       exttype = exttype.uppercased()
       
       // TODO: complete information
@@ -205,6 +221,15 @@ open class SQLite3ModelFetch: AdaptorModelFetch {
     let foreignKeyRecords = try _fetchForeignKeysOfTable(table)
     guard !foreignKeyRecords.isEmpty else { return [] }
 
+    func constraintRule(_ value: Any?, column: String) -> ConstraintRule? {
+      guard let value = value as? String else { return nil }
+      guard let rule = ConstraintRule(sqliteRule: value) else {
+        log.warn("unexpected foreign-key \(column) rule:", value)
+        return nil
+      }
+      return rule
+    }
+
     let fkeysByConstraint : [ Int : [ AdaptorRecord ] ] = {
       var grouped = [ Int : [ AdaptorRecord ] ]()
       for record in foreignKeyRecords {
@@ -244,7 +269,6 @@ open class SQLite3ModelFetch: AdaptorModelFetch {
       relship.constraintName = name
       
       for fkey in fkeys {
-        // TODO: match (e.g. NONE), on_update(updateRule)
         guard let destname     = fkey["table"] as? String,
               let sourceColumn = fkey["from"]  as? String,
               let targetColumn = fkey["to"]    as? String
@@ -254,27 +278,9 @@ open class SQLite3ModelFetch: AdaptorModelFetch {
         
         let join = Join(source: sourceColumn, destination: targetColumn)
         relship.joins.append(join)
-        
-        let drc = (fkey["on_delete"] as? String)?.first
-        
-        if let deleteRule = drc {
-          switch deleteRule {
-            case "n", "N": relship.deleteRule = .noAction
-            case "r", "R": relship.deleteRule = .deny
-            case "c", "C": relship.deleteRule = .cascade
-            
-            case "s", "S":
-              let n = (fkey["on_delete"] as? String)?.uppercased() ?? ""
-              if      n == "SET NULL"    { relship.deleteRule = .nullify      }
-              else if n == "SET DEFAULT" { relship.deleteRule = .applyDefault }
-              else {
-                fallthrough
-              }
-            
-            default:
-              log.warn("unexpected foreign-key delete rule:", fkey["on_delete"])
-          }
-        }
+
+        relship.updateRule = constraintRule(fkey["on_update"], column: "update")
+        relship.deleteRule = constraintRule(fkey["on_delete"], column: "delete")
       }
       
       if !relship.joins.isEmpty {
@@ -283,6 +289,21 @@ open class SQLite3ModelFetch: AdaptorModelFetch {
     }
     
     return relships
+  }
+}
+
+public extension ConstraintRule {
+
+  /// Parses an action returned by SQLite's foreign_key_list pragma.
+  init?(sqliteRule: String) {
+    switch sqliteRule.uppercased() {
+      case "NO ACTION":   self = .noAction
+      case "RESTRICT":    self = .deny
+      case "CASCADE":     self = .cascade
+      case "SET NULL":    self = .nullify
+      case "SET DEFAULT": self = .applyDefault
+      default:            return nil
+    }
   }
 }
 

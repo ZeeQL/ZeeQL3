@@ -12,25 +12,48 @@ import XCTest
 
 class SQLite3OGoAdaptorTests: AdaptorOGoTestCase {
   
-  override var adaptor : Adaptor! {
-    XCTAssertNotNil(_adaptor)
-    return _adaptor
+  override var adaptor : Adaptor! { return _adaptor }
+  private var _adaptor    : SQLite3Adaptor?
+  private var databaseURL : URL?
+
+  override func setUpWithError() throws {
+    let url = try temporaryTestDatabase(named: "OGo.sqlite3")
+    databaseURL = url
+    _adaptor    = SQLite3Adaptor(url.path)
   }
-  
-  var _adaptor : SQLite3Adaptor = {
-    var pathToTestDB : String = {
-      #if ZEE_BUNDLE_RESOURCES
-        let bundle = Bundle(for: type(of: self) as! AnyClass)
-        let url    = bundle.url(forResource: "OGo", withExtension: "sqlite3")
-        guard let path = url?.path else { return "OGo.sqlite3" }
-        return path
-      #else
-        let dataPath = lookupTestDataPath()
-        return "\(dataPath)/OGo.sqlite3"
-      #endif
-    }()
-    return SQLite3Adaptor(pathToTestDB)
-  }()
+
+  override func tearDownWithError() throws {
+    _adaptor = nil
+    if let databaseURL {
+      try FileManager.default.removeItem(at: databaseURL)
+    }
+    databaseURL = nil
+  }
+
+  func testRawAdaptorChannelQuery() throws { try runRawAdaptorChannelQuery() }
+  func testEvaluateQueryExpression() throws { try runEvaluateQueryExpression() }
+  func testRawTypeSafeQuery() throws { try runRawTypeSafeQuery() }
+  func testSimpleTX() throws { try runSimpleTX() }
+
+  func testAdaptorDataSourceFindByID() throws {
+    try runAdaptorDataSourceFindByID()
+  }
+
+  func testBasicReflection() throws { try runBasicReflection() }
+  func testTableReflection() throws { try runTableReflection() }
+  func testCodeSchema() throws { try runCodeSchema() }
+
+  func testCodeSchemaWithJoinQualifier() throws {
+    try runCodeSchemaWithJoinQualifier()
+  }
+
+  func testCodeSchemaWithRelshipPrefetch() throws {
+    try runCodeSchemaWithRelshipPrefetch()
+  }
+
+  func testCodeSchemaWithTypedFetchSpec() throws {
+    try runCodeSchemaWithTypedFetchSpec()
+  }
 
   func testCount() throws {
     let db = Database(adaptor: adaptor)
@@ -138,22 +161,4 @@ class SQLite3OGoAdaptorTests: AdaptorOGoTestCase {
     }
   }
   
-  // MARK: - Non-ObjC Swift Support
-
-  static var allTests = [
-    // super
-    ( "testRawAdaptorChannelQuery",  testRawAdaptorChannelQuery  ),
-    ( "testEvaluateQueryExpression", testEvaluateQueryExpression ),
-    ( "testRawTypeSafeQuery",        testRawTypeSafeQuery        ),
-    ( "testSimpleTX",                testSimpleTX                ),
-    ( "testAdaptorDataSourceFindByID", testAdaptorDataSourceFindByID ),
-    ( "testBasicReflection",         testBasicReflection         ),
-    ( "testTableReflection",         testTableReflection         ),
-    ( "testCodeSchema",              testCodeSchema              ),
-    ( "testCodeSchemaWithJoinQualifier",   testCodeSchemaWithJoinQualifier ),
-    ( "testCodeSchemaWithRelshipPrefetch", testCodeSchemaWithRelshipPrefetch ),
-    ( "testCodeSchemaWithTypedFetchSpec",  testCodeSchemaWithTypedFetchSpec ),
-    // own
-    ( "testCount", testCount ),
-  ]
 }

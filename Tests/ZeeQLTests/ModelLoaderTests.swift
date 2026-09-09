@@ -8,6 +8,9 @@
 
 import XCTest
 import Foundation
+#if canImport(FoundationXML)
+  import FoundationXML
+#endif
 @testable import ZeeQL
 
 class ModelLoaderTests: XCTestCase {
@@ -114,7 +117,44 @@ class ModelLoaderTests: XCTestCase {
       }
     }
   }
+
+  func testMalformedQualifiersThrow() throws {
+    let qualifiers = [
+      """
+      <model>
+        <entity name="Person" restrictingQualifier="name ="/>
+      </model>
+      """,
+      """
+      <model>
+        <entity name="Person"/>
+        <fetchRequest name="broken" entity="Person"
+                      predicateString="name ="/>
+      </model>
+      """,
+      """
+      <model>
+        <entity name="Person">
+          <fetch name="broken"><qualifier>name =</qualifier></fetch>
+        </entity>
+      </model>
+      """
+    ]
+
+    for string in qualifiers {
+      let xml = try XMLDocument(xmlString: string, options: [])
+      let loader = CoreDataModelLoader()
+
+      XCTAssertThrowsError(try loader.loadDataModelContents(from: xml)) {
+        guard let error = $0 as? QualifierParser.ParserError else {
+          return XCTFail("unexpected error: \($0)")
+        }
+        XCTAssertEqual(error.string, "name =")
+      }
+    }
+  }
   
+  #if !os(Linux) // Compiled model UID decoding is Darwin-specific.
   func testCompiledModelLoad() {
     let url = urlToMOMModel
     let model : Model
@@ -187,6 +227,8 @@ class ModelLoaderTests: XCTestCase {
     }
   }
 
+  #endif
+
   func testModelSQLize() {
     let url = urlToModel
     let originalModel : Model
@@ -241,6 +283,7 @@ class ModelLoaderTests: XCTestCase {
   static var allTests = [
     ( "testModelPath",         testModelPath         ),
     ( "testModelLoad",         testModelLoad         ),
+    ( "testMalformedQualifiersThrow", testMalformedQualifiersThrow ),
     // Compiled models do not work on Linux:
     // ( "testCompiledModelLoad", testCompiledModelLoad ),
     ( "testModelSQLize",       testModelSQLize       ),

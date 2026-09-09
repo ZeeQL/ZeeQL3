@@ -98,13 +98,18 @@ public final class SingleConnectionPool: AdaptorChannelPool {
                                       execute: self.gc!)
     }
   }
-  private func expire() {
+  func expire() {
     let rerun : Bool
     do {
       lock.lock(); defer { lock.unlock() }
       if let entry = entry {
-        rerun = entry.age > maxAge
-        if !rerun { self.entry = nil }
+        if entry.age >= maxAge {
+          self.entry = nil
+          rerun = false
+        }
+        else {
+          rerun = true
+        }
       }
       else { rerun = false }
     }

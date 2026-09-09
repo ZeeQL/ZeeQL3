@@ -220,23 +220,15 @@ public enum DatabaseObjectError : Swift.Error {
 }
 
 
-/**
- * RelationshipManipulation
- *
- * Special KVC functions for toMany keys in ORM objects.
- */
-public protocol RelationshipManipulation
-  : AnyObject, KeyValueCodingType, MutableKeyValueCodingType
+/// KVC operations for adding and removing related objects.
+public protocol RelationshipManipulation: AnyObject, KeyValueCodingType,
+                                          MutableKeyValueCodingType
 {
   
-  /**
-   * Add an object to the array stored under '_key'.
-   */
+  /// Assign a to-one relationship or add an object to a to-many relationship.
   func addObject   (_ object: AnyObject, toPropertyWithKey key: String)
   
-  /**
-   * Remove an object to the array stored under '_key'.
-   */
+  /// Clear a to-one relationship or remove an object from a to-many collection.
   func removeObject(_ object: AnyObject, fromPropertyWithKey key: String)
   
   // MARK: - Both Sides (called by DatabaseChannel)
@@ -248,44 +240,74 @@ public protocol RelationshipManipulation
 }
 
 public extension RelationshipManipulation { // default imp
-  
+
+  /**
+   * Use instance or static entity metadata to detect toOne/Many.
+   */
   func addObject(_ object: AnyObject, toPropertyWithKey key: String) {
-    // TBD: this is, sigh.
-    // also, the KVC access is still a little open, this should do
-    // takeValueForKey in case the subclass overrides it
     let log = globalZeeQLLogger
-    
-    // If it is a to-one, we push the object itself into the relship.
-    if let object = object as? DatabaseObject {
-      do {
-        try takeValue(object, forKey: key)
-      }
-      catch {
-        log.error("Could not take toOne relationship for key:", key)
-      }
-      return
-    }
-    
-    // TBD: Really AnyObject? Rather `DatabaseObject`?
-    // Because the input is like that!
     do {
-      if var list = valueForKey(key) as? [ AnyObject ] {
-        if !list.contains(where: { $0 === object }) {
-          list.append(object)
-          try takeValue(list, forKey: key)
+      if !isToManyRelationship(key) {
+        try takeValue(object, forKey: key)
+        return
+      }
+
+      if let value = valueForKey(key) {
+        guard var objects = value as? [ AnyObject ] else {
+          log.error("Expected a to-many collection for key:", key)
+          return
         }
+        guard !objects.contains(where: { $0 === object }) else { return }
+        objects.append(object)
+        try takeValue(objects, forKey: key)
       }
       else {
         try takeValue([ object ], forKey: key)
       }
     }
     catch {
-      log.error("Could not take toMany relationship for key:", key)
+      log.error("Could not add relationship object for key:", key, error)
     }
   }
+
+  /// Remove by identity
   func removeObject(_ object: AnyObject, fromPropertyWithKey key: String) {
-    // TODO
-    fatalError("not implemented: \(#function)")
+    let log = globalZeeQLLogger
+    guard let value = valueForKey(key) else { return }
+    do {
+      if !isToManyRelationship(key) {
+        guard value as AnyObject === object else { return }
+        try takeValue(nil, forKey: key)
+        return
+      }
+
+      guard var objects = value as? [ AnyObject ] else {
+        log.error("Expected a to-many collection for key:", key)
+        return
+      }
+      guard let index = objects.firstIndex(where: { $0 === object }) else {
+        return
+      }
+      objects.remove(at: index)
+      try takeValue(objects, forKey: key)
+    }
+    catch {
+      log.error("Could not remove relationship object for key:", key, error)
+    }
+  }
+
+  private func isToManyRelationship(_ key: String) -> Bool {
+    let entity: Entity?
+    if let object = self as? ActiveRecordType {
+      entity = object.entity
+    }
+    else if let entityType = type(of: self) as? EntityType.Type {
+      entity = entityType.entity
+    }
+    else {
+      entity = nil
+    }
+    return entity?[relationship: key]?.isToMany ?? true
   }
 
   // MARK: - Both Sides
@@ -293,20 +315,16 @@ public extension RelationshipManipulation { // default imp
   func addObject   (_ object: RelationshipManipulation,
                     toBothSidesOfRelationshipWithKey key: String)
   {
-    /* Note: we don't know the Entity here, so we can't access the inverse
-     *       relationship. ActiveRecord COULD change this. It doesn't, because
-     *       it creates a cycle.
-     */
+    // Preserve the single-side default. Conformers that maintain inverse
+    // relationships can override this helper.
     addObject(object, toPropertyWithKey: key)
   }
   
   func removeObject(_ object: RelationshipManipulation,
                     fromBothSidesOfRelationshipWithKey key: String)
   {
-    /* Note: we don't know the Entity here, so we can't access the inverse
-     *       relationship. ActiveRecord COULD change this. It doesn't, because
-     *       it creates a cycle.
-     */
+    // Preserve the single-side default. Conformers that maintain inverse
+    // relationships can override this helper.
     removeObject(object, fromPropertyWithKey: key)
   }
 }

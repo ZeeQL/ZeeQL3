@@ -206,13 +206,25 @@ open class ActiveRecordBase : ActiveRecordType, SmartDescription {
     guard let idx = list.firstIndex(where: { $0 === o }) else { return }
     
     list.remove(at: idx)
-    takeStoredValue([ list ], forKey: key)
+    takeStoredValue(list, forKey: key)
   }
   
   
   // MARK: - Save
   
   open func validateForSave() throws {
+    guard !isReadOnly else { throw DatabaseObjectError.readOnly(self) }
+  }
+
+  open func validateForInsert() throws {
+    try validateForSave()
+  }
+
+  open func validateForUpdate() throws {
+    try validateForSave()
+  }
+
+  open func validateForDelete() throws {
     guard !isReadOnly else { throw DatabaseObjectError.readOnly(self) }
   }
   

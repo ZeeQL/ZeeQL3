@@ -13,20 +13,26 @@ import XCTest
 class SQLite3ActiveRecordTests: AdapterActiveRecordTests {
   
   override var adaptor : Adaptor! { return _adaptor }
-  var _adaptor : Adaptor = {
-    var pathToTestDB : String = {
-    #if ZEE_BUNDLE_RESOURCES
-      let bundle = Bundle(for: type(of: self) as! AnyClass)
-      let url    = bundle.url(forResource: "contacts", withExtension: "sqlite3")
-      guard let path = url?.path else { return "contacts.sqlite3" }
-      return path
-    #else
-      let dataPath = lookupTestDataPath()
-      return "\(dataPath)/contacts.sqlite3"
-    #endif
-    }()
-    return SQLite3Adaptor(pathToTestDB)
-  }()
+  private var _adaptor    : SQLite3Adaptor?
+  private var databaseURL : URL?
+
+  override func setUpWithError() throws {
+    let url = try temporaryTestDatabase(named: "contacts.sqlite3")
+    databaseURL = url
+    _adaptor    = SQLite3Adaptor(url.path)
+  }
+
+  override func tearDownWithError() throws {
+    _adaptor = nil
+    if let databaseURL {
+      try FileManager.default.removeItem(at: databaseURL)
+    }
+    databaseURL = nil
+  }
+
+  func testSnapshotting() throws { try runSnapshotting() }
+  func testSimpleChange() throws { try runSimpleChange() }
+  func testInsertAndDelete() throws { try runInsertAndDelete() }
   
   func testFetchRawContactsModel() throws { // doesn't belong here, but well
     let channel = try adaptor.openChannel()
@@ -87,15 +93,4 @@ class SQLite3ActiveRecordTests: AdapterActiveRecordTests {
     }
   }
 
-  
-  // MARK: - Non-ObjC Swift Support
-  
-  static var allTests = [
-    // super
-    ( "testSnapshotting",    testSnapshotting    ),
-    ( "testSimpleChange",    testSimpleChange    ),
-    ( "testInsertAndDelete", testInsertAndDelete ),
-    // own
-    ( "testFetchRawContactsModel", testFetchRawContactsModel ),
-  ]
 }

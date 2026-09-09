@@ -21,46 +21,43 @@
  * The helper does organize a fetch for ONE level, e.g. `person` in this case.
  */
 class DatabaseChannelFetchHelper {
-  // TODO: fix abuse of GlobalID, workaround for Hashable-limitations
-  // ^^ hh: what?
   
   /// The contains the database objects we want to fetch relationships for.
   let baseObjects             : [ DatabaseObject ]
   
-  /// This is a map from the join key in the base objects, e.g. `id` to the
-  /// the global ID's of those objects.
-  var sourceKeyToValues       = [ String : [ GlobalID ] ]()
+  /// Maps a join attribute, e.g. `id`, to its distinct hashable values.
+  var sourceKeyToValues       = [ String : [ AnyHashable ] ]()
   
-  /// This is a map from the join key in the base objects, e.g. `id` to the
-  /// the actual ``DatabaseObject``'s.
-  var sourceKeyToValueObjects = [ String : [ GlobalID : [ DatabaseObject ] ] ]()
+  /// Maps a join attribute and value to the matching ``DatabaseObject``'s.
+  var sourceKeyToValueObjects =
+    [ String : [ AnyHashable : [ DatabaseObject ] ] ]()
   
   init(baseObjects: [ DatabaseObject ]) {
     self.baseObjects = baseObjects
   }
   
-  func getSourceValues(_ srcName: String) -> [ GlobalID ] {
+  func getSourceValues(_ srcName: String) throws -> [ AnyHashable ] {
     if let result = sourceKeyToValues[srcName] { return result }
 
-    fill(srcName)
+    try fill(srcName)
     return sourceKeyToValues[srcName] ?? []
   }
   
   func getValueToObjects(_ srcName: String)
-       -> [ GlobalID : [ DatabaseObject ] ]
+    throws -> [ AnyHashable : [ DatabaseObject ] ]
   {
     if let result = sourceKeyToValueObjects[srcName] { return result }
     
-    fill(srcName)
+    try fill(srcName)
     return sourceKeyToValueObjects[srcName] ?? [:]
   }
   
-  func fill(_ srcName: String) {
+  func fill(_ srcName: String) throws {
     guard !baseObjects.isEmpty else { return }
     
     /* not yet cached, calculate */
-    var srcValues      = [ GlobalID ]()
-    var valueToObjects = [ GlobalID : [ DatabaseObject ] ]()
+    var srcValues      = [ AnyHashable ]()
+    var valueToObjects = [ AnyHashable : [ DatabaseObject ] ]()
     
     
     /* calculate */
@@ -72,7 +69,7 @@ class DatabaseChannelFetchHelper {
       guard let rv = baseObject.storedValueForKey(srcName) else { continue }
       // guard let rv = baseObject.valueForKey(srcName) else { continue }
       
-      guard let v = hackValueHolder(rv) else { // TBD: do we know the entity?
+      guard let v = try prefetchJoinKey(rv) else {
         continue
       }
       
@@ -95,21 +92,10 @@ class DatabaseChannelFetchHelper {
 
 }
 
-func hackValueHolder(_ value : Any?) -> GlobalID? {
-  // Swift GID hack
-  // 2025-04-28: What does it hack? I think getting GID's?
-  //             They could have the entityName?
-  guard let rv = value else { return nil }
-  
-  if let gid = rv as? GlobalID { return gid }
-  if let i   = rv as? Int {
-    return SingleIntKeyGlobalID(entityName: "<HACK>", value: i)
+func prefetchJoinKey(_ value: Any?) throws -> AnyHashable? {
+  guard let value else { return nil }
+  guard let key = value as? AnyHashable else {
+    throw DatabaseChannelError.unsupportedPrefetchJoinValue(type(of: value))
   }
-  if let i   = rv as? Int64 {
-    return SingleIntKeyGlobalID(entityName: "<HACK>", value: Int(i))
-  }
-  if let i   = rv as? Int32 {
-    return SingleIntKeyGlobalID(entityName: "<HACK>", value: Int(i))
-  }
-  fatalError("cannot process join value: \(rv)")
+  return key
 }

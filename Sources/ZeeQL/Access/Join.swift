@@ -139,14 +139,11 @@ public struct Join : Equatable, SmartDescription {
   // MARK: - Equatable
 
   public static func ==(lhs: Join, rhs: Join) -> Bool {
-    /* fast check (should work often) */
-    if lhs.source === rhs.source && lhs.destination === rhs.destination {
-      return true
-    }
-    
-    /* slow check */
-    // TODO: call ==
-    return false
+    let lhsSource      = lhs.sourceName      ?? lhs.source?.name
+    let lhsDestination = lhs.destinationName ?? lhs.destination?.name
+    let rhsSource      = rhs.sourceName      ?? rhs.source?.name
+    let rhsDestination = rhs.destinationName ?? rhs.destination?.name
+    return lhsSource == rhsSource && lhsDestination == rhsDestination
   }
   
   public func isEqual(to object: Any?) -> Bool {

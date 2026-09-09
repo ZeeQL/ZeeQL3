@@ -125,6 +125,16 @@ class SQLite3ExpressionTests: XCTestCase {
     XCTAssertEqual(bindings[0].value as? String, "Donald")
   }
 
+  func testOffsetWithoutLimitUsesSQLiteSyntax() {
+    let fs = ModelFetchSpecification(entity: entity, offset: 2)
+    let expr = factory.selectExpressionForAttributes(
+      entity.attributes, lock: false, fs, entity)
+
+    XCTAssertEqual(expr.statement,
+                   "SELECT BASE.\"id\", BASE.\"age\", BASE.\"name\" " +
+                     "FROM \"company\" AS BASE LIMIT -1 OFFSET 2")
+  }
+
   
   // MARK: - Non-ObjC Swift Support
 
@@ -134,5 +144,7 @@ class SQLite3ExpressionTests: XCTestCase {
     ( "testInsertSQLExpr",    testInsertSQLExpr ),
     ( "testSimpleSelectExpr", testSimpleSelectExpr ),
     ( "testSimpleSelectExprWithArgument", testSimpleSelectExprWithArgument ),
+    ( "testOffsetWithoutLimitUsesSQLiteSyntax",
+      testOffsetWithoutLimitUsesSQLiteSyntax ),
   ]
 }

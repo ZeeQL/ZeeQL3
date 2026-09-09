@@ -47,29 +47,20 @@ public extension AdaptorRecordSchema {
   }
 }
 
-public final class AdaptorRecordSchemaWithAttributes
-                   : AdaptorRecordSchema, SmartDescription
+public final class AdaptorRecordSchemaWithAttributes: AdaptorRecordSchema,
+                                                      SmartDescription
 {
   
-  public let attributes      : [ Attribute ]?
-  
-  @usableFromInline
-  var _attributeNames        : [ String    ]? = nil // cache them
-  
-  @inlinable
-  public var attributeNames  : [ String ] {
-    if _attributeNames == nil { // build cache
-      _attributeNames = attributes?.map { $0.name }
-    }
-    return _attributeNames ?? []
-  }
+  public let attributes     : [ Attribute ]?
+  public let attributeNames : [ String ]
   
   @inlinable
   public var count : Int { return attributes?.count ?? 0 }
 
   @inlinable
   public init(_ attributes: [ Attribute ]) {
-    self.attributes = attributes
+    self.attributes     = attributes
+    self.attributeNames = attributes.map { $0.name }
   }
   
   @inlinable
@@ -82,9 +73,7 @@ public final class AdaptorRecordSchemaWithAttributes
   // MARK: - Description
 
   @inlinable
-  public var descriptionPrefix : String {
-    return "schema"
-  }
+  public var descriptionPrefix : String { return "schema" }
 }
 
 public final class AdaptorRecordSchemaWithNames : AdaptorRecordSchema {
@@ -99,13 +88,9 @@ public final class AdaptorRecordSchemaWithNames : AdaptorRecordSchema {
 
   @discardableResult
   public func switchKey(_ oldKey: String, to newKey: String) -> Bool {
-    #if swift(>=5)
-      guard let index = attributeNames.firstIndex(of: oldKey) else {
-        return false
-      }
-    #else
-      guard let index = attributeNames.index(of: oldKey) else { return false }
-    #endif
+    guard let index = attributeNames.firstIndex(of: oldKey) else {
+      return false
+    }
     attributeNames[index] = newKey
     return true
   }

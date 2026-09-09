@@ -16,6 +16,7 @@ public enum DatabaseChannelError : Swift.Error {
   case missingEntity(String?)
   case missingRelationship(Entity, String)
   case incompleteJoin(Join)
+  case unsupportedPrefetchJoinValue(Any.Type)
   
   case couldNotBuildPrimaryKeyQualifier
   case missingAttributeUsedForLocking(Attribute)
@@ -102,9 +103,9 @@ open class DatabaseChannelBase {
     
     do {
       try ac.begin()
-      releaseChannel() // only release if good
     }
     catch {
+      if !ac.isTransactionInProgress { releaseChannel() }
       throw DatabaseChannelError.couldNotBeginTX(error)
     }
   }
@@ -121,13 +122,12 @@ open class DatabaseChannelBase {
       else {
         try ac.commit()
       }
-      releaseChannel() // only release if everything was fine
+      releaseChannel()
     }
     catch {
+      if !ac.isTransactionInProgress { releaseChannel() }
       throw DatabaseChannelError.couldNotFinishTX(error)
     }
-    
-    releaseChannel()
   }
 
   /**
@@ -155,45 +155,43 @@ open class DatabaseChannelBase {
     throws -> R
   {
     try withChannel { adaptorChannel in
+      let log = globalZeeQLLogger
       
       if isInTransaction { // Transaction managed by someone else
         return try code(adaptorChannel)
       }
 
       try adaptorChannel.begin()
+
+      let result: R
       do {
-        let result = try code(adaptorChannel)
-        
-        do {
-          if rollbackWhenDone {
-            try adaptorChannel.rollback()
-          }
-          else {
-            try adaptorChannel.commit()
-          }
-        }
-        catch {
-          if !rollbackWhenDone { // commit failed
-            // tx should be cancelled, no rollback required, but lets do it
-            // anyways.
-            try? adaptorChannel.rollback()
-          }
-          throw DatabaseChannelError.couldNotFinishTX(error)
-        }
-        
-        return result
+        result = try code(adaptorChannel)
       }
-      catch {
+      catch let bodyError {
         do {
           try adaptorChannel.rollback()
-          throw error // properly rolled back after error in code
         }
-        catch { // Could not rollback
-          globalZeeQLLogger.warn("could not rollback transaction:", error)
-          throw DatabaseChannelError.couldNotFinishTX(error)
-            // TBD: separate error?
+        catch {
+          log.warn("could not rollback transaction:", error,
+                   "after body error:", bodyError)
+        }
+        throw bodyError
+      }
+
+      do {
+        if rollbackWhenDone {
+          try adaptorChannel.rollback()
+        }
+        else {
+          try adaptorChannel.commit()
         }
       }
+      catch let finishError {
+        if !rollbackWhenDone { try? adaptorChannel.rollback() }
+        throw DatabaseChannelError.couldNotFinishTX(finishError)
+      }
+
+      return result
     }
   }
   
@@ -484,7 +482,7 @@ open class DatabaseChannelBase {
       throw DatabaseChannelError.incompleteJoin(join)
     }
     
-    let srcValues = helper.getSourceValues(srcName)
+    let srcValues = try helper.getSourceValues(srcName)
     #if DEBUG
     do {
       let unique = Set(srcValues)
@@ -495,7 +493,7 @@ open class DatabaseChannelBase {
     /* This is a Map which maps the join target-value to matching
      * DatabaseObjects. Usually its just one.
      */
-    let valueToObjects = helper.getValueToObjects(srcName)
+    let valueToObjects = try helper.getValueToObjects(srcName)
     
     // TBD: srcValues could be empty?! Well, values could be NULL (for non-pkey
     //      source attributes).
@@ -526,7 +524,8 @@ open class DatabaseChannelBase {
     
     // This does things like:
     // `companyId in [ 1, 2, 3, 4 ]`
-    let joinQualifier = KeyValueQualifier(targetName, .in, srcValues)
+    let joinValues: [ Any? ] = srcValues.map { $0.base }
+    let joinQualifier = KeyValueQualifier(targetName, .in, joinValues)
     
     guard let destEntity = rel.destinationEntity else {
       // TODO: what error
@@ -561,7 +560,7 @@ open class DatabaseChannelBase {
         continue
       }
 
-      guard let v = hackValueHolder(rv) else {
+      guard let v = try prefetchJoinKey(rv) else {
         continue
       }
       
@@ -792,6 +791,17 @@ open class DatabaseChannelBase {
       try adaptorChannel.performAdaptorOperations(&aops)
       
       
+      // Carry results from the executed value copies back to their owners.
+      var resultIndex = aops.startIndex
+      for op in ops {
+        for index in op.adaptorOperations.indices {
+          op.adaptorOperations[index] = aops[resultIndex]
+          resultIndex += 1
+        }
+        op.captureAdaptorOperationResults()
+      }
+      assert(resultIndex == aops.endIndex)
+
       // OK, the database operations have been successful. Now we need to handle
       // the side effects.
       
@@ -882,6 +892,7 @@ open class DatabaseChannelBase {
     var aops = [ AdaptorOperation ]()
 
     for op in ops {
+      op.adaptorOperations.removeAll(keepingCapacity: true)
       guard let aop = try op.primaryAdaptorOperation() else { continue }
       aops.append(aop)
       op.addAdaptorOperation(aop) // TBD: do we really need this?

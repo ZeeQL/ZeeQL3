@@ -85,9 +85,17 @@ extension Sequence where Iterator.Element == Entity { // a table group
   var groupRelationships : [ Relationship ] {
     var relships                = [ Relationship ]()
     var registeredRelationships = Set<String>()
+    var registeredForeignKeys   = Set<SQLForeignKey>()
     
     for entity in self {
       for rs in entity.relationships {
+        if let foreignKey = rs.foreignKey {
+          guard registeredForeignKeys.insert(foreignKey).inserted else { 
+            continue 
+          }
+          relships.append(rs)
+          continue
+        }
         guard let key = rs.constraintKey             else { continue }
         guard !registeredRelationships.contains(key) else { continue }
         relships.append(rs)
@@ -133,6 +141,7 @@ extension Sequence where Iterator.Element == Entity { // a table group
          where T.Iterator.Element == Iterator.Element
   {
     let ownNames = Set<String>(self.map( { $0.name } ))
+    let otherNames = Set<String>(other.map { $0.name })
     var count = 0
     for entity in self {
       for relship in entity.relationships {
@@ -140,6 +149,7 @@ extension Sequence where Iterator.Element == Entity { // a table group
         guard let name = relship.ssfDestinationName else { continue }
         
         guard !ownNames.contains(name) else { continue }
+        guard otherNames.contains(name) else { continue }
         
         count += 1
       }

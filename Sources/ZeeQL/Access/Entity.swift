@@ -398,11 +398,11 @@ public extension Entity {
   @inlinable
   func isEqual(to object: Any?) -> Bool {
     guard let other = object as? Entity else { return false }
-    return other.isEqual(to: self)
+    return isEqual(to: other)
   }
   
   @inlinable
-  func isEqual(to other: Self) -> Bool {
+  func isEqual(to other: Entity) -> Bool {
     if other === self { return true  }
     guard name                  == other.name         else { return false }
     guard externalName          == other.externalName else { return false }
@@ -432,7 +432,7 @@ public extension Entity {
     
     for attr in attributes {
       guard let other = other[attribute: attr.name] else { return false }
-      guard attr.isEqual(to: other)                 else { return false }
+      guard (attr as any EquatableType).isEqual(to: other) else { return false }
     }
     if let v  = attributesUsedForLocking,
        let ov = other.attributesUsedForLocking
@@ -443,7 +443,7 @@ public extension Entity {
     }
     for rs in relationships {
       guard let other = other[relationship: rs.name] else { return false }
-      guard rs.isEqual(to: other)                    else { return false }
+      guard (rs as any EquatableType).isEqual(to: other) else { return false }
     }
 
     return true

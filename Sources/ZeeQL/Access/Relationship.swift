@@ -77,7 +77,7 @@ public extension Relationship { // default imp
   var constraintName : String?         { return nil        }
 
   @inlinable
-  var minCount       : Int? { return isToMany ? nil : (isMandatory ? 0 : 1) }
+  var minCount       : Int? { return isToMany ? nil : (isMandatory ? 1 : 0) }
   @inlinable
   var maxCount       : Int? { return isToMany ? nil : 1 }
   
@@ -135,16 +135,30 @@ public extension Relationship { // extra methods
   @inlinable
   func isEqual(to object: Any?) -> Bool {
     guard let other = object as? Relationship else { return false }
-    return other.isEqual(to: self)
+    return isEqual(to: other)
   }
   
   @inlinable
-  func isEqual(to other: Self) -> Bool {
+  func isEqual(to other: Relationship) -> Bool {
     if other === self { return true  }
     guard name              ==  other.name              else { return false }
     guard isToMany          ==  other.isToMany          else { return false }
-    guard entity            === other.entity            else { return false }
-    guard destinationEntity === other.destinationEntity else { return false }
+
+    // Compare endpoint identity or names without following cyclic model graphs.
+    guard entity === other.entity || entity.name == other.entity.name else {
+      return false
+    }
+    let destination      = destinationEntity
+    let otherDestination = other.destinationEntity
+    if destination == nil || destination !== otherDestination {
+      let destinationName = destination?.name
+        ?? (self as? ModelRelationship)?.destinationEntityName
+      let otherDestinationName = otherDestination?.name
+        ?? (other as? ModelRelationship)?.destinationEntityName
+      guard destinationName == otherDestinationName else { return false }
+    }
+    guard relationshipPath == other.relationshipPath else { return false }
+
     guard ownsDestination   ==  other.ownsDestination   else { return false }
     guard isMandatory       ==  other.isMandatory       else { return false }
     guard minCount          ==  other.minCount          else { return false }
@@ -186,15 +200,14 @@ public extension Relationship { // extra methods
   
   /**
    * Returns the Relationship objects for each component of the
-   * relationshipPath() of a flattened Relationship. Eg:
+   * relationshipPath() of a flattened Relationship.
    *
-   *     employments.company.addresses
+   * E.g. `employments.company.addresses`
    *
    * could return three Relationship objects:
-   *
-   *     'employments', source = Persons,     dest = Employments
-   *     'company',     source = Employments, dest = Companies
-   *     'addresses',   source = Companies,   dest = Addresses
+   * - 'employments', source = Persons,     dest = Employments
+   * - 'company',     source = Employments, dest = Companies
+   * - 'addresses',   source = Companies,   dest = Addresses
    * 
    * The method returns nil if this is not a flattened relationship.
    */
@@ -212,9 +225,10 @@ public extension Relationship { // extra methods
         return nil // TODO: log
       }
       
-      assert(!rel.isFlattened, "Not implemented")
+      assert(!rel.isFlattened, "Flattend relships not implemented")
         // TODO: pathes containing flattened relships
-      
+
+      relships.append(rel)
       relentity = rel.destinationEntity
     }
     
@@ -224,7 +238,7 @@ public extension Relationship { // extra methods
   /**
    * Makes the Relationship check whether any of its joins reference the
    * given property.
-   * A property is an Attribute or Relationship object.
+   * A property is an ``Attribute`` or ``Relationship`` object.
    */
   @inlinable
   func references(property: Property) -> Bool {
@@ -371,11 +385,12 @@ open class ModelRelationship : Relationship {
   public final var joinSemantic          = Join.Semantic.innerJoin
   open         var isToMany              = false
   public final var relationshipPath      : String?
+  public final var updateRule            : ConstraintRule?
   public final var deleteRule            : ConstraintRule?
   
   public final var minCount              : Int? {
     set { _minCount = newValue }
-    get { return _minCount ?? (isToMany ? nil : (isMandatory ? 0 : 1)) }
+    get { return _minCount ?? (isToMany ? nil : (isMandatory ? 1 : 0)) }
   }
   public final var maxCount              : Int? {
     set { _maxCount = newValue }
@@ -406,6 +421,7 @@ open class ModelRelationship : Relationship {
     constraintName    = rs.constraintName
     joinSemantic      = rs.joinSemantic
     isToMany          = rs.isToMany
+    updateRule        = rs.updateRule
     deleteRule        = rs.deleteRule
     relationshipPath  = rs.relationshipPath
     entity            = newEntity ?? rs.entity

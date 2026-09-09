@@ -21,17 +21,144 @@ class QualifierParserTests: XCTestCase {
     _testKeyValueQualifier("name < 'Duck'",     "name", "Duck")
     _testKeyValueQualifier("name = null",       "name", nil)
   }
-  
-  func testComplexCompoundQualifier() {
-    // should be: ((a = 1 AND b = 2) OR c = 3) AND f = 4
-    let q = parse("a = 1 AND b = 2 OR c = 3 AND f = 4") // TODO: FAILS
-    XCTAssertNotNil(q, "could not parse qualifier")
 
-    XCTAssert(q! is CompoundQualifier, "did not parse an AND qualifier")
-    let aq = q! as! CompoundQualifier
-    XCTAssert(aq.op == .and, "did not parse an AND qualifier")
-    
-    XCTAssertEqual(aq.qualifiers.count, 2, "length of top-level does not match")
+  func testUnterminatedQuotedStringsReturnNil() {
+    XCTAssertNil(qualifierWithFormat("name = '"))
+    XCTAssertNil(qualifierWithFormat("name = 'unterminated"))
+    XCTAssertNil(qualifierWithFormat("name = \"unterminated"))
+    XCTAssertNil(qualifierWithFormat("name = 'escape\\"))
+  }
+
+  func testTrailingFormatMarkerReturnsNil() {
+    XCTAssertNil(qualifierWithFormat("name = %"))
+  }
+
+  func testThrowingParser() throws {
+    let qualifier = try QualifierParser.parse("name = 'Duck'")
+    let keyValue = try XCTUnwrap(qualifier as? KeyValueQualifier)
+
+    XCTAssertEqual(keyValue.key, "name")
+    XCTAssertEqual(keyValue.value as? String, "Duck")
+  }
+
+  func testThrowingParserReportsOriginalString() {
+    let input = "name = 'unterminated"
+
+    XCTAssertThrowsError(try QualifierParser.parse(input)) { thrown in
+      guard let error = thrown as? QualifierParser.ParserError else {
+        return XCTFail("unexpected error: \(thrown)")
+      }
+      XCTAssertEqual(error.string, input)
+      guard case .invalidSyntax(let reason, _, _) = error else {
+        return XCTFail("unexpected parser error: \(error)")
+      }
+      XCTAssertTrue(reason.contains("not closed"))
+    }
+  }
+
+  func testThrowingParserReportsEmptyInput() {
+    let input = " "
+
+    XCTAssertThrowsError(try QualifierParser.parse(input)) { thrown in
+      XCTAssertEqual(
+        thrown as? QualifierParser.ParserError,
+        .emptyInput(string: input))
+    }
+  }
+
+  func testMalformedTokenBoundariesDoNotTrap() {
+    let inputs = [
+      "", " ", "%", "'", "\"", "name ", "name =", "name = ",
+      "name = %", "name = '", "name = \\", "name = $", "(", "SQL[",
+      "SQL[$", "name = ()", "name = (Date", "name = (Date)",
+      "name = (Date) "
+    ]
+    for input in inputs { _ = qualifierWithFormat(input) }
+  }
+
+  func testUnsupportedFormatSpecifiersReportErrors() {
+    let inputs = [
+      "%z = 1", "name %z 1", "name = %z", "name = 1 %z other = 2"
+    ]
+    for input in inputs {
+      XCTAssertThrowsError(try QualifierParser.parse(input, "name")) { thrown in
+        guard let error = thrown as? QualifierParser.ParserError else {
+          return XCTFail("unexpected error for \(input): \(thrown)")
+        }
+        XCTAssertEqual(error.string, input)
+        guard case .invalidSyntax(let reason, _, _) = error else {
+          return XCTFail("unexpected parser error: \(error)")
+        }
+        XCTAssertTrue(reason.contains("unknown"))
+        XCTAssertTrue(reason.contains("%z"))
+      }
+      XCTAssertNil(qualifierWithFormat(input, "name"), input)
+    }
+  }
+
+  func testMalformedTokenBoundaryCorpusDoesNotTrap() {
+    let seeds = [
+      "name = 'unterminated\\", "name = \"unterminated",
+      "name = %", "name = %z", "%z = 1", "name = $",
+      "(name = 1 AND value = 2", "NOT (name = 1 OR)",
+      "SQL[$variable", "SQL[unterminated", "emoji😀 = 'value'",
+      "naïve = 'café'", "amount = -", "amount = -.",
+      "a = 1 AND b = 2 OR c = 3"
+    ]
+    let fragments = [
+      "", " ", "(", ")", "'", "\"", "%", "%z", "$", "SQL[",
+      "NOT ", "name", " = ", " AND ", " OR ", "-", "1", "\\"
+    ]
+
+    for seed in seeds {
+      for boundary in seed.indices {
+        checkTokenBoundary(String(seed[..<boundary]))
+      }
+      checkTokenBoundary(seed)
+    }
+    for lhs in fragments {
+      for rhs in fragments { checkTokenBoundary(lhs + rhs) }
+    }
+  }
+  
+  func testComplexCompoundQualifier() throws {
+    let parsed = try XCTUnwrap(
+      parse("a = 1 AND b = 2 OR c = 3 AND f = 4"))
+    let disjunction = try XCTUnwrap(parsed as? CompoundQualifier)
+    XCTAssertEqual(disjunction.op, .or)
+    XCTAssertEqual(disjunction.qualifiers.count, 2)
+
+    let left = try XCTUnwrap(
+      disjunction.qualifiers[0] as? CompoundQualifier)
+    XCTAssertEqual(left.op, .and)
+    XCTAssertEqual(left.qualifiers.count, 2)
+    XCTAssertEqual((left.qualifiers[0] as? KeyValueQualifier)?.key, "a")
+    XCTAssertEqual((left.qualifiers[1] as? KeyValueQualifier)?.key, "b")
+
+    let right = try XCTUnwrap(
+      disjunction.qualifiers[1] as? CompoundQualifier)
+    XCTAssertEqual(right.op, .and)
+    XCTAssertEqual(right.qualifiers.count, 2)
+    XCTAssertEqual((right.qualifiers[0] as? KeyValueQualifier)?.key, "c")
+    XCTAssertEqual((right.qualifiers[1] as? KeyValueQualifier)?.key, "f")
+  }
+
+  func testAndBindsMoreTightlyThanOr() throws {
+    let parsed = try XCTUnwrap(parse("a = 1 OR b = 2 AND c = 3"))
+    let disjunction = try XCTUnwrap(parsed as? CompoundQualifier)
+    XCTAssertEqual(disjunction.op, .or)
+    XCTAssertEqual(disjunction.qualifiers.count, 2)
+    XCTAssertEqual(
+      (disjunction.qualifiers[0] as? KeyValueQualifier)?.key, "a")
+
+    let conjunction = try XCTUnwrap(
+      disjunction.qualifiers[1] as? CompoundQualifier)
+    XCTAssertEqual(conjunction.op, .and)
+    XCTAssertEqual(conjunction.qualifiers.count, 2)
+    XCTAssertEqual(
+      (conjunction.qualifiers[0] as? KeyValueQualifier)?.key, "b")
+    XCTAssertEqual(
+      (conjunction.qualifiers[1] as? KeyValueQualifier)?.key, "c")
   }
   
   func testComplexArgumentParsing() {
@@ -302,6 +429,20 @@ class QualifierParserTests: XCTestCase {
 
 
   // MARK: - Support
+
+  private func checkTokenBoundary(_ input: String) {
+    do { _ = try QualifierParser.parse(input, "key", 1) }
+    catch let error as QualifierParser.ParserError {
+      XCTAssertEqual(error.string, input)
+      if case .invalidSyntax(_, let position, _) = error {
+        XCTAssertGreaterThanOrEqual(position, 0, input)
+        XCTAssertLessThanOrEqual(position, input.count, input)
+      }
+    }
+    catch {
+      XCTFail("unexpected error for \(input.debugDescription): \(error)")
+    }
+  }
   
   func _testKeyValueQualifier(_ _qs: String, _ _k: String, _ _v: Any?) {
     let q = parse(_qs)
@@ -325,7 +466,19 @@ class QualifierParserTests: XCTestCase {
   static var allTests = [
     ( "testSimpleKeyValueQualifierInt",    testSimpleKeyValueQualifierInt    ),
     ( "testSimpleKeyValueQualifierString", testSimpleKeyValueQualifierString ),
+    ( "testUnterminatedQuotedStringsReturnNil",
+      testUnterminatedQuotedStringsReturnNil ),
+    ( "testTrailingFormatMarkerReturnsNil",
+      testTrailingFormatMarkerReturnsNil ),
+    ( "testThrowingParser",               testThrowingParser               ),
+    ( "testThrowingParserReportsOriginalString",
+      testThrowingParserReportsOriginalString ),
+    ( "testThrowingParserReportsEmptyInput",
+      testThrowingParserReportsEmptyInput ),
+    ( "testMalformedTokenBoundariesDoNotTrap",
+      testMalformedTokenBoundariesDoNotTrap ),
     ( "testComplexCompoundQualifier",      testComplexCompoundQualifier      ),
+    ( "testAndBindsMoreTightlyThanOr",     testAndBindsMoreTightlyThanOr     ),
     ( "testComplexArgumentParsing",        testComplexArgumentParsing        ),
     ( "testQualifierWithOneVariables",     testQualifierWithOneVariables     ),
     ( "testQualifierWithSomeVariables",    testQualifierWithSomeVariables    ),
