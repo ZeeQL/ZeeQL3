@@ -236,7 +236,6 @@ public struct QualifierParser {
         throw parseError("not yet supported: %%")
       
       default:
-        assertionFailure("unknown string format specification: \(_pat)")
         throw parseError("unknown string format specification: \(_pat)")
     }
   }

@@ -75,6 +75,51 @@ class QualifierParserTests: XCTestCase {
     ]
     for input in inputs { _ = qualifierWithFormat(input) }
   }
+
+  func testUnsupportedFormatSpecifiersReportErrors() {
+    let inputs = [
+      "%z = 1", "name %z 1", "name = %z", "name = 1 %z other = 2"
+    ]
+    for input in inputs {
+      XCTAssertThrowsError(try QualifierParser.parse(input, "name")) { thrown in
+        guard let error = thrown as? QualifierParser.ParserError else {
+          return XCTFail("unexpected error for \(input): \(thrown)")
+        }
+        XCTAssertEqual(error.string, input)
+        guard case .invalidSyntax(let reason, _, _) = error else {
+          return XCTFail("unexpected parser error: \(error)")
+        }
+        XCTAssertTrue(reason.contains("unknown"))
+        XCTAssertTrue(reason.contains("%z"))
+      }
+      XCTAssertNil(qualifierWithFormat(input, "name"), input)
+    }
+  }
+
+  func testMalformedTokenBoundaryCorpusDoesNotTrap() {
+    let seeds = [
+      "name = 'unterminated\\", "name = \"unterminated",
+      "name = %", "name = %z", "%z = 1", "name = $",
+      "(name = 1 AND value = 2", "NOT (name = 1 OR)",
+      "SQL[$variable", "SQL[unterminated", "emoji😀 = 'value'",
+      "naïve = 'café'", "amount = -", "amount = -.",
+      "a = 1 AND b = 2 OR c = 3"
+    ]
+    let fragments = [
+      "", " ", "(", ")", "'", "\"", "%", "%z", "$", "SQL[",
+      "NOT ", "name", " = ", " AND ", " OR ", "-", "1", "\\"
+    ]
+
+    for seed in seeds {
+      for boundary in seed.indices {
+        checkTokenBoundary(String(seed[..<boundary]))
+      }
+      checkTokenBoundary(seed)
+    }
+    for lhs in fragments {
+      for rhs in fragments { checkTokenBoundary(lhs + rhs) }
+    }
+  }
   
   func testComplexCompoundQualifier() throws {
     let parsed = try XCTUnwrap(
@@ -384,6 +429,20 @@ class QualifierParserTests: XCTestCase {
 
 
   // MARK: - Support
+
+  private func checkTokenBoundary(_ input: String) {
+    do { _ = try QualifierParser.parse(input, "key", 1) }
+    catch let error as QualifierParser.ParserError {
+      XCTAssertEqual(error.string, input)
+      if case .invalidSyntax(_, let position, _) = error {
+        XCTAssertGreaterThanOrEqual(position, 0, input)
+        XCTAssertLessThanOrEqual(position, input.count, input)
+      }
+    }
+    catch {
+      XCTFail("unexpected error for \(input.debugDescription): \(error)")
+    }
+  }
   
   func _testKeyValueQualifier(_ _qs: String, _ _k: String, _ _v: Any?) {
     let q = parse(_qs)
