@@ -28,8 +28,8 @@ jobs:
         run: swift build -c debug
       - name: Build Swift Release Package
         run: swift build -c release
-      - name: Run Tests
-        run: swift test
+      - name: Run Swift Release Tests
+        run: swift test -c release
   nextstep:
     runs-on: macos-latest
     steps:
@@ -40,12 +40,38 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
       - name: Build Xcode Project
-        run: xcodebuild -project ZeeQL3.xcodeproj -scheme ZeeQL
+        run: >-
+          xcodebuild -project ZeeQL3.xcodeproj -scheme ZeeQL
+          -configuration Debug
       - name: Build Swift Debug Package
         run: swift build -c debug
       - name: Build Swift Release Package
         run: swift build -c release
-#      - name: Run Package Tests
-#        run: swift test
-      - name: Run Xcode Tests
-        run: xcodebuild -project ZeeQL3.xcodeproj -scheme ZeeQL test
+      - name: Run Swift Release Tests
+        run: swift test -c release
+      - name: Run Xcode Release Tests
+        run: >-
+          xcodebuild -project ZeeQL3.xcodeproj -scheme ZeeQL
+          -configuration Release ENABLE_TESTABILITY=YES test
+
+  strict-concurrency:
+    runs-on: ubuntu-latest
+    container: swift:6.2-jammy
+    steps:
+      - name: Install SQLite
+        run: |
+          apt-get update
+          apt-get -y install libsqlite3-dev
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      - name: Build With Complete Concurrency Checking
+        # Diagnostic-only in Swift 5 mode; warnings are not promoted to errors.
+        run: swift build -Xswiftc -strict-concurrency=complete
+
+  address-sanitizer:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      - name: Run Release Tests With AddressSanitizer
+        run: swift test -c release --sanitize address
