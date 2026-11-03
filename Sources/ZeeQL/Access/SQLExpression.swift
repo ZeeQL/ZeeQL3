@@ -1276,7 +1276,7 @@ open class SQLExpression: SmartDescription {
       if list.isEmpty { return "( )" } // empty list
       return "( " + list.map { String($0) }.joined(separator: ", ") + " )"
     }
-    if #available(macOS 13, iOS 15, *) {
+    if #available(macOS 13, iOS 16, watchOS 9, tvOS 16, *) {
       if let list = v as? any Sequence<any BinaryInteger> {
         return "( " + list.map { String($0) }.joined(separator: ", ") + " )"
       }

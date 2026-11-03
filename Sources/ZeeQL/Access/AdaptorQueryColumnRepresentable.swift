@@ -54,9 +54,9 @@ extension UInt16  : AdaptorQueryColumnRepresentable {}
 extension UInt32  : AdaptorQueryColumnRepresentable {}
 extension UInt64  : AdaptorQueryColumnRepresentable {}
 #if compiler(>=6)
-@available(macOS 15, iOS 13, *)
+@available(macOS 15, iOS 18, watchOS 11, tvOS 18, visionOS 2, *)
 extension Int128  : AdaptorQueryColumnRepresentable {}
-@available(macOS 15, iOS 13, *)
+@available(macOS 15, iOS 18, watchOS 11, tvOS 18, visionOS 2, *)
 extension UInt128 : AdaptorQueryColumnRepresentable {}
 #endif
 
@@ -70,7 +70,7 @@ extension BinaryInteger {
     
     if let value = value as? Self { return value }
     
-    if #available(macOS 15, iOS 13, *) {
+    if #available(macOS 15, iOS 18, watchOS 11, tvOS 18, visionOS 2, *) {
       if let value = value as? any BinaryInteger { return Self(value) }
     }
     
@@ -105,7 +105,7 @@ extension BinaryFloatingPoint {
     
     if let value = value as? Self { return value }
     
-    if #available(macOS 15, iOS 13, *) {
+    if #available(macOS 15, iOS 18, watchOS 11, tvOS 18, visionOS 2, *) {
       if let value = value as? any BinaryFloatingPoint { return Self(value) }
       if let value = value as? any BinaryInteger       { return Self(value) }
     }
@@ -139,7 +139,7 @@ extension Date: AdaptorQueryColumnRepresentable {
     }
     if let date = value as? Date { return date }
 
-    if #available(macOS 15, iOS 13, *) {
+    if #available(macOS 15, iOS 18, watchOS 11, tvOS 18, visionOS 2, *) {
       if let v = value as? any BinaryInteger {
         return Date(timeIntervalSince1970: TimeInterval(v))
       }
@@ -253,7 +253,7 @@ extension UUID: AdaptorQueryColumnRepresentable {
       }
     }
     #if compiler(>=6)
-    if #available(macOS 15, iOS 13, *), let n = value as? UInt128 {
+    if #available(macOS 15, iOS 18, watchOS 11, tvOS 18, visionOS 2, *), let n = value as? UInt128 {
       return withUnsafeBytes(of: n.bigEndian) { (raw: UnsafeRawBufferPointer) in
         UUID(uuid: ( raw[0],  raw[1],  raw[2],  raw[3],
                      raw[4],  raw[5],  raw[6],  raw[7],
@@ -280,7 +280,7 @@ extension Array: AdaptorQueryColumnRepresentable where Element == UInt8 {
     #endif
     if let s = value as? String { return Self(s.utf8) }
     
-    if #available(macOS 13, iOS 13, *) {
+    if #available(macOS 13, iOS 16, watchOS 9, tvOS 16, *) {
       if let seq = value as? any Sequence<UInt8> { return .init(seq) }
     }
 
@@ -301,7 +301,7 @@ extension Set: AdaptorQueryColumnRepresentable where Element == UInt8 {
     #endif
     if let s = value as? String { return Self(s.utf8) }
 
-    if #available(macOS 13, iOS 13, *) {
+    if #available(macOS 13, iOS 16, watchOS 9, tvOS 16, *) {
       if let seq = value as? any Sequence<UInt8> { return .init(seq) }
     }
 
