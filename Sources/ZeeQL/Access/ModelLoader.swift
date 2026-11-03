@@ -1454,16 +1454,20 @@ open class CoreDataModelLoader : ModelLoader {
 #else
   // iOS has no XMLDocument, tiny replacement
   class XMLNode {
+    enum Kind { case element, attribute, text }
+    var kind        : Kind    { return .text }
+    var stringValue : String? = nil
   }
   class XMLElement  : XMLNode {
+    override var kind : Kind { return .element }
     var name        : String?           = nil
     var attributes  : [ XMLAttribute ]? = nil
     var children    : [ XMLNode      ]? = nil
   }
   class XMLAttribute : XMLNode {
+    override var kind : Kind { return .attribute }
     var name        : String?      = nil
     var localName   : String?      = nil
-    var stringValue : String?      = nil
   }
   
   enum XMLDocumentError: Swift.Error {
