@@ -133,6 +133,10 @@ open class TypedDatabaseChannel<ObjectType> : DatabaseChannelBase,
       // Typed one will try to assign it to its `ObjectType`, which will be
       // wrong for relationship targets (unless those are the same).
       let genericChannel = DatabaseChannel(database: database)
+      let baseEntity = fs.entity ?? database[entity: entityName]
+      genericChannel.fallbackObjectType =
+        database.classForEntity(baseEntity) == nil ? ObjectType.self
+                                                   : ActiveRecord.self
       genericChannel.adaptorChannel = adaptorChannel // run in same TX!
       defer { genericChannel.adaptorChannel = nil } // make sure to clear this!
       do {

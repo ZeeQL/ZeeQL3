@@ -20,6 +20,8 @@ open class DatabaseChannel : DatabaseChannelBase, IteratorProtocol, Sequence {
   
   public var objects : IndexingIterator<[ObjectType]>?
   
+  public var fallbackObjectType : DatabaseObject.Type?
+  
   override var hasObjectIterator : Bool { return objects != nil }
 
   override func fetchObjectFromIterator() -> DatabaseObject? {
@@ -36,6 +38,10 @@ open class DatabaseChannel : DatabaseChannelBase, IteratorProtocol, Sequence {
   override open func cancelFetch() {
     super.cancelFetch()
     objects = nil
+  }
+  
+  override func objectTypeForRow(_ row: AdaptorRecord) -> DatabaseObject.Type? {
+    return fallbackObjectType
   }
   
   
