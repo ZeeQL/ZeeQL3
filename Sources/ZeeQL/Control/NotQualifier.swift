@@ -3,22 +3,18 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 28/02/17.
-//  Copyright © 2017-2025 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2026 ZeeZide GmbH. All rights reserved.
 //
 
-public struct NotQualifier : Qualifier, Equatable {
+public struct NotQualifier : Qualifier, QualifierEvaluation, Equatable {
   
   public let qualifier : Qualifier
 
-  public init(qualifier: Qualifier) {
-    self.qualifier = qualifier
-  }
+  public init(qualifier: Qualifier) { self.qualifier = qualifier }
   
-  @inlinable
-  public var isEmpty : Bool      { return qualifier.isEmpty }
-  @inlinable
-  public var not     : Qualifier { return qualifier }
-  
+  @inlinable public var isEmpty : Bool      { return qualifier.isEmpty }
+  @inlinable public var not     : Qualifier { return qualifier         }
+
   
   // MARK: - Bindings and References
 
@@ -47,6 +43,15 @@ public struct NotQualifier : Qualifier, Equatable {
   }
   
   
+  // MARK: - QualifierEvaluation
+
+  @inlinable
+  public func evaluate(with object: Any?) -> Bool {
+    guard let qe = qualifier as? QualifierEvaluation else { return false }
+    return !qe.evaluate(with: object)
+  }
+
+
   // MARK: - Equality
   
   public static func ==(lhs: NotQualifier, rhs: NotQualifier) -> Bool {
