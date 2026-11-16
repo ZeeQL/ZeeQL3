@@ -31,8 +31,7 @@ extension KeyValueQualifier: QualifierEvaluation {
   
   @inlinable
   public func evaluate(with object: Any?) -> Bool {
-    let objectValue =
-          KeyValueCoding.valueForKeyPath(keyExpr.key, inObject: object)
+    let objectValue = keyExpr.valueForObject(object)
     return operation.compare(objectValue, value)
   }
 }
@@ -41,8 +40,8 @@ extension KeyComparisonQualifier: QualifierEvaluation {
   
   @inlinable
   public func evaluate(with object: Any?) -> Bool {
-    let a = KeyValueCoding.valueForKeyPath(leftKeyExpr .key, inObject: object)
-    let b = KeyValueCoding.valueForKeyPath(rightKeyExpr.key, inObject: object)
+    let a = leftKeyExpr .valueForObject(object)
+    let b = rightKeyExpr.valueForObject(object)
     return operation.compare(a, b)
   }
 }
